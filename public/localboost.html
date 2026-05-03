@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LocalBoost AI – Grow Your Business Instantly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --bg2: #111111; --bg3: #1a1a1a;
+    --border: #2a2a2a; --border2: #333;
+    --gold: #c9a84c; --gold2: #e8c97a; --gold-dim: rgba(201,168,76,0.12);
+    --white: #f5f0e8; --white-dim: rgba(245,240,232,0.55); --white-muted: rgba(245,240,232,0.3);
+    --red: #e05a5a; --green: #5ab87e; --r: 10px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--white); min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-size: 200px 200px; pointer-events: none; z-index: 0; opacity: .6;
+  }
+  header { position: relative; z-index: 10; border-bottom: 1px solid var(--border); padding: 0 clamp(16px, 5vw, 60px); display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo-mark { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 32px; height: 32px; background: var(--gold); border-radius: 6px; display: grid; place-items: center; }
+  .logo-icon svg { width: 18px; height: 18px; }
+  .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; color: var(--white); }
+  .logo-text span { color: var(--gold); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .badge { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; background: var(--gold-dim); color: var(--gold2); border: 1px solid rgba(201,168,76,.25); }
+  .btn-pro { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 8px; background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; border: none; cursor: pointer; transition: opacity .2s, transform .15s; white-space: nowrap; }
+  .btn-pro:hover { opacity: .88; transform: translateY(-1px); }
+  .hero { position: relative; z-index: 10; text-align: center; padding: clamp(48px, 8vw, 96px) clamp(16px, 5vw, 60px) clamp(40px, 6vw, 72px); overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(201,168,76,.15) 0%, transparent 70%); pointer-events: none; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
+  .eyebrow::before, .eyebrow::after { content: ''; flex: 1; min-width: 24px; height: 1px; background: var(--gold); opacity: .4; }
+  .hero h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(48px, 9vw, 110px); line-height: .95; letter-spacing: 2px; color: var(--white); margin-bottom: 16px; }
+  .hero h1 span { color: var(--gold); }
+  .hero p { font-size: clamp(15px, 2.2vw, 18px); color: var(--white-dim); max-width: 520px; margin: 0 auto 36px; line-height: 1.7; font-weight: 300; }
+  .hero-stats { display: flex; justify-content: center; gap: clamp(24px, 5vw, 60px); flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold2); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--white-muted); letter-spacing: .5px; margin-top: 2px; }
+  .divider { height: 1px; background: var(--border); position: relative; z-index: 10; margin: 0 clamp(16px, 5vw, 60px); }
+  .main-wrap { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; padding: clamp(32px, 5vw, 64px) clamp(16px, 5vw, 60px); display: grid; grid-template-columns: 380px 1fr; gap: 32px; align-items: start; }
+  @media (max-width: 860px) { .main-wrap { grid-template-columns: 1fr; } .form-panel { position: static !important; } }
+  .form-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; position: sticky; top: 24px; }
+  .panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 20px; color: var(--white); display: flex; align-items: center; gap: 8px; }
+  .panel-title span { display: inline-block; width: 4px; height: 22px; background: var(--gold); border-radius: 2px; }
+  .form-group { margin-bottom: 18px; }
+  label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--white-muted); margin-bottom: 7px; }
+  input[type="text"], select { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r); padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 400; color: var(--white); outline: none; transition: border-color .2s, box-shadow .2s; appearance: none; -webkit-appearance: none; }
+  input[type="text"]::placeholder { color: var(--white-muted); }
+  input[type="text"]:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.12); }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a84c' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  select option { background: #1a1a1a; }
+  .optional-tag { font-size: 10px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--white-muted); opacity: .7; margin-left: 4px; }
+  .btn-generate { width: 100%; margin-top: 6px; background: linear-gradient(135deg, var(--gold) 0%, #a8722e 100%); color: #0a0a0a; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: .5px; padding: 14px; border: none; border-radius: var(--r); cursor: pointer; transition: opacity .2s, transform .15s, box-shadow .2s; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-generate:hover:not(:disabled) { opacity: .9; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(201,168,76,.3); }
+  .btn-generate:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(0,0,0,.3); border-top-color: #0a0a0a; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .pro-note { text-align: center; font-size: 12px; color: var(--white-muted); margin-top: 14px; line-height: 1.5; }
+  .pro-note a { color: var(--gold); text-decoration: none; }
+  .output-panel { min-width: 0; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 340px; gap: 16px; border: 1px dashed var(--border2); border-radius: 16px; text-align: center; padding: 40px; }
+  .empty-icon { width: 64px; height: 64px; background: var(--bg2); border-radius: 50%; display: grid; place-items: center; font-size: 28px; color: var(--gold); }
+  .empty-state h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--white-dim); }
+  .empty-state p { font-size: 14px; color: var(--white-muted); max-width: 280px; line-height: 1.6; }
+  .results-grid { display: flex; flex-direction: column; gap: 20px; }
+  .result-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; animation: fadeUp .4s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  .result-card:nth-child(1) { animation-delay: .05s; }
+  .result-card:nth-child(2) { animation-delay: .12s; }
+  .result-card:nth-child(3) { animation-delay: .19s; }
+  .result-card:nth-child(4) { animation-delay: .26s; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg3); }
+  .card-header-left { display: flex; align-items: center; gap: 10px; }
+  .card-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--gold-dim); display: grid; place-items: center; font-size: 16px; border: 1px solid rgba(201,168,76,.2); }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--white); }
+  .card-sub { font-size: 11px; color: var(--white-muted); margin-top: 1px; }
+  .btn-copy-all { font-size: 12px; font-weight: 600; color: var(--gold); background: var(--gold-dim); border: 1px solid rgba(201,168,76,.25); border-radius: 6px; padding: 5px 12px; cursor: pointer; transition: background .2s; }
+  .btn-copy-all:hover { background: rgba(201,168,76,.2); }
+  .card-body { padding: 20px; }
+  .subsection { margin-bottom: 22px; }
+  .subsection:last-child { margin-bottom: 0; }
+  .subsection-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .subsection-label::after { content: ''; flex: 1; height: 1px; background: rgba(201,168,76,.2); }
+  .item-list { display: flex; flex-direction: column; gap: 10px; }
+  .item { background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 16px; position: relative; transition: border-color .2s; }
+  .item:hover { border-color: var(--border); }
+  .item-number { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); margin-bottom: 6px; letter-spacing: .5px; font-weight: 500; }
+  .item-text { font-size: 13.5px; line-height: 1.65; color: var(--white-dim); font-weight: 300; padding-right: 36px; }
+  .item-copy { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 6px; background: transparent; border: 1px solid transparent; display: grid; place-items: center; cursor: pointer; color: var(--white-muted); transition: background .2s, color .2s, border-color .2s; font-size: 13px; }
+  .item-copy:hover { background: var(--gold-dim); color: var(--gold2); border-color: rgba(201,168,76,.25); }
+  .item-copy.copied { color: var(--green); }
+  .hashtag-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .hashtag-chip { font-size: 13px; font-weight: 500; font-family: 'DM Mono', monospace; color: var(--gold2); background: var(--gold-dim); border: 1px solid rgba(201,168,76,.2); border-radius: 20px; padding: 5px 12px; cursor: pointer; transition: background .15s; user-select: all; }
+  .hashtag-chip:hover { background: rgba(201,168,76,.2); }
+  .hashtag-copy-all { width: 100%; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--white-muted); background: var(--bg3); border: 1px solid var(--border2); border-radius: 7px; padding: 8px; cursor: pointer; transition: color .2s, border-color .2s; }
+  .hashtag-copy-all:hover { color: var(--gold); border-color: rgba(201,168,76,.3); }
+  .promo-label { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; background: rgba(90,184,126,.15); color: var(--green); border: 1px solid rgba(90,184,126,.25); border-radius: 4px; padding: 2px 7px; margin-bottom: 6px; }
+  .toast { position: fixed; bottom: 28px; right: 28px; background: #1c1c1c; border: 1px solid var(--border2); color: var(--white); font-size: 13px; font-weight: 500; padding: 12px 20px; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.4); z-index: 1000; display: flex; align-items: center; gap: 8px; transform: translateY(20px); opacity: 0; transition: transform .25s ease, opacity .25s ease; pointer-events: none; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  footer { position: relative; z-index: 10; border-top: 1px solid var(--border); padding: 32px clamp(16px, 5vw, 60px); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .footer-left { font-size: 12px; color: var(--white-muted); line-height: 1.7; }
+  .footer-left a { color: var(--gold); text-decoration: none; }
+  .footer-left a:hover { text-decoration: underline; }
+  .footer-right { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1.5px; color: var(--border2); }
+  .footer-right span { color: var(--gold); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" fill="#0a0a0a"/></svg>
+    </div>
+    <div class="logo-text">LOCAL<span>BOOST</span> AI</div>
+  </div>
+  <div class="header-right">
+    <span class="badge">Free Plan</span>
+    <button class="btn-pro" onclick="upgradePro()">⚡ Upgrade to Pro</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">✦ AI-powered marketing ✦</div>
+  <h1>Grow Your<br><span>Business Instantly</span></h1>
+  <p>Generate reviews, captions, promos & SMS messages tailored to your business — in seconds.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">Businesses Boosted</div></div>
+    <div class="stat"><div class="stat-num">50+</div><div class="stat-label">Content Types</div></div>
+    <div class="stat"><div class="stat-num">2.5s</div><div class="stat-label">Avg. Generate Time</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<main class="main-wrap">
+  <aside class="form-panel">
+    <div class="panel-title"><span></span> Your Business Info</div>
+
+    <div class="form-group">
+      <label>Business Type</label>
+      <input type="text" id="businessType" placeholder="e.g. Coffee shop, Salon, Gym">
+    </div>
+
+    <div class="form-group">
+      <label>Location</label>
+      <input type="text" id="location" placeholder="e.g. Brooklyn, NY">
+    </div>
+
+    <div class="form-group">
+      <label>Target Audience <span class="optional-tag">(optional)</span></label>
+      <input type="text" id="audience" placeholder="e.g. Young professionals">
+    </div>
+
+    <div class="form-group">
+      <label>Tone</label>
+      <select id="tone">
+        <option value="friendly">😊 Friendly</option>
+        <option value="professional">💼 Professional</option>
+        <option value="funny">😄 Funny</option>
+        <option value="luxury">✨ Luxury</option>
+      </select>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generate()">
+      <span class="btn-icon">✦</span>
+      <span class="btn-label">Generate My Content</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+
+    <p class="pro-note">Need unlimited generations? <a href="#" onclick="upgradePro();return false;">Upgrade to Pro →</a></p>
+  </aside>
+
+  <section class="output-panel" id="output">
+    <div class="empty-state">
+      <div class="empty-icon">✦</div>
+      <h3>Ready to Boost</h3>
+      <p>Fill in your business details and click Generate to get customized marketing content instantly.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-left">
+    Need custom tools for your business?<br>
+    <a href="mailto:Kingmohib530@gmail.com">Contact us → Kingmohib530@gmail.com</a>
+  </div>
+  <div class="footer-right">LOCAL<span>BOOST</span> AI</div>
+</footer>
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toastText">Copied to clipboard!</span></div>
+
+<script>
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastText').textContent=msg||'Copied to clipboard!';
+  t.classList.add('show');
+  clearTimeout(window.__tt);
+  window.__tt=setTimeout(()=>t.classList.remove('show'),1800);
+}
+function copyText(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast('Copied!');
+    if(btn){ btn.classList.add('copied'); btn.textContent='✓'; setTimeout(()=>{btn.classList.remove('copied');btn.textContent='⧉';},1200); }
+  });
+}
+function upgradePro(){
+  showToast('Email Kingmohib530@gmail.com for early Pro access');
+}
+
+const TONES = {
+  friendly:{adj:'amazing',vibe:'so welcoming',emoji:'😊'},
+  professional:{adj:'exceptional',vibe:'highly professional',emoji:'💼'},
+  funny:{adj:'ridiculously good',vibe:'hilariously fun',emoji:'😄'},
+  luxury:{adj:'truly exquisite',vibe:'absolutely luxurious',emoji:'✨'}
+};
+
+function generate(){
+  const biz=document.getElementById('businessType').value.trim();
+  const loc=document.getElementById('location').value.trim();
+  const aud=document.getElementById('audience').value.trim()||'locals';
+  const tone=document.getElementById('tone').value;
+  if(!biz||!loc){ showToast('Please fill Business Type & Location'); return; }
+
+  const btn=document.getElementById('generateBtn');
+  const spin=document.getElementById('spinner');
+  btn.disabled=true; spin.style.display='inline-block';
+
+  setTimeout(()=>{
+    btn.disabled=false; spin.style.display='none';
+    renderResults(biz,loc,aud,tone);
+  },900);
+}
+
+function renderResults(biz,loc,aud,tone){
+  const t=TONES[tone];
+  const out=document.getElementById('output');
+
+  const reviews=[
+    `Honestly the best ${biz.toLowerCase()} in ${loc}! The staff is ${t.vibe} and the quality is ${t.adj}. Highly recommend ${t.emoji}`,
+    `Stopped by this ${biz.toLowerCase()} in ${loc} and was blown away. ${t.adj.charAt(0).toUpperCase()+t.adj.slice(1)} experience from start to finish.`,
+    `If you're in ${loc} looking for a great ${biz.toLowerCase()}, this is the place. Perfect for ${aud}.`
+  ];
+  const captions=[
+    `Your new favorite ${biz.toLowerCase()} in ${loc} is here. ✦`,
+    `Made for ${aud}. Loved by ${loc}. ${t.emoji}`,
+    `Stop scrolling. Start experiencing the best ${biz.toLowerCase()} in town.`
+  ];
+  const tags=[`#${loc.replace(/[^a-z0-9]/gi,'')}`,`#${biz.replace(/[^a-z0-9]/gi,'')}`,'#SmallBusiness','#ShopLocal','#SupportLocal',`#${loc.replace(/[^a-z0-9]/gi,'')}Life`,'#NewInTown','#MustVisit'];
+  const promos=[
+    {label:'Limited Time',text:`🎉 20% OFF your first visit to our ${biz.toLowerCase()} in ${loc}! Show this code: BOOST20. Valid this week only.`},
+    {label:'Weekend Deal',text:`Weekend special for ${aud}: Buy one, get one 50% off every Saturday & Sunday. See you in ${loc}!`}
+  ];
+  const sms=[
+    `Hey! Quick reminder — your favorite ${biz.toLowerCase()} in ${loc} has a special waiting for you. Reply YES for details.`,
+    `${t.emoji} New drop alert! Visit us this week in ${loc} for an exclusive ${aud}-only offer.`
+  ];
+
+  out.innerHTML=`
+    <div class="results-grid">
+      ${card('⭐','Customer Reviews','3 authentic-sounding reviews',renderItems(reviews,'Review'))}
+      ${card('📸','Social Captions','Ready to post on Instagram & TikTok',renderItems(captions,'Caption')+subsection('Hashtags',renderHashtags(tags)))}
+      ${card('🎯','Promotions',`${promos.length} eye-catching offers`,renderPromos(promos))}
+      ${card('💬','SMS Messages','Short, punchy & conversion-ready',renderItems(sms,'SMS'))}
+    </div>`;
+}
+
+function escapeAttr(s){return s.replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function card(icon,title,sub,body){
+  return `<div class="result-card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <div class="card-icon">${icon}</div>
+        <div><div class="card-title">${title}</div><div class="card-sub">${sub}</div></div>
+      </div>
+      <button class="btn-copy-all" onclick="copyCard(this)">Copy All</button>
+    </div>
+    <div class="card-body">${body}</div>
+  </div>`;
+}
+function renderItems(arr,prefix){
+  return `<div class="item-list">`+arr.map((txt,i)=>`
+    <div class="item">
+      <div class="item-number">${prefix} ${String(i+1).padStart(2,'0')}</div>
+      <div class="item-text">${txt}</div>
+      <button class="item-copy" onclick="copyText('${escapeAttr(txt)}',this)">⧉</button>
+    </div>`).join('')+`</div>`;
+}
+function renderHashtags(tags){
+  return `<div class="hashtag-grid">`+tags.map(t=>`<span class="hashtag-chip" onclick="copyText('${t}')">${t}</span>`).join('')+`</div>
+    <button class="hashtag-copy-all" onclick="copyText('${tags.join(' ')}')">Copy all hashtags</button>`;
+}
+function renderPromos(promos){
+  return `<div class="item-list">`+promos.map((p,i)=>`
+    <div class="item">
+      <span class="promo-label">${p.label}</span>
+      <div class="item-number">Promo ${String(i+1).padStart(2,'0')}</div>
+      <div class="item-text">${p.text}</div>
+      <button class="item-copy" onclick="copyText('${escapeAttr(p.text)}',this)">⧉</button>
+    </div>`).join('')+`</div>`;
+}
+function subsection(label,inner){
+  return `<div class="subsection" style="margin-top:22px"><div class="subsection-label">${label}</div>${inner}</div>`;
+}
+function copyCard(btn){
+  const card=btn.closest('.result-card');
+  const texts=[...card.querySelectorAll('.item-text, .hashtag-chip')].map(e=>e.innerText).join('\n\n');
+  copyText(texts);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter' && document.activeElement && document.activeElement.tagName==='INPUT' && !document.getElementById('generateBtn').disabled) generate();
+});
+</script>
+</body>
+</html>

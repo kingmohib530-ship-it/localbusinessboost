@@ -1,26 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "LocalBoost AI – Grow Your Business Instantly" },
+      { name: "description", content: "Generate reviews, captions, promos & SMS messages tailored to your business in seconds." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
-
 function Index() {
-  return <PlaceholderIndex />;
+  return (
+    <iframe
+      src="/localboost.html"
+      title="LocalBoost AI"
+      style={{ position: "fixed", inset: 0, width: "100%", height: "100%", border: "none" }}
+    />
+  );
 }
