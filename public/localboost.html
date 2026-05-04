@@ -1198,13 +1198,24 @@ async function generate(section){
   if(!section){ btn.disabled=true; spin.style.display='inline-block'; }
 
   try {
+    let accessToken = null;
+    try { const { data } = await sb.auth.getSession(); accessToken = data?.session?.access_token || null; } catch(_){}
+    const headers = { 'Content-Type': 'application/json' };
+    if(accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
     const res = await fetch('/api/generate-content', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers,
       body: JSON.stringify({ businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section })
     });
     const data = await res.json();
-    if(!res.ok){ showToast(data.error || 'Generation failed'); return; }
+    if(!res.ok){
+      if(res.status === 402 || res.status === 403 || data.code === 'limit_reached' || data.code === 'upgrade_required'){
+        openPricing(data.error || 'Upgrade to Pro to continue.');
+      } else {
+        showToast(data.error || 'Generation failed');
+      }
+      return;
+    }
 
     if(section && lastData){
       if(data[section]) lastData[section] = data[section];
