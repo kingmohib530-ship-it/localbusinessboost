@@ -89,6 +89,7 @@ CUSTOMER REVIEWS (3) — written BY real customers, like actual Google/Yelp revi
 - Reference a believable specific detail (a drink, a stylist's name, the window seat, the Saturday rush). Mention the locked business name in at least 2 of the 3.
 - Avoid corporate hospitality tone, marketing adjectives ("exquisite", "second to none", "phenomenal experience"), and anything that sounds like the owner wrote it. Star ratings, names, and dates are NOT included — just the review text.
 - No emojis unless it genuinely fits how a real person would write that review.
+- LUXURY-TONE EXCEPTION: even when the tone is "luxury", reviews must still sound like a normal customer typing — NOT poetic, NOT influencer-style, NOT a brand essay. Luxury comes through in PERCEPTION (what they noticed, the quiet details, restraint), not in fancy vocabulary. Real people speak simply even when impressed. BANNED phrases in any review: "next level", "an experience", "blown my mind", "blew me away", "elevated", "a journey", "unmatched", "10/10", "obsessed". Replace them with subtle, understated praise tied to a specific small detail (the lighting, the timing, how quiet it was, how the chair felt, how the espresso was poured).
 
 INSTAGRAM CAPTIONS (5) — must read like real posts a small business would actually publish:
 - Write like real Instagram users posting from their phone — NOT like marketers writing campaign copy.
