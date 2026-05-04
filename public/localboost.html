@@ -539,8 +539,16 @@ function saveCurrentBusiness(){
   if(existing){
     existing.audience = audience; existing.tone = tone;
     persistProfiles(list);
+    setActiveClientId(existing.id);
+    // Re-tag any unassigned recents to this client
+    const all = loadAllRecent();
+    let changed = false;
+    all.forEach(r => { if(!r.clientId){ r.clientId = existing.id; changed = true; } });
+    if(changed) persistRecent(all);
     renderProfiles(existing.id);
     document.getElementById('profileSelect').value = existing.id;
+    renderClientBar();
+    renderRecent();
     refreshReminderToggle();
     showToast('Updated saved business');
     return;
@@ -548,10 +556,18 @@ function saveCurrentBusiness(){
   const profile = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), businessType, location, audience, tone };
   list.unshift(profile);
   persistProfiles(list);
+  setActiveClientId(profile.id);
+  // Re-tag any unassigned recents to this new client
+  const all = loadAllRecent();
+  let changed = false;
+  all.forEach(r => { if(!r.clientId){ r.clientId = profile.id; changed = true; } });
+  if(changed) persistRecent(all);
   renderProfiles(profile.id);
   document.getElementById('profileSelect').value = profile.id;
+  renderClientBar();
+  renderRecent();
   refreshReminderToggle();
-  showToast('Saved "' + profileLabel(profile) + '"');
+  showToast('Client added: ' + profileLabel(profile));
 }
 function deleteSelectedProfile(){
   const sel = document.getElementById('profileSelect');
@@ -559,8 +575,14 @@ function deleteSelectedProfile(){
   if(!id) return;
   const list = loadProfiles().filter(p => p.id !== id);
   persistProfiles(list);
+  // Drop this client's recents too
+  const all = loadAllRecent().filter(r => r.clientId !== id);
+  persistRecent(all);
+  if(getActiveClientId() === id) setActiveClientId('');
   renderProfiles('');
-  showToast('Deleted saved business');
+  renderClientBar();
+  renderRecent();
+  showToast('Deleted client');
 }
 
 
