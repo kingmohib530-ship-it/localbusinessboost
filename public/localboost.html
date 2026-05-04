@@ -568,18 +568,34 @@ function deleteSelectedProfile(){
 const RECENT_KEY = 'lb_recent_generations_v1';
 const RECENT_MAX = 5;
 
-function loadRecent(){
+function loadAllRecent(){
   try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
   catch { return []; }
 }
+function loadRecent(){
+  const all = loadAllRecent();
+  const active = getActiveClientId();
+  if(!active) return all.filter(r => !r.clientId);
+  return all.filter(r => r.clientId === active);
+}
 function persistRecent(list){
-  localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
+  // Only ever called with the full list
+  localStorage.setItem(RECENT_KEY, JSON.stringify(list));
 }
 function addRecent(entry){
-  const list = loadRecent();
-  list.unshift(entry);
-  persistRecent(list);
+  entry.clientId = getActiveClientId() || null;
+  const all = loadAllRecent();
+  all.unshift(entry);
+  // Keep RECENT_MAX per client (and per "no client" bucket)
+  const seen = {};
+  const trimmed = all.filter(r => {
+    const k = r.clientId || '__none__';
+    seen[k] = (seen[k] || 0) + 1;
+    return seen[k] <= RECENT_MAX;
+  });
+  persistRecent(trimmed);
   renderRecent();
+  renderClientBar();
 }
 function formatTime(ts){
   const d = new Date(ts);
