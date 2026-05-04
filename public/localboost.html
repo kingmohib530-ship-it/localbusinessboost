@@ -173,6 +173,47 @@
    .cal-day-snippet { font-size: 11.5px; color: var(--white-dim); line-height: 1.4; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
    .cal-day-empty { font-size: 11px; color: var(--white-muted); font-style: italic; }
    @media (max-width: 900px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
+   .pricing-modal { position: fixed; inset: 0; background: rgba(5,5,5,.78); backdrop-filter: blur(6px); z-index: 1100; display: none; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+   .pricing-modal.open { display: flex; animation: fadeUp .25s ease; }
+   .pricing-card-wrap { width: 100%; max-width: 1080px; background: #0d0d0d; border: 1px solid var(--border2); border-radius: 16px; padding: 36px clamp(20px, 4vw, 44px); position: relative; }
+   .pricing-close { position: absolute; top: 14px; right: 16px; background: transparent; border: none; color: var(--white-muted); font-size: 24px; cursor: pointer; line-height: 1; }
+   .pricing-close:hover { color: var(--white); }
+   .pricing-head { text-align: center; margin-bottom: 28px; }
+   .pricing-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
+   .pricing-title { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 1.5px; color: var(--white); }
+   .pricing-title span { color: var(--gold); }
+   .pricing-sub { color: var(--white-muted); font-size: 13px; margin-top: 6px; }
+   .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+   @media (max-width: 820px) { .pricing-grid { grid-template-columns: 1fr; } }
+   .tier { background: var(--bg2, #131313); border: 1px solid var(--border2); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; position: relative; transition: all .18s; }
+   .tier.featured { border-color: var(--gold); box-shadow: 0 8px 32px rgba(201,168,76,.12); }
+   .tier-tag { position: absolute; top: -10px; right: 16px; background: var(--gold); color: #0a0a0a; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; }
+   .tier-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1.2px; color: var(--white); }
+   .tier-price { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: var(--gold); line-height: 1; }
+   .tier-price small { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--white-muted); font-weight: 400; letter-spacing: 0; margin-left: 4px; }
+   .tier-pitch { font-size: 12.5px; color: var(--white-dim); line-height: 1.5; }
+   .tier-feats { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+   .tier-feats li { font-size: 12.5px; color: var(--white-dim); line-height: 1.45; padding-left: 18px; position: relative; }
+   .tier-feats li:before { content: '✓'; position: absolute; left: 0; color: var(--gold); font-weight: 700; }
+   .tier-feats li.no:before { content: '×'; color: var(--white-muted); }
+   .tier-feats li.no { color: var(--white-muted); text-decoration: line-through; opacity: .7; }
+   .tier-cta { margin-top: 8px; padding: 11px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; border: 1px solid var(--border2); background: transparent; color: var(--white); }
+   .tier-cta.primary { background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; border: none; }
+   .tier-cta.primary:hover { opacity: .9; transform: translateY(-1px); }
+   .tier-cta.ghost:hover { border-color: var(--gold); color: var(--gold); }
+   .tier-cta.current { background: var(--gold-dim); color: var(--gold); border: 1px dashed rgba(201,168,76,.4); cursor: default; }
+   .upgrade-soft { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; margin: 12px 0; background: linear-gradient(135deg, var(--gold-dim), transparent); border: 1px solid rgba(201,168,76,.35); border-left: 3px solid var(--gold); border-radius: 10px; font-family: 'DM Sans', sans-serif; }
+   .upgrade-soft-title { font-size: 13.5px; color: var(--gold2); font-weight: 600; }
+   .upgrade-soft-text { font-size: 12px; color: var(--white-dim); line-height: 1.45; }
+   .upgrade-soft-actions { display: flex; gap: 8px; margin-top: 4px; }
+   .upgrade-soft-btn { font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+   .upgrade-soft-btn.primary { background: var(--gold); color: #0a0a0a; }
+   .upgrade-soft-btn.ghost { background: transparent; color: var(--white-muted); border: 1px solid var(--border2); }
+   .upgrade-soft-btn.ghost:hover { color: var(--white); border-color: var(--gold); }
+   .badge.pro-badge { background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; }
+   .badge.agency-badge { background: linear-gradient(135deg, #b58cd8, #6a4ea8); color: #0a0a0a; }
+   .mode-btn.locked { opacity: .55; }
+   .mode-btn.locked .mode-name:after { content: ' 🔒'; font-size: 11px; }
    .client-bar { margin-bottom: 18px; padding: 12px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r); }
    .client-bar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
    .client-bar-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--gold); text-transform: uppercase; }
@@ -229,8 +270,8 @@
     <div class="logo-text">LOCAL<span>BOOST</span> AI</div>
   </div>
   <div class="header-right">
-    <span class="badge">Free Plan</span>
-    <button class="btn-pro" onclick="upgradePro()">⚡ Upgrade to Pro</button>
+    <span class="badge" id="planBadge">Free Plan</span>
+    <button class="btn-pro" id="upgradeBtn" onclick="openPricing()">⚡ Upgrade</button>
   </div>
 </header>
 
@@ -374,6 +415,18 @@
 
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toastText">Copied to clipboard!</span></div>
 
+<div class="pricing-modal" id="pricingModal" role="dialog" aria-modal="true" aria-labelledby="pricingTitle">
+  <div class="pricing-card-wrap">
+    <button type="button" class="pricing-close" id="pricingCloseBtn" aria-label="Close">×</button>
+    <div class="pricing-head">
+      <div class="pricing-eyebrow">✦ Choose your plan ✦</div>
+      <div class="pricing-title" id="pricingTitle">UNLOCK YOUR <span>FULL TOOLKIT</span></div>
+      <div class="pricing-sub" id="pricingSub">Cancel anytime. All plans include core AI generation.</div>
+    </div>
+    <div class="pricing-grid" id="pricingGrid"></div>
+  </div>
+</div>
+
 <script>
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -388,9 +441,167 @@ function copyText(text,btn){
     if(btn){ btn.classList.add('copied'); btn.textContent='✓'; setTimeout(()=>{btn.classList.remove('copied');btn.textContent='⧉';},1200); }
   });
 }
-function upgradePro(){
-  showToast('Email Kingmohib530@gmail.com for early Pro access');
+// ===== Plans & Pricing =====
+const PLAN_KEY = 'lb_plan_v1';
+const USAGE_KEY = 'lb_usage_v1';
+const PLANS = {
+  free: {
+    name: 'Free', price: '$0', period: '/forever',
+    pitch: 'Test the platform with daily generations.',
+    feats: [
+      { ok:true, t:'5 generations per day' },
+      { ok:true, t:'1 saved business' },
+      { ok:true, t:'Instant + Local SEO modes' },
+      { ok:false, t:'Weekly Planner mode' },
+      { ok:false, t:'Section regeneration' },
+      { ok:false, t:'Full history (5 entries)' },
+      { ok:false, t:'Multiple client workspaces' },
+      { ok:false, t:'Bulk generation & export packs' },
+    ],
+    cta: 'Current plan', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 1, modes: ['instant','seo','variation'] }
+  },
+  pro: {
+    name: 'Pro', price: '$29', period: '/month',
+    pitch: 'For solo operators running their own business.',
+    feats: [
+      { ok:true, t:'Unlimited generations' },
+      { ok:true, t:'Unlimited saved businesses' },
+      { ok:true, t:'All modes including Weekly Planner' },
+      { ok:true, t:'Section regeneration' },
+      { ok:true, t:'Full history (5 per business)' },
+      { ok:true, t:'Weekly content reminders' },
+      { ok:false, t:'Multi-client workspace switching' },
+      { ok:false, t:'Bulk generation & export packs' },
+    ],
+    cta: 'Upgrade to Pro', featured: true, limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+  },
+  agency: {
+    name: 'Agency', price: '$79', period: '/month',
+    pitch: 'For freelancers and agencies managing multiple clients.',
+    feats: [
+      { ok:true, t:'Everything in Pro' },
+      { ok:true, t:'Multi-client workspaces' },
+      { ok:true, t:'Bulk generation across clients' },
+      { ok:true, t:'Export-ready marketing packs' },
+      { ok:true, t:'Priority generation queue' },
+      { ok:true, t:'Branded client exports (coming soon)' },
+    ],
+    cta: 'Go Agency', limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+  }
+};
+function getPlan(){ return localStorage.getItem(PLAN_KEY) || 'free'; }
+function setPlan(p){
+  localStorage.setItem(PLAN_KEY, p);
+  refreshPlanBadge();
+  renderPricingGrid();
+  updateModeLocks();
+  renderClientBar?.();
+  renderRecent?.();
+  showToast(p === 'free' ? 'Switched to Free plan' : `Welcome to ${PLANS[p].name}!`);
 }
+function planLimits(){ return PLANS[getPlan()].limits; }
+function refreshPlanBadge(){
+  const b = document.getElementById('planBadge');
+  const btn = document.getElementById('upgradeBtn');
+  const plan = getPlan();
+  b.textContent = PLANS[plan].name + ' Plan';
+  b.className = 'badge' + (plan==='pro'?' pro-badge':plan==='agency'?' agency-badge':'');
+  if(btn){
+    if(plan === 'agency'){ btn.style.display = 'none'; }
+    else { btn.style.display = ''; btn.textContent = plan === 'free' ? '⚡ Upgrade' : '⚡ Go Agency'; }
+  }
+}
+
+// Daily generation usage
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function loadUsage(){
+  try { return JSON.parse(localStorage.getItem(USAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function getDailyCount(){
+  const u = loadUsage();
+  return u.date === todayKey() ? (u.count || 0) : 0;
+}
+function bumpDailyCount(){
+  const u = loadUsage();
+  if(u.date !== todayKey()){ u.date = todayKey(); u.count = 0; }
+  u.count = (u.count || 0) + 1;
+  localStorage.setItem(USAGE_KEY, JSON.stringify(u));
+}
+
+// Modal
+function openPricing(reason){
+  renderPricingGrid();
+  const sub = document.getElementById('pricingSub');
+  if(reason){ sub.textContent = reason; }
+  else { sub.textContent = 'Cancel anytime. All plans include core AI generation.'; }
+  document.getElementById('pricingModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePricing(){
+  document.getElementById('pricingModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderPricingGrid(){
+  const grid = document.getElementById('pricingGrid');
+  if(!grid) return;
+  const current = getPlan();
+  grid.innerHTML = Object.entries(PLANS).map(([id, p]) => {
+    const isCurrent = id === current;
+    const ctaClass = isCurrent ? 'current' : (p.featured ? 'primary' : 'ghost');
+    const ctaText = isCurrent ? '✓ Current plan' : p.cta;
+    return `<div class="tier ${p.featured?'featured':''}">
+      ${p.featured?'<span class="tier-tag">Most popular</span>':''}
+      <div class="tier-name">${p.name}</div>
+      <div class="tier-price">${p.price}<small>${p.period}</small></div>
+      <div class="tier-pitch">${p.pitch}</div>
+      <ul class="tier-feats">
+        ${p.feats.map(f => `<li class="${f.ok?'':'no'}">${f.t}</li>`).join('')}
+      </ul>
+      <button type="button" class="tier-cta ${ctaClass}" data-plan="${id}" ${isCurrent?'disabled':''}>${ctaText}</button>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.tier-cta[data-plan]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.plan;
+      if(id === getPlan()) return;
+      // Demo billing: just switch the plan locally
+      setPlan(id);
+      closePricing();
+    });
+  });
+}
+
+// Soft upgrade banners (rendered inline, never blocking)
+function softUpgrade({title, text, into}){
+  const host = into || document.getElementById('output');
+  if(!host) return;
+  const div = document.createElement('div');
+  div.className = 'upgrade-soft';
+  div.innerHTML = `
+    <div class="upgrade-soft-title">${title}</div>
+    <div class="upgrade-soft-text">${text}</div>
+    <div class="upgrade-soft-actions">
+      <button type="button" class="upgrade-soft-btn primary">See plans</button>
+      <button type="button" class="upgrade-soft-btn ghost">Maybe later</button>
+    </div>`;
+  // Replace any stale banner first
+  host.querySelectorAll('.upgrade-soft').forEach(n => n.remove());
+  host.prepend(div);
+  div.querySelector('.upgrade-soft-btn.primary').addEventListener('click', () => openPricing(text));
+  div.querySelector('.upgrade-soft-btn.ghost').addEventListener('click', () => div.remove());
+}
+
+function updateModeLocks(){
+  const allowed = planLimits().modes;
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    const ok = allowed.includes(btn.dataset.mode);
+    btn.classList.toggle('locked', !ok);
+  });
+}
+
+// Backwards-compat shim
+function upgradePro(){ openPricing(); }
 
 // ===== Client Mode =====
 const ACTIVE_CLIENT_KEY = 'lb_active_client_v1';
@@ -530,6 +741,10 @@ function saveCurrentBusiness(){
   // Dedupe by businessType + location (case-insensitive)
   const key = (businessType + '|' + location).toLowerCase();
   const existing = list.find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  if(!existing && list.length >= planLimits().savedBusinesses){
+    openPricing(`Your ${PLANS[getPlan()].name} plan saves up to ${planLimits().savedBusinesses} business. Upgrade to manage unlimited clients.`);
+    return;
+  }
   if(existing){
     existing.audience = audience; existing.tone = tone;
     persistProfiles(list);
@@ -624,10 +839,12 @@ function formatTime(ts){
   return d.toLocaleDateString();
 }
 function renderRecent(){
-  const list = loadRecent();
+  const all = loadRecent();
+  const cap = planLimits().history;
+  const list = all.slice(0, Math.min(all.length, cap));
   const block = document.getElementById('recentBlock');
   const ul = document.getElementById('recentList');
-  if(!list.length){ block.style.display = 'none'; return; }
+  if(!list.length && all.length === 0){ block.style.display = 'none'; return; }
   block.style.display = 'block';
   ul.innerHTML = list.map(item => {
     const name = (item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
@@ -639,8 +856,10 @@ function renderRecent(){
       </div>
       <span style="color:var(--gold);font-size:14px;">↺</span>
     </button>`;
-  }).join('');
-  ul.querySelectorAll('.recent-item').forEach(el => {
+  }).join('') + (all.length > list.length
+    ? `<button type="button" class="recent-item" style="justify-content:center;color:var(--gold);font-weight:600;" onclick="openPricing('Upgrade to access your full history (${all.length} entries).')">+ ${all.length - list.length} more in history — Upgrade to view</button>`
+    : '');
+  ul.querySelectorAll('.recent-item[data-id]').forEach(el => {
     el.addEventListener('click', () => restoreRecent(el.dataset.id));
   });
 }
@@ -798,6 +1017,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('reminderBannerClose')?.addEventListener('click', dismissReminderBanner);
   refreshReminderToggle();
   checkReminderBanner();
+
+  // Plans / pricing modal
+  refreshPlanBadge();
+  updateModeLocks();
+  document.getElementById('pricingCloseBtn')?.addEventListener('click', closePricing);
+  document.getElementById('pricingModal')?.addEventListener('click', (e) => {
+    if(e.target.id === 'pricingModal') closePricing();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') closePricing();
+  });
 });
 
 const TONES = {
@@ -820,9 +1050,14 @@ const MODE_BANNERS = {
 
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    if(!planLimits().modes.includes(mode)){
+      openPricing(`${mode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature.`);
+      return;
+    }
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentMode = btn.dataset.mode;
+    currentMode = mode;
   });
 });
 
@@ -832,6 +1067,21 @@ async function generate(section){
   const aud=document.getElementById('audience').value.trim()||'locals';
   const tone=document.getElementById('tone').value;
   if(!biz||!loc){ showToast('Please fill Business Type & Location'); return; }
+
+  // Plan gates (soft — show modal, do not silently block)
+  const limits = planLimits();
+  if(!limits.modes.includes(currentMode)){
+    openPricing(`${currentMode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature. Upgrade to unlock.`);
+    return;
+  }
+  if(section && getPlan() === 'free'){
+    openPricing('Section regeneration is a Pro feature — generate the full pack on Free, or upgrade to refresh sections individually.');
+    return;
+  }
+  if(!section && getDailyCount() >= limits.dailyGenerations){
+    openPricing(`You've used all ${limits.dailyGenerations} daily generations on the Free plan. Upgrade for unlimited.`);
+    return;
+  }
 
   const btn=document.getElementById('generateBtn');
   const spin=document.getElementById('spinner');
@@ -851,6 +1101,7 @@ async function generate(section){
       renderResults(lastData);
     } else {
       lastData = data;
+      bumpDailyCount();
       renderResults(data);
       const saveBtn = document.getElementById('saveBizBtn');
       if(saveBtn) saveBtn.classList.add('visible');
