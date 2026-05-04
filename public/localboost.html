@@ -384,8 +384,82 @@ function deleteSelectedProfile(){
   showToast('Deleted saved business');
 }
 
+
+// ===== Recent Generations (localStorage) =====
+const RECENT_KEY = 'lb_recent_generations_v1';
+const RECENT_MAX = 5;
+
+function loadRecent(){
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+  catch { return []; }
+}
+function persistRecent(list){
+  localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
+}
+function addRecent(entry){
+  const list = loadRecent();
+  list.unshift(entry);
+  persistRecent(list);
+  renderRecent();
+}
+function formatTime(ts){
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if(diff < 60) return 'just now';
+  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if(diff < 86400*7) return Math.floor(diff/86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+function renderRecent(){
+  const list = loadRecent();
+  const block = document.getElementById('recentBlock');
+  const ul = document.getElementById('recentList');
+  if(!list.length){ block.style.display = 'none'; return; }
+  block.style.display = 'block';
+  ul.innerHTML = list.map(item => {
+    const name = (item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
+    return `<button type="button" class="recent-item" data-id="${item.id}">
+      <div class="recent-item-main">
+        <div class="recent-item-name">${name.replace(/</g,'&lt;')}</div>
+        <div class="recent-item-meta">${formatTime(item.ts)} · ${item.tone || 'friendly'}</div>
+        <div class="recent-item-mode">${item.mode || 'instant'} mode</div>
+      </div>
+      <span style="color:var(--gold);font-size:14px;">↺</span>
+    </button>`;
+  }).join('');
+  ul.querySelectorAll('.recent-item').forEach(el => {
+    el.addEventListener('click', () => restoreRecent(el.dataset.id));
+  });
+}
+function restoreRecent(id){
+  const item = loadRecent().find(x => x.id === id);
+  if(!item) return;
+  document.getElementById('businessType').value = item.businessType || '';
+  document.getElementById('location').value = item.location || '';
+  document.getElementById('audience').value = item.audience || '';
+  document.getElementById('tone').value = item.tone || 'friendly';
+  if(item.mode){
+    currentMode = item.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode===item.mode));
+  }
+  lastData = item.data;
+  activeTab = 'reviews';
+  renderResults(item.data);
+  const saveBtn = document.getElementById('saveBizBtn');
+  if(saveBtn) saveBtn.classList.add('visible');
+  showToast('Restored "' + (item.businessType || 'previous') + '"');
+}
+function clearRecent(){
+  localStorage.removeItem(RECENT_KEY);
+  renderRecent();
+  showToast('History cleared');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderProfiles('');
+  renderRecent();
   const sel = document.getElementById('profileSelect');
   const del = document.getElementById('profileDelBtn');
   if(sel) sel.addEventListener('change', e => {
@@ -393,6 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
     else del.disabled = true;
   });
   if(del) del.addEventListener('click', deleteSelectedProfile);
+  const clr = document.getElementById('recentClearBtn');
+  if(clr) clr.addEventListener('click', clearRecent);
 });
 
 const TONES = {
