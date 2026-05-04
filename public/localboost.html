@@ -1529,13 +1529,43 @@ async function signOut(){
   ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
   showAuthShell(true);
 }
+async function openBillingPortal(){
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session?.access_token){ alert('Please sign in first'); return; }
+    const res = await fetch('/api/public/billing/portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ environment: 'sandbox', returnUrl: window.top.location.origin })
+    });
+    if(!res.ok){
+      const t = await res.text();
+      alert('Could not open billing: ' + t);
+      return;
+    }
+    const { url } = await res.json();
+    window.open(url, '_blank');
+  } catch(e){ alert('Billing error: ' + (e?.message || e)); }
+}
+async function signInWithGoogle(){
+  try {
+    const { data, error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.top.location.origin,
+        skipBrowserRedirect: true,
+      }
+    });
+    if(error) throw error;
+    if(data?.url){ window.top.location.href = data.url; }
+  } catch(e){ setAuthMessage(e?.message || 'Google sign-in failed', 'error'); }
+}
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('authForm')?.addEventListener('submit', handleAuthSubmit);
   document.getElementById('authToggleBtn')?.addEventListener('click', () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin'));
   document.getElementById('signOutBtn')?.addEventListener('click', signOut);
-  document.getElementById('billingBtn')?.addEventListener('click', () => {
-    try { window.parent.postMessage({ type: 'lb-portal' }, '*'); } catch(_){}
-  });
+  document.getElementById('googleSignInBtn')?.addEventListener('click', signInWithGoogle);
+  document.getElementById('billingBtn')?.addEventListener('click', openBillingPortal);
   setAuthMode('signin');
   // Bootstrap session
   sb.auth.getSession().then(({ data }) => applySession(data.session));
