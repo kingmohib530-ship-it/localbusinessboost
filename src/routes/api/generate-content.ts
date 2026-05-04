@@ -87,6 +87,21 @@ ABSOLUTE RULES:
 4. Vary sentence length and rhythm. Avoid the polished "AI cadence" where every sentence is the same length and structure.
 5. Light imperfection is good: contractions, sentence fragments, a stray "honestly" or "tbh" where it fits the tone.
 
+SECTION PERSONALITY SEPARATION (CRITICAL — do not let tone bleed between sections):
+Each field in the JSON must read like it was written by a DIFFERENT person inside the business. Different role, different vocabulary, different rhythm. If two sections sound interchangeable, you've failed this rule.
+- reviews → REAL CUSTOMERS. Imperfect, emotional, slightly inconsistent in tone across the 3. Phone-typed, not edited. Never sounds like the brand.
+- captions → SOCIAL MEDIA MANAGER. Scroll-stopping, varied formats across the 5 (a one-liner, a fragment, a quick observation, a soft CTA, etc.). Never repeats its own structure twice in a row.
+- hooks → VIRAL CONTENT STRATEGIST. Spoken-out-loud, short, punchy, curiosity-driven. Built to stop a thumb in the first 1.5 seconds. No full sentences when a fragment is sharper.
+- hashtags → SEO / DATA ASSISTANT. Structured, deliberate, not creative writing. No puns, no inside jokes, no "creative" tags. Pure discoverability.
+- promos → REAL ${biz} OWNER scribbling offers on a chalkboard. Plain, operational, practical. Zero branding language. Zero poetry.
+- sms → BUSINESS OWNER directly texting a customer they know. Short, urgent, natural — like a real text, not a marketing blast.
+
+ANTI-BLEED ENFORCEMENT:
+- A phrase that fits in captions must NOT appear in reviews. A phrase that fits in promos must NOT appear in hooks. Etc.
+- Vary phrasing across sections — no repeated openers, no repeated adjectives, no repeated sentence shapes between sections.
+- Within each array, vary sentence structure too — don't ship 3 reviews that all start with the same beat, or 5 captions that all use the same rhythm.
+- Avoid generic AI filler ("we pride ourselves", "second to none", "experience the difference", "elevate your", "discover", "unlock"). If you catch yourself writing it, rewrite.
+
 SECTION RULES:
 
 CUSTOMER REVIEWS (3) — written BY real customers, like actual Google/Yelp reviews (NOT owner replies, NOT staff voice):
