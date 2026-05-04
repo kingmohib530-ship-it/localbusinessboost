@@ -517,13 +517,7 @@ function renderProfiles(selectedId){
 function applyProfile(id){
   const p = loadProfiles().find(x => x.id === id);
   if(!p) return;
-  document.getElementById('businessType').value = p.businessType || '';
-  document.getElementById('location').value = p.location || '';
-  document.getElementById('audience').value = p.audience || '';
-  document.getElementById('tone').value = p.tone || 'friendly';
-  document.getElementById('profileDelBtn').disabled = false;
-  if(typeof refreshReminderToggle === 'function') refreshReminderToggle();
-  showToast('Loaded "' + profileLabel(p) + '"');
+  switchClient(id);
 }
 function saveCurrentBusiness(){
   const businessType = document.getElementById('businessType').value.trim();
