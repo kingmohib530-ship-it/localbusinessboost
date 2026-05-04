@@ -1347,7 +1347,7 @@ async function generate(section){
     return;
   }
   if(!section && getDailyCount() >= limits.dailyGenerations){
-    openPricing(`You've used all ${limits.dailyGenerations} generations on the Starter plan today. Upgrade to Pro for unlimited generations.`);
+    showHardLimitModal();
     return;
   }
 
