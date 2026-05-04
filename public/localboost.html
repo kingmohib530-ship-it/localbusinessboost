@@ -441,9 +441,167 @@ function copyText(text,btn){
     if(btn){ btn.classList.add('copied'); btn.textContent='✓'; setTimeout(()=>{btn.classList.remove('copied');btn.textContent='⧉';},1200); }
   });
 }
-function upgradePro(){
-  showToast('Email Kingmohib530@gmail.com for early Pro access');
+// ===== Plans & Pricing =====
+const PLAN_KEY = 'lb_plan_v1';
+const USAGE_KEY = 'lb_usage_v1';
+const PLANS = {
+  free: {
+    name: 'Free', price: '$0', period: '/forever',
+    pitch: 'Test the platform with daily generations.',
+    feats: [
+      { ok:true, t:'5 generations per day' },
+      { ok:true, t:'1 saved business' },
+      { ok:true, t:'Instant + Local SEO modes' },
+      { ok:false, t:'Weekly Planner mode' },
+      { ok:false, t:'Section regeneration' },
+      { ok:false, t:'Full history (5 entries)' },
+      { ok:false, t:'Multiple client workspaces' },
+      { ok:false, t:'Bulk generation & export packs' },
+    ],
+    cta: 'Current plan', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 1, modes: ['instant','seo','variation'] }
+  },
+  pro: {
+    name: 'Pro', price: '$29', period: '/month',
+    pitch: 'For solo operators running their own business.',
+    feats: [
+      { ok:true, t:'Unlimited generations' },
+      { ok:true, t:'Unlimited saved businesses' },
+      { ok:true, t:'All modes including Weekly Planner' },
+      { ok:true, t:'Section regeneration' },
+      { ok:true, t:'Full history (5 per business)' },
+      { ok:true, t:'Weekly content reminders' },
+      { ok:false, t:'Multi-client workspace switching' },
+      { ok:false, t:'Bulk generation & export packs' },
+    ],
+    cta: 'Upgrade to Pro', featured: true, limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+  },
+  agency: {
+    name: 'Agency', price: '$79', period: '/month',
+    pitch: 'For freelancers and agencies managing multiple clients.',
+    feats: [
+      { ok:true, t:'Everything in Pro' },
+      { ok:true, t:'Multi-client workspaces' },
+      { ok:true, t:'Bulk generation across clients' },
+      { ok:true, t:'Export-ready marketing packs' },
+      { ok:true, t:'Priority generation queue' },
+      { ok:true, t:'Branded client exports (coming soon)' },
+    ],
+    cta: 'Go Agency', limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+  }
+};
+function getPlan(){ return localStorage.getItem(PLAN_KEY) || 'free'; }
+function setPlan(p){
+  localStorage.setItem(PLAN_KEY, p);
+  refreshPlanBadge();
+  renderPricingGrid();
+  updateModeLocks();
+  renderClientBar?.();
+  renderRecent?.();
+  showToast(p === 'free' ? 'Switched to Free plan' : `Welcome to ${PLANS[p].name}!`);
 }
+function planLimits(){ return PLANS[getPlan()].limits; }
+function refreshPlanBadge(){
+  const b = document.getElementById('planBadge');
+  const btn = document.getElementById('upgradeBtn');
+  const plan = getPlan();
+  b.textContent = PLANS[plan].name + ' Plan';
+  b.className = 'badge' + (plan==='pro'?' pro-badge':plan==='agency'?' agency-badge':'');
+  if(btn){
+    if(plan === 'agency'){ btn.style.display = 'none'; }
+    else { btn.style.display = ''; btn.textContent = plan === 'free' ? '⚡ Upgrade' : '⚡ Go Agency'; }
+  }
+}
+
+// Daily generation usage
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function loadUsage(){
+  try { return JSON.parse(localStorage.getItem(USAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function getDailyCount(){
+  const u = loadUsage();
+  return u.date === todayKey() ? (u.count || 0) : 0;
+}
+function bumpDailyCount(){
+  const u = loadUsage();
+  if(u.date !== todayKey()){ u.date = todayKey(); u.count = 0; }
+  u.count = (u.count || 0) + 1;
+  localStorage.setItem(USAGE_KEY, JSON.stringify(u));
+}
+
+// Modal
+function openPricing(reason){
+  renderPricingGrid();
+  const sub = document.getElementById('pricingSub');
+  if(reason){ sub.textContent = reason; }
+  else { sub.textContent = 'Cancel anytime. All plans include core AI generation.'; }
+  document.getElementById('pricingModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePricing(){
+  document.getElementById('pricingModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderPricingGrid(){
+  const grid = document.getElementById('pricingGrid');
+  if(!grid) return;
+  const current = getPlan();
+  grid.innerHTML = Object.entries(PLANS).map(([id, p]) => {
+    const isCurrent = id === current;
+    const ctaClass = isCurrent ? 'current' : (p.featured ? 'primary' : 'ghost');
+    const ctaText = isCurrent ? '✓ Current plan' : p.cta;
+    return `<div class="tier ${p.featured?'featured':''}">
+      ${p.featured?'<span class="tier-tag">Most popular</span>':''}
+      <div class="tier-name">${p.name}</div>
+      <div class="tier-price">${p.price}<small>${p.period}</small></div>
+      <div class="tier-pitch">${p.pitch}</div>
+      <ul class="tier-feats">
+        ${p.feats.map(f => `<li class="${f.ok?'':'no'}">${f.t}</li>`).join('')}
+      </ul>
+      <button type="button" class="tier-cta ${ctaClass}" data-plan="${id}" ${isCurrent?'disabled':''}>${ctaText}</button>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.tier-cta[data-plan]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.plan;
+      if(id === getPlan()) return;
+      // Demo billing: just switch the plan locally
+      setPlan(id);
+      closePricing();
+    });
+  });
+}
+
+// Soft upgrade banners (rendered inline, never blocking)
+function softUpgrade({title, text, into}){
+  const host = into || document.getElementById('output');
+  if(!host) return;
+  const div = document.createElement('div');
+  div.className = 'upgrade-soft';
+  div.innerHTML = `
+    <div class="upgrade-soft-title">${title}</div>
+    <div class="upgrade-soft-text">${text}</div>
+    <div class="upgrade-soft-actions">
+      <button type="button" class="upgrade-soft-btn primary">See plans</button>
+      <button type="button" class="upgrade-soft-btn ghost">Maybe later</button>
+    </div>`;
+  // Replace any stale banner first
+  host.querySelectorAll('.upgrade-soft').forEach(n => n.remove());
+  host.prepend(div);
+  div.querySelector('.upgrade-soft-btn.primary').addEventListener('click', () => openPricing(text));
+  div.querySelector('.upgrade-soft-btn.ghost').addEventListener('click', () => div.remove());
+}
+
+function updateModeLocks(){
+  const allowed = planLimits().modes;
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    const ok = allowed.includes(btn.dataset.mode);
+    btn.classList.toggle('locked', !ok);
+  });
+}
+
+// Backwards-compat shim
+function upgradePro(){ openPricing(); }
 
 // ===== Client Mode =====
 const ACTIVE_CLIENT_KEY = 'lb_active_client_v1';
