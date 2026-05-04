@@ -545,19 +545,33 @@ const PLANS = {
     cta: 'Current plan', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 1, modes: ['instant','seo','variation'] }
   },
   pro: {
-    name: 'Pro', price: '$29', period: '/month',
-    pitch: 'For solo operators running their own business.',
+    name: 'Pro', price: '$19', period: '/month',
+    pitch: 'Get started with unlimited generations.',
     feats: [
       { ok:true, t:'Unlimited generations' },
-      { ok:true, t:'Unlimited saved businesses' },
-      { ok:true, t:'All modes including Weekly Planner' },
-      { ok:true, t:'Section regeneration' },
+      { ok:true, t:'Up to 3 saved businesses' },
+      { ok:true, t:'Instant + Local SEO + Variation modes' },
       { ok:true, t:'Full history (5 per business)' },
+      { ok:false, t:'Weekly Planner mode' },
+      { ok:false, t:'Section regeneration' },
+      { ok:false, t:'Multi-client workspace switching' },
+      { ok:false, t:'Bulk generation & export packs' },
+    ],
+    cta: 'Upgrade to Pro', limits: { dailyGenerations: Infinity, savedBusinesses: 3, history: Infinity, modes: ['instant','seo','variation'] }
+  },
+  proPlus: {
+    name: 'Pro+', price: '$29', period: '/month',
+    pitch: 'For solo operators who want the full toolkit.',
+    feats: [
+      { ok:true, t:'Everything in Pro' },
+      { ok:true, t:'Unlimited saved businesses' },
+      { ok:true, t:'Weekly Planner mode' },
+      { ok:true, t:'Section regeneration' },
       { ok:true, t:'Weekly content reminders' },
       { ok:false, t:'Multi-client workspace switching' },
       { ok:false, t:'Bulk generation & export packs' },
     ],
-    cta: 'Upgrade to Pro', featured: true, limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+    cta: 'Upgrade to Pro+', featured: true, badge: 'Recommended', limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
   },
   agency: {
     name: 'Agency', price: '$79', period: '/month',
@@ -589,10 +603,13 @@ function refreshPlanBadge(){
   const btn = document.getElementById('upgradeBtn');
   const plan = getPlan();
   b.textContent = PLANS[plan].name + ' Plan';
-  b.className = 'badge' + (plan==='pro'?' pro-badge':plan==='agency'?' agency-badge':'');
+  b.className = 'badge' + (plan==='pro'||plan==='proPlus'?' pro-badge':plan==='agency'?' agency-badge':'');
   if(btn){
     if(plan === 'agency'){ btn.style.display = 'none'; }
-    else { btn.style.display = ''; btn.textContent = plan === 'free' ? '⚡ Upgrade' : '⚡ Go Agency'; }
+    else {
+      btn.style.display = '';
+      btn.textContent = plan === 'free' ? '⚡ Upgrade' : plan === 'pro' ? '⚡ Go Pro+' : '⚡ Go Agency';
+    }
   }
 }
 
