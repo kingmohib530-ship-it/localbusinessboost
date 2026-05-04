@@ -1426,7 +1426,7 @@ function setAuthMode(mode){
   const isSignup = mode === 'signup';
   document.getElementById('authTitle').innerHTML = isSignup ? 'Create your <span>account</span>' : 'Welcome <span>back</span>';
   document.getElementById('authSub').textContent = isSignup
-    ? 'Get 5 free generations per day, 1 saved business, and your own private workspace.'
+    ? 'Start on Starter ($7.99/mo) — 5 generations per day, 1 saved business, your own private workspace.'
     : 'Log in to manage your saved businesses, weekly content plans, and history.';
   document.getElementById('authSubmit').textContent = isSignup ? 'Create account' : 'Sign in';
   document.getElementById('authPassword').setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
