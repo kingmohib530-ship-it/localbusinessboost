@@ -1048,6 +1048,21 @@ async function generate(section){
   const tone=document.getElementById('tone').value;
   if(!biz||!loc){ showToast('Please fill Business Type & Location'); return; }
 
+  // Plan gates (soft — show modal, do not silently block)
+  const limits = planLimits();
+  if(!limits.modes.includes(currentMode)){
+    openPricing(`${currentMode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature. Upgrade to unlock.`);
+    return;
+  }
+  if(section && getPlan() === 'free'){
+    openPricing('Section regeneration is a Pro feature — generate the full pack on Free, or upgrade to refresh sections individually.');
+    return;
+  }
+  if(!section && getDailyCount() >= limits.dailyGenerations){
+    openPricing(`You've used all ${limits.dailyGenerations} daily generations on the Free plan. Upgrade for unlimited.`);
+    return;
+  }
+
   const btn=document.getElementById('generateBtn');
   const spin=document.getElementById('spinner');
   if(!section){ btn.disabled=true; spin.style.display='inline-block'; }
