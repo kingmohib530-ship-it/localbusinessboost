@@ -1377,6 +1377,108 @@ function copyTab(id){
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter' && document.activeElement && document.activeElement.tagName==='INPUT' && !document.getElementById('generateBtn').disabled) generate();
 });
+// ===== Auth UI =====
+let authMode = 'signin';
+function setAuthMessage(html, kind){
+  const el = document.getElementById('authMessage');
+  if(!html){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="${kind === 'error' ? 'auth-error' : 'auth-info'}">${html}</div>`;
+}
+function setAuthMode(mode){
+  authMode = mode;
+  const isSignup = mode === 'signup';
+  document.getElementById('authTitle').innerHTML = isSignup ? 'Create your <span>account</span>' : 'Welcome <span>back</span>';
+  document.getElementById('authSub').textContent = isSignup
+    ? 'Get 5 free generations per day, 1 saved business, and your own private workspace.'
+    : 'Log in to manage your saved businesses, weekly content plans, and history.';
+  document.getElementById('authSubmit').textContent = isSignup ? 'Create account' : 'Sign in';
+  document.getElementById('authPassword').setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
+  document.getElementById('authToggleText').textContent = isSignup ? 'Already have an account?' : 'New to LocalBoost?';
+  document.getElementById('authToggleBtn').textContent = isSignup ? 'Sign in' : 'Create an account';
+  setAuthMessage('');
+}
+function showAuthShell(show){
+  document.getElementById('authShell').classList.toggle('show', show);
+  document.getElementById('appRoot').classList.toggle('locked', show);
+  document.body.style.overflow = show ? 'hidden' : '';
+  document.getElementById('userChip').style.display = show ? 'none' : '';
+}
+function applySession(session){
+  const user = session?.user || null;
+  currentUserId = user?.id || null;
+  if(user){
+    showAuthShell(false);
+    document.getElementById('userEmail').textContent = user.email || 'Account';
+    document.getElementById('userAvatar').textContent = (user.email || '?')[0].toUpperCase();
+    // Re-render everything for this user's namespace
+    if(typeof refreshPlanBadge === 'function') refreshPlanBadge();
+    if(typeof updateModeLocks === 'function') updateModeLocks();
+    if(typeof renderClientBar === 'function') renderClientBar();
+    if(typeof renderProfiles === 'function') renderProfiles(getActiveClientId() || '');
+    if(typeof renderRecent === 'function') renderRecent();
+    if(typeof refreshReminderToggle === 'function') refreshReminderToggle();
+    if(typeof checkReminderBanner === 'function') checkReminderBanner();
+    // Restore active profile fields
+    const ap = (typeof loadProfiles === 'function') ? loadProfiles().find(p => p.id === getActiveClientId()) : null;
+    ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+    const tone = document.getElementById('tone'); if(tone) tone.value = 'friendly';
+    if(ap){
+      document.getElementById('businessType').value = ap.businessType || '';
+      document.getElementById('location').value = ap.location || '';
+      document.getElementById('audience').value = ap.audience || '';
+      document.getElementById('tone').value = ap.tone || 'friendly';
+    }
+    lastData = null;
+    if(typeof resetOutputPanel === 'function') resetOutputPanel();
+  } else {
+    showAuthShell(true);
+  }
+}
+async function handleAuthSubmit(e){
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const btn = document.getElementById('authSubmit');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = '…';
+  setAuthMessage('');
+  try {
+    if(authMode === 'signup'){
+      const { data, error } = await sb.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: window.location.origin + window.location.pathname }
+      });
+      if(error) throw error;
+      if(!data.session){
+        setAuthMessage('Check your email to confirm your account, then sign in.', 'info');
+        setAuthMode('signin');
+      }
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+    }
+  } catch(err){
+    setAuthMessage(err?.message || 'Something went wrong', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+async function signOut(){
+  await sb.auth.signOut();
+  // Clear in-memory state — storage is namespaced so no cross-user leakage
+  currentUserId = null;
+  lastData = null;
+  ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  showAuthShell(true);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('authForm')?.addEventListener('submit', handleAuthSubmit);
+  document.getElementById('authToggleBtn')?.addEventListener('click', () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin'));
+  document.getElementById('signOutBtn')?.addEventListener('click', signOut);
+  setAuthMode('signin');
+  // Bootstrap session
+  sb.auth.getSession().then(({ data }) => applySession(data.session));
+  sb.auth.onAuthStateChange((_event, session) => applySession(session));
+});
 </script>
 </body>
 </html>
