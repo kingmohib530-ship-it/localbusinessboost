@@ -13,6 +13,20 @@ function getSupabase() {
   return _supabase;
 }
 
+function planFromPriceId(priceId?: string): "free" | "pro" | "agency" {
+  if (priceId === "agency_monthly") return "agency";
+  if (priceId === "pro_monthly") return "pro";
+  return "free";
+}
+
+async function syncProfilePlan(userId: string, priceId: string | undefined, status: string, customerId: string) {
+  const isActive = status === "active" || status === "trialing" || status === "past_due";
+  const plan = isActive ? planFromPriceId(priceId) : "free";
+  await (getSupabase().from("profiles") as any)
+    .update({ plan, stripe_customer_id: customerId, updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+}
+
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const userId = subscription.metadata?.userId;
   if (!userId) {
