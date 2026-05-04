@@ -856,8 +856,10 @@ function renderRecent(){
       </div>
       <span style="color:var(--gold);font-size:14px;">↺</span>
     </button>`;
-  }).join('');
-  ul.querySelectorAll('.recent-item').forEach(el => {
+  }).join('') + (all.length > list.length
+    ? `<button type="button" class="recent-item" style="justify-content:center;color:var(--gold);font-weight:600;" onclick="openPricing('Upgrade to access your full history (${all.length} entries).')">+ ${all.length - list.length} more in history — Upgrade to view</button>`
+    : '');
+  ul.querySelectorAll('.recent-item[data-id]').forEach(el => {
     el.addEventListener('click', () => restoreRecent(el.dataset.id));
   });
 }
