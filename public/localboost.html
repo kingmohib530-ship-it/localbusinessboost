@@ -741,6 +741,10 @@ function saveCurrentBusiness(){
   // Dedupe by businessType + location (case-insensitive)
   const key = (businessType + '|' + location).toLowerCase();
   const existing = list.find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  if(!existing && list.length >= planLimits().savedBusinesses){
+    openPricing(`Your ${PLANS[getPlan()].name} plan saves up to ${planLimits().savedBusinesses} business. Upgrade to manage unlimited clients.`);
+    return;
+  }
   if(existing){
     existing.audience = audience; existing.tone = tone;
     persistProfiles(list);
