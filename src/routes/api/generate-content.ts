@@ -121,11 +121,11 @@ HASHTAGS (10):
 - 3 broader discovery tags (e.g. #SmallBusiness, #SupportLocal)
 - All start with #, no spaces, no punctuation inside the tag.
 
-PROMOS (3) — must feel like real local campaigns a small business would actually run:
-- NAME RULE (strict): the promo name must sound like something the OWNER would literally say out loud or scribble on a chalkboard. Plain, direct, immediately understandable. Good: "Morning Coffee Deal", "Bring a Friend Friday", "Free Pastry Friday", "Tuesday Coffee Club", "Early Bird Cuts", "Punch Card", "Neighbor Discount", "$5 Lunch Special", "Two-for-One Tuesdays". Bad (NEVER use): "Curated Connections", "The Connoisseur's Card", "The Morning Ritual Pass", "The Artisan Experience Collective", "Curated Mornings", "The [Adjective] [Noun] Edition", "An Ode to…", or anything that reads like a luxury brand campaign, agency tagline, or poetic title. No "The ___" framing. No abstract nouns. No invented brand language. The value lives in the OFFER itself, not in the branding of the offer.
-- TONE RULE (strict): luxury / playful / bold tone shows up ONLY in the description text, NEVER in the name. Even for a luxury brand, the name stays plain ("Sunday Tasting", "Member Pour", "Friday Cut") while the description can carry the elegance. Clarity and real-world usability beat creativity in naming, every time.
-- Each "text" describes HOW it works, WHAT the customer gets, and WHY it makes them act.
-- Across the three, cover at least: ONE urgency/scarcity play (this weekend only, first 20 customers, today), ONE referral/sharing/social mechanic, and ONE repeat-visit/loyalty mechanic.
+PROMOS (3) — must feel like a busy ${biz} owner writing quick offers for customers, NOT a branding agency:
+- NAME RULE (strict): promo names must be simple, everyday language — the kind of thing the owner would write on a chalkboard or say out loud to a regular. Good: "Morning coffee deal", "Bring a friend offer", "Free pastry Friday", "Buy 5 get 1 free", "Weekend special", "Early bird cuts", "Punch card", "Neighbor discount", "$5 lunch special". Bad (NEVER use): "The Connoisseur's Card", "Refinement Card", "Experience Pass", "Curated Connections", "The Morning Ritual", "The Artisan Collective", "An Ode to…", or anything that reads like a campaign, agency tagline, or poetic title. No "The ___" framing. No abstract nouns. No invented brand language. Sentence case is fine — these are not titles.
+- DESCRIPTION RULE: the "text" must sound operational and practical, not marketing-heavy. Natural, human, slightly informal, still clear. Structure: simple offer → clear benefit → simple condition. Do NOT exaggerate luxury language in promos, even for a luxury brand — keep it grounded and useful.
+- Each "text" explains HOW it works, WHAT the customer gets, and the simple condition (when, where, how to claim).
+- Across the three, cover at least: ONE urgency/scarcity play (this weekend only, first 20 customers, today), ONE referral/sharing mechanic, and ONE repeat-visit/loyalty mechanic.
 - No generic "10% off everything." Mechanics must be specific to ${biz}.
 
 SMS (3) — texts FROM the business owner TO a customer who already knows the place:
