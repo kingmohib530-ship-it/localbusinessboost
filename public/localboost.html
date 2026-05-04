@@ -415,6 +415,18 @@
 
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toastText">Copied to clipboard!</span></div>
 
+<div class="pricing-modal" id="pricingModal" role="dialog" aria-modal="true" aria-labelledby="pricingTitle">
+  <div class="pricing-card-wrap">
+    <button type="button" class="pricing-close" id="pricingCloseBtn" aria-label="Close">×</button>
+    <div class="pricing-head">
+      <div class="pricing-eyebrow">✦ Choose your plan ✦</div>
+      <div class="pricing-title" id="pricingTitle">UNLOCK YOUR <span>FULL TOOLKIT</span></div>
+      <div class="pricing-sub" id="pricingSub">Cancel anytime. All plans include core AI generation.</div>
+    </div>
+    <div class="pricing-grid" id="pricingGrid"></div>
+  </div>
+</div>
+
 <script>
 function showToast(msg){
   const t=document.getElementById('toast');
