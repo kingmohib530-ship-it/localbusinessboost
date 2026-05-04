@@ -158,6 +158,21 @@
    .reminder-banner-cta { font-size: 12px; font-weight: 600; color: var(--gold); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
    .reminder-banner-close { background: none; border: none; color: var(--white-muted); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
    .reminder-banner-close:hover { color: var(--red); }
+   .calendar-wrap { padding: 22px; border-bottom: 1px solid var(--border); }
+   .calendar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+   .calendar-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1.5px; color: var(--white); }
+   .calendar-title span { color: var(--gold); }
+   .calendar-sub { font-size: 11px; color: var(--white-muted); font-family: 'DM Mono', monospace; letter-spacing: .5px; }
+   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+   .cal-day { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 10px 12px; min-height: 110px; display: flex; flex-direction: column; gap: 6px; transition: all .18s; }
+   .cal-day:hover { border-color: var(--gold); transform: translateY(-1px); }
+   .cal-day-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+   .cal-day-name { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
+   .cal-day-type { font-size: 9.5px; color: var(--white-muted); text-transform: uppercase; letter-spacing: .5px; }
+   .cal-day-icon { font-size: 13px; }
+   .cal-day-snippet { font-size: 11.5px; color: var(--white-dim); line-height: 1.4; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+   .cal-day-empty { font-size: 11px; color: var(--white-muted); font-style: italic; }
+   @media (max-width: 900px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
   .recent-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
   .recent-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
   .recent-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 11px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; cursor: pointer; transition: all .15s; text-align: left; font-family: 'DM Sans', sans-serif; }
@@ -719,6 +734,7 @@ function renderResults(data){
   const banner = MODE_BANNERS[currentMode] || '';
 
   out.innerHTML = `
+    ${currentMode==='weekly' ? renderCalendar(data) : ''}
     <div class="tabs-wrap">
       <div class="tabs-bar" id="tabsBar">
         ${TABS.map(t => {
@@ -751,6 +767,53 @@ function renderResults(data){
   });
   const sel = document.getElementById('tabSelect');
   if(sel) sel.addEventListener('change', e => switchTab(e.target.value));
+}
+
+const CAL_PLAN = [
+  { day:'Mon', section:'captions', icon:'📸', type:'Caption' },
+  { day:'Tue', section:'hooks',    icon:'🪝', type:'Hook' },
+  { day:'Wed', section:'promos',   icon:'🎯', type:'Promo' },
+  { day:'Thu', section:'reviews',  icon:'⭐', type:'Review' },
+  { day:'Fri', section:'sms',      icon:'💬', type:'SMS blast' },
+  { day:'Sat', section:'hashtags', icon:'#️⃣', type:'Hashtag set' },
+  { day:'Sun', section:'captions', icon:'📸', type:'Caption' }
+];
+function snippet(text, n){
+  const s = String(text || '').replace(/\s+/g,' ').trim();
+  return s.length > n ? s.slice(0, n-1).trimEnd() + '…' : s;
+}
+function calCell(plan, data, idx){
+  const items = getSectionItems(data, plan.section);
+  if(!items.length){
+    return `<div class="cal-day-snippet cal-day-empty">No ${plan.type.toLowerCase()} yet</div>`;
+  }
+  const pick = items[idx % items.length];
+  if(plan.section === 'promos'){
+    return `<div class="cal-day-snippet"><strong style="color:var(--gold2);">${snippet(pick.label, 28)}</strong><br>${snippet(pick.text, 70)}</div>`;
+  }
+  if(plan.section === 'hashtags'){
+    const set = items.slice(idx*3, idx*3+3).join(' ') || items.slice(0,3).join(' ');
+    return `<div class="cal-day-snippet" style="font-family:'DM Mono',monospace;color:var(--gold);">${snippet(set, 80)}</div>`;
+  }
+  return `<div class="cal-day-snippet">${snippet(pick, 90)}</div>`;
+}
+function renderCalendar(data){
+  const cells = CAL_PLAN.map((p, i) => `
+    <div class="cal-day">
+      <div class="cal-day-head">
+        <span class="cal-day-name">${p.day}</span>
+        <span class="cal-day-icon">${p.icon}</span>
+      </div>
+      <div class="cal-day-type">${p.type}</div>
+      ${calCell(p, data, i)}
+    </div>`).join('');
+  return `<div class="calendar-wrap">
+    <div class="calendar-head">
+      <div class="calendar-title">7-DAY <span>CONTENT CALENDAR</span></div>
+      <div class="calendar-sub">Snippets pulled from your generated content</div>
+    </div>
+    <div class="calendar-grid">${cells}</div>
+  </div>`;
 }
 
 function switchTab(id){
