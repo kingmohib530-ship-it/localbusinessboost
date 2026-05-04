@@ -344,6 +344,7 @@
     <span class="user-chip" id="userChip" style="display:none">
       <span class="user-chip-avatar" id="userAvatar">?</span>
       <span id="userEmail">—</span>
+      <button type="button" id="billingBtn" title="Manage billing" style="display:none">Billing</button>
       <button type="button" id="signOutBtn" title="Sign out">Sign out</button>
     </span>
   </div>
@@ -546,32 +547,18 @@ const PLANS = {
   },
   pro: {
     name: 'Pro', price: '$19', period: '/month',
-    pitch: 'Get started with unlimited generations.',
+    pitch: 'For solo operators running their business.',
     feats: [
       { ok:true, t:'Unlimited generations' },
-      { ok:true, t:'Up to 3 saved businesses' },
-      { ok:true, t:'Instant + Local SEO + Variation modes' },
-      { ok:true, t:'Full history (5 per business)' },
-      { ok:false, t:'Weekly Planner mode' },
-      { ok:false, t:'Section regeneration' },
-      { ok:false, t:'Multi-client workspace switching' },
-      { ok:false, t:'Bulk generation & export packs' },
-    ],
-    cta: 'Upgrade to Pro', limits: { dailyGenerations: Infinity, savedBusinesses: 3, history: Infinity, modes: ['instant','seo','variation'] }
-  },
-  proPlus: {
-    name: 'Pro+', price: '$29', period: '/month',
-    pitch: 'For solo operators who want the full toolkit.',
-    feats: [
-      { ok:true, t:'Everything in Pro' },
       { ok:true, t:'Unlimited saved businesses' },
-      { ok:true, t:'Weekly Planner mode' },
+      { ok:true, t:'All modes including Weekly Planner' },
       { ok:true, t:'Section regeneration' },
+      { ok:true, t:'Full history (5 per business)' },
       { ok:true, t:'Weekly content reminders' },
       { ok:false, t:'Multi-client workspace switching' },
       { ok:false, t:'Bulk generation & export packs' },
     ],
-    cta: 'Upgrade to Pro+', featured: true, badge: 'Recommended', limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+    cta: 'Upgrade to Pro', featured: true, limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
   },
   agency: {
     name: 'Agency', price: '$79', period: '/month',
@@ -603,7 +590,7 @@ function refreshPlanBadge(){
   const btn = document.getElementById('upgradeBtn');
   const plan = getPlan();
   b.textContent = PLANS[plan].name + ' Plan';
-  b.className = 'badge' + (plan==='pro'||plan==='proPlus'?' pro-badge':plan==='agency'?' agency-badge':'');
+  b.className = 'badge' + (plan==='pro'?' pro-badge':plan==='agency'?' agency-badge':'');
   if(btn){
     if(plan === 'agency'){ btn.style.display = 'none'; }
     else {
@@ -663,11 +650,23 @@ function renderPricingGrid(){
     </div>`;
   }).join('');
   grid.querySelectorAll('.tier-cta[data-plan]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.dataset.plan;
       if(id === getPlan()) return;
-      // Demo billing: just switch the plan locally
-      setPlan(id);
+      if(id === 'free'){
+        // Downgrade: open billing portal so user can cancel
+        try {
+          window.parent.postMessage({ type: 'lb-portal' }, '*');
+          closePricing();
+        } catch(_){}
+        return;
+      }
+      const priceId = id === 'pro' ? 'pro_monthly' : id === 'agency' ? 'agency_monthly' : null;
+      if(!priceId){ return; }
+      // Get current user email
+      let email = null;
+      try { const { data } = await sb.auth.getUser(); email = data?.user?.email || null; } catch(_){}
+      window.parent.postMessage({ type: 'lb-checkout', priceId, userId: currentUserId, email }, '*');
       closePricing();
     });
   });
@@ -1420,6 +1419,41 @@ function showAuthShell(show){
   document.body.style.overflow = show ? 'hidden' : '';
   document.getElementById('userChip').style.display = show ? 'none' : '';
 }
+// Sync plan from Stripe subscription row in DB
+async function syncSubscription(){
+  if(!currentUserId) return;
+  try {
+    const { data, error } = await sb
+      .from('subscriptions')
+      .select('price_id,status,current_period_end,cancel_at_period_end')
+      .eq('user_id', currentUserId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if(error) { console.warn('sub sync error', error); return; }
+    let plan = 'free';
+    if(data){
+      const isActive =
+        (['active','trialing','past_due'].includes(data.status) &&
+          (!data.current_period_end || new Date(data.current_period_end) > new Date())) ||
+        (data.status === 'canceled' && data.current_period_end && new Date(data.current_period_end) > new Date());
+      if(isActive){
+        if(data.price_id === 'agency_monthly') plan = 'agency';
+        else if(data.price_id === 'pro_monthly') plan = 'pro';
+      }
+    }
+    if(plan !== getPlan()){
+      localStorage.setItem(K(PLAN_KEY), plan);
+      refreshPlanBadge();
+      renderPricingGrid();
+      updateModeLocks?.();
+      renderClientBar?.();
+      renderRecent?.();
+    }
+    const billingBtn = document.getElementById('billingBtn');
+    if(billingBtn) billingBtn.style.display = (plan !== 'free') ? '' : 'none';
+  } catch(e){ console.warn('sub sync failed', e); }
+}
 function applySession(session){
   const user = session?.user || null;
   currentUserId = user?.id || null;
@@ -1435,6 +1469,7 @@ function applySession(session){
     if(typeof renderRecent === 'function') renderRecent();
     if(typeof refreshReminderToggle === 'function') refreshReminderToggle();
     if(typeof checkReminderBanner === 'function') checkReminderBanner();
+    syncSubscription();
     // Restore active profile fields
     const ap = (typeof loadProfiles === 'function') ? loadProfiles().find(p => p.id === getActiveClientId()) : null;
     ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
@@ -1491,10 +1526,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('authForm')?.addEventListener('submit', handleAuthSubmit);
   document.getElementById('authToggleBtn')?.addEventListener('click', () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin'));
   document.getElementById('signOutBtn')?.addEventListener('click', signOut);
+  document.getElementById('billingBtn')?.addEventListener('click', () => {
+    try { window.parent.postMessage({ type: 'lb-portal' }, '*'); } catch(_){}
+  });
   setAuthMode('signin');
   // Bootstrap session
   sb.auth.getSession().then(({ data }) => applySession(data.session));
   sb.auth.onAuthStateChange((_event, session) => applySession(session));
+  // Re-sync subscription when window regains focus (e.g. after returning from Stripe)
+  window.addEventListener('focus', () => { if(currentUserId) syncSubscription(); });
 });
 </script>
 </body>

@@ -1,4 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { createPortalSession } from "@/utils/payments.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,12 +15,69 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+interface CheckoutReq {
+  priceId: string;
+  userId?: string;
+  email?: string;
+}
+
 function Index() {
+  const [checkout, setCheckout] = useState<CheckoutReq | null>(null);
+
+  useEffect(() => {
+    const onMsg = async (e: MessageEvent) => {
+      const d = e.data;
+      if (!d || typeof d !== "object") return;
+      if (d.type === "lb-checkout" && typeof d.priceId === "string") {
+        setCheckout({ priceId: d.priceId, userId: d.userId, email: d.email });
+      } else if (d.type === "lb-portal") {
+        try {
+          const url = await createPortalSession({
+            data: { environment: getStripeEnvironment(), returnUrl: window.location.origin },
+          });
+          window.open(url, "_blank");
+        } catch (err) {
+          alert("Open billing portal failed: " + (err as Error).message);
+        }
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
   return (
-    <iframe
-      src="/localboost.html"
-      title="LocalBoost AI"
-      style={{ position: "fixed", inset: 0, width: "100%", height: "100%", border: "none" }}
-    />
+    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column" }}>
+      <PaymentTestModeBanner />
+      <iframe
+        src="/localboost.html"
+        title="LocalBoost AI"
+        style={{ flex: 1, width: "100%", border: "none" }}
+      />
+      {checkout && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setCheckout(null); }}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16,
+          }}
+        >
+          <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto", position: "relative" }}>
+            <button
+              onClick={() => setCheckout(null)}
+              style={{ position: "absolute", top: 8, right: 12, background: "transparent", border: "none", fontSize: 22, cursor: "pointer", zIndex: 2 }}
+              aria-label="Close"
+            >×</button>
+            <div style={{ padding: 8 }}>
+              <StripeEmbeddedCheckout
+                priceId={checkout.priceId}
+                userId={checkout.userId}
+                customerEmail={checkout.email}
+                returnUrl={`${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
