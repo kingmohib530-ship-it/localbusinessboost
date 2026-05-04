@@ -431,6 +431,8 @@ async function generate(section){
     } else {
       lastData = data;
       renderResults(data);
+      const saveBtn = document.getElementById('saveBizBtn');
+      if(saveBtn) saveBtn.classList.add('visible');
     }
   } catch(e){
     console.error(e);
