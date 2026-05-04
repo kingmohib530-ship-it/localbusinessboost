@@ -294,6 +294,91 @@ function upgradePro(){
   showToast('Email Kingmohib530@gmail.com for early Pro access');
 }
 
+// ===== Saved Businesses (localStorage) =====
+const PROFILES_KEY = 'lb_saved_businesses_v1';
+
+function loadProfiles(){
+  try { return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]'); }
+  catch { return []; }
+}
+function persistProfiles(list){
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
+}
+function profileLabel(p){
+  const parts = [p.businessType, p.location].filter(Boolean);
+  return parts.join(' — ') || 'Untitled';
+}
+function renderProfiles(selectedId){
+  const list = loadProfiles();
+  const block = document.getElementById('profilesBlock');
+  const sel = document.getElementById('profileSelect');
+  const del = document.getElementById('profileDelBtn');
+  if(!list.length){
+    block.style.display = 'none';
+    return;
+  }
+  block.style.display = 'block';
+  sel.innerHTML = `<option value="">— Choose a saved business —</option>` +
+    list.map(p => `<option value="${p.id}" ${p.id===selectedId?'selected':''}>${profileLabel(p).replace(/</g,'&lt;')}</option>`).join('');
+  del.disabled = !selectedId;
+}
+function applyProfile(id){
+  const p = loadProfiles().find(x => x.id === id);
+  if(!p) return;
+  document.getElementById('businessType').value = p.businessType || '';
+  document.getElementById('location').value = p.location || '';
+  document.getElementById('audience').value = p.audience || '';
+  document.getElementById('tone').value = p.tone || 'friendly';
+  document.getElementById('profileDelBtn').disabled = false;
+  showToast('Loaded "' + profileLabel(p) + '"');
+}
+function saveCurrentBusiness(){
+  const businessType = document.getElementById('businessType').value.trim();
+  const location = document.getElementById('location').value.trim();
+  const audience = document.getElementById('audience').value.trim();
+  const tone = document.getElementById('tone').value;
+  if(!businessType || !location){ showToast('Fill Business Type & Location first'); return; }
+
+  const list = loadProfiles();
+  // Dedupe by businessType + location (case-insensitive)
+  const key = (businessType + '|' + location).toLowerCase();
+  const existing = list.find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  if(existing){
+    existing.audience = audience; existing.tone = tone;
+    persistProfiles(list);
+    renderProfiles(existing.id);
+    document.getElementById('profileSelect').value = existing.id;
+    showToast('Updated saved business');
+    return;
+  }
+  const profile = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), businessType, location, audience, tone };
+  list.unshift(profile);
+  persistProfiles(list);
+  renderProfiles(profile.id);
+  document.getElementById('profileSelect').value = profile.id;
+  showToast('Saved "' + profileLabel(profile) + '"');
+}
+function deleteSelectedProfile(){
+  const sel = document.getElementById('profileSelect');
+  const id = sel.value;
+  if(!id) return;
+  const list = loadProfiles().filter(p => p.id !== id);
+  persistProfiles(list);
+  renderProfiles('');
+  showToast('Deleted saved business');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderProfiles('');
+  const sel = document.getElementById('profileSelect');
+  const del = document.getElementById('profileDelBtn');
+  if(sel) sel.addEventListener('change', e => {
+    if(e.target.value) applyProfile(e.target.value);
+    else del.disabled = true;
+  });
+  if(del) del.addEventListener('click', deleteSelectedProfile);
+});
+
 const TONES = {
   friendly:{adj:'amazing',vibe:'so welcoming',emoji:'😊'},
   professional:{adj:'exceptional',vibe:'highly professional',emoji:'💼'},
