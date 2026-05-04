@@ -693,15 +693,23 @@ function renderPricingGrid(){
   const grid = document.getElementById('pricingGrid');
   if(!grid) return;
   const current = getPlan();
-  grid.innerHTML = Object.entries(PLANS).map(([id, p]) => {
+  const order = ['free','pro','agency'];
+  grid.innerHTML = order.map(id => {
+    const p = PLANS[id];
     const isCurrent = id === current;
+    const isMuted = id === 'free';
     const ctaClass = isCurrent ? 'current' : (p.featured ? 'primary' : 'ghost');
     const ctaText = isCurrent ? '✓ Current plan' : p.cta;
-    return `<div class="tier ${p.featured?'featured':''}">
-      ${p.featured?'<span class="tier-tag">Most popular</span>':''}
+    const tag = p.featured
+      ? '<span class="tier-tag">★ Most Popular — Recommended</span>'
+      : (isMuted ? '<span class="tier-tag muted-tag">For testing only</span>' : '');
+    return `<div class="tier ${p.featured?'featured':''} ${isMuted?'muted':''}">
+      ${tag}
       <div class="tier-name">${p.name}</div>
       <div class="tier-price">${p.price}<small>${p.period}</small></div>
+      ${p.tagline ? `<div class="tier-tagline">${p.tagline}</div>` : ''}
       <div class="tier-pitch">${p.pitch}</div>
+      ${p.featured ? '<div class="tier-recommend">Most users choose Pro — unlock full access instantly.</div>' : ''}
       <ul class="tier-feats">
         ${p.feats.map(f => `<li class="${f.ok?'':'no'}">${f.t}</li>`).join('')}
       </ul>
