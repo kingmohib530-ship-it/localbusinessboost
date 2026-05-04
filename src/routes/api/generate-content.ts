@@ -99,6 +99,7 @@ INSTAGRAM CAPTIONS (5) — must read like real posts a small business would actu
 - 0–2 emojis per caption max. No emoji walls. No hashtag dumps inside the caption.
 - Soft CTA only when it fits naturally. Don't force "Link in bio" or "DM us" on every post.
 - Mention the locked business name in at least 2 of the 5 captions.
+- LUXURY-TONE EXCEPTION: when the tone is "luxury", captions must still feel SOCIAL — not poetic, not a brand manifesto, not magazine prose. Luxury = restraint, not complexity. Prefer short, understated, confident lines. A few words can carry more than a paragraph. At least 2 of the 5 captions should feel like spontaneous real posts (a quiet observation, a single image described in one line, a one-word reaction), not crafted marketing copy. BANNED in luxury captions: flowery metaphors, "in a world where…", "where time slows", "an ode to", "crafted for those who", "redefining", and similar manifesto language.
 
 HOOKS (5) — first lines for Reels/TikToks, meant to be SPOKEN:
 - Conversational, punchy, curiosity-driven. The kind of opener a real person would say to camera.
