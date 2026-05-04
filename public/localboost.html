@@ -402,6 +402,7 @@ function saveCurrentBusiness(){
     persistProfiles(list);
     renderProfiles(existing.id);
     document.getElementById('profileSelect').value = existing.id;
+    refreshReminderToggle();
     showToast('Updated saved business');
     return;
   }
@@ -410,6 +411,7 @@ function saveCurrentBusiness(){
   persistProfiles(list);
   renderProfiles(profile.id);
   document.getElementById('profileSelect').value = profile.id;
+  refreshReminderToggle();
   showToast('Saved "' + profileLabel(profile) + '"');
 }
 function deleteSelectedProfile(){
