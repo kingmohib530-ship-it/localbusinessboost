@@ -1,4 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const PLAN_DAILY_CAP: Record<string, number> = {
+  free: 5,      // legacy rows still labeled 'free' = Starter cap
+  starter: 5,   // future-proof
+  pro: -1,      // unlimited
+  agency: -1,
+};
+
+const SECTION_ALLOWED_PLANS = new Set(["pro", "agency"]);
 
 type GenerateInput = {
   businessType?: string;
