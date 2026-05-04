@@ -5,7 +5,12 @@ type GenerateInput = {
   location?: string;
   audience?: string;
   tone?: string;
+  mode?: string;
+  section?: string;
 };
+
+const ALLOWED_SECTIONS = ["reviews", "captions", "hooks", "hashtags", "promos", "sms"] as const;
+type SectionKey = (typeof ALLOWED_SECTIONS)[number];
 
 const SYSTEM_PROMPT = `Return ONLY a valid JSON object. No markdown. No code fences. No commentary.`;
 
