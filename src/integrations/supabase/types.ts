@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          plan: Database["public"]["Enums"]["app_plan"]
+          stripe_customer_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["app_plan"]
+          stripe_customer_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["app_plan"]
+          stripe_customer_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -73,7 +100,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_plan: "free" | "pro" | "agency"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -200,6 +227,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_plan: ["free", "pro", "agency"],
+    },
   },
 } as const

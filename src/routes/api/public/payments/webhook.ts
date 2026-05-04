@@ -13,6 +13,20 @@ function getSupabase() {
   return _supabase;
 }
 
+function planFromPriceId(priceId?: string): "free" | "pro" | "agency" {
+  if (priceId === "agency_monthly") return "agency";
+  if (priceId === "pro_monthly") return "pro";
+  return "free";
+}
+
+async function syncProfilePlan(userId: string, priceId: string | undefined, status: string, customerId: string) {
+  const isActive = status === "active" || status === "trialing" || status === "past_due";
+  const plan = isActive ? planFromPriceId(priceId) : "free";
+  await (getSupabase().from("profiles") as any)
+    .update({ plan, stripe_customer_id: customerId, updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+}
+
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const userId = subscription.metadata?.userId;
   if (!userId) {
@@ -40,6 +54,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     },
     { onConflict: "stripe_subscription_id" }
   );
+  await syncProfilePlan(userId, priceId, subscription.status, subscription.customer);
 }
 
 async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
@@ -61,6 +76,9 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
     })
     .eq("stripe_subscription_id", subscription.id)
     .eq("environment", env);
+
+  const userId = subscription.metadata?.userId;
+  if (userId) await syncProfilePlan(userId, priceId, subscription.status, subscription.customer);
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
@@ -68,6 +86,9 @@ async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
     .update({ status: "canceled", updated_at: new Date().toISOString() })
     .eq("stripe_subscription_id", subscription.id)
     .eq("environment", env);
+
+  const userId = subscription.metadata?.userId;
+  if (userId) await syncProfilePlan(userId, undefined, "canceled", subscription.customer);
 }
 
 async function handleWebhook(req: Request, env: StripeEnv) {
