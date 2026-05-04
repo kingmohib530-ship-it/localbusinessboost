@@ -1185,11 +1185,11 @@ async function generate(section){
     return;
   }
   if(section && getPlan() === 'free'){
-    openPricing('Section regeneration is a Pro feature — generate the full pack on Free, or upgrade to refresh sections individually.');
+    openPricing('Section regeneration is a Pro feature — upgrade to Pro to refresh sections individually.');
     return;
   }
   if(!section && getDailyCount() >= limits.dailyGenerations){
-    openPricing(`You've used all ${limits.dailyGenerations} daily generations on the Free plan. Upgrade for unlimited.`);
+    openPricing(`You've used all ${limits.dailyGenerations} generations on the Starter plan today. Upgrade to Pro for unlimited generations.`);
     return;
   }
 
