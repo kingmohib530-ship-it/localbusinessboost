@@ -1367,7 +1367,9 @@ async function generate(section){
     });
     const data = await res.json();
     if(!res.ok){
-      if(res.status === 402 || res.status === 403 || data.code === 'limit_reached' || data.code === 'upgrade_required'){
+      if(res.status === 402 || data.code === 'limit_reached'){
+        showHardLimitModal();
+      } else if(res.status === 403 || data.code === 'upgrade_required'){
         openPricing(data.error || 'Upgrade to Pro to continue.');
       } else {
         showToast(data.error || 'Generation failed');
