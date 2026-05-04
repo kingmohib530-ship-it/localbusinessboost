@@ -281,7 +281,26 @@ const TONES = {
   luxury:{adj:'truly exquisite',vibe:'absolutely luxurious',emoji:'✨'}
 };
 
-async function generate(){
+let currentMode = 'instant';
+let lastData = null;
+let activeTab = 'reviews';
+
+const MODE_BANNERS = {
+  instant: 'Generating <strong>all sections</strong> in one shot — ready to post.',
+  weekly: 'Building a <strong>7-day content plan</strong> across all sections.',
+  seo: 'Emphasizing <strong>local geo + keyword density</strong> for search visibility.',
+  variation: 'Returning <strong>multiple stylistic versions</strong> per section.'
+};
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+  });
+});
+
+async function generate(section){
   const biz=document.getElementById('businessType').value.trim();
   const loc=document.getElementById('location').value.trim();
   const aud=document.getElementById('audience').value.trim()||'locals';
@@ -290,17 +309,24 @@ async function generate(){
 
   const btn=document.getElementById('generateBtn');
   const spin=document.getElementById('spinner');
-  btn.disabled=true; spin.style.display='inline-block';
+  if(!section){ btn.disabled=true; spin.style.display='inline-block'; }
 
   try {
     const res = await fetch('/api/generate-content', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ businessType:biz, location:loc, audience:aud, tone })
+      body: JSON.stringify({ businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section })
     });
     const data = await res.json();
     if(!res.ok){ showToast(data.error || 'Generation failed'); return; }
-    renderResults(data);
+
+    if(section && lastData){
+      if(data[section]) lastData[section] = data[section];
+      renderResults(lastData);
+    } else {
+      lastData = data;
+      renderResults(data);
+    }
   } catch(e){
     console.error(e);
     showToast('Network error — try again');
@@ -309,36 +335,90 @@ async function generate(){
   }
 }
 
+const TABS = [
+  { id:'reviews', label:'Reviews', icon:'⭐' },
+  { id:'captions', label:'Captions', icon:'📸' },
+  { id:'hooks', label:'Hooks', icon:'🪝' },
+  { id:'hashtags', label:'Hashtags', icon:'#️⃣' },
+  { id:'promos', label:'Promos', icon:'🎯' },
+  { id:'sms', label:'SMS', icon:'💬' }
+];
+
+function getSectionItems(data, id){
+  if(id==='hashtags') return data.hashtags || [];
+  if(id==='promos') return data.promos || [];
+  if(id==='hooks') return data.hooks || deriveHooks(data);
+  return data[id] || [];
+}
+
+function deriveHooks(data){
+  // Backend doesn't return hooks yet — derive short hooks from captions as a placeholder.
+  const caps = data.captions || [];
+  return caps.map(c => {
+    const first = String(c).split(/[.!?\n]/)[0].trim();
+    return first.length > 90 ? first.slice(0,87)+'…' : first;
+  }).filter(Boolean);
+}
+
 function renderResults(data){
   const out=document.getElementById('output');
-  const reviews = data.reviews || [];
-  const captions = data.captions || [];
-  const tags = data.hashtags || [];
-  const promos = data.promos || [];
-  const sms = data.sms || [];
+  const banner = MODE_BANNERS[currentMode] || '';
 
-  out.innerHTML=`
-    <div class="results-grid">
-      ${card('⭐','Customer Reviews','3 authentic-sounding reviews',renderItems(reviews,'Review'))}
-      ${card('📸','Social Captions','Ready to post on Instagram & TikTok',renderItems(captions,'Caption')+subsection('Hashtags',renderHashtags(tags)))}
-      ${card('🎯','Promotions',`${promos.length} eye-catching offers`,renderPromos(promos))}
-      ${card('💬','SMS Messages','Short, punchy & conversion-ready',renderItems(sms,'SMS'))}
-    </div>`;
-}
-
-function escapeAttr(s){return s.replace(/'/g,"\\'").replace(/"/g,'&quot;');}
-function card(icon,title,sub,body){
-  return `<div class="result-card">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="card-icon">${icon}</div>
-        <div><div class="card-title">${title}</div><div class="card-sub">${sub}</div></div>
+  out.innerHTML = `
+    <div class="tabs-wrap">
+      <div class="tabs-bar" id="tabsBar">
+        ${TABS.map(t => {
+          const count = getSectionItems(data, t.id).length;
+          return `<button class="tab-btn ${t.id===activeTab?'active':''}" data-tab="${t.id}">
+            <span>${t.icon}</span><span>${t.label}</span><span class="tab-count">${count}</span>
+          </button>`;
+        }).join('')}
       </div>
-      <button class="btn-copy-all" onclick="copyCard(this)">Copy All</button>
-    </div>
-    <div class="card-body">${body}</div>
-  </div>`;
+      <select class="tab-select" id="tabSelect">
+        ${TABS.map(t => {
+          const count = getSectionItems(data, t.id).length;
+          return `<option value="${t.id}" ${t.id===activeTab?'selected':''}>${t.icon}  ${t.label} (${count})</option>`;
+        }).join('')}
+      </select>
+      <div id="tabPanels">
+        ${TABS.map(t => `<div class="tab-panel ${t.id===activeTab?'active':''}" data-panel="${t.id}">
+          <div class="mode-banner">${banner}</div>
+          <div class="tab-actions">
+            <button class="tab-action-btn ta-primary" onclick="copyTab('${t.id}')">⧉ Copy All</button>
+            <button class="tab-action-btn ta-ghost" onclick="generate('${t.id}')">↻ Regenerate this section</button>
+          </div>
+          ${renderTabBody(t.id, data)}
+        </div>`).join('')}
+      </div>
+    </div>`;
+
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.addEventListener('click', () => switchTab(b.dataset.tab));
+  });
+  const sel = document.getElementById('tabSelect');
+  if(sel) sel.addEventListener('change', e => switchTab(e.target.value));
 }
+
+function switchTab(id){
+  activeTab = id;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel===id));
+  const sel = document.getElementById('tabSelect');
+  if(sel) sel.value = id;
+}
+
+function renderTabBody(id, data){
+  const items = getSectionItems(data, id);
+  if(!items || items.length===0){
+    return `<div style="padding:24px;text-align:center;color:var(--white-muted);font-size:13px;">No content yet for this section. Try regenerating.</div>`;
+  }
+  if(id==='hashtags') return renderHashtags(items);
+  if(id==='promos') return renderPromos(items);
+  const labels = { reviews:'Review', captions:'Caption', hooks:'Hook', sms:'SMS' };
+  return renderItems(items, labels[id] || 'Item');
+}
+
+function escapeAttr(s){return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');}
 function renderItems(arr,prefix){
   return `<div class="item-list">`+arr.map((txt,i)=>`
     <div class="item">
@@ -360,13 +440,15 @@ function renderPromos(promos){
       <button class="item-copy" onclick="copyText('${escapeAttr(p.text)}',this)">⧉</button>
     </div>`).join('')+`</div>`;
 }
-function subsection(label,inner){
-  return `<div class="subsection" style="margin-top:22px"><div class="subsection-label">${label}</div>${inner}</div>`;
-}
-function copyCard(btn){
-  const card=btn.closest('.result-card');
-  const texts=[...card.querySelectorAll('.item-text, .hashtag-chip')].map(e=>e.innerText).join('\n\n');
-  copyText(texts);
+function copyTab(id){
+  if(!lastData){ return; }
+  const items = getSectionItems(lastData, id);
+  if(!items.length){ showToast('Nothing to copy yet'); return; }
+  let text = '';
+  if(id==='promos') text = items.map(p => `${p.label}: ${p.text}`).join('\n\n');
+  else if(id==='hashtags') text = items.join(' ');
+  else text = items.join('\n\n');
+  copyText(text);
 }
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter' && document.activeElement && document.activeElement.tagName==='INPUT' && !document.getElementById('generateBtn').disabled) generate();
