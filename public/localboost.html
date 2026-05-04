@@ -734,6 +734,7 @@ function renderResults(data){
   const banner = MODE_BANNERS[currentMode] || '';
 
   out.innerHTML = `
+    ${currentMode==='weekly' ? renderCalendar(data) : ''}
     <div class="tabs-wrap">
       <div class="tabs-bar" id="tabsBar">
         ${TABS.map(t => {
@@ -766,6 +767,53 @@ function renderResults(data){
   });
   const sel = document.getElementById('tabSelect');
   if(sel) sel.addEventListener('change', e => switchTab(e.target.value));
+}
+
+const CAL_PLAN = [
+  { day:'Mon', section:'captions', icon:'📸', type:'Caption' },
+  { day:'Tue', section:'hooks',    icon:'🪝', type:'Hook' },
+  { day:'Wed', section:'promos',   icon:'🎯', type:'Promo' },
+  { day:'Thu', section:'reviews',  icon:'⭐', type:'Review' },
+  { day:'Fri', section:'sms',      icon:'💬', type:'SMS blast' },
+  { day:'Sat', section:'hashtags', icon:'#️⃣', type:'Hashtag set' },
+  { day:'Sun', section:'captions', icon:'📸', type:'Caption' }
+];
+function snippet(text, n){
+  const s = String(text || '').replace(/\s+/g,' ').trim();
+  return s.length > n ? s.slice(0, n-1).trimEnd() + '…' : s;
+}
+function calCell(plan, data, idx){
+  const items = getSectionItems(data, plan.section);
+  if(!items.length){
+    return `<div class="cal-day-snippet cal-day-empty">No ${plan.type.toLowerCase()} yet</div>`;
+  }
+  const pick = items[idx % items.length];
+  if(plan.section === 'promos'){
+    return `<div class="cal-day-snippet"><strong style="color:var(--gold2);">${snippet(pick.label, 28)}</strong><br>${snippet(pick.text, 70)}</div>`;
+  }
+  if(plan.section === 'hashtags'){
+    const set = items.slice(idx*3, idx*3+3).join(' ') || items.slice(0,3).join(' ');
+    return `<div class="cal-day-snippet" style="font-family:'DM Mono',monospace;color:var(--gold);">${snippet(set, 80)}</div>`;
+  }
+  return `<div class="cal-day-snippet">${snippet(pick, 90)}</div>`;
+}
+function renderCalendar(data){
+  const cells = CAL_PLAN.map((p, i) => `
+    <div class="cal-day">
+      <div class="cal-day-head">
+        <span class="cal-day-name">${p.day}</span>
+        <span class="cal-day-icon">${p.icon}</span>
+      </div>
+      <div class="cal-day-type">${p.type}</div>
+      ${calCell(p, data, i)}
+    </div>`).join('');
+  return `<div class="calendar-wrap">
+    <div class="calendar-head">
+      <div class="calendar-title">7-DAY <span>CONTENT CALENDAR</span></div>
+      <div class="calendar-sub">Snippets pulled from your generated content</div>
+    </div>
+    <div class="calendar-grid">${cells}</div>
+  </div>`;
 }
 
 function switchTab(id){
