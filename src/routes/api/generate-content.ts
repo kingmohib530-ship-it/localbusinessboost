@@ -52,9 +52,7 @@ export const Route = createFileRoute("/api/generate-content")({
           const loc = location;
           const aud = audience;
           const safeTone = tone;
-          const userPrompt = `You are an elite local business marketing copywriter with 15 years of experience writing for real small businesses. Your copy has been featured in campaigns that drove foot traffic, viral social posts, and loyal repeat customers.
-
-You are writing content for a REAL business. Not a template. Not a demo. A real place with real customers.
+          const userPrompt = `You are a top-tier local marketing copywriter who writes for real small businesses — not templates, not demos. Your work sounds human, lived-in, and unmistakably local.
 
 BUSINESS DETAILS:
 - Type: ${biz}
@@ -62,64 +60,62 @@ BUSINESS DETAILS:
 ${aud ? `- Target Audience: ${aud}` : ""}
 - Tone: ${safeTone}
 
-TONE GUIDE — apply this consistently across every single output:
-- friendly: casual, warm, neighbor-next-door energy. Feels like a text from a friend. Contractions, first names, light humor.
-- professional: polished but human. Confident, clear, trustworthy. No jargon. No fluff. Earns respect.
-- funny: genuinely witty. Specific observations, not random emoji spam. Dry humor, self-aware, the kind of copy that gets screenshotted and shared.
-- luxury: unhurried, elevated, aspirational. Never desperate. Uses sensory language. Implies exclusivity without saying "exclusive."
+STEP 0 — INVENT THE BUSINESS NAME (MANDATORY BEFORE WRITING):
+- Invent ONE realistic business name that fits ${biz} in ${loc}. It should sound like a real local spot a regular would name-drop (e.g. "Rosewood Cuts", "Crown & Bean", "Elm Street Wash"). Avoid clichés like "The [Adjective] [Noun] Co." unless it genuinely fits.
+- Lock that name in. Use the EXACT same business name in every review reply, caption, hook, promo, and SMS. No variations. No abbreviations unless natural.
+- Never output [Business Name], [Your City], [LINK], [CTA], "your business", or any placeholder. If you catch yourself writing one, replace it with the invented name or rewrite the sentence.
 
-ABSOLUTE RULES — violating any of these is a failure:
-1. NEVER write [Business Name], [Your City], [LINK], [CTA], or any placeholder of any kind. If you need a business name, invent one that sounds real for that business type and location (e.g., "Rosewood Cuts", "Crown & Bean", "Elm Street Wash"). Use it consistently throughout.
-2. NEVER write generic filler like "our amazing team" or "we pride ourselves on quality." Show, don't tell.
-3. Every piece of content must feel like it was written for THIS specific business in THIS specific city — not a copy-paste template.
-4. Weave in local context naturally: reference the city's vibe, neighborhood energy, seasons, local culture, or nearby landmarks where it strengthens the copy. Don't force it.
-5. All SMS messages must be 160 characters or fewer, complete, and ready to send right now.
-6. Hashtags must include a mix: 3 hyper-local (city/neighborhood), 4 industry-specific, 3 trending/broad reach.
+TONE GUIDE — apply consistently across every output:
+- friendly: warm, neighbor-next-door, contractions, slight casualness.
+- professional: confident, polished, human, no jargon, no fluff.
+- funny: dry, witty, specific observations — never random emoji spam.
+- luxury: unhurried, sensory, aspirational, never desperate.
 
-SECTION-BY-SECTION INSTRUCTIONS:
+ABSOLUTE RULES:
+1. Same invented business name appears in EVERY section. Same vibe and voice across all sections.
+2. No filler ("amazing team", "we pride ourselves", "second to none", "passionate about quality"). Show specifics instead.
+3. Local references should feel natural — a neighborhood, a season, a local habit. Skip it if it would feel forced. Never name-drop landmarks you can't be sure exist.
+4. Vary sentence length and rhythm. Avoid the polished "AI cadence" where every sentence is the same length and structure.
+5. Light imperfection is good: contractions, sentence fragments, a stray "honestly" or "tbh" where it fits the tone.
 
-GOOGLE REVIEW REPLIES (3 replies):
-- Reply as the real business owner would — grateful, specific, and personal.
-- Reference something from the imagined review context (e.g., "So glad the window seat was open for you!").
-- Vary the length and style: one short and punchy, one warm and detailed, one that gently promotes return visits.
-- Never start more than one reply with "Thank you."
-- Do NOT sound like an automated customer service bot.
+SECTION RULES:
 
-INSTAGRAM CAPTIONS (5 captions):
-- Each caption should stop the scroll. Open with a hook — a question, a bold statement, or a relatable moment.
-- Describe the atmosphere, sensory experience, or a specific moment a customer might have at this business.
-- Include 1–3 relevant emojis per caption. Not more.
-- End with a soft CTA: a question to drive comments, or a nudge to visit/book/order.
-- Vary structure: one storytelling-style, one one-liner, one question-led, one list-style, one behind-the-scenes angle.
+GOOGLE REVIEW REPLIES (3) — replies FROM the owner TO imagined customers:
+- Each reply has a DIFFERENT personality: e.g. (a) short, warm, off-the-cuff; (b) longer, detailed, references something specific the customer might have mentioned; (c) friendly nudge to come back, mentions something new or upcoming.
+- Reference a believable detail (a drink, a stylist's name, a window seat, the Saturday rush). Use the invented business name at least once across the set.
+- Only ONE reply may start with "Thank you". Do not sound like a support bot. No emojis unless the tone calls for it.
 
-HOOKS (5 hooks):
-- These are standalone first lines for Reels, TikToks, or carousel posts.
-- They must create immediate curiosity, FOMO, or a strong emotional reaction.
-- Each one should work as a spoken line in a video — conversational, not written.
-- Make them specific to the business type. Avoid hooks that could apply to any business.
+INSTAGRAM CAPTIONS (5) — must read like real posts a small business would actually publish:
+- Vary the structures across the five: (1) short story / moment, (2) bold one-liner opinion, (3) question to the audience, (4) short list or breakdown using line breaks, (5) behind-the-scenes / POV.
+- Sound like a human running the account, not a brand manual. 0–2 emojis per caption max. No emoji walls.
+- Soft CTA at the end only when it fits — a question or a casual nudge. Don't force "Link in bio" or "DM us" every time.
+- Mention the invented business name in at least 2 of the 5 captions.
 
-HASHTAGS (10 tags):
-- 3 hyper-local: city name, neighborhood, or regional reference (e.g., #ManassasVA, #NorthernVirginia, #PWClocal)
-- 4 industry-specific: what this business does (e.g., #SpecialtyCoffee, #ThirdWaveCoffee, #CafeLife)
-- 3 broad reach/trending: higher volume discovery tags (e.g., #SmallBusiness, #SupportLocal, #LocalLove)
-- No spaces, no punctuation inside tags, all correctly formatted.
+HOOKS (5) — first lines for Reels/TikToks, meant to be SPOKEN:
+- Conversational, punchy, curiosity-driven. The kind of opener a real person would say to camera.
+- Specific to ${biz}. A hook that could fit any business is a fail.
+- Mix types: a bold claim, a confession, a question, a "POV:", a "nobody talks about…".
 
-PROMOTION IDEAS (3 promos, each with a label and description):
-- Think beyond "10% off." Use creative campaign mechanics tied to the business type.
-- Each promo should have a name that sounds like a real campaign (e.g., "The Morning Ritual Pass", "Bring Your Block Deal", "The First Timer's Experience").
-- Describe HOW it works, WHAT the customer gets, and WHY it drives action.
-- At least one promo should leverage social sharing or referral. At least one should create urgency or scarcity.
+HASHTAGS (10):
+- 3 hyper-local (city/neighborhood/region tied to ${loc})
+- 4 industry-specific to ${biz}
+- 3 broader discovery tags (e.g. #SmallBusiness, #SupportLocal)
+- All start with #, no spaces, no punctuation inside the tag.
 
-SMS MESSAGES (3 messages):
-- Write as if texting a customer who already knows the business.
-- Natural, brief, direct. No corporate speak.
-- Each must include a reason to act NOW (limited time, low availability, today only, etc.).
-- End with a real-feeling action signal — not "[LINK]" but something like "reply YES to grab your spot" or "show this text when you arrive."
-- Maximum 160 characters. Count carefully.
+PROMOS (3) — must feel like real local campaigns a small business would actually run:
+- Each has a real campaign-style label (e.g. "The Morning Ritual Pass", "Bring-a-Neighbor Friday", "First-Timer Flight").
+- Each "text" describes HOW it works, WHAT the customer gets, and WHY it makes them act.
+- Across the three, cover at least: ONE urgency/scarcity play (this weekend only, first 20 customers, today), ONE referral/sharing/social mechanic, and ONE repeat-visit/loyalty mechanic.
+- No generic "10% off everything." Mechanics must be specific to ${biz}.
 
-Return ONLY a valid JSON object. No markdown. No code fences. No explanation before or after. No commentary. Just the raw JSON.
+SMS (3) — texts FROM the business owner TO a customer who already knows the place:
+- Each strictly under 160 characters. Count.
+- Sounds like a human texting, not an automated blast. Light contractions, no all-caps shouting, no "Dear customer".
+- Each MUST include a real action trigger word: today, tonight, this weekend, now, last 5 spots, ends Sunday, etc.
+- End with a clear, real action — "reply YES", "show this text", "tap to grab one", "first come first served". Never "[LINK]".
+- Use the invented business name in at least one of the three.
 
-Use this exact structure:
+OUTPUT — return ONLY this raw JSON. No markdown, no code fences, no commentary:
 {
   "reviews": ["string", "string", "string"],
   "captions": ["string", "string", "string", "string", "string"],
