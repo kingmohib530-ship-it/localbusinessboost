@@ -495,6 +495,90 @@ function clearRecent(){
   showToast('History cleared');
 }
 
+// ===== Weekly Content Reminders =====
+const REMINDERS_KEY = 'lb_weekly_reminders_v1';
+const REMINDER_MIN_DAYS = 5;
+const REMINDER_MAX_DAYS = 7;
+
+function loadReminders(){
+  try { return JSON.parse(localStorage.getItem(REMINDERS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function persistReminders(map){
+  localStorage.setItem(REMINDERS_KEY, JSON.stringify(map));
+}
+function setReminderForProfile(profileId, enabled){
+  const map = loadReminders();
+  if(enabled){
+    map[profileId] = { enabled: true, ts: Date.now(), dismissedAt: 0 };
+  } else {
+    delete map[profileId];
+  }
+  persistReminders(map);
+}
+function findCurrentProfileId(){
+  const businessType = document.getElementById('businessType').value.trim();
+  const location = document.getElementById('location').value.trim();
+  if(!businessType || !location) return null;
+  const key = (businessType + '|' + location).toLowerCase();
+  const match = loadProfiles().find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  return match ? match.id : null;
+}
+function refreshReminderToggle(){
+  const wrap = document.getElementById('reminderToggle');
+  const cb = document.getElementById('reminderCheckbox');
+  const pid = findCurrentProfileId();
+  if(!pid){ wrap.classList.remove('visible'); cb.checked = false; return; }
+  wrap.classList.add('visible');
+  const map = loadReminders();
+  cb.checked = !!(map[pid] && map[pid].enabled);
+  cb.dataset.profileId = pid;
+}
+function checkReminderBanner(){
+  const banner = document.getElementById('reminderBanner');
+  const map = loadReminders();
+  const profiles = loadProfiles();
+  const now = Date.now();
+  const dayMs = 86400000;
+  let due = null;
+  for(const p of profiles){
+    const r = map[p.id];
+    if(!r || !r.enabled) continue;
+    const age = (now - r.ts) / dayMs;
+    const sinceDismiss = r.dismissedAt ? (now - r.dismissedAt) / dayMs : Infinity;
+    if(age >= REMINDER_MIN_DAYS && sinceDismiss >= 1){
+      due = { profile: p, age };
+      break;
+    }
+  }
+  if(!due){ banner.classList.remove('visible'); return; }
+  const txt = document.getElementById('reminderBannerText');
+  const name = profileLabel(due.profile);
+  txt.innerHTML = `It's time to refresh your <strong>${name.replace(/</g,'&lt;')}</strong> content<small>Last generated ${Math.floor(due.age)} days ago · weekly reminder</small>`;
+  banner.classList.add('visible');
+  banner.dataset.profileId = due.profile.id;
+}
+function onReminderBannerClick(){
+  const banner = document.getElementById('reminderBanner');
+  const pid = banner.dataset.profileId;
+  if(!pid) return;
+  applyProfile(pid);
+  // Reset the timer so it doesn't fire again immediately
+  const map = loadReminders();
+  if(map[pid]){ map[pid].ts = Date.now(); map[pid].dismissedAt = 0; persistReminders(map); }
+  banner.classList.remove('visible');
+  document.querySelector('.form-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  refreshReminderToggle();
+}
+function dismissReminderBanner(e){
+  e.stopPropagation();
+  const banner = document.getElementById('reminderBanner');
+  const pid = banner.dataset.profileId;
+  const map = loadReminders();
+  if(pid && map[pid]){ map[pid].dismissedAt = Date.now(); persistReminders(map); }
+  banner.classList.remove('visible');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderProfiles('');
   renderRecent();
@@ -503,10 +587,27 @@ document.addEventListener('DOMContentLoaded', () => {
   if(sel) sel.addEventListener('change', e => {
     if(e.target.value) applyProfile(e.target.value);
     else del.disabled = true;
+    refreshReminderToggle();
   });
   if(del) del.addEventListener('click', deleteSelectedProfile);
   const clr = document.getElementById('recentClearBtn');
   if(clr) clr.addEventListener('click', clearRecent);
+
+  // Reminder wiring
+  ['businessType','location'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', refreshReminderToggle);
+  });
+  const cb = document.getElementById('reminderCheckbox');
+  if(cb) cb.addEventListener('change', () => {
+    const pid = cb.dataset.profileId;
+    if(!pid){ cb.checked = false; showToast('Save this business first'); return; }
+    setReminderForProfile(pid, cb.checked);
+    showToast(cb.checked ? 'Weekly reminder on' : 'Weekly reminder off');
+  });
+  document.getElementById('reminderBanner')?.addEventListener('click', onReminderBannerClick);
+  document.getElementById('reminderBannerClose')?.addEventListener('click', dismissReminderBanner);
+  refreshReminderToggle();
+  checkReminderBanner();
 });
 
 const TONES = {
