@@ -211,6 +211,31 @@
    .upgrade-soft-btn.primary { background: var(--gold); color: #0a0a0a; }
    .upgrade-soft-btn.ghost { background: transparent; color: var(--white-muted); border: 1px solid var(--border2); }
    .upgrade-soft-btn.ghost:hover { color: var(--white); border-color: var(--gold); }
+   /* Conversion: warning banner near limit */
+   .limit-warn { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin: 12px 22px; background: linear-gradient(135deg, rgba(201,168,76,.18), transparent); border: 1px solid rgba(201,168,76,.4); border-left: 3px solid var(--gold); border-radius: 10px; font-family: 'DM Sans', sans-serif; }
+   .limit-warn-text { flex: 1; font-size: 12.5px; color: var(--white-dim); line-height: 1.45; }
+   .limit-warn-text strong { color: var(--gold2); font-weight: 600; }
+   .limit-warn-btn { background: var(--gold); color: #0a0a0a; border: none; padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+   .limit-warn-btn:hover { opacity: .9; }
+   .limit-warn-close { background: none; border: none; color: var(--white-muted); font-size: 18px; cursor: pointer; line-height: 1; padding: 0 4px; }
+   /* Conversion: post-first-gen soft modal + hard limit modal */
+   .convert-modal { position: fixed; inset: 0; background: rgba(5,5,5,.82); backdrop-filter: blur(8px); z-index: 1200; display: none; align-items: center; justify-content: center; padding: 24px; }
+   .convert-modal.open { display: flex; animation: fadeUp .25s ease; }
+   .convert-card { width: 100%; max-width: 460px; background: #0d0d0d; border: 1px solid var(--gold); border-radius: 16px; padding: 32px clamp(22px, 4vw, 36px); position: relative; text-align: center; box-shadow: 0 24px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(201,168,76,.2); }
+   .convert-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+   .convert-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1.1; letter-spacing: 1.2px; color: var(--white); margin-bottom: 10px; }
+   .convert-title span { color: var(--gold); }
+   .convert-sub { font-size: 13.5px; color: var(--white-dim); line-height: 1.55; margin-bottom: 20px; }
+   .convert-bullets { list-style: none; padding: 0; margin: 0 0 22px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+   .convert-bullets li { font-size: 13px; color: var(--white-dim); padding-left: 22px; position: relative; line-height: 1.4; }
+   .convert-bullets li:before { content: '✓'; position: absolute; left: 0; color: var(--gold); font-weight: 700; }
+   .convert-cta-primary { width: 100%; padding: 13px; border-radius: 10px; background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: transform .15s; }
+   .convert-cta-primary:hover { transform: translateY(-1px); }
+   .convert-cta-ghost { width: 100%; margin-top: 8px; padding: 10px; border-radius: 10px; background: transparent; color: var(--white-muted); font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; border: 1px solid var(--border2); cursor: pointer; }
+   .convert-cta-ghost:hover { color: var(--white); border-color: var(--white-muted); }
+   .convert-meta { margin-top: 14px; font-size: 11.5px; color: var(--white-muted); font-family: 'DM Mono', monospace; letter-spacing: .5px; }
+   .convert-close { position: absolute; top: 12px; right: 14px; background: transparent; border: none; color: var(--white-muted); font-size: 22px; cursor: pointer; line-height: 1; }
+   .convert-close:hover { color: var(--white); }
    .badge.pro-badge { background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; }
    .badge.agency-badge { background: linear-gradient(135deg, #b58cd8, #6a4ea8); color: #0a0a0a; }
    .mode-btn.locked { opacity: .55; }
@@ -510,6 +535,19 @@
   </div>
 </div>
 
+<div class="convert-modal" id="convertModal" role="dialog" aria-modal="true" aria-labelledby="convertTitle">
+  <div class="convert-card">
+    <button type="button" class="convert-close" id="convertCloseBtn" aria-label="Close">×</button>
+    <div class="convert-eyebrow" id="convertEyebrow">✦ You're on a roll ✦</div>
+    <div class="convert-title" id="convertTitle">Want <span>unlimited content</span> like this?</div>
+    <div class="convert-sub" id="convertSub">Keep the momentum going — generate as much as you need, anytime.</div>
+    <ul class="convert-bullets" id="convertBullets"></ul>
+    <button type="button" class="convert-cta-primary" id="convertPrimaryBtn">Upgrade to Pro — $19/month</button>
+    <button type="button" class="convert-cta-ghost" id="convertGhostBtn">Maybe later</button>
+    <div class="convert-meta" id="convertMeta"></div>
+  </div>
+</div>
+
 <script>
 // ===== Auth / per-user storage =====
 const SUPABASE_URL = 'https://uibavbmqvzbjhssbvrbn.supabase.co';
@@ -587,6 +625,7 @@ function setPlan(p){
   refreshPlanBadge();
   renderPricingGrid();
   updateModeLocks();
+  renderLimitWarnBanner?.();
   renderClientBar?.();
   renderRecent?.();
   showToast(p === 'free' ? 'Switched to Free plan' : `Welcome to ${PLANS[p].name}!`);
@@ -711,7 +750,127 @@ function updateModeLocks(){
 }
 
 // Backwards-compat shim
-function upgradePro(){ openPricing(); }
+function upgradePro(){ startProCheckout('upgrade_btn'); }
+
+// ===== Conversion Optimization Layer =====
+const FIRST_GEN_PROMPT_KEY = 'lb_first_gen_prompt_v1';
+const WARN_DISMISS_KEY = 'lb_warn_dismiss_day_v1';
+
+async function startProCheckout(source){
+  let email = null;
+  try { const { data } = await sb.auth.getUser(); email = data?.user?.email || null; } catch(_){}
+  closeConvertModal();
+  closePricing();
+  window.parent.postMessage({ type: 'lb-checkout', priceId: 'pro_monthly', userId: currentUserId, email, source: source || 'convert' }, '*');
+}
+
+function showConvertModal({eyebrow, title, sub, bullets, primaryText, ghostText, meta, onPrimary, onGhost, dismissible}){
+  const m = document.getElementById('convertModal');
+  if(!m) return;
+  document.getElementById('convertEyebrow').textContent = eyebrow || '✦ Unlock more ✦';
+  document.getElementById('convertTitle').innerHTML = title;
+  document.getElementById('convertSub').textContent = sub || '';
+  const ul = document.getElementById('convertBullets');
+  ul.innerHTML = (bullets || []).map(b => `<li>${b}</li>`).join('');
+  const pBtn = document.getElementById('convertPrimaryBtn');
+  pBtn.textContent = primaryText || 'Upgrade to Pro — $19/month';
+  const gBtn = document.getElementById('convertGhostBtn');
+  gBtn.textContent = ghostText || 'Maybe later';
+  document.getElementById('convertMeta').textContent = meta || '';
+  const closeX = document.getElementById('convertCloseBtn');
+  closeX.style.display = (dismissible === false) ? 'none' : '';
+  const newP = pBtn.cloneNode(true); pBtn.replaceWith(newP);
+  newP.addEventListener('click', () => { (onPrimary || (() => startProCheckout('convert_modal')))(); });
+  const newG = gBtn.cloneNode(true); gBtn.replaceWith(newG);
+  newG.addEventListener('click', () => { (onGhost || closeConvertModal)(); });
+  if(dismissible !== false){
+    const newX = closeX.cloneNode(true); closeX.replaceWith(newX);
+    newX.addEventListener('click', closeConvertModal);
+  }
+  m.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeConvertModal(){
+  const m = document.getElementById('convertModal');
+  if(!m) return;
+  m.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function maybeShowFirstGenPrompt(){
+  if(getPlan() !== 'free') return;
+  const k = K(FIRST_GEN_PROMPT_KEY);
+  if(localStorage.getItem(k)) return;
+  localStorage.setItem(k, '1');
+  setTimeout(() => {
+    showConvertModal({
+      eyebrow: '✦ You just made your first piece ✦',
+      title: 'Want <span>unlimited content</span> like this?',
+      sub: 'Keep generating without limits and scale your business faster.',
+      bullets: [
+        'Unlimited content, every day',
+        'All planning and SEO modes unlocked',
+        'Refresh any section in one click',
+      ],
+    });
+  }, 900);
+}
+
+function renderLimitWarnBanner(){
+  const existing = document.getElementById('limitWarnBanner');
+  if(getPlan() !== 'free'){ if(existing) existing.remove(); return; }
+  const limits = planLimits();
+  const used = getDailyCount();
+  const cap = limits.dailyGenerations;
+  if(!cap || cap === Infinity){ if(existing) existing.remove(); return; }
+  const ratio = used / cap;
+  const dismissedDay = localStorage.getItem(K(WARN_DISMISS_KEY));
+  if(ratio < 0.7 || used >= cap || dismissedDay === todayKey()){
+    if(existing) existing.remove();
+    return;
+  }
+  if(existing) return;
+  const left = cap - used;
+  const div = document.createElement('div');
+  div.id = 'limitWarnBanner';
+  div.className = 'limit-warn';
+  div.innerHTML = `
+    <div class="limit-warn-text"><strong>You're close to your daily limit</strong> — ${left} generation${left===1?'':'s'} left today. Unlock unlimited content with Pro.</div>
+    <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">Upgrade to Pro</button>
+    <button type="button" class="limit-warn-close" id="limitWarnClose" aria-label="Dismiss">×</button>`;
+  const main = document.querySelector('main');
+  if(main && main.firstChild) main.insertBefore(div, main.firstChild);
+  else document.body.prepend(div);
+  document.getElementById('limitWarnUpgrade').addEventListener('click', () => startProCheckout('limit_warn'));
+  document.getElementById('limitWarnClose').addEventListener('click', () => {
+    localStorage.setItem(K(WARN_DISMISS_KEY), todayKey());
+    div.remove();
+  });
+}
+
+function nextResetText(){
+  const now = new Date();
+  const reset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+  const ms = reset.getTime() - now.getTime();
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `Resets in ${h}h ${m}m (00:00 UTC)`;
+}
+
+function showHardLimitModal(){
+  showConvertModal({
+    eyebrow: '✦ Daily limit reached ✦',
+    title: "You've hit your <span>daily limit</span>",
+    sub: "Don't stop now — keep generating without limits and grow your business faster.",
+    bullets: [
+      'Unlimited content, anytime',
+      'All advanced modes unlocked',
+      'Refresh sections individually',
+    ],
+    ghostText: nextResetText(),
+    onGhost: () => { showToast(nextResetText()); },
+  });
+}
 
 // ===== Client Mode =====
 const ACTIVE_CLIENT_KEY = 'lb_active_client_v1';
@@ -1189,7 +1348,7 @@ async function generate(section){
     return;
   }
   if(!section && getDailyCount() >= limits.dailyGenerations){
-    openPricing(`You've used all ${limits.dailyGenerations} generations on the Starter plan today. Upgrade to Pro for unlimited generations.`);
+    showHardLimitModal();
     return;
   }
 
@@ -1209,7 +1368,9 @@ async function generate(section){
     });
     const data = await res.json();
     if(!res.ok){
-      if(res.status === 402 || res.status === 403 || data.code === 'limit_reached' || data.code === 'upgrade_required'){
+      if(res.status === 402 || data.code === 'limit_reached'){
+        showHardLimitModal();
+      } else if(res.status === 403 || data.code === 'upgrade_required'){
         openPricing(data.error || 'Upgrade to Pro to continue.');
       } else {
         showToast(data.error || 'Generation failed');
@@ -1239,6 +1400,8 @@ async function generate(section){
         if(map[pid] && map[pid].enabled){ map[pid].ts = Date.now(); map[pid].dismissedAt = 0; persistReminders(map); }
       }
       checkReminderBanner();
+      renderLimitWarnBanner();
+      maybeShowFirstGenPrompt();
     }
   } catch(e){
     console.error(e);
@@ -1485,6 +1648,7 @@ function applySession(session){
     // Re-render everything for this user's namespace
     if(typeof refreshPlanBadge === 'function') refreshPlanBadge();
     if(typeof updateModeLocks === 'function') updateModeLocks();
+    if(typeof renderLimitWarnBanner === 'function') renderLimitWarnBanner();
     if(typeof renderClientBar === 'function') renderClientBar();
     if(typeof renderProfiles === 'function') renderProfiles(getActiveClientId() || '');
     if(typeof renderRecent === 'function') renderRecent();
