@@ -538,19 +538,19 @@ const PLAN_KEY = 'lb_plan_v1';
 const USAGE_KEY = 'lb_usage_v1';
 const PLANS = {
   free: {
-    name: 'Free', price: '$0', period: '/forever',
-    pitch: 'Test the platform with daily generations.',
+    name: 'Starter', price: '$7.99', period: '/month',
+    pitch: 'Entry tier for testing the platform with daily limits.',
     feats: [
       { ok:true, t:'5 generations per day' },
       { ok:true, t:'1 saved business' },
-      { ok:true, t:'Instant + Local SEO modes' },
-      { ok:false, t:'Weekly Planner mode' },
-      { ok:false, t:'Section regeneration' },
-      { ok:false, t:'Full history (5 entries)' },
-      { ok:false, t:'Multiple client workspaces' },
-      { ok:false, t:'Bulk generation & export packs' },
+      { ok:true, t:'Instant mode only' },
+      { ok:true, t:'Limited history (last 5 results)' },
+      { ok:false, t:'Unlimited generations' },
+      { ok:false, t:'Weekly Planner, Local SEO & Variation modes' },
+      { ok:false, t:'Section regeneration & priority queue' },
+      { ok:false, t:'Bulk generation, export packs & multi-client workspaces' },
     ],
-    cta: 'Current plan', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 1, modes: ['instant','seo','variation'] }
+    cta: 'Current plan', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 5, modes: ['instant'] }
   },
   pro: {
     name: 'Pro', price: '$19', period: '/month',
@@ -560,7 +560,7 @@ const PLANS = {
       { ok:true, t:'Unlimited saved businesses' },
       { ok:true, t:'All modes including Weekly Planner' },
       { ok:true, t:'Section regeneration' },
-      { ok:true, t:'Full history (5 per business)' },
+      { ok:true, t:'Full history' },
       { ok:true, t:'Weekly content reminders' },
       { ok:false, t:'Multi-client workspace switching' },
       { ok:false, t:'Bulk generation & export packs' },
