@@ -673,6 +673,13 @@ async function generate(section){
         businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
         data
       });
+      // Reset weekly reminder timer if this business has one enabled
+      const pid = findCurrentProfileId();
+      if(pid){
+        const map = loadReminders();
+        if(map[pid] && map[pid].enabled){ map[pid].ts = Date.now(); map[pid].dismissedAt = 0; persistReminders(map); }
+      }
+      checkReminderBanner();
     }
   } catch(e){
     console.error(e);
