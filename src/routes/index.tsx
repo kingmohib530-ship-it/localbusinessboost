@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { absoluteUrl } from "@/lib/url";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,7 +62,7 @@ function Index() {
                 priceId={checkout.priceId}
                 userId={checkout.userId}
                 customerEmail={checkout.email}
-                returnUrl={`${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`}
+                returnUrl={absoluteUrl("/checkout/return?session_id={CHECKOUT_SESSION_ID}")}
               />
             </div>
           </div>

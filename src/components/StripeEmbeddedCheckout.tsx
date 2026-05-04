@@ -1,6 +1,7 @@
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCheckoutSession } from "@/utils/payments.functions";
+import { absoluteUrl } from "@/lib/url";
 
 interface Props {
   priceId: string;
@@ -18,7 +19,7 @@ export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, userI
         quantity,
         customerEmail,
         userId,
-        returnUrl: returnUrl || window.location.href,
+        returnUrl: returnUrl || absoluteUrl("/checkout/return?session_id={CHECKOUT_SESSION_ID}"),
         environment: getStripeEnvironment(),
       },
     });

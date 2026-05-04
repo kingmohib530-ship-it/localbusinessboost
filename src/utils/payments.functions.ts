@@ -12,6 +12,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     environment: StripeEnv;
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
+    try {
+      const u = new URL(data.returnUrl);
+      if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("bad protocol");
+    } catch {
+      throw new Error("returnUrl must be an absolute http(s) URL");
+    }
     return data;
   })
   .handler(async ({ data }) => {

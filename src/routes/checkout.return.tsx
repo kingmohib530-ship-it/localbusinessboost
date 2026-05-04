@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { absoluteUrl, topLevelNavigate } from "@/lib/url";
 
 export const Route = createFileRoute("/checkout/return")({
   validateSearch: (search: Record<string, unknown>): { session_id?: string } => ({
@@ -40,7 +41,7 @@ function CheckoutReturn() {
       if (data && ["active", "trialing"].includes((data as { status: string }).status)) {
         setStatus("active");
         setTimeout(() => {
-          window.location.href = "/";
+          topLevelNavigate(absoluteUrl("/"));
         }, 1500);
         return;
       }
