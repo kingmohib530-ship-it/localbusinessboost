@@ -1039,9 +1039,14 @@ const MODE_BANNERS = {
 
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    if(!planLimits().modes.includes(mode)){
+      openPricing(`${mode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature.`);
+      return;
+    }
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentMode = btn.dataset.mode;
+    currentMode = mode;
   });
 });
 
