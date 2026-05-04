@@ -78,7 +78,7 @@ TONE BLENDING RULE — tone influences style, it does NOT fully control it. Appl
 - SMS: always practical and conversational, regardless of tone. Even luxury SMS stays short, direct, and texting-natural — no poetry, no manifesto, no jokes that obscure the action.
 - HOOKS: lightly tone-flavored but still spoken-out-loud natural.
 - CAPTIONS: tone CAN come through more strongly here, but still social-first (see luxury exception above).
-- PROMOS: this is the MOST stylized section. Tone can fully shape the campaign name and pitch. Go further here than anywhere else.
+- PROMOS: tone shapes the DESCRIPTION only. The promo NAME stays plain and operational regardless of tone — never stylized, never branded, never poetic. A café owner writing on a chalkboard, not a marketing agency.
 
 ABSOLUTE RULES:
 1. Same invented business name appears in EVERY section. Same vibe and voice across all sections.
@@ -122,7 +122,8 @@ HASHTAGS (10):
 - All start with #, no spaces, no punctuation inside the tag.
 
 PROMOS (3) — must feel like real local campaigns a small business would actually run:
-- Each has a plain, practical label that sounds like something the OWNER would actually say out loud to a regular — NOT a marketing agency tagline. Good: "Tuesday Coffee Club", "Bring a Friend Friday", "Early Bird Cuts", "Punch Card", "Neighbor Discount". Bad (avoid): "The Morning Ritual Pass", "The Artisan Experience Collective", "Curated Mornings", "The [Adjective] [Noun] Edition", anything that reads like a luxury brand campaign. Keep elegance in the TONE of the description, not in the name. Names should be clear, short, and operational — a customer should instantly understand what it is from the name alone.
+- NAME RULE (strict): the promo name must sound like something the OWNER would literally say out loud or scribble on a chalkboard. Plain, direct, immediately understandable. Good: "Morning Coffee Deal", "Bring a Friend Friday", "Free Pastry Friday", "Tuesday Coffee Club", "Early Bird Cuts", "Punch Card", "Neighbor Discount", "$5 Lunch Special", "Two-for-One Tuesdays". Bad (NEVER use): "Curated Connections", "The Connoisseur's Card", "The Morning Ritual Pass", "The Artisan Experience Collective", "Curated Mornings", "The [Adjective] [Noun] Edition", "An Ode to…", or anything that reads like a luxury brand campaign, agency tagline, or poetic title. No "The ___" framing. No abstract nouns. No invented brand language. The value lives in the OFFER itself, not in the branding of the offer.
+- TONE RULE (strict): luxury / playful / bold tone shows up ONLY in the description text, NEVER in the name. Even for a luxury brand, the name stays plain ("Sunday Tasting", "Member Pour", "Friday Cut") while the description can carry the elegance. Clarity and real-world usability beat creativity in naming, every time.
 - Each "text" describes HOW it works, WHAT the customer gets, and WHY it makes them act.
 - Across the three, cover at least: ONE urgency/scarcity play (this weekend only, first 20 customers, today), ONE referral/sharing/social mechanic, and ONE repeat-visit/loyalty mechanic.
 - No generic "10% off everything." Mechanics must be specific to ${biz}.
