@@ -2,8 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import { createPortalSession } from "@/utils/payments.functions";
-import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,20 +23,11 @@ function Index() {
   const [checkout, setCheckout] = useState<CheckoutReq | null>(null);
 
   useEffect(() => {
-    const onMsg = async (e: MessageEvent) => {
+    const onMsg = (e: MessageEvent) => {
       const d = e.data;
       if (!d || typeof d !== "object") return;
       if (d.type === "lb-checkout" && typeof d.priceId === "string") {
         setCheckout({ priceId: d.priceId, userId: d.userId, email: d.email });
-      } else if (d.type === "lb-portal") {
-        try {
-          const url = await createPortalSession({
-            data: { environment: getStripeEnvironment(), returnUrl: window.location.origin },
-          });
-          window.open(url, "_blank");
-        } catch (err) {
-          alert("Open billing portal failed: " + (err as Error).message);
-        }
       }
     };
     window.addEventListener("message", onMsg);
