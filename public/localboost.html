@@ -392,6 +392,100 @@ function upgradePro(){
   showToast('Email Kingmohib530@gmail.com for early Pro access');
 }
 
+// ===== Client Mode =====
+const ACTIVE_CLIENT_KEY = 'lb_active_client_v1';
+const CLIENT_PALETTE = ['#c9a84c','#7ab8d8','#d87a96','#84c98e','#b58cd8','#e2a06b','#6cc8c0','#d8c45c'];
+function getActiveClientId(){ return localStorage.getItem(ACTIVE_CLIENT_KEY) || ''; }
+function setActiveClientId(id){
+  if(id) localStorage.setItem(ACTIVE_CLIENT_KEY, id);
+  else localStorage.removeItem(ACTIVE_CLIENT_KEY);
+}
+function clientColor(id){
+  let h = 0; for(let i=0;i<id.length;i++) h = (h*31 + id.charCodeAt(i)) >>> 0;
+  return CLIENT_PALETTE[h % CLIENT_PALETTE.length];
+}
+function clientInitials(p){
+  const src = (p.businessType || p.location || '?').trim();
+  const words = src.split(/\s+/);
+  return ((words[0]||'?')[0] + (words[1]?words[1][0]:'')).toUpperCase();
+}
+function renderClientBar(){
+  const list = loadProfiles();
+  const chips = document.getElementById('clientChips');
+  const active = getActiveClientId();
+  if(!list.length){
+    chips.innerHTML = `<span class="client-empty">No clients yet — fill the form & click ★ Save This Business to add one.</span>`;
+  } else {
+    chips.innerHTML = list.map(p => {
+      const isActive = p.id === active;
+      const count = loadAllRecent().filter(r => r.clientId === p.id).length;
+      const color = clientColor(p.id);
+      return `<button type="button" class="client-chip ${isActive?'active':''}" data-id="${p.id}" title="${profileLabel(p).replace(/"/g,'&quot;')}">
+        <span class="client-chip-avatar" style="background:${color}">${clientInitials(p)}</span>
+        <span class="client-chip-name">${profileLabel(p).replace(/</g,'&lt;')}</span>
+        <span class="client-chip-count">${count}</span>
+      </button>`;
+    }).join('');
+    chips.querySelectorAll('.client-chip').forEach(el => {
+      el.addEventListener('click', () => switchClient(el.dataset.id));
+    });
+  }
+  // banner
+  const banner = document.getElementById('activeClientBanner');
+  const nameEl = document.getElementById('activeClientName');
+  const activeProfile = list.find(p => p.id === active);
+  if(activeProfile){
+    banner.classList.add('visible');
+    nameEl.textContent = profileLabel(activeProfile);
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+function switchClient(id){
+  setActiveClientId(id);
+  const p = loadProfiles().find(x => x.id === id);
+  if(p){
+    document.getElementById('businessType').value = p.businessType || '';
+    document.getElementById('location').value = p.location || '';
+    document.getElementById('audience').value = p.audience || '';
+    document.getElementById('tone').value = p.tone || 'friendly';
+  }
+  // Clear current results (they belong to the previous client)
+  lastData = null;
+  resetOutputPanel();
+  renderClientBar();
+  renderProfiles(id);
+  const sel = document.getElementById('profileSelect'); if(sel) sel.value = id;
+  document.getElementById('profileDelBtn').disabled = !id;
+  renderRecent();
+  refreshReminderToggle();
+  if(p) showToast('Switched to ' + profileLabel(p));
+}
+function newClient(){
+  setActiveClientId('');
+  ['businessType','location','audience'].forEach(i => { document.getElementById(i).value=''; });
+  document.getElementById('tone').value = 'friendly';
+  lastData = null;
+  resetOutputPanel();
+  renderClientBar();
+  renderProfiles('');
+  const saveBtn = document.getElementById('saveBizBtn');
+  if(saveBtn) saveBtn.classList.remove('visible');
+  renderRecent();
+  refreshReminderToggle();
+  document.getElementById('businessType').focus();
+  showToast('New client workspace');
+}
+function resetOutputPanel(){
+  const out = document.getElementById('output');
+  if(!out) return;
+  out.innerHTML = `<div class="empty-state">
+    <div class="empty-icon">✦</div>
+    <h3>Ready to Boost</h3>
+    <p>Fill in your business details and click Generate to get customized marketing content instantly.</p>
+  </div>`;
+}
+
 // ===== Saved Businesses (localStorage) =====
 const PROFILES_KEY = 'lb_saved_businesses_v1';
 
