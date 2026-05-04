@@ -139,6 +139,16 @@
   .btn-save-biz { width: 100%; margin-top: 10px; background: transparent; color: var(--gold); border: 1px dashed rgba(201,168,76,.4); border-radius: var(--r); padding: 11px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; display: none; align-items: center; justify-content: center; gap: 6px; }
   .btn-save-biz.visible { display: flex; }
   .btn-save-biz:hover { background: var(--gold-dim); border-style: solid; }
+  .recent-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .recent-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+  .recent-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 11px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; cursor: pointer; transition: all .15s; text-align: left; font-family: 'DM Sans', sans-serif; }
+  .recent-item:hover { border-color: var(--gold); background: var(--gold-dim); }
+  .recent-item-main { min-width: 0; flex: 1; }
+  .recent-item-name { font-size: 12.5px; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-item-meta { font-size: 10.5px; color: var(--white-muted); margin-top: 2px; font-family: 'DM Mono', monospace; letter-spacing: .3px; }
+  .recent-item-mode { font-size: 9.5px; color: var(--gold2); text-transform: uppercase; letter-spacing: .5px; margin-top: 1px; }
+  .recent-clear { font-size: 11px; color: var(--white-muted); background: none; border: none; cursor: pointer; padding: 4px 0; margin-top: 4px; }
+  .recent-clear:hover { color: var(--red); }
   @media (max-width: 640px) {
     .tabs-bar { display: none; }
     .tab-select { display: block; }
@@ -196,6 +206,12 @@
         <select id="profileSelect"></select>
         <button type="button" class="profile-del-btn" id="profileDelBtn" title="Delete saved business" disabled>🗑</button>
       </div>
+    </div>
+
+    <div class="recent-block" id="recentBlock" style="display:none">
+      <label>Recent Generations</label>
+      <div class="recent-list" id="recentList"></div>
+      <button type="button" class="recent-clear" id="recentClearBtn">Clear history</button>
     </div>
 
 
@@ -368,8 +384,82 @@ function deleteSelectedProfile(){
   showToast('Deleted saved business');
 }
 
+
+// ===== Recent Generations (localStorage) =====
+const RECENT_KEY = 'lb_recent_generations_v1';
+const RECENT_MAX = 5;
+
+function loadRecent(){
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+  catch { return []; }
+}
+function persistRecent(list){
+  localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
+}
+function addRecent(entry){
+  const list = loadRecent();
+  list.unshift(entry);
+  persistRecent(list);
+  renderRecent();
+}
+function formatTime(ts){
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if(diff < 60) return 'just now';
+  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if(diff < 86400*7) return Math.floor(diff/86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+function renderRecent(){
+  const list = loadRecent();
+  const block = document.getElementById('recentBlock');
+  const ul = document.getElementById('recentList');
+  if(!list.length){ block.style.display = 'none'; return; }
+  block.style.display = 'block';
+  ul.innerHTML = list.map(item => {
+    const name = (item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
+    return `<button type="button" class="recent-item" data-id="${item.id}">
+      <div class="recent-item-main">
+        <div class="recent-item-name">${name.replace(/</g,'&lt;')}</div>
+        <div class="recent-item-meta">${formatTime(item.ts)} · ${item.tone || 'friendly'}</div>
+        <div class="recent-item-mode">${item.mode || 'instant'} mode</div>
+      </div>
+      <span style="color:var(--gold);font-size:14px;">↺</span>
+    </button>`;
+  }).join('');
+  ul.querySelectorAll('.recent-item').forEach(el => {
+    el.addEventListener('click', () => restoreRecent(el.dataset.id));
+  });
+}
+function restoreRecent(id){
+  const item = loadRecent().find(x => x.id === id);
+  if(!item) return;
+  document.getElementById('businessType').value = item.businessType || '';
+  document.getElementById('location').value = item.location || '';
+  document.getElementById('audience').value = item.audience || '';
+  document.getElementById('tone').value = item.tone || 'friendly';
+  if(item.mode){
+    currentMode = item.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode===item.mode));
+  }
+  lastData = item.data;
+  activeTab = 'reviews';
+  renderResults(item.data);
+  const saveBtn = document.getElementById('saveBizBtn');
+  if(saveBtn) saveBtn.classList.add('visible');
+  showToast('Restored "' + (item.businessType || 'previous') + '"');
+}
+function clearRecent(){
+  localStorage.removeItem(RECENT_KEY);
+  renderRecent();
+  showToast('History cleared');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderProfiles('');
+  renderRecent();
   const sel = document.getElementById('profileSelect');
   const del = document.getElementById('profileDelBtn');
   if(sel) sel.addEventListener('change', e => {
@@ -377,6 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
     else del.disabled = true;
   });
   if(del) del.addEventListener('click', deleteSelectedProfile);
+  const clr = document.getElementById('recentClearBtn');
+  if(clr) clr.addEventListener('click', clearRecent);
 });
 
 const TONES = {
@@ -433,6 +525,12 @@ async function generate(section){
       renderResults(data);
       const saveBtn = document.getElementById('saveBizBtn');
       if(saveBtn) saveBtn.classList.add('visible');
+      addRecent({
+        id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        ts: Date.now(),
+        businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
+        data
+      });
     }
   } catch(e){
     console.error(e);
