@@ -54,6 +54,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     },
     { onConflict: "stripe_subscription_id" }
   );
+  await syncProfilePlan(userId, priceId, subscription.status, subscription.customer);
 }
 
 async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
@@ -75,6 +76,9 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
     })
     .eq("stripe_subscription_id", subscription.id)
     .eq("environment", env);
+
+  const userId = subscription.metadata?.userId;
+  if (userId) await syncProfilePlan(userId, priceId, subscription.status, subscription.customer);
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
@@ -82,6 +86,9 @@ async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
     .update({ status: "canceled", updated_at: new Date().toISOString() })
     .eq("stripe_subscription_id", subscription.id)
     .eq("environment", env);
+
+  const userId = subscription.metadata?.userId;
+  if (userId) await syncProfilePlan(userId, undefined, "canceled", subscription.customer);
 }
 
 async function handleWebhook(req: Request, env: StripeEnv) {
