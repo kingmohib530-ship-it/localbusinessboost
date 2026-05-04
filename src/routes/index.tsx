@@ -62,7 +62,7 @@ function Index() {
                 priceId={checkout.priceId}
                 userId={checkout.userId}
                 customerEmail={checkout.email}
-                returnUrl={`${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`}
+                returnUrl={absoluteUrl("/checkout/return?session_id={CHECKOUT_SESSION_ID}")}
               />
             </div>
           </div>
