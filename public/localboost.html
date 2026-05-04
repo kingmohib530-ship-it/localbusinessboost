@@ -603,10 +603,13 @@ function refreshPlanBadge(){
   const btn = document.getElementById('upgradeBtn');
   const plan = getPlan();
   b.textContent = PLANS[plan].name + ' Plan';
-  b.className = 'badge' + (plan==='pro'?' pro-badge':plan==='agency'?' agency-badge':'');
+  b.className = 'badge' + (plan==='pro'||plan==='proPlus'?' pro-badge':plan==='agency'?' agency-badge':'');
   if(btn){
     if(plan === 'agency'){ btn.style.display = 'none'; }
-    else { btn.style.display = ''; btn.textContent = plan === 'free' ? '⚡ Upgrade' : '⚡ Go Agency'; }
+    else {
+      btn.style.display = '';
+      btn.textContent = plan === 'free' ? '⚡ Upgrade' : plan === 'pro' ? '⚡ Go Pro+' : '⚡ Go Agency';
+    }
   }
 }
 
