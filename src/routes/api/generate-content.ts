@@ -90,7 +90,8 @@ ABSOLUTE RULES:
 SECTION RULES:
 
 CUSTOMER REVIEWS (3) — written BY real customers, like actual Google/Yelp reviews (NOT owner replies, NOT staff voice):
-- Each review has a DIFFERENT personality and writing style: e.g. (a) short, casual, almost lazy ("went here last weekend, was actually really good"), (b) longer, detailed, slightly rambling regular who lists 2–3 specific things they liked, (c) a slightly mixed but mostly positive review where they note one tiny gripe and still recommend it.
+- Each review has a DIFFERENT personality, intensity, and writing style: e.g. (a) short, casual, almost lazy ("went here last weekend, was actually really good"), (b) longer, detailed, slightly rambling regular who lists 2–3 specific things they liked, (c) a slightly mixed but mostly positive review where they note one tiny gripe and still recommend it.
+- HUMAN VARIATION RULE (mandatory): the 3 reviews must NOT all sound equally calm/neutral. At least ONE review must carry stronger emotion — genuine love ("okay I'm officially obsessed"), mild frustration ("waited way too long but…"), or low-key obsession ("third time this month, send help"). At least ONE review must be extremely casual and slightly unstructured — lowercase start, run-on sentence, a typo or missing punctuation, a thought that jumps. Real customers are inconsistent in tone and intensity; lean into that.
 - Sound like real people typing on their phone: contractions, sentence fragments, occasional "tbh", "ngl", "fwiw", a stray comma splice, a missing apostrophe is fine. NOT every review — just natural sprinkles.
 - Slight repetition is okay ("really really liked it", "good good vibes"). Casual phrasing welcome.
 - Reference a believable specific detail (a drink, a stylist's name, the window seat, the Saturday rush). Mention the locked business name in at least 2 of the 3.
