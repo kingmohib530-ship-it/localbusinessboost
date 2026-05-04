@@ -384,6 +384,7 @@ function applyProfile(id){
   document.getElementById('audience').value = p.audience || '';
   document.getElementById('tone').value = p.tone || 'friendly';
   document.getElementById('profileDelBtn').disabled = false;
+  if(typeof refreshReminderToggle === 'function') refreshReminderToggle();
   showToast('Loaded "' + profileLabel(p) + '"');
 }
 function saveCurrentBusiness(){
