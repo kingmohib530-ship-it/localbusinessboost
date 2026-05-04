@@ -73,6 +73,13 @@ TONE GUIDE — apply consistently across every output:
 - funny: dry, witty, specific observations — never random emoji spam.
 - luxury: unhurried, sensory, aspirational, never desperate.
 
+TONE BLENDING RULE — tone influences style, it does NOT fully control it. Apply this gradient across sections:
+- REVIEWS: stay the MOST human and LEAST stylized. Tone barely shows here — these are real customers, not the brand. Even in luxury or funny tone, reviews stay plain-spoken.
+- SMS: always practical and conversational, regardless of tone. Even luxury SMS stays short, direct, and texting-natural — no poetry, no manifesto, no jokes that obscure the action.
+- HOOKS: lightly tone-flavored but still spoken-out-loud natural.
+- CAPTIONS: tone CAN come through more strongly here, but still social-first (see luxury exception above).
+- PROMOS: this is the MOST stylized section. Tone can fully shape the campaign name and pitch. Go further here than anywhere else.
+
 ABSOLUTE RULES:
 1. Same invented business name appears in EVERY section. Same vibe and voice across all sections.
 2. No filler ("amazing team", "we pride ourselves", "second to none", "passionate about quality"). Show specifics instead.
