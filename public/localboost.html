@@ -226,7 +226,7 @@ const TONES = {
   luxury:{adj:'truly exquisite',vibe:'absolutely luxurious',emoji:'✨'}
 };
 
-function generate(){
+async function generate(){
   const biz=document.getElementById('businessType').value.trim();
   const loc=document.getElementById('location').value.trim();
   const aud=document.getElementById('audience').value.trim()||'locals';
@@ -237,35 +237,30 @@ function generate(){
   const spin=document.getElementById('spinner');
   btn.disabled=true; spin.style.display='inline-block';
 
-  setTimeout(()=>{
+  try {
+    const res = await fetch('/api/generate-content', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ businessType:biz, location:loc, audience:aud, tone })
+    });
+    const data = await res.json();
+    if(!res.ok){ showToast(data.error || 'Generation failed'); return; }
+    renderResults(data);
+  } catch(e){
+    console.error(e);
+    showToast('Network error — try again');
+  } finally {
     btn.disabled=false; spin.style.display='none';
-    renderResults(biz,loc,aud,tone);
-  },900);
+  }
 }
 
-function renderResults(biz,loc,aud,tone){
-  const t=TONES[tone];
+function renderResults(data){
   const out=document.getElementById('output');
-
-  const reviews=[
-    `Honestly the best ${biz.toLowerCase()} in ${loc}! The staff is ${t.vibe} and the quality is ${t.adj}. Highly recommend ${t.emoji}`,
-    `Stopped by this ${biz.toLowerCase()} in ${loc} and was blown away. ${t.adj.charAt(0).toUpperCase()+t.adj.slice(1)} experience from start to finish.`,
-    `If you're in ${loc} looking for a great ${biz.toLowerCase()}, this is the place. Perfect for ${aud}.`
-  ];
-  const captions=[
-    `Your new favorite ${biz.toLowerCase()} in ${loc} is here. ✦`,
-    `Made for ${aud}. Loved by ${loc}. ${t.emoji}`,
-    `Stop scrolling. Start experiencing the best ${biz.toLowerCase()} in town.`
-  ];
-  const tags=[`#${loc.replace(/[^a-z0-9]/gi,'')}`,`#${biz.replace(/[^a-z0-9]/gi,'')}`,'#SmallBusiness','#ShopLocal','#SupportLocal',`#${loc.replace(/[^a-z0-9]/gi,'')}Life`,'#NewInTown','#MustVisit'];
-  const promos=[
-    {label:'Limited Time',text:`🎉 20% OFF your first visit to our ${biz.toLowerCase()} in ${loc}! Show this code: BOOST20. Valid this week only.`},
-    {label:'Weekend Deal',text:`Weekend special for ${aud}: Buy one, get one 50% off every Saturday & Sunday. See you in ${loc}!`}
-  ];
-  const sms=[
-    `Hey! Quick reminder — your favorite ${biz.toLowerCase()} in ${loc} has a special waiting for you. Reply YES for details.`,
-    `${t.emoji} New drop alert! Visit us this week in ${loc} for an exclusive ${aud}-only offer.`
-  ];
+  const reviews = data.reviews || [];
+  const captions = data.captions || [];
+  const tags = data.hashtags || [];
+  const promos = data.promos || [];
+  const sms = data.sms || [];
 
   out.innerHTML=`
     <div class="results-grid">
