@@ -139,6 +139,16 @@
   .btn-save-biz { width: 100%; margin-top: 10px; background: transparent; color: var(--gold); border: 1px dashed rgba(201,168,76,.4); border-radius: var(--r); padding: 11px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; display: none; align-items: center; justify-content: center; gap: 6px; }
   .btn-save-biz.visible { display: flex; }
   .btn-save-biz:hover { background: var(--gold-dim); border-style: solid; }
+  .recent-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .recent-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+  .recent-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 11px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; cursor: pointer; transition: all .15s; text-align: left; font-family: 'DM Sans', sans-serif; }
+  .recent-item:hover { border-color: var(--gold); background: var(--gold-dim); }
+  .recent-item-main { min-width: 0; flex: 1; }
+  .recent-item-name { font-size: 12.5px; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-item-meta { font-size: 10.5px; color: var(--white-muted); margin-top: 2px; font-family: 'DM Mono', monospace; letter-spacing: .3px; }
+  .recent-item-mode { font-size: 9.5px; color: var(--gold2); text-transform: uppercase; letter-spacing: .5px; margin-top: 1px; }
+  .recent-clear { font-size: 11px; color: var(--white-muted); background: none; border: none; cursor: pointer; padding: 4px 0; margin-top: 4px; }
+  .recent-clear:hover { color: var(--red); }
   @media (max-width: 640px) {
     .tabs-bar { display: none; }
     .tab-select { display: block; }
