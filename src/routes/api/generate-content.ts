@@ -78,7 +78,7 @@ TONE BLENDING RULE — tone influences style, it does NOT fully control it. Appl
 - SMS: always practical and conversational, regardless of tone. Even luxury SMS stays short, direct, and texting-natural — no poetry, no manifesto, no jokes that obscure the action.
 - HOOKS: lightly tone-flavored but still spoken-out-loud natural.
 - CAPTIONS: tone CAN come through more strongly here, but still social-first (see luxury exception above).
-- PROMOS: this is the MOST stylized section. Tone can fully shape the campaign name and pitch. Go further here than anywhere else.
+- PROMOS: tone shapes the DESCRIPTION only. The promo NAME stays plain and operational regardless of tone — never stylized, never branded, never poetic. A café owner writing on a chalkboard, not a marketing agency.
 
 ABSOLUTE RULES:
 1. Same invented business name appears in EVERY section. Same vibe and voice across all sections.
