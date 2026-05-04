@@ -130,6 +130,15 @@
   .mode-banner strong { color: var(--gold2); font-weight: 600; }
   .day-divider { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 1px dashed rgba(201,168,76,.2); }
   .day-divider:first-child { margin-top: 0; }
+  .profiles-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .profiles-row { display: flex; gap: 8px; align-items: stretch; }
+  .profiles-row select { flex: 1; min-width: 0; }
+  .profile-del-btn { flex: 0 0 auto; background: var(--bg3); border: 1px solid var(--border2); color: var(--white-muted); border-radius: var(--r); padding: 0 12px; cursor: pointer; font-size: 14px; transition: all .18s; }
+  .profile-del-btn:hover:not(:disabled) { color: var(--red); border-color: var(--red); }
+  .profile-del-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .btn-save-biz { width: 100%; margin-top: 10px; background: transparent; color: var(--gold); border: 1px dashed rgba(201,168,76,.4); border-radius: var(--r); padding: 11px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; display: none; align-items: center; justify-content: center; gap: 6px; }
+  .btn-save-biz.visible { display: flex; }
+  .btn-save-biz:hover { background: var(--gold-dim); border-style: solid; }
   @media (max-width: 640px) {
     .tabs-bar { display: none; }
     .tab-select { display: block; }
@@ -180,6 +189,15 @@
 <main class="main-wrap">
   <aside class="form-panel">
     <div class="panel-title"><span></span> Your Business Info</div>
+
+    <div class="profiles-block" id="profilesBlock" style="display:none">
+      <label>Saved Businesses</label>
+      <div class="profiles-row">
+        <select id="profileSelect"></select>
+        <button type="button" class="profile-del-btn" id="profileDelBtn" title="Delete saved business" disabled>🗑</button>
+      </div>
+    </div>
+
 
     <div class="form-group">
       <label>Business Type</label>
@@ -234,6 +252,8 @@
       <div class="spinner" id="spinner"></div>
     </button>
 
+    <button type="button" class="btn-save-biz" id="saveBizBtn" onclick="saveCurrentBusiness()">★ Save This Business</button>
+
     <p class="pro-note">Need unlimited generations? <a href="#" onclick="upgradePro();return false;">Upgrade to Pro →</a></p>
   </aside>
 
@@ -273,6 +293,91 @@ function copyText(text,btn){
 function upgradePro(){
   showToast('Email Kingmohib530@gmail.com for early Pro access');
 }
+
+// ===== Saved Businesses (localStorage) =====
+const PROFILES_KEY = 'lb_saved_businesses_v1';
+
+function loadProfiles(){
+  try { return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]'); }
+  catch { return []; }
+}
+function persistProfiles(list){
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
+}
+function profileLabel(p){
+  const parts = [p.businessType, p.location].filter(Boolean);
+  return parts.join(' — ') || 'Untitled';
+}
+function renderProfiles(selectedId){
+  const list = loadProfiles();
+  const block = document.getElementById('profilesBlock');
+  const sel = document.getElementById('profileSelect');
+  const del = document.getElementById('profileDelBtn');
+  if(!list.length){
+    block.style.display = 'none';
+    return;
+  }
+  block.style.display = 'block';
+  sel.innerHTML = `<option value="">— Choose a saved business —</option>` +
+    list.map(p => `<option value="${p.id}" ${p.id===selectedId?'selected':''}>${profileLabel(p).replace(/</g,'&lt;')}</option>`).join('');
+  del.disabled = !selectedId;
+}
+function applyProfile(id){
+  const p = loadProfiles().find(x => x.id === id);
+  if(!p) return;
+  document.getElementById('businessType').value = p.businessType || '';
+  document.getElementById('location').value = p.location || '';
+  document.getElementById('audience').value = p.audience || '';
+  document.getElementById('tone').value = p.tone || 'friendly';
+  document.getElementById('profileDelBtn').disabled = false;
+  showToast('Loaded "' + profileLabel(p) + '"');
+}
+function saveCurrentBusiness(){
+  const businessType = document.getElementById('businessType').value.trim();
+  const location = document.getElementById('location').value.trim();
+  const audience = document.getElementById('audience').value.trim();
+  const tone = document.getElementById('tone').value;
+  if(!businessType || !location){ showToast('Fill Business Type & Location first'); return; }
+
+  const list = loadProfiles();
+  // Dedupe by businessType + location (case-insensitive)
+  const key = (businessType + '|' + location).toLowerCase();
+  const existing = list.find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  if(existing){
+    existing.audience = audience; existing.tone = tone;
+    persistProfiles(list);
+    renderProfiles(existing.id);
+    document.getElementById('profileSelect').value = existing.id;
+    showToast('Updated saved business');
+    return;
+  }
+  const profile = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), businessType, location, audience, tone };
+  list.unshift(profile);
+  persistProfiles(list);
+  renderProfiles(profile.id);
+  document.getElementById('profileSelect').value = profile.id;
+  showToast('Saved "' + profileLabel(profile) + '"');
+}
+function deleteSelectedProfile(){
+  const sel = document.getElementById('profileSelect');
+  const id = sel.value;
+  if(!id) return;
+  const list = loadProfiles().filter(p => p.id !== id);
+  persistProfiles(list);
+  renderProfiles('');
+  showToast('Deleted saved business');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderProfiles('');
+  const sel = document.getElementById('profileSelect');
+  const del = document.getElementById('profileDelBtn');
+  if(sel) sel.addEventListener('change', e => {
+    if(e.target.value) applyProfile(e.target.value);
+    else del.disabled = true;
+  });
+  if(del) del.addEventListener('click', deleteSelectedProfile);
+});
 
 const TONES = {
   friendly:{adj:'amazing',vibe:'so welcoming',emoji:'😊'},
@@ -326,6 +431,8 @@ async function generate(section){
     } else {
       lastData = data;
       renderResults(data);
+      const saveBtn = document.getElementById('saveBizBtn');
+      if(saveBtn) saveBtn.classList.add('visible');
     }
   } catch(e){
     console.error(e);
