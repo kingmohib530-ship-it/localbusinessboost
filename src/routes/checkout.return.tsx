@@ -41,7 +41,7 @@ function CheckoutReturn() {
       if (data && ["active", "trialing"].includes((data as { status: string }).status)) {
         setStatus("active");
         setTimeout(() => {
-          window.location.href = "/";
+          topLevelNavigate(absoluteUrl("/"));
         }, 1500);
         return;
       }
