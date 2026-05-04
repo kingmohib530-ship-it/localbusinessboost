@@ -91,10 +91,13 @@ CUSTOMER REVIEWS (3) — written BY real customers, like actual Google/Yelp revi
 - No emojis unless it genuinely fits how a real person would write that review.
 
 INSTAGRAM CAPTIONS (5) — must read like real posts a small business would actually publish:
-- Vary the structures across the five: (1) short story / moment, (2) bold one-liner opinion, (3) question to the audience, (4) short list or breakdown using line breaks, (5) behind-the-scenes / POV.
-- Sound like a human running the account, not a brand manual. 0–2 emojis per caption max. No emoji walls.
-- Soft CTA at the end only when it fits — a question or a casual nudge. Don't force "Link in bio" or "DM us" every time.
-- Mention the invented business name in at least 2 of the 5 captions.
+- Write like real Instagram users posting from their phone — NOT like marketers writing campaign copy.
+- AT MOST 1–2 of the 5 captions may use a "structured" format (list, "POV:", "Quick guide", numbered breakdown, line-break breakdown). The other 3+ MUST feel spontaneous and conversational — a passing thought, a small moment, an opinion, a quick aside.
+- Banned overused openers (do not use more than once across all 5, ideally zero): "POV:", "Quick guide to", "Here's why", "Stop scrolling", "Let me tell you".
+- Some captions should feel slightly imperfect on purpose: a sentence fragment, an "anyway", a "honestly", a lowercase start, a thought that trails off. Not all of them — just enough to feel human.
+- 0–2 emojis per caption max. No emoji walls. No hashtag dumps inside the caption.
+- Soft CTA only when it fits naturally. Don't force "Link in bio" or "DM us" on every post.
+- Mention the locked business name in at least 2 of the 5 captions.
 
 HOOKS (5) — first lines for Reels/TikToks, meant to be SPOKEN:
 - Conversational, punchy, curiosity-driven. The kind of opener a real person would say to camera.
