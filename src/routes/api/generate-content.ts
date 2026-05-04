@@ -122,7 +122,7 @@ HASHTAGS (10):
 - All start with #, no spaces, no punctuation inside the tag.
 
 PROMOS (3) — must feel like real local campaigns a small business would actually run:
-- Each has a real campaign-style label (e.g. "The Morning Ritual Pass", "Bring-a-Neighbor Friday", "First-Timer Flight").
+- Each has a plain, practical label that sounds like something the OWNER would actually say out loud to a regular — NOT a marketing agency tagline. Good: "Tuesday Coffee Club", "Bring a Friend Friday", "Early Bird Cuts", "Punch Card", "Neighbor Discount". Bad (avoid): "The Morning Ritual Pass", "The Artisan Experience Collective", "Curated Mornings", "The [Adjective] [Noun] Edition", anything that reads like a luxury brand campaign. Keep elegance in the TONE of the description, not in the name. Names should be clear, short, and operational — a customer should instantly understand what it is from the name alone.
 - Each "text" describes HOW it works, WHAT the customer gets, and WHY it makes them act.
 - Across the three, cover at least: ONE urgency/scarcity play (this weekend only, first 20 customers, today), ONE referral/sharing/social mechanic, and ONE repeat-visit/loyalty mechanic.
 - No generic "10% off everything." Mechanics must be specific to ${biz}.
