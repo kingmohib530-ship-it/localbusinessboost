@@ -749,7 +749,127 @@ function updateModeLocks(){
 }
 
 // Backwards-compat shim
-function upgradePro(){ openPricing(); }
+function upgradePro(){ startProCheckout('upgrade_btn'); }
+
+// ===== Conversion Optimization Layer =====
+const FIRST_GEN_PROMPT_KEY = 'lb_first_gen_prompt_v1';
+const WARN_DISMISS_KEY = 'lb_warn_dismiss_day_v1';
+
+async function startProCheckout(source){
+  let email = null;
+  try { const { data } = await sb.auth.getUser(); email = data?.user?.email || null; } catch(_){}
+  closeConvertModal();
+  closePricing();
+  window.parent.postMessage({ type: 'lb-checkout', priceId: 'pro_monthly', userId: currentUserId, email, source: source || 'convert' }, '*');
+}
+
+function showConvertModal({eyebrow, title, sub, bullets, primaryText, ghostText, meta, onPrimary, onGhost, dismissible}){
+  const m = document.getElementById('convertModal');
+  if(!m) return;
+  document.getElementById('convertEyebrow').textContent = eyebrow || '✦ Unlock more ✦';
+  document.getElementById('convertTitle').innerHTML = title;
+  document.getElementById('convertSub').textContent = sub || '';
+  const ul = document.getElementById('convertBullets');
+  ul.innerHTML = (bullets || []).map(b => `<li>${b}</li>`).join('');
+  const pBtn = document.getElementById('convertPrimaryBtn');
+  pBtn.textContent = primaryText || 'Upgrade to Pro — $19/month';
+  const gBtn = document.getElementById('convertGhostBtn');
+  gBtn.textContent = ghostText || 'Maybe later';
+  document.getElementById('convertMeta').textContent = meta || '';
+  const closeX = document.getElementById('convertCloseBtn');
+  closeX.style.display = (dismissible === false) ? 'none' : '';
+  const newP = pBtn.cloneNode(true); pBtn.replaceWith(newP);
+  newP.addEventListener('click', () => { (onPrimary || (() => startProCheckout('convert_modal')))(); });
+  const newG = gBtn.cloneNode(true); gBtn.replaceWith(newG);
+  newG.addEventListener('click', () => { (onGhost || closeConvertModal)(); });
+  if(dismissible !== false){
+    const newX = closeX.cloneNode(true); closeX.replaceWith(newX);
+    newX.addEventListener('click', closeConvertModal);
+  }
+  m.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeConvertModal(){
+  const m = document.getElementById('convertModal');
+  if(!m) return;
+  m.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function maybeShowFirstGenPrompt(){
+  if(getPlan() !== 'free') return;
+  const k = K(FIRST_GEN_PROMPT_KEY);
+  if(localStorage.getItem(k)) return;
+  localStorage.setItem(k, '1');
+  setTimeout(() => {
+    showConvertModal({
+      eyebrow: '✦ You just made your first piece ✦',
+      title: 'Want <span>unlimited content</span> like this?',
+      sub: 'Keep generating without limits and scale your business faster.',
+      bullets: [
+        'Unlimited content, every day',
+        'All planning and SEO modes unlocked',
+        'Refresh any section in one click',
+      ],
+    });
+  }, 900);
+}
+
+function renderLimitWarnBanner(){
+  const existing = document.getElementById('limitWarnBanner');
+  if(getPlan() !== 'free'){ if(existing) existing.remove(); return; }
+  const limits = planLimits();
+  const used = getDailyCount();
+  const cap = limits.dailyGenerations;
+  if(!cap || cap === Infinity){ if(existing) existing.remove(); return; }
+  const ratio = used / cap;
+  const dismissedDay = localStorage.getItem(K(WARN_DISMISS_KEY));
+  if(ratio < 0.7 || used >= cap || dismissedDay === todayKey()){
+    if(existing) existing.remove();
+    return;
+  }
+  if(existing) return;
+  const left = cap - used;
+  const div = document.createElement('div');
+  div.id = 'limitWarnBanner';
+  div.className = 'limit-warn';
+  div.innerHTML = `
+    <div class="limit-warn-text"><strong>You're close to your daily limit</strong> — ${left} generation${left===1?'':'s'} left today. Unlock unlimited content with Pro.</div>
+    <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">Upgrade to Pro</button>
+    <button type="button" class="limit-warn-close" id="limitWarnClose" aria-label="Dismiss">×</button>`;
+  const main = document.querySelector('main');
+  if(main && main.firstChild) main.insertBefore(div, main.firstChild);
+  else document.body.prepend(div);
+  document.getElementById('limitWarnUpgrade').addEventListener('click', () => startProCheckout('limit_warn'));
+  document.getElementById('limitWarnClose').addEventListener('click', () => {
+    localStorage.setItem(K(WARN_DISMISS_KEY), todayKey());
+    div.remove();
+  });
+}
+
+function nextResetText(){
+  const now = new Date();
+  const reset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+  const ms = reset.getTime() - now.getTime();
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `Resets in ${h}h ${m}m (00:00 UTC)`;
+}
+
+function showHardLimitModal(){
+  showConvertModal({
+    eyebrow: '✦ Daily limit reached ✦',
+    title: "You've hit your <span>daily limit</span>",
+    sub: "Don't stop now — keep generating without limits and grow your business faster.",
+    bullets: [
+      'Unlimited content, anytime',
+      'All advanced modes unlocked',
+      'Refresh sections individually',
+    ],
+    ghostText: nextResetText(),
+    onGhost: () => { showToast(nextResetText()); },
+  });
+}
 
 // ===== Client Mode =====
 const ACTIVE_CLIENT_KEY = 'lb_active_client_v1';
