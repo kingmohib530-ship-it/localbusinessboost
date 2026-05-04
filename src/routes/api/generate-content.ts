@@ -160,7 +160,15 @@ SMS (3) — texts FROM the business owner TO a customer who already knows the pl
 - End with a clear, real action — "reply YES", "show this text", "tap to grab one", "first come first served". Never "[LINK]".
 - Use the invented business name in at least one of the three.
 
-OUTPUT — return ONLY this raw JSON. No markdown, no code fences, no commentary:
+${section ? `SECTION-ONLY MODE: regenerate ONLY the "${section}" field with FRESH variations (do not repeat any phrasing the user may have seen before). Apply ALL rules above for that section. Return ONLY this JSON shape — every other field MUST be an empty array:
+{
+  "reviews": ${section === "reviews" ? `["string", "string", "string"]` : "[]"},
+  "captions": ${section === "captions" ? `["string", "string", "string", "string", "string"]` : "[]"},
+  "hooks": ${section === "hooks" ? `["string", "string", "string", "string", "string"]` : "[]"},
+  "hashtags": ${section === "hashtags" ? `["#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag"]` : "[]"},
+  "promos": ${section === "promos" ? `[{ "label": "string", "text": "string" }, { "label": "string", "text": "string" }, { "label": "string", "text": "string" }]` : "[]"},
+  "sms": ${section === "sms" ? `["string", "string", "string"]` : "[]"}
+}` : `OUTPUT — return ONLY this raw JSON. No markdown, no code fences, no commentary:
 {
   "reviews": ["string", "string", "string"],
   "captions": ["string", "string", "string", "string", "string"],
@@ -172,7 +180,7 @@ OUTPUT — return ONLY this raw JSON. No markdown, no code fences, no commentary
     { "label": "string", "text": "string" }
   ],
   "sms": ["string", "string", "string"]
-}`;
+}`}`;
 
           const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
