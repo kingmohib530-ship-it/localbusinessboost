@@ -1399,6 +1399,8 @@ async function generate(section){
         if(map[pid] && map[pid].enabled){ map[pid].ts = Date.now(); map[pid].dismissedAt = 0; persistReminders(map); }
       }
       checkReminderBanner();
+      renderLimitWarnBanner();
+      maybeShowFirstGenPrompt();
     }
   } catch(e){
     console.error(e);
