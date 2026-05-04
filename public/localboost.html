@@ -138,7 +138,26 @@
   .profile-del-btn:disabled { opacity: .35; cursor: not-allowed; }
   .btn-save-biz { width: 100%; margin-top: 10px; background: transparent; color: var(--gold); border: 1px dashed rgba(201,168,76,.4); border-radius: var(--r); padding: 11px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; display: none; align-items: center; justify-content: center; gap: 6px; }
   .btn-save-biz.visible { display: flex; }
-  .btn-save-biz:hover { background: var(--gold-dim); border-style: solid; }
+   .btn-save-biz:hover { background: var(--gold-dim); border-style: solid; }
+   .reminder-toggle { display: none; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r); font-family: 'DM Sans', sans-serif; }
+   .reminder-toggle.visible { display: flex; }
+   .reminder-toggle-label { font-size: 12.5px; color: var(--white-dim); line-height: 1.35; }
+   .reminder-toggle-label small { display: block; color: var(--white-muted); font-size: 10.5px; margin-top: 2px; }
+   .switch { position: relative; flex: 0 0 auto; width: 36px; height: 20px; }
+   .switch input { opacity: 0; width: 0; height: 0; }
+   .switch .slider { position: absolute; inset: 0; cursor: pointer; background: #2a2a2a; border: 1px solid var(--border2); border-radius: 20px; transition: .2s; }
+   .switch .slider:before { content: ''; position: absolute; height: 14px; width: 14px; left: 2px; top: 1px; background: var(--white-muted); border-radius: 50%; transition: .2s; }
+   .switch input:checked + .slider { background: var(--gold-dim); border-color: var(--gold); }
+   .switch input:checked + .slider:before { transform: translateX(16px); background: var(--gold); }
+   .reminder-banner { position: relative; z-index: 10; margin: 0 clamp(16px, 5vw, 60px) 16px; padding: 14px 18px; background: linear-gradient(135deg, var(--gold-dim), rgba(201,168,76,.04)); border: 1px solid rgba(201,168,76,.35); border-left: 3px solid var(--gold); border-radius: 10px; display: none; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; transition: all .18s; font-family: 'DM Sans', sans-serif; }
+   .reminder-banner.visible { display: flex; animation: fadeUp .35s ease; }
+   .reminder-banner:hover { border-color: var(--gold); transform: translateY(-1px); }
+   .reminder-banner-text { font-size: 13.5px; color: var(--white); line-height: 1.4; }
+   .reminder-banner-text strong { color: var(--gold2); font-weight: 600; }
+   .reminder-banner-text small { display: block; font-size: 11px; color: var(--white-muted); margin-top: 3px; font-family: 'DM Mono', monospace; letter-spacing: .3px; }
+   .reminder-banner-cta { font-size: 12px; font-weight: 600; color: var(--gold); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+   .reminder-banner-close { background: none; border: none; color: var(--white-muted); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
+   .reminder-banner-close:hover { color: var(--red); }
   .recent-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
   .recent-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
   .recent-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 11px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; cursor: pointer; transition: all .15s; text-align: left; font-family: 'DM Sans', sans-serif; }
@@ -195,6 +214,14 @@
 </section>
 
 <div class="divider"></div>
+
+<div class="reminder-banner" id="reminderBanner" role="button" tabindex="0">
+  <div class="reminder-banner-text" id="reminderBannerText">It's time to refresh your content</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="reminder-banner-cta">Refresh now →</span>
+    <button type="button" class="reminder-banner-close" id="reminderBannerClose" title="Dismiss">×</button>
+  </div>
+</div>
 
 <main class="main-wrap">
   <aside class="form-panel">
@@ -269,6 +296,17 @@
     </button>
 
     <button type="button" class="btn-save-biz" id="saveBizBtn" onclick="saveCurrentBusiness()">★ Save This Business</button>
+
+    <label class="reminder-toggle" id="reminderToggle">
+      <span class="reminder-toggle-label">
+        Remind me to generate new content weekly
+        <small>We'll show a gentle nudge in 5–7 days.</small>
+      </span>
+      <span class="switch">
+        <input type="checkbox" id="reminderCheckbox">
+        <span class="slider"></span>
+      </span>
+    </label>
 
     <p class="pro-note">Need unlimited generations? <a href="#" onclick="upgradePro();return false;">Upgrade to Pro →</a></p>
   </aside>
@@ -346,6 +384,7 @@ function applyProfile(id){
   document.getElementById('audience').value = p.audience || '';
   document.getElementById('tone').value = p.tone || 'friendly';
   document.getElementById('profileDelBtn').disabled = false;
+  if(typeof refreshReminderToggle === 'function') refreshReminderToggle();
   showToast('Loaded "' + profileLabel(p) + '"');
 }
 function saveCurrentBusiness(){
@@ -364,6 +403,7 @@ function saveCurrentBusiness(){
     persistProfiles(list);
     renderProfiles(existing.id);
     document.getElementById('profileSelect').value = existing.id;
+    refreshReminderToggle();
     showToast('Updated saved business');
     return;
   }
@@ -372,6 +412,7 @@ function saveCurrentBusiness(){
   persistProfiles(list);
   renderProfiles(profile.id);
   document.getElementById('profileSelect').value = profile.id;
+  refreshReminderToggle();
   showToast('Saved "' + profileLabel(profile) + '"');
 }
 function deleteSelectedProfile(){
@@ -457,6 +498,90 @@ function clearRecent(){
   showToast('History cleared');
 }
 
+// ===== Weekly Content Reminders =====
+const REMINDERS_KEY = 'lb_weekly_reminders_v1';
+const REMINDER_MIN_DAYS = 5;
+const REMINDER_MAX_DAYS = 7;
+
+function loadReminders(){
+  try { return JSON.parse(localStorage.getItem(REMINDERS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function persistReminders(map){
+  localStorage.setItem(REMINDERS_KEY, JSON.stringify(map));
+}
+function setReminderForProfile(profileId, enabled){
+  const map = loadReminders();
+  if(enabled){
+    map[profileId] = { enabled: true, ts: Date.now(), dismissedAt: 0 };
+  } else {
+    delete map[profileId];
+  }
+  persistReminders(map);
+}
+function findCurrentProfileId(){
+  const businessType = document.getElementById('businessType').value.trim();
+  const location = document.getElementById('location').value.trim();
+  if(!businessType || !location) return null;
+  const key = (businessType + '|' + location).toLowerCase();
+  const match = loadProfiles().find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  return match ? match.id : null;
+}
+function refreshReminderToggle(){
+  const wrap = document.getElementById('reminderToggle');
+  const cb = document.getElementById('reminderCheckbox');
+  const pid = findCurrentProfileId();
+  if(!pid){ wrap.classList.remove('visible'); cb.checked = false; return; }
+  wrap.classList.add('visible');
+  const map = loadReminders();
+  cb.checked = !!(map[pid] && map[pid].enabled);
+  cb.dataset.profileId = pid;
+}
+function checkReminderBanner(){
+  const banner = document.getElementById('reminderBanner');
+  const map = loadReminders();
+  const profiles = loadProfiles();
+  const now = Date.now();
+  const dayMs = 86400000;
+  let due = null;
+  for(const p of profiles){
+    const r = map[p.id];
+    if(!r || !r.enabled) continue;
+    const age = (now - r.ts) / dayMs;
+    const sinceDismiss = r.dismissedAt ? (now - r.dismissedAt) / dayMs : Infinity;
+    if(age >= REMINDER_MIN_DAYS && sinceDismiss >= 1){
+      due = { profile: p, age };
+      break;
+    }
+  }
+  if(!due){ banner.classList.remove('visible'); return; }
+  const txt = document.getElementById('reminderBannerText');
+  const name = profileLabel(due.profile);
+  txt.innerHTML = `It's time to refresh your <strong>${name.replace(/</g,'&lt;')}</strong> content<small>Last generated ${Math.floor(due.age)} days ago · weekly reminder</small>`;
+  banner.classList.add('visible');
+  banner.dataset.profileId = due.profile.id;
+}
+function onReminderBannerClick(){
+  const banner = document.getElementById('reminderBanner');
+  const pid = banner.dataset.profileId;
+  if(!pid) return;
+  applyProfile(pid);
+  // Reset the timer so it doesn't fire again immediately
+  const map = loadReminders();
+  if(map[pid]){ map[pid].ts = Date.now(); map[pid].dismissedAt = 0; persistReminders(map); }
+  banner.classList.remove('visible');
+  document.querySelector('.form-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  refreshReminderToggle();
+}
+function dismissReminderBanner(e){
+  e.stopPropagation();
+  const banner = document.getElementById('reminderBanner');
+  const pid = banner.dataset.profileId;
+  const map = loadReminders();
+  if(pid && map[pid]){ map[pid].dismissedAt = Date.now(); persistReminders(map); }
+  banner.classList.remove('visible');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderProfiles('');
   renderRecent();
@@ -465,10 +590,27 @@ document.addEventListener('DOMContentLoaded', () => {
   if(sel) sel.addEventListener('change', e => {
     if(e.target.value) applyProfile(e.target.value);
     else del.disabled = true;
+    refreshReminderToggle();
   });
   if(del) del.addEventListener('click', deleteSelectedProfile);
   const clr = document.getElementById('recentClearBtn');
   if(clr) clr.addEventListener('click', clearRecent);
+
+  // Reminder wiring
+  ['businessType','location'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', refreshReminderToggle);
+  });
+  const cb = document.getElementById('reminderCheckbox');
+  if(cb) cb.addEventListener('change', () => {
+    const pid = cb.dataset.profileId;
+    if(!pid){ cb.checked = false; showToast('Save this business first'); return; }
+    setReminderForProfile(pid, cb.checked);
+    showToast(cb.checked ? 'Weekly reminder on' : 'Weekly reminder off');
+  });
+  document.getElementById('reminderBanner')?.addEventListener('click', onReminderBannerClick);
+  document.getElementById('reminderBannerClose')?.addEventListener('click', dismissReminderBanner);
+  refreshReminderToggle();
+  checkReminderBanner();
 });
 
 const TONES = {
@@ -531,6 +673,13 @@ async function generate(section){
         businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
         data
       });
+      // Reset weekly reminder timer if this business has one enabled
+      const pid = findCurrentProfileId();
+      if(pid){
+        const map = loadReminders();
+        if(map[pid] && map[pid].enabled){ map[pid].ts = Date.now(); map[pid].dismissedAt = 0; persistReminders(map); }
+      }
+      checkReminderBanner();
     }
   } catch(e){
     console.error(e);
