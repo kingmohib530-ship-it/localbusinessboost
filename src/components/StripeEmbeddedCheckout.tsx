@@ -19,7 +19,7 @@ export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, userI
         quantity,
         customerEmail,
         userId,
-        returnUrl: returnUrl || window.location.href,
+        returnUrl: returnUrl || absoluteUrl("/checkout/return?session_id={CHECKOUT_SESSION_ID}"),
         environment: getStripeEnvironment(),
       },
     });
