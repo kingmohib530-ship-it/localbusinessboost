@@ -525,6 +525,12 @@ async function generate(section){
       renderResults(data);
       const saveBtn = document.getElementById('saveBizBtn');
       if(saveBtn) saveBtn.classList.add('visible');
+      addRecent({
+        id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        ts: Date.now(),
+        businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
+        data
+      });
     }
   } catch(e){
     console.error(e);
