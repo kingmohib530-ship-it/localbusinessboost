@@ -1,4 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const PLAN_DAILY_CAP: Record<string, number> = {
+  free: 5,      // legacy rows still labeled 'free' = Starter cap
+  starter: 5,   // future-proof
+  pro: -1,      // unlimited
+  agency: -1,
+};
+
+const SECTION_ALLOWED_PLANS = new Set(["pro", "agency"]);
 
 type GenerateInput = {
   businessType?: string;
@@ -48,6 +59,70 @@ export const Route = createFileRoute("/api/generate-content")({
               JSON.stringify({ error: "businessType and location are required" }),
               { status: 400, headers: cors },
             );
+          }
+
+          // ===== Server-side auth + plan gate =====
+          const authHeader = request.headers.get("authorization") || "";
+          if (!authHeader.startsWith("Bearer ")) {
+            return new Response(JSON.stringify({ error: "Sign in required" }), { status: 401, headers: cors });
+          }
+          const token = authHeader.slice("Bearer ".length).trim();
+          if (!token) {
+            return new Response(JSON.stringify({ error: "Sign in required" }), { status: 401, headers: cors });
+          }
+          const supaUrl = process.env.SUPABASE_URL!;
+          const supaPub = process.env.SUPABASE_PUBLISHABLE_KEY!;
+          const userClient = createClient(supaUrl, supaPub, {
+            global: { headers: { Authorization: `Bearer ${token}` } },
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+          const { data: claimData, error: claimErr } = await userClient.auth.getClaims(token);
+          const userId = claimData?.claims?.sub;
+          if (claimErr || !userId) {
+            return new Response(JSON.stringify({ error: "Invalid session" }), { status: 401, headers: cors });
+          }
+
+          // Look up plan from profiles (service-role bypasses RLS)
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("plan")
+            .eq("user_id", userId)
+            .maybeSingle();
+          const planRaw = (profile?.plan as string | undefined) || "free";
+          const dailyCap = PLAN_DAILY_CAP[planRaw] ?? 5;
+          const isPaidUnlimited = dailyCap < 0;
+
+          // Section regeneration gated to paid plans
+          if (section && !SECTION_ALLOWED_PLANS.has(planRaw)) {
+            return new Response(
+              JSON.stringify({ error: "Section regeneration is a Pro feature. Upgrade to refresh sections individually.", code: "upgrade_required", suggestedPlan: "pro" }),
+              { status: 403, headers: cors },
+            );
+          }
+
+          // Atomic consume (skip for full-pack generations on unlimited plans we still log; for section calls on paid plans we skip the cap)
+          if (!section || !isPaidUnlimited) {
+            const { data: consumeRows, error: consumeErr } = await (supabaseAdmin as any).rpc(
+              "try_consume_generation",
+              { user_uuid: userId, daily_cap: dailyCap },
+            );
+            if (consumeErr) {
+              console.error("usage rpc error", consumeErr);
+              return new Response(JSON.stringify({ error: "Usage check failed" }), { status: 500, headers: cors });
+            }
+            const row = Array.isArray(consumeRows) ? consumeRows[0] : consumeRows;
+            if (row && row.allowed === false) {
+              return new Response(
+                JSON.stringify({
+                  error: `You've used all ${row.cap} generations on the Starter plan today. Upgrade to Pro for unlimited generations.`,
+                  code: "limit_reached",
+                  used: row.used,
+                  cap: row.cap,
+                  suggestedPlan: "pro",
+                }),
+                { status: 402, headers: cors },
+              );
+            }
           }
 
           const apiKey = process.env.LOVABLE_API_KEY;

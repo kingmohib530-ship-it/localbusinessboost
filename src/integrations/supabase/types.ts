@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      generation_usage: {
+        Row: {
+          count: number
+          day: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          day?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -97,6 +118,14 @@ export type Database = {
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
+      }
+      try_consume_generation: {
+        Args: { daily_cap: number; user_uuid: string }
+        Returns: {
+          allowed: boolean
+          cap: number
+          used: number
+        }[]
       }
     }
     Enums: {
