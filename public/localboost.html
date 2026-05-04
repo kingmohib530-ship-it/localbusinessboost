@@ -468,29 +468,109 @@
     </div>
 
 
-    <div class="form-group">
-      <label>Business Type</label>
-      <input type="text" id="businessType" placeholder="e.g. Coffee shop, Salon, Gym">
+    <div class="wizard" id="setupWizard">
+      <div class="wizard-head">
+        <div>
+          <div class="wizard-step-label" id="wizardStepLabel">Step 1 of 4</div>
+          <div class="wizard-step-title" id="wizardStepTitle">Business Identity</div>
+        </div>
+        <div style="font-size:11px;color:var(--white-muted);font-family:'DM Mono',monospace;">~30 sec setup</div>
+      </div>
+      <div class="wizard-progress" id="wizardProgress">
+        <div class="wizard-progress-dot current"></div>
+        <div class="wizard-progress-dot"></div>
+        <div class="wizard-progress-dot"></div>
+        <div class="wizard-progress-dot"></div>
+      </div>
+
+      <div class="wizard-step active" data-step="1">
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" id="businessName" placeholder="e.g. Crown & Bean" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label>Business Type</label>
+          <select id="businessType">
+            <option value="">Select a type…</option>
+            <option value="coffee shop">☕ Coffee shop</option>
+            <option value="barber shop">💈 Barber shop</option>
+            <option value="bakery">🥐 Bakery</option>
+            <option value="gym">🏋️ Gym / Fitness</option>
+            <option value="restaurant">🍽 Restaurant</option>
+            <option value="salon">💇 Hair salon</option>
+            <option value="nail salon">💅 Nail salon</option>
+            <option value="spa">🧖 Spa / Wellness</option>
+            <option value="dental clinic">🦷 Dental clinic</option>
+            <option value="med spa">✨ Med spa</option>
+            <option value="auto repair">🔧 Auto repair</option>
+            <option value="car wash">🚗 Car wash</option>
+            <option value="real estate">🏠 Real estate</option>
+            <option value="florist">🌷 Florist</option>
+            <option value="pet groomer">🐶 Pet groomer</option>
+            <option value="tattoo studio">🎨 Tattoo studio</option>
+            <option value="cleaning service">🧽 Cleaning service</option>
+            <option value="landscaping">🌿 Landscaping</option>
+            <option value="photography">📸 Photography</option>
+            <option value="boutique">👗 Boutique / Retail</option>
+            <option value="bookstore">📚 Bookstore</option>
+            <option value="bar">🍸 Bar / Lounge</option>
+            <option value="ice cream shop">🍦 Ice cream shop</option>
+            <option value="yoga studio">🧘 Yoga studio</option>
+            <option value="other">✏️ Other (type below)</option>
+          </select>
+        </div>
+        <div class="form-group" id="businessTypeOtherWrap" style="display:none">
+          <label>Describe your business</label>
+          <input type="text" id="businessTypeOther" placeholder="e.g. Vinyl record store" maxlength="80">
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="2">
+        <div class="form-group">
+          <label>City + State</label>
+          <input type="text" id="location" placeholder="e.g. Brooklyn, NY">
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn" data-wiz-back>← Back</button>
+          <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="3">
+        <div class="form-group">
+          <label>Target Audience <span class="optional-tag">(optional)</span></label>
+          <input type="text" id="audience" placeholder="e.g. Young professionals, families, students, luxury clients">
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn" data-wiz-back>← Back</button>
+          <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="4">
+        <div class="form-group">
+          <label>Brand Tone</label>
+          <select id="tone">
+            <option value="friendly">😊 Friendly — warm & approachable</option>
+            <option value="professional">💼 Professional — polished & confident</option>
+            <option value="funny">😄 Funny — witty & playful</option>
+            <option value="luxury">✨ Luxury — refined & aspirational</option>
+          </select>
+        </div>
+        <div class="wizard-summary" id="wizardSummary"></div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn" data-wiz-back>← Back</button>
+          <button type="button" class="wizard-btn primary" data-wiz-finish>Finish setup ✓</button>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>Location</label>
-      <input type="text" id="location" placeholder="e.g. Brooklyn, NY">
-    </div>
-
-    <div class="form-group">
-      <label>Target Audience <span class="optional-tag">(optional)</span></label>
-      <input type="text" id="audience" placeholder="e.g. Young professionals">
-    </div>
-
-    <div class="form-group">
-      <label>Tone</label>
-      <select id="tone">
-        <option value="friendly">😊 Friendly</option>
-        <option value="professional">💼 Professional</option>
-        <option value="funny">😄 Funny</option>
-        <option value="luxury">✨ Luxury</option>
-      </select>
+    <div class="wizard-summary" id="setupRecap" style="display:none;margin-bottom:14px;">
+      <span id="setupRecapText"></span>
+      <button type="button" class="wizard-edit" id="setupEditBtn">Edit setup</button>
     </div>
 
     <div class="form-group">
