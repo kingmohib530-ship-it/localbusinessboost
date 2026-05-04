@@ -184,25 +184,38 @@
    .pricing-title { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 1.5px; color: var(--white); }
    .pricing-title span { color: var(--gold); }
    .pricing-sub { color: var(--white-muted); font-size: 13px; margin-top: 6px; }
-   .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+   .pricing-grid { display: grid; grid-template-columns: 0.85fr 1.25fr 0.9fr; gap: 16px; align-items: stretch; }
    @media (max-width: 820px) { .pricing-grid { grid-template-columns: 1fr; } }
-   .tier { background: var(--bg2, #131313); border: 1px solid var(--border2); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; position: relative; transition: all .18s; }
-   .tier.featured { border-color: var(--gold); box-shadow: 0 8px 32px rgba(201,168,76,.12); }
-   .tier-tag { position: absolute; top: -10px; right: 16px; background: var(--gold); color: #0a0a0a; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; }
+   .tier { background: var(--bg2, #131313); border: 1px solid var(--border2); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 10px; position: relative; transition: all .18s; }
+   .tier.muted { opacity: .82; padding: 18px; background: #101010; }
+   .tier.muted .tier-name { font-size: 18px; color: var(--white-dim); }
+   .tier.muted .tier-price { font-size: 28px; color: var(--white-muted); }
+   .tier.muted .tier-tagline { color: var(--white-muted); }
+   .tier.featured { border-color: var(--gold); box-shadow: 0 16px 48px rgba(201,168,76,.18), 0 0 0 1px rgba(201,168,76,.25); transform: scale(1.04); padding: 28px 24px; background: linear-gradient(180deg, #1a1612 0%, #131313 60%); }
+   @media (max-width: 820px) { .tier.featured { transform: none; } }
+   .tier-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--gold), #e0b85a); color: #0a0a0a; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; padding: 5px 14px; border-radius: 999px; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 14px rgba(201,168,76,.35); }
+   .tier-tag.muted-tag { background: var(--bg3); color: var(--white-muted); border: 1px solid var(--border2); font-weight: 600; box-shadow: none; }
    .tier-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1.2px; color: var(--white); }
+   .tier.featured .tier-name { font-size: 28px; color: var(--gold); }
    .tier-price { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: var(--gold); line-height: 1; }
+   .tier.featured .tier-price { font-size: 52px; }
    .tier-price small { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--white-muted); font-weight: 400; letter-spacing: 0; margin-left: 4px; }
+   .tier-tagline { font-size: 11.5px; font-family: 'DM Mono', monospace; letter-spacing: .8px; color: var(--gold2); text-transform: uppercase; margin-top: -2px; }
+   .tier.featured .tier-tagline { color: var(--gold); }
    .tier-pitch { font-size: 12.5px; color: var(--white-dim); line-height: 1.5; }
+   .tier.featured .tier-pitch { font-size: 13.5px; color: var(--white); }
    .tier-feats { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; flex: 1; }
    .tier-feats li { font-size: 12.5px; color: var(--white-dim); line-height: 1.45; padding-left: 18px; position: relative; }
    .tier-feats li:before { content: '✓'; position: absolute; left: 0; color: var(--gold); font-weight: 700; }
-   .tier-feats li.no:before { content: '×'; color: var(--white-muted); }
-   .tier-feats li.no { color: var(--white-muted); text-decoration: line-through; opacity: .7; }
+   .tier-feats li.no:before { content: '×'; color: #c96b6b; }
+   .tier-feats li.no { color: var(--white-muted); }
+   .tier.featured .tier-feats li { font-size: 13px; color: var(--white); }
    .tier-cta { margin-top: 8px; padding: 11px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; border: 1px solid var(--border2); background: transparent; color: var(--white); }
-   .tier-cta.primary { background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; border: none; }
-   .tier-cta.primary:hover { opacity: .9; transform: translateY(-1px); }
+   .tier-cta.primary { background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; border: none; padding: 14px; font-size: 14px; font-weight: 700; box-shadow: 0 8px 24px rgba(201,168,76,.25); }
+   .tier-cta.primary:hover { opacity: .92; transform: translateY(-1px); }
    .tier-cta.ghost:hover { border-color: var(--gold); color: var(--gold); }
    .tier-cta.current { background: var(--gold-dim); color: var(--gold); border: 1px dashed rgba(201,168,76,.4); cursor: default; }
+   .tier-recommend { font-size: 11px; color: var(--gold2); text-align: center; margin-top: -4px; font-style: italic; }
    .upgrade-soft { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; margin: 12px 0; background: linear-gradient(135deg, var(--gold-dim), transparent); border: 1px solid rgba(201,168,76,.35); border-left: 3px solid var(--gold); border-radius: 10px; font-family: 'DM Sans', sans-serif; }
    .upgrade-soft-title { font-size: 13.5px; color: var(--gold2); font-weight: 600; }
    .upgrade-soft-text { font-size: 12px; color: var(--white-dim); line-height: 1.45; }
