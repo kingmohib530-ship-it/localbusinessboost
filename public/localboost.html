@@ -839,10 +839,12 @@ function formatTime(ts){
   return d.toLocaleDateString();
 }
 function renderRecent(){
-  const list = loadRecent();
+  const all = loadRecent();
+  const cap = planLimits().history;
+  const list = all.slice(0, Math.min(all.length, cap));
   const block = document.getElementById('recentBlock');
   const ul = document.getElementById('recentList');
-  if(!list.length){ block.style.display = 'none'; return; }
+  if(!list.length && all.length === 0){ block.style.display = 'none'; return; }
   block.style.display = 'block';
   ul.innerHTML = list.map(item => {
     const name = (item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
