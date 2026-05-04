@@ -60,10 +60,12 @@ BUSINESS DETAILS:
 ${aud ? `- Target Audience: ${aud}` : ""}
 - Tone: ${safeTone}
 
-STEP 0 — INVENT THE BUSINESS NAME (MANDATORY BEFORE WRITING):
-- Invent ONE realistic business name that fits ${biz} in ${loc}. It should sound like a real local spot a regular would name-drop (e.g. "Rosewood Cuts", "Crown & Bean", "Elm Street Wash"). Avoid clichés like "The [Adjective] [Noun] Co." unless it genuinely fits.
-- Lock that name in. Use the EXACT same business name in every review reply, caption, hook, promo, and SMS. No variations. No abbreviations unless natural.
-- Never output [Business Name], [Your City], [LINK], [CTA], "your business", or any placeholder. If you catch yourself writing one, replace it with the invented name or rewrite the sentence.
+STEP 0 — CRITICAL IDENTITY RULE (DO THIS FIRST, BEFORE ANY OTHER OUTPUT):
+- Generate ONE consistent business name for this entire response. Derive it directly from the business type (${biz}) and city (${loc}) — it must feel like it could only belong to this business in this place.
+- It should sound like a real local spot a regular would name-drop (e.g. "Rosewood Cuts", "Crown & Bean", "Elm Street Wash"). Avoid clichés like "The [Adjective] [Noun] Co." unless it genuinely fits.
+- LOCK THAT NAME IN. You MUST reuse the EXACT same name — same spelling, same casing, same wording — in every review reply, caption, hook, promo, and SMS where a name appears.
+- NEVER invent a new name mid-response. NEVER use multiple brand names in the same session. If you catch a second name slipping in, stop and replace it with the locked name.
+- Never output [Business Name], [Your City], [LINK], [CTA], "your business", or any placeholder. Always use the locked name or rewrite the sentence.
 
 TONE GUIDE — apply consistently across every output:
 - friendly: warm, neighbor-next-door, contractions, slight casualness.
