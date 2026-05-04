@@ -37,6 +37,11 @@ export const Route = createFileRoute("/api/generate-content")({
           const location = (body.location || "").toString().slice(0, 200).trim();
           const audience = (body.audience || "locals").toString().slice(0, 200).trim();
           const tone = (body.tone || "friendly").toString().slice(0, 50).trim();
+          const sectionRaw = (body.section || "").toString().trim().toLowerCase();
+          const section: SectionKey | null =
+            (ALLOWED_SECTIONS as readonly string[]).includes(sectionRaw)
+              ? (sectionRaw as SectionKey)
+              : null;
 
           if (!businessType || !location) {
             return new Response(
