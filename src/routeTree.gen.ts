@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -35,17 +36,24 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
+  id: '/api/public/billing/portal',
+  path: '/api/public/billing/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -53,6 +61,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -61,18 +70,21 @@ export interface FileRouteTypes {
     | '/'
     | '/api/generate-content'
     | '/checkout/return'
+    | '/api/public/billing/portal'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/api/generate-content'
     | '/checkout/return'
+    | '/api/public/billing/portal'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
     | '/api/generate-content'
     | '/checkout/return'
+    | '/api/public/billing/portal'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -80,6 +92,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -113,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/billing/portal': {
+      id: '/api/public/billing/portal'
+      path: '/api/public/billing/portal'
+      fullPath: '/api/public/billing/portal'
+      preLoaderRoute: typeof ApiPublicBillingPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -120,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
