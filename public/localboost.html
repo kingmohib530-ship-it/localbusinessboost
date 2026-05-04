@@ -1648,6 +1648,7 @@ function applySession(session){
     // Re-render everything for this user's namespace
     if(typeof refreshPlanBadge === 'function') refreshPlanBadge();
     if(typeof updateModeLocks === 'function') updateModeLocks();
+    if(typeof renderLimitWarnBanner === 'function') renderLimitWarnBanner();
     if(typeof renderClientBar === 'function') renderClientBar();
     if(typeof renderProfiles === 'function') renderProfiles(getActiveClientId() || '');
     if(typeof renderRecent === 'function') renderRecent();
