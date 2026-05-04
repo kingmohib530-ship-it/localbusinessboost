@@ -589,7 +589,7 @@ function refreshPlanBadge(){
   const btn = document.getElementById('upgradeBtn');
   const plan = getPlan();
   b.textContent = PLANS[plan].name + ' Plan';
-  b.className = 'badge' + (plan==='pro'||plan==='proPlus'?' pro-badge':plan==='agency'?' agency-badge':'');
+  b.className = 'badge' + (plan==='pro'?' pro-badge':plan==='agency'?' agency-badge':'');
   if(btn){
     if(plan === 'agency'){ btn.style.display = 'none'; }
     else {
@@ -660,7 +660,7 @@ function renderPricingGrid(){
         } catch(_){}
         return;
       }
-      const priceId = id === 'pro' ? 'pro_monthly' : id === 'proPlus' ? 'pro_monthly' : id === 'agency' ? 'agency_monthly' : null;
+      const priceId = id === 'pro' ? 'pro_monthly' : id === 'agency' ? 'agency_monthly' : null;
       if(!priceId){ return; }
       // Get current user email
       let email = null;
