@@ -573,9 +573,9 @@ const PLANS = {
     cta: 'Go Agency', limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
   }
 };
-function getPlan(){ return localStorage.getItem(PLAN_KEY) || 'free'; }
+function getPlan(){ return localStorage.getItem(K(PLAN_KEY)) || 'free'; }
 function setPlan(p){
-  localStorage.setItem(PLAN_KEY, p);
+  localStorage.setItem(K(PLAN_KEY), p);
   refreshPlanBadge();
   renderPricingGrid();
   updateModeLocks();
@@ -599,7 +599,7 @@ function refreshPlanBadge(){
 // Daily generation usage
 function todayKey(){ return new Date().toISOString().slice(0,10); }
 function loadUsage(){
-  try { return JSON.parse(localStorage.getItem(USAGE_KEY) || '{}'); }
+  try { return JSON.parse(localStorage.getItem(K(USAGE_KEY)) || '{}'); }
   catch { return {}; }
 }
 function getDailyCount(){
@@ -610,7 +610,7 @@ function bumpDailyCount(){
   const u = loadUsage();
   if(u.date !== todayKey()){ u.date = todayKey(); u.count = 0; }
   u.count = (u.count || 0) + 1;
-  localStorage.setItem(USAGE_KEY, JSON.stringify(u));
+  localStorage.setItem(K(USAGE_KEY), JSON.stringify(u));
 }
 
 // Modal
@@ -690,10 +690,10 @@ function upgradePro(){ openPricing(); }
 // ===== Client Mode =====
 const ACTIVE_CLIENT_KEY = 'lb_active_client_v1';
 const CLIENT_PALETTE = ['#c9a84c','#7ab8d8','#d87a96','#84c98e','#b58cd8','#e2a06b','#6cc8c0','#d8c45c'];
-function getActiveClientId(){ return localStorage.getItem(ACTIVE_CLIENT_KEY) || ''; }
+function getActiveClientId(){ return localStorage.getItem(K(ACTIVE_CLIENT_KEY)) || ''; }
 function setActiveClientId(id){
-  if(id) localStorage.setItem(ACTIVE_CLIENT_KEY, id);
-  else localStorage.removeItem(ACTIVE_CLIENT_KEY);
+  if(id) localStorage.setItem(K(ACTIVE_CLIENT_KEY), id);
+  else localStorage.removeItem(K(ACTIVE_CLIENT_KEY));
 }
 function clientColor(id){
   let h = 0; for(let i=0;i<id.length;i++) h = (h*31 + id.charCodeAt(i)) >>> 0;
@@ -785,11 +785,11 @@ function resetOutputPanel(){
 const PROFILES_KEY = 'lb_saved_businesses_v1';
 
 function loadProfiles(){
-  try { return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]'); }
+  try { return JSON.parse(localStorage.getItem(K(PROFILES_KEY)) || '[]'); }
   catch { return []; }
 }
 function persistProfiles(list){
-  localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
+  localStorage.setItem(K(PROFILES_KEY), JSON.stringify(list));
 }
 function profileLabel(p){
   const parts = [p.businessType, p.location].filter(Boolean);
@@ -884,7 +884,7 @@ const RECENT_KEY = 'lb_recent_generations_v1';
 const RECENT_MAX = 5;
 
 function loadAllRecent(){
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+  try { return JSON.parse(localStorage.getItem(K(RECENT_KEY)) || '[]'); }
   catch { return []; }
 }
 function loadRecent(){
@@ -895,7 +895,7 @@ function loadRecent(){
 }
 function persistRecent(list){
   // Only ever called with the full list
-  localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  localStorage.setItem(K(RECENT_KEY), JSON.stringify(list));
 }
 function addRecent(entry){
   entry.clientId = getActiveClientId() || null;
@@ -980,11 +980,11 @@ const REMINDER_MIN_DAYS = 5;
 const REMINDER_MAX_DAYS = 7;
 
 function loadReminders(){
-  try { return JSON.parse(localStorage.getItem(REMINDERS_KEY) || '{}'); }
+  try { return JSON.parse(localStorage.getItem(K(REMINDERS_KEY)) || '{}'); }
   catch { return {}; }
 }
 function persistReminders(map){
-  localStorage.setItem(REMINDERS_KEY, JSON.stringify(map));
+  localStorage.setItem(K(REMINDERS_KEY), JSON.stringify(map));
 }
 function setReminderForProfile(profileId, enabled){
   const map = loadReminders();
