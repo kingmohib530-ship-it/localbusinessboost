@@ -756,8 +756,22 @@ function dismissReminderBanner(e){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderProfiles('');
+  // Restore active client (if any) into the form on load
+  const activeId = getActiveClientId();
+  const profiles = loadProfiles();
+  const activeProfile = profiles.find(p => p.id === activeId);
+  if(activeProfile){
+    document.getElementById('businessType').value = activeProfile.businessType || '';
+    document.getElementById('location').value = activeProfile.location || '';
+    document.getElementById('audience').value = activeProfile.audience || '';
+    document.getElementById('tone').value = activeProfile.tone || 'friendly';
+  } else if(activeId){
+    setActiveClientId('');
+  }
+  renderClientBar();
+  renderProfiles(activeId || '');
   renderRecent();
+  document.getElementById('clientNewBtn')?.addEventListener('click', newClient);
   const sel = document.getElementById('profileSelect');
   const del = document.getElementById('profileDelBtn');
   if(sel) sel.addEventListener('change', e => {
