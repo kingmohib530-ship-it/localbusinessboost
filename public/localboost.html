@@ -663,9 +663,12 @@ function restoreRecent(id){
   showToast('Restored "' + (item.businessType || 'previous') + '"');
 }
 function clearRecent(){
-  localStorage.removeItem(RECENT_KEY);
+  const active = getActiveClientId();
+  const all = loadAllRecent().filter(r => active ? r.clientId !== active : !!r.clientId);
+  persistRecent(all);
   renderRecent();
-  showToast('History cleared');
+  renderClientBar();
+  showToast(active ? 'Cleared this client\'s history' : 'History cleared');
 }
 
 // ===== Weekly Content Reminders =====
