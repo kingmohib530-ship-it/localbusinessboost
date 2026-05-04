@@ -625,6 +625,7 @@ function setPlan(p){
   refreshPlanBadge();
   renderPricingGrid();
   updateModeLocks();
+  renderLimitWarnBanner?.();
   renderClientBar?.();
   renderRecent?.();
   showToast(p === 'free' ? 'Switched to Free plan' : `Welcome to ${PLANS[p].name}!`);
