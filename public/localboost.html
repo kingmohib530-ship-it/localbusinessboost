@@ -1490,10 +1490,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('authForm')?.addEventListener('submit', handleAuthSubmit);
   document.getElementById('authToggleBtn')?.addEventListener('click', () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin'));
   document.getElementById('signOutBtn')?.addEventListener('click', signOut);
+  document.getElementById('billingBtn')?.addEventListener('click', () => {
+    try { window.parent.postMessage({ type: 'lb-portal' }, '*'); } catch(_){}
+  });
   setAuthMode('signin');
   // Bootstrap session
   sb.auth.getSession().then(({ data }) => applySession(data.session));
   sb.auth.onAuthStateChange((_event, session) => applySession(session));
+  // Re-sync subscription when window regains focus (e.g. after returning from Stripe)
+  window.addEventListener('focus', () => { if(currentUserId) syncSubscription(); });
 });
 </script>
 </body>
