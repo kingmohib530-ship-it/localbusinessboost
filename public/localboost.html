@@ -503,6 +503,15 @@
 </div>
 
 <script>
+// ===== Auth / per-user storage =====
+const SUPABASE_URL = 'https://uibavbmqvzbjhssbvrbn.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpYmF2Ym1xdnpiamhzc2J2cmJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NTI2NjksImV4cCI6MjA5MzQyODY2OX0.R5PeFm2-paAzUo3TDLAINfTfqeFlhe8pp8iFNkf4Cgc';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'lb-auth' }
+});
+let currentUserId = null;
+function uidSuffix(){ return currentUserId ? ('::' + currentUserId) : ''; }
+function K(base){ return base + uidSuffix(); }
 function showToast(msg){
   const t=document.getElementById('toast');
   document.getElementById('toastText').textContent=msg||'Copied to clipboard!';
