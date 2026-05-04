@@ -1081,6 +1081,7 @@ async function generate(section){
       renderResults(lastData);
     } else {
       lastData = data;
+      bumpDailyCount();
       renderResults(data);
       const saveBtn = document.getElementById('saveBizBtn');
       if(saveBtn) saveBtn.classList.add('visible');
