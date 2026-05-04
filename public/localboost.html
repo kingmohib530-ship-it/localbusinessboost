@@ -577,37 +577,37 @@ const USAGE_KEY = 'lb_usage_v1';
 const PLANS = {
   free: {
     name: 'Starter', price: '$7.99', period: '/month',
-    pitch: 'Entry tier for testing the platform with daily limits.',
+    tagline: 'Limited access plan',
+    pitch: 'Try the platform with daily limits — basic access only.',
     feats: [
-      { ok:true, t:'5 generations per day' },
+      { ok:false, t:'Only 5 generations per day' },
+      { ok:false, t:'Instant mode only — advanced modes locked' },
+      { ok:false, t:'No section regeneration' },
+      { ok:false, t:'No bulk generation or export packs' },
       { ok:true, t:'1 saved business' },
-      { ok:true, t:'Instant mode only' },
       { ok:true, t:'Limited history (last 5 results)' },
-      { ok:false, t:'Unlimited generations' },
-      { ok:false, t:'Weekly Planner, Local SEO & Variation modes' },
-      { ok:false, t:'Section regeneration & priority queue' },
-      { ok:false, t:'Bulk generation, export packs & multi-client workspaces' },
     ],
-    cta: 'Current plan', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 5, modes: ['instant'] }
+    cta: 'Stay on Starter', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 5, modes: ['instant'] }
   },
   pro: {
     name: 'Pro', price: '$19', period: '/month',
-    pitch: 'For solo operators running their business.',
+    tagline: 'Best value for solo business owners',
+    pitch: 'Full access to the AI marketing engine — generate unlimited content, save hours every day, and run your business faster.',
     feats: [
-      { ok:true, t:'Unlimited generations' },
+      { ok:true, t:'Unlimited content generation' },
+      { ok:true, t:'All modes: Weekly Planner, Local SEO & Variation' },
+      { ok:true, t:'Section regeneration in one click' },
       { ok:true, t:'Unlimited saved businesses' },
-      { ok:true, t:'All modes including Weekly Planner' },
-      { ok:true, t:'Section regeneration' },
-      { ok:true, t:'Full history' },
+      { ok:true, t:'Full history of every result' },
       { ok:true, t:'Weekly content reminders' },
-      { ok:false, t:'Multi-client workspace switching' },
-      { ok:false, t:'Bulk generation & export packs' },
+      { ok:true, t:'Priority support' },
     ],
-    cta: 'Upgrade to Pro', featured: true, limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+    cta: 'Unlock full access — $19/mo', featured: true, limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
   },
   agency: {
     name: 'Agency', price: '$79', period: '/month',
-    pitch: 'For freelancers and agencies managing multiple clients.',
+    tagline: 'For agencies managing multiple clients',
+    pitch: 'Scale to multi-client workflows with bulk generation and export-ready content packs.',
     feats: [
       { ok:true, t:'Everything in Pro' },
       { ok:true, t:'Multi-client workspaces' },
@@ -616,7 +616,7 @@ const PLANS = {
       { ok:true, t:'Priority generation queue' },
       { ok:true, t:'Branded client exports (coming soon)' },
     ],
-    cta: 'Go Agency', limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
+    cta: 'Go Agency — $79/mo', limits: { dailyGenerations: Infinity, savedBusinesses: Infinity, history: Infinity, modes: ['instant','weekly','seo','variation'] }
   }
 };
 function getPlan(){ return localStorage.getItem(K(PLAN_KEY)) || 'free'; }
