@@ -82,10 +82,13 @@ ABSOLUTE RULES:
 
 SECTION RULES:
 
-GOOGLE REVIEW REPLIES (3) — replies FROM the owner TO imagined customers:
-- Each reply has a DIFFERENT personality: e.g. (a) short, warm, off-the-cuff; (b) longer, detailed, references something specific the customer might have mentioned; (c) friendly nudge to come back, mentions something new or upcoming.
-- Reference a believable detail (a drink, a stylist's name, a window seat, the Saturday rush). Use the invented business name at least once across the set.
-- Only ONE reply may start with "Thank you". Do not sound like a support bot. No emojis unless the tone calls for it.
+CUSTOMER REVIEWS (3) — written BY real customers, like actual Google/Yelp reviews (NOT owner replies, NOT staff voice):
+- Each review has a DIFFERENT personality and writing style: e.g. (a) short, casual, almost lazy ("went here last weekend, was actually really good"), (b) longer, detailed, slightly rambling regular who lists 2–3 specific things they liked, (c) a slightly mixed but mostly positive review where they note one tiny gripe and still recommend it.
+- Sound like real people typing on their phone: contractions, sentence fragments, occasional "tbh", "ngl", "fwiw", a stray comma splice, a missing apostrophe is fine. NOT every review — just natural sprinkles.
+- Slight repetition is okay ("really really liked it", "good good vibes"). Casual phrasing welcome.
+- Reference a believable specific detail (a drink, a stylist's name, the window seat, the Saturday rush). Mention the locked business name in at least 2 of the 3.
+- Avoid corporate hospitality tone, marketing adjectives ("exquisite", "second to none", "phenomenal experience"), and anything that sounds like the owner wrote it. Star ratings, names, and dates are NOT included — just the review text.
+- No emojis unless it genuinely fits how a real person would write that review.
 
 INSTAGRAM CAPTIONS (5) — must read like real posts a small business would actually publish:
 - Vary the structures across the five: (1) short story / moment, (2) bold one-liner opinion, (3) question to the audience, (4) short list or breakdown using line breaks, (5) behind-the-scenes / POV.
