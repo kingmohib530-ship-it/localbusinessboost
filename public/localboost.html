@@ -1007,7 +1007,7 @@ function clientColor(id){
   return CLIENT_PALETTE[h % CLIENT_PALETTE.length];
 }
 function clientInitials(p){
-  const src = (p.businessType || p.location || '?').trim();
+  const src = (p.businessName || p.businessType || p.location || '?').trim();
   const words = src.split(/\s+/);
   return ((words[0]||'?')[0] + (words[1]?words[1][0]:'')).toUpperCase();
 }
