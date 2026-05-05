@@ -763,6 +763,40 @@
   </section>
 </main>
 
+<section id="lockedPreview" class="how-section" style="padding-top:20px;">
+  <h2 class="section-title">Unlock The Full Growth Engine</h2>
+  <p class="section-sub">A taste of what Pro unlocks — built for businesses that want compounding results.</p>
+  <div class="how-grid">
+    <div class="how-card" style="position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;backdrop-filter:blur(3px);background:rgba(10,10,10,.45);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;z-index:2;">
+        <div style="font-size:24px;">🔒</div>
+        <button type="button" onclick="startProCheckout('locked_weekly')" style="padding:8px 16px;background:var(--gold);color:#0a0a0a;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">Unlock with Pro</button>
+      </div>
+      <div class="how-step">📅 Pro feature</div>
+      <h3>Weekly Content Plan</h3>
+      <p>A full 7-day marketing calendar generated in one click. Mon–Sun, narrative arc, ready to post.</p>
+    </div>
+    <div class="how-card" style="position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;backdrop-filter:blur(3px);background:rgba(10,10,10,.45);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;z-index:2;">
+        <div style="font-size:24px;">🔒</div>
+        <button type="button" onclick="startProCheckout('locked_bulk')" style="padding:8px 16px;background:var(--gold);color:#0a0a0a;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">Unlock with Pro</button>
+      </div>
+      <div class="how-step">⚡ Pro feature</div>
+      <h3>Bulk Content Generator</h3>
+      <p>Generate 30+ posts, captions, and SMS messages at once. Export-ready packs for the entire month.</p>
+    </div>
+    <div class="how-card" style="position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;backdrop-filter:blur(3px);background:rgba(10,10,10,.45);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;z-index:2;">
+        <div style="font-size:24px;">🔒</div>
+        <button type="button" onclick="startProCheckout('locked_multi')" style="padding:8px 16px;background:var(--gold);color:#0a0a0a;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">Unlock with Pro</button>
+      </div>
+      <div class="how-step">🏢 Pro feature</div>
+      <h3>Multi-Business Mode</h3>
+      <p>Manage unlimited saved businesses, switch between brand voices instantly, and never lose a profile.</p>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="footer-left">
     Need custom tools for your business?<br>
@@ -831,18 +865,18 @@ const PLANS = {
     tagline: 'Limited access plan',
     pitch: 'Try the platform with daily limits — basic access only.',
     feats: [
-      { ok:false, t:'Only 5 generations per day' },
+      { ok:false, t:'Only 3 generations per day' },
       { ok:false, t:'Instant mode only — advanced modes locked' },
       { ok:false, t:'No section regeneration' },
       { ok:false, t:'No bulk generation or export packs' },
       { ok:true, t:'1 saved business' },
       { ok:true, t:'Limited history (last 5 results)' },
     ],
-    cta: 'Stay on Starter', limits: { dailyGenerations: 5, savedBusinesses: 1, history: 5, modes: ['instant'] }
+    cta: 'Stay on Starter', limits: { dailyGenerations: 3, savedBusinesses: 1, history: 5, modes: ['instant'] }
   },
   pro: {
     name: 'Pro', price: '$19', period: '/month',
-    tagline: 'Best value for solo business owners',
+    tagline: 'Less than $0.30/day to grow your business',
     pitch: 'Full access to the AI marketing engine — generate unlimited content, save hours every day, and run your business faster.',
     feats: [
       { ok:true, t:'Unlimited content generation' },
@@ -880,9 +914,13 @@ function setPlan(p){
   renderClientBar?.();
   renderRecent?.();
   showToast(p === 'free' ? 'Switched to Free plan' : `Welcome to ${PLANS[p].name}!`);
+  const lp = document.getElementById('lockedPreview');
+  if(lp) lp.style.display = (p === 'free') ? '' : 'none';
 }
 function planLimits(){ return PLANS[getPlan()].limits; }
 function refreshPlanBadge(){
+  const lp = document.getElementById('lockedPreview');
+  if(lp) lp.style.display = (getPlan() === 'free') ? '' : 'none';
   const b = document.getElementById('planBadge');
   const btn = document.getElementById('upgradeBtn');
   const plan = getPlan();
@@ -1075,6 +1113,36 @@ function maybeShowFirstGenPrompt(){
   }, 900);
 }
 
+// Session-level upgrade triggers
+let _sessionGenCount = 0;
+let _resultsViewTimer = null;
+function trackSessionGeneration(){
+  if(getPlan() !== 'free') return;
+  _sessionGenCount++;
+  if(_sessionGenCount === 2){
+    setTimeout(() => {
+      if(getPlan() !== 'free') return;
+      showConvertModal({
+        eyebrow: '✦ You\'re on a roll ✦',
+        title: 'Want <span>unlimited content</span> like this?',
+        sub: 'Upgrade in 1 click — less than $0.30/day to grow your business.',
+        bullets: ['Unlimited generations','All advanced modes','Section regeneration'],
+        primaryText: 'Upgrade to Pro — $7.99/month',
+      });
+    }, 600);
+  }
+  // Reset 60s timer on results
+  if(_resultsViewTimer) clearTimeout(_resultsViewTimer);
+  _resultsViewTimer = setTimeout(() => {
+    if(getPlan() !== 'free') return;
+    if(document.querySelector('.upgrade-soft')) return;
+    softUpgrade({
+      title: 'Want unlimited content like this?',
+      text: 'Upgrade in 1 click — less than $0.30/day.',
+    });
+  }, 60000);
+}
+
 function renderLimitWarnBanner(){
   const existing = document.getElementById('limitWarnBanner');
   if(getPlan() !== 'free'){ if(existing) existing.remove(); return; }
@@ -1084,17 +1152,19 @@ function renderLimitWarnBanner(){
   if(!cap || cap === Infinity){ if(existing) existing.remove(); return; }
   const ratio = used / cap;
   const dismissedDay = localStorage.getItem(K(WARN_DISMISS_KEY));
-  if(ratio < 0.7 || used >= cap || dismissedDay === todayKey()){
+  // Always show remaining once user has generated at least once
+  if(used < 1 || used >= cap){
     if(existing) existing.remove();
     return;
   }
-  if(existing) return;
+  if(existing) existing.remove();
   const left = cap - used;
   const div = document.createElement('div');
   div.id = 'limitWarnBanner';
   div.className = 'limit-warn';
+  const tone = left === 1 ? `<strong>You have 1 free generation left today.</strong>` : `<strong>You have ${left} free generations left today.</strong>`;
   div.innerHTML = `
-    <div class="limit-warn-text"><strong>You're close to your daily limit</strong> — ${left} generation${left===1?'':'s'} left today. Unlock unlimited content with Pro.</div>
+    <div class="limit-warn-text">${tone} Less than $0.30/day for unlimited.</div>
     <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">Upgrade to Pro</button>
     <button type="button" class="limit-warn-close" id="limitWarnClose" aria-label="Dismiss">×</button>`;
   const main = document.querySelector('main');
@@ -1119,15 +1189,19 @@ function nextResetText(){
 function showHardLimitModal(){
   showConvertModal({
     eyebrow: '✦ Daily limit reached ✦',
-    title: "You've hit your <span>daily limit</span>",
-    sub: "Don't stop now — keep generating without limits and grow your business faster.",
+    title: "You're getting <span>real results</span> — don't stop now.",
+    sub: "You've used your free generations. Upgrade to keep growing your business with unlimited content.",
     bullets: [
-      'Unlimited content, anytime',
+      'Unlimited content, every day',
       'All advanced modes unlocked',
-      'Refresh sections individually',
+      'Refresh any section in one click',
+      'Less than $0.30/day to grow your business',
     ],
-    ghostText: nextResetText(),
-    onGhost: () => { showToast(nextResetText()); },
+    primaryText: 'Upgrade to Pro — $7.99/month',
+    ghostText: 'Maybe later',
+    meta: nextResetText(),
+    onGhost: closeConvertModal,
+    dismissible: false,
   });
 }
 
@@ -1965,6 +2039,7 @@ async function generate(section, opts){
       checkReminderBanner();
       renderLimitWarnBanner();
       maybeShowFirstGenPrompt();
+      trackSessionGeneration();
     }
   } catch(e){
     console.error(e);
