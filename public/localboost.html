@@ -1419,7 +1419,173 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape') closePricing();
   });
+  // ===== Onboarding wizard =====
+  initWizard();
 });
+
+function getBusinessTypeValue(){
+  const sel = document.getElementById('businessType');
+  if(!sel) return '';
+  if(sel.value === 'other'){
+    return (document.getElementById('businessTypeOther')?.value || '').trim();
+  }
+  return (sel.value || '').trim();
+}
+function setBusinessTypeValue(val){
+  const sel = document.getElementById('businessType');
+  const otherWrap = document.getElementById('businessTypeOtherWrap');
+  const otherInput = document.getElementById('businessTypeOther');
+  if(!sel) return;
+  const v = (val || '').trim();
+  const hasOption = Array.from(sel.options).some(o => o.value === v);
+  if(hasOption && v !== 'other' && v !== ''){
+    sel.value = v;
+    if(otherWrap) otherWrap.style.display = 'none';
+    if(otherInput) otherInput.value = '';
+  } else if(v) {
+    sel.value = 'other';
+    if(otherWrap) otherWrap.style.display = 'block';
+    if(otherInput) otherInput.value = v;
+  } else {
+    sel.value = '';
+    if(otherWrap) otherWrap.style.display = 'none';
+    if(otherInput) otherInput.value = '';
+  }
+}
+
+let wizardStep = 1;
+const WIZ_STEPS = [
+  { n:1, title:'Business Identity' },
+  { n:2, title:'Location' },
+  { n:3, title:'Audience' },
+  { n:4, title:'Tone' },
+];
+function showWizardStep(n){
+  wizardStep = Math.max(1, Math.min(4, n));
+  document.querySelectorAll('.wizard-step').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.step) === wizardStep);
+  });
+  const dots = document.querySelectorAll('.wizard-progress-dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('done','current');
+    if(i+1 < wizardStep) d.classList.add('done');
+    else if(i+1 === wizardStep) d.classList.add('current');
+  });
+  const step = WIZ_STEPS[wizardStep-1];
+  const lbl = document.getElementById('wizardStepLabel');
+  const ttl = document.getElementById('wizardStepTitle');
+  if(lbl) lbl.textContent = `Step ${step.n} of 4`;
+  if(ttl) ttl.textContent = step.title;
+  if(wizardStep === 4) renderWizardSummary();
+}
+function validateWizardStep(n){
+  if(n === 1){
+    const name = (document.getElementById('businessName')?.value || '').trim();
+    const type = getBusinessTypeValue();
+    if(!name){ showToast('Add your Business Name to continue'); return false; }
+    if(!type){ showToast('Choose your business type'); return false; }
+  } else if(n === 2){
+    const loc = (document.getElementById('location')?.value || '').trim();
+    if(!loc){ showToast('Enter your city + state'); return false; }
+  }
+  return true;
+}
+function renderWizardSummary(){
+  const name = (document.getElementById('businessName')?.value || '').trim();
+  const type = getBusinessTypeValue();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  const aud = (document.getElementById('audience')?.value || '').trim();
+  const snap = buildPersonalitySnapshot({ name, type, loc, audience: aud });
+  const el = document.getElementById('wizardSummary');
+  if(!el) return;
+  el.innerHTML = `<strong>${(name||'Your business').replace(/</g,'&lt;')}</strong> — ${snap.vibe}<br><span style="color:var(--white-dim)">Angle:</span> ${snap.angle}`;
+}
+// Smart personalization layer — silent personality snapshot per business type
+const TYPE_PERSONALITY = {
+  'coffee shop':       { vibe:'cozy neighborhood café', angle:'morning routines, caffeine culture, regulars by name', style:'warm, lived-in, slightly sleepy mornings' },
+  'barber shop':       { vibe:'classic grooming spot', angle:'fresh look, confidence, the chair as a ritual', style:'sharp, masculine, no-nonsense friendly' },
+  'bakery':            { vibe:'small-batch bakery',   angle:'fresh-from-the-oven, weekend treats, pastry obsessions', style:'inviting, sensory, slightly indulgent' },
+  'gym':               { vibe:'community gym',         angle:'discipline, transformation, daily energy', style:'motivating, direct, real progress over hype' },
+  'restaurant':        { vibe:'local restaurant',      angle:'dining experience, taste, atmosphere, the table you keep coming back to', style:'flavor-led, atmospheric, hospitable' },
+  'salon':             { vibe:'hair salon',            angle:'self-care, transformation, looking like yourself again', style:'confident, personal, glow-up energy' },
+  'nail salon':        { vibe:'nail studio',           angle:'self-care, design, the small ritual', style:'detail-loving, personal, soft confidence' },
+  'spa':               { vibe:'wellness spa',          angle:'unwind, reset, slow down', style:'calm, sensory, low-volume' },
+  'dental clinic':     { vibe:'modern dental clinic',  angle:'comfort, trust, gentle care', style:'reassuring, clear, professional warmth' },
+  'med spa':           { vibe:'med spa',               angle:'subtle results, expert hands, glow', style:'refined, clinical-but-warm' },
+  'auto repair':       { vibe:'trusted local mechanic',angle:'honest work, fair pricing, back on the road', style:'plain-spoken, dependable' },
+  'car wash':          { vibe:'neighborhood car wash', angle:'quick clean, that fresh-car feeling', style:'breezy, fast, satisfying' },
+  'real estate':       { vibe:'local real estate pro', angle:'finding home, knowing the neighborhood', style:'grounded, neighborhood-savvy' },
+  'florist':           { vibe:'local florist',         angle:'occasions, small gestures, seasonal blooms', style:'soft, sensory, thoughtful' },
+  'pet groomer':       { vibe:'pet grooming studio',   angle:'happy pets, fresh look, gentle handling', style:'cheerful, gentle, pet-loving' },
+  'tattoo studio':     { vibe:'tattoo studio',         angle:'craft, story, ink that means something', style:'bold, artistic, unfiltered' },
+  'cleaning service':  { vibe:'cleaning service',      angle:'time back, spotless space, peace of mind', style:'reliable, warm, no-nonsense' },
+  'landscaping':       { vibe:'landscaping crew',      angle:'curb appeal, outdoor living, the yard you wanted', style:'practical, seasonal, proud-of-craft' },
+  'photography':       { vibe:'photography studio',    angle:'real moments, frame-worthy memories', style:'visual, story-led, intimate' },
+  'boutique':          { vibe:'curated boutique',      angle:'pieces you won\'t see everywhere, personal style', style:'taste-driven, friendly, in-the-know' },
+  'bookstore':         { vibe:'indie bookstore',       angle:'staff picks, getting lost in stacks, finding the next read', style:'literary, warm, slightly nerdy' },
+  'bar':               { vibe:'neighborhood bar',      angle:'after-work pours, weekend nights, regulars at the bar', style:'easy, unpretentious, social' },
+  'ice cream shop':    { vibe:'ice cream shop',        angle:'summer evenings, small joys, flavor of the week', style:'playful, sweet, nostalgic' },
+  'yoga studio':       { vibe:'yoga studio',           angle:'breath, intention, showing up for yourself', style:'calm, grounding, encouraging' },
+};
+function buildPersonalitySnapshot({ name, type, loc, audience }){
+  const t = (type||'').toLowerCase();
+  const fb = { vibe:`local ${t || 'business'}`, angle:'real customers, real moments, neighborhood credibility', style:'grounded, human, locally specific' };
+  const base = TYPE_PERSONALITY[t] || fb;
+  const audPart = audience ? ` for ${audience}` : '';
+  return {
+    vibe: `${base.vibe}${audPart} in ${loc || 'your city'}`,
+    angle: base.angle,
+    style: base.style,
+  };
+}
+
+function initWizard(){
+  // Event delegation for wizard buttons
+  document.querySelectorAll('[data-wiz-next]').forEach(b => b.addEventListener('click', () => {
+    if(!validateWizardStep(wizardStep)) return;
+    showWizardStep(wizardStep + 1);
+  }));
+  document.querySelectorAll('[data-wiz-back]').forEach(b => b.addEventListener('click', () => {
+    showWizardStep(wizardStep - 1);
+  }));
+  document.querySelectorAll('[data-wiz-finish]').forEach(b => b.addEventListener('click', () => {
+    finishWizard();
+  }));
+  // Other type toggle
+  const typeSel = document.getElementById('businessType');
+  const otherWrap = document.getElementById('businessTypeOtherWrap');
+  if(typeSel) typeSel.addEventListener('change', () => {
+    if(otherWrap) otherWrap.style.display = typeSel.value === 'other' ? 'block' : 'none';
+  });
+  document.getElementById('setupEditBtn')?.addEventListener('click', () => {
+    document.getElementById('setupRecap').style.display = 'none';
+    document.getElementById('setupWizard').style.display = 'block';
+    showWizardStep(1);
+  });
+  // If existing profile prefilled, collapse wizard into recap on load
+  maybeCollapseWizard();
+}
+function finishWizard(){
+  if(!validateWizardStep(1) || !validateWizardStep(2)) return;
+  collapseWizard();
+}
+function collapseWizard(){
+  const wiz = document.getElementById('setupWizard');
+  const recap = document.getElementById('setupRecap');
+  const txt = document.getElementById('setupRecapText');
+  if(wiz) wiz.style.display = 'none';
+  const name = (document.getElementById('businessName')?.value || '').trim();
+  const type = getBusinessTypeValue();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  if(txt) txt.innerHTML = `<strong>${(name||type).replace(/</g,'&lt;')}</strong> · ${type} · ${loc}`;
+  if(recap) recap.style.display = 'block';
+}
+function maybeCollapseWizard(){
+  const name = (document.getElementById('businessName')?.value || '').trim();
+  const type = getBusinessTypeValue();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  if(name && type && loc) collapseWizard();
+}
 
 const TONES = {
   friendly:{adj:'amazing',vibe:'so welcoming',emoji:'😊'},
