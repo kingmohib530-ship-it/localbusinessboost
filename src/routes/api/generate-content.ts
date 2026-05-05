@@ -20,6 +20,17 @@ type GenerateInput = {
   mode?: string;
   section?: string;
   snapshot?: { vibe?: string; angle?: string; style?: string };
+  // New intelligence-layer inputs
+  priceLevel?: string;            // 'budget' | 'mid' | 'premium'
+  brandPersonality?: string;      // free-text or preset
+  goal?: string;                  // 'foot_traffic' | 'repeat' | 'viral' | 'premium'
+  realOwnerVoice?: boolean;       // imperfect, human-owner phrasing
+  standOut?: boolean;             // competitor-aware differentiation
+  variant?: string;               // 'safe' | 'balanced' | 'high_conversion' — single-variant rewrite
+  generateVariants?: boolean;     // ask model for all 3 in one call
+  avoidPhrases?: string[];        // last-N kept-but-don't-repeat
+  likedExamples?: string[];       // user-approved style references
+  clientLocalMoment?: string;     // optional override from client
 };
 
 const ALLOWED_SECTIONS = ["reviews", "captions", "hooks", "hashtags", "promos", "sms"] as const;
