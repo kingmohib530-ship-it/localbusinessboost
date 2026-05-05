@@ -1047,12 +1047,13 @@ function switchClient(id){
   setActiveClientId(id);
   const p = loadProfiles().find(x => x.id === id);
   if(p){
-    document.getElementById('businessType').value = p.businessType || '';
+    const bn = document.getElementById('businessName'); if(bn) bn.value = p.businessName || '';
+    setBusinessTypeValue(p.businessType || '');
     document.getElementById('location').value = p.location || '';
     document.getElementById('audience').value = p.audience || '';
     document.getElementById('tone').value = p.tone || 'friendly';
+    if(typeof maybeCollapseWizard === 'function') maybeCollapseWizard();
   }
-  // Clear current results (they belong to the previous client)
   lastData = null;
   resetOutputPanel();
   renderClientBar();
@@ -1065,7 +1066,9 @@ function switchClient(id){
 }
 function newClient(){
   setActiveClientId('');
-  ['businessType','location','audience'].forEach(i => { document.getElementById(i).value=''; });
+  const bn = document.getElementById('businessName'); if(bn) bn.value = '';
+  setBusinessTypeValue('');
+  ['location','audience'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
   document.getElementById('tone').value = 'friendly';
   lastData = null;
   resetOutputPanel();
@@ -1075,7 +1078,11 @@ function newClient(){
   if(saveBtn) saveBtn.classList.remove('visible');
   renderRecent();
   refreshReminderToggle();
-  document.getElementById('businessType').focus();
+  // Reopen wizard for the new client
+  const wiz = document.getElementById('setupWizard'); if(wiz) wiz.style.display = 'block';
+  const recap = document.getElementById('setupRecap'); if(recap) recap.style.display = 'none';
+  if(typeof showWizardStep === 'function') showWizardStep(1);
+  document.getElementById('businessName')?.focus();
   showToast('New client workspace');
 }
 function resetOutputPanel(){
