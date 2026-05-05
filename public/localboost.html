@@ -1776,7 +1776,8 @@ function recordFeedback(text, liked){
 window.recordFeedback = recordFeedback;
 
 
-async function generate(section){
+async function generate(section, opts){
+  opts = opts || {};
   const businessName=(document.getElementById('businessName')?.value||'').trim();
   const biz=getBusinessTypeValue();
   const loc=document.getElementById('location').value.trim();
