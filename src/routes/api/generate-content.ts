@@ -307,6 +307,12 @@ SMS (3) — texts FROM the business owner TO a customer who already knows the pl
 - End with a clear, real action — "reply YES", "show this text", "tap to grab one", "first come first served". Never "[LINK]".
 - Use the invented business name in at least one of the three.
 
+${variant ? `\nVARIANT REWRITE MODE — ${variant.toUpperCase()}.
+- safe: low-risk, conservative, broadly inoffensive, plain-English. Best for skeptical audiences.
+- balanced: confident default, mixes specificity with approachability. The "normal" version.
+- high_conversion: bolder framing, sharper hooks, stronger CTAs, light urgency, willing to be polarizing. Still on-brand, never spammy.
+Apply this style across EVERY section uniformly.\n` : ""}
+
 ${section ? `SECTION-ONLY MODE: regenerate ONLY the "${section}" field with FRESH variations (do not repeat any phrasing the user may have seen before). Apply ALL rules above for that section. Return ONLY this JSON shape — every other field MUST be an empty array:
 {
   "reviews": ${section === "reviews" ? `["string", "string", "string"]` : "[]"},
@@ -314,7 +320,8 @@ ${section ? `SECTION-ONLY MODE: regenerate ONLY the "${section}" field with FRES
   "hooks": ${section === "hooks" ? `["string", "string", "string", "string", "string"]` : "[]"},
   "hashtags": ${section === "hashtags" ? `["#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag"]` : "[]"},
   "promos": ${section === "promos" ? `[{ "label": "string", "text": "string" }, { "label": "string", "text": "string" }, { "label": "string", "text": "string" }]` : "[]"},
-  "sms": ${section === "sms" ? `["string", "string", "string"]` : "[]"}
+  "sms": ${section === "sms" ? `["string", "string", "string"]` : "[]"},
+  "_meta": { "viralScore": 0, "engagement": "low|medium|high", "bestPlatform": "Instagram|TikTok|SMS|Google", "reasoning": "one short sentence" }
 }` : `OUTPUT — return ONLY this raw JSON. No markdown, no code fences, no commentary:
 {
   "reviews": ["string", "string", "string"],
@@ -326,8 +333,25 @@ ${section ? `SECTION-ONLY MODE: regenerate ONLY the "${section}" field with FRES
     { "label": "string", "text": "string" },
     { "label": "string", "text": "string" }
   ],
-  "sms": ["string", "string", "string"]
-}`}`;
+  "sms": ["string", "string", "string"],
+  "_meta": {
+    "viralScore": 0,
+    "engagement": "low|medium|high",
+    "bestPlatform": "Instagram|TikTok|SMS|Google",
+    "reasoning": "ONE short sentence (max 18 words) explaining WHY this set will perform — name the lever (curiosity, local relatability, urgency, scarcity, novelty, etc.). Do NOT be generic."
+  }${generateVariants ? `,
+  "_variants": {
+    "safe":            { "captions": ["string","string","string"], "hooks": ["string","string","string"], "sms": ["string","string"] },
+    "balanced":        { "captions": ["string","string","string"], "hooks": ["string","string","string"], "sms": ["string","string"] },
+    "high_conversion": { "captions": ["string","string","string"], "hooks": ["string","string","string"], "sms": ["string","string"] }
+  }` : ""}
+}
+
+META RULES (MANDATORY):
+- "viralScore" is an integer 1–100. Be HONEST and discriminating — most safe local content scores 35–60. Reserve 80+ for genuinely sharp, specific, hook-driven sets. Do not inflate.
+- "engagement" reflects expected likes/replies/saves on the chosen platform.
+- "bestPlatform" is the single channel where THIS set will perform best (one of: Instagram, TikTok, SMS, Google).
+- "reasoning" must reference a CONCRETE lever from the actual outputs, not generic praise.`}`;
 
           const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
