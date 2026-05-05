@@ -20,6 +20,17 @@ type GenerateInput = {
   mode?: string;
   section?: string;
   snapshot?: { vibe?: string; angle?: string; style?: string };
+  // New intelligence-layer inputs
+  priceLevel?: string;            // 'budget' | 'mid' | 'premium'
+  brandPersonality?: string;      // free-text or preset
+  goal?: string;                  // 'foot_traffic' | 'repeat' | 'viral' | 'premium'
+  realOwnerVoice?: boolean;       // imperfect, human-owner phrasing
+  standOut?: boolean;             // competitor-aware differentiation
+  variant?: string;               // 'safe' | 'balanced' | 'high_conversion' — single-variant rewrite
+  generateVariants?: boolean;     // ask model for all 3 in one call
+  avoidPhrases?: string[];        // last-N kept-but-don't-repeat
+  likedExamples?: string[];       // user-approved style references
+  clientLocalMoment?: string;     // optional override from client
 };
 
 const ALLOWED_SECTIONS = ["reviews", "captions", "hooks", "hashtags", "promos", "sms"] as const;
@@ -60,6 +71,45 @@ export const Route = createFileRoute("/api/generate-content")({
             (ALLOWED_SECTIONS as readonly string[]).includes(sectionRaw)
               ? (sectionRaw as SectionKey)
               : null;
+
+          // New intelligence-layer fields (sanitized)
+          const PRICE_LEVELS = new Set(["budget", "mid", "premium"]);
+          const GOALS = new Set(["foot_traffic", "repeat", "viral", "premium"]);
+          const VARIANTS = new Set(["safe", "balanced", "high_conversion"]);
+          const priceLevel = PRICE_LEVELS.has((body.priceLevel || "").toLowerCase())
+            ? (body.priceLevel as string).toLowerCase()
+            : "";
+          const brandPersonality = (body.brandPersonality || "").toString().slice(0, 200).trim();
+          const goal = GOALS.has((body.goal || "").toLowerCase()) ? (body.goal as string).toLowerCase() : "";
+          const realOwnerVoice = !!body.realOwnerVoice;
+          const standOut = !!body.standOut;
+          const variant = VARIANTS.has((body.variant || "").toLowerCase()) ? (body.variant as string).toLowerCase() : "";
+          const generateVariants = !!body.generateVariants;
+          const avoidPhrases = Array.isArray(body.avoidPhrases)
+            ? body.avoidPhrases.filter((s) => typeof s === "string").slice(0, 30).map((s) => s.slice(0, 200))
+            : [];
+          const likedExamples = Array.isArray(body.likedExamples)
+            ? body.likedExamples.filter((s) => typeof s === "string").slice(0, 10).map((s) => s.slice(0, 240))
+            : [];
+
+          // Server-derived "local moment" — keeps content alive without trusting client
+          const now = new Date();
+          const month = now.getUTCMonth();
+          const season =
+            month <= 1 || month === 11 ? "winter" :
+            month <= 4 ? "spring" :
+            month <= 7 ? "summer" : "fall";
+          const dow = now.getUTCDay();
+          const dayVibe = dow === 0 || dow === 6 ? "weekend chill" : "weekday grind";
+          const hourLocal = (now.getUTCHours() + 24) % 24;
+          const partOfDay =
+            hourLocal < 5 ? "late night" :
+            hourLocal < 11 ? "morning rush" :
+            hourLocal < 14 ? "lunch hour" :
+            hourLocal < 17 ? "afternoon lull" :
+            hourLocal < 21 ? "evening" : "late night";
+          const clientLocalMoment = (body.clientLocalMoment || "").toString().slice(0, 120).trim();
+          const localMoment = clientLocalMoment || `${season} · ${dayVibe} · ${partOfDay}`;
 
           if (!businessType || !location) {
             return new Response(
@@ -152,7 +202,19 @@ ${businessName ? `- Business Name: ${businessName}` : ""}
 - City/Location: ${loc}
 ${aud ? `- Target Audience: ${aud}` : ""}
 - Tone: ${safeTone}
+${priceLevel ? `- Price level: ${priceLevel} (budget = value/affordable signals; mid = balanced everyday quality; premium = restraint, craft, fewer adjectives)` : ""}
+${brandPersonality ? `- Brand personality keywords: ${brandPersonality}` : ""}
 ${snapVibe ? `\nBRAND PERSONALITY SNAPSHOT (use silently to guide voice — do NOT quote it back):\n- Brand vibe: ${snapVibe}\n- Marketing angle: ${snapAngle}\n- Voice/style: ${snapStyle}\n` : ""}
+LOCAL MOMENT (use silently to anchor 1–2 outputs in the real world right now — do NOT mention it explicitly): ${localMoment}.
+${goal ? `\nPRIMARY GOAL — ${goal.toUpperCase()}. Tilt persuasion accordingly:
+- foot_traffic: low-friction first visit, today/this-week urgency, easy directions vibe, "come by"
+- repeat: loyalty mechanics, "your usual", small perks for coming back, familiar tone
+- viral: pattern-breaking hooks, share-worthy framings, mild controversy or curiosity, replicable formats
+- premium: restraint, fewer words, status-by-implication, no discounting language\n` : ""}
+${standOut ? `\nCOMPETITOR-AWARE MODE — assume nearby competitors of the same type are using safe, generic copy ("amazing service", "great team", "quality you can trust"). Your job is to sound like the OPPOSITE: more specific, more opinionated, more local, more confident. Do NOT mention competitors. Just out-write them.\n` : ""}
+${realOwnerVoice ? `\nREAL-OWNER VOICE — outputs should feel like the actual owner wrote them on their phone between customers. Lightly imperfect: occasional sentence fragment, a contraction, a stray "honestly" or "tbh", a lowercase start. NEVER over-polished. NEVER agency-speak.\n` : ""}
+${avoidPhrases.length ? `\nAVOID REPEATING (recently shown to this user — produce FRESH wording, do not reuse these openers, hooks, or stock phrases):\n${avoidPhrases.map((p) => `- "${p}"`).join("\n")}\n` : ""}
+${likedExamples.length ? `\nSTYLE REFERENCES (the user previously kept these — match the rhythm, density, and voice; do NOT copy):\n${likedExamples.map((p) => `- "${p}"`).join("\n")}\n` : ""}
 STEP 0 — CRITICAL IDENTITY RULE (DO THIS FIRST, BEFORE ANY OTHER OUTPUT):
 ${businessName
   ? `- The business name is "${businessName}". You MUST use this EXACT name — same spelling, same casing, same wording — every time a brand name appears in any review, caption, hook, promo, or SMS. Never alter it, abbreviate it, translate it, or invent a variant.`
@@ -245,6 +307,12 @@ SMS (3) — texts FROM the business owner TO a customer who already knows the pl
 - End with a clear, real action — "reply YES", "show this text", "tap to grab one", "first come first served". Never "[LINK]".
 - Use the invented business name in at least one of the three.
 
+${variant ? `\nVARIANT REWRITE MODE — ${variant.toUpperCase()}.
+- safe: low-risk, conservative, broadly inoffensive, plain-English. Best for skeptical audiences.
+- balanced: confident default, mixes specificity with approachability. The "normal" version.
+- high_conversion: bolder framing, sharper hooks, stronger CTAs, light urgency, willing to be polarizing. Still on-brand, never spammy.
+Apply this style across EVERY section uniformly.\n` : ""}
+
 ${section ? `SECTION-ONLY MODE: regenerate ONLY the "${section}" field with FRESH variations (do not repeat any phrasing the user may have seen before). Apply ALL rules above for that section. Return ONLY this JSON shape — every other field MUST be an empty array:
 {
   "reviews": ${section === "reviews" ? `["string", "string", "string"]` : "[]"},
@@ -252,7 +320,8 @@ ${section ? `SECTION-ONLY MODE: regenerate ONLY the "${section}" field with FRES
   "hooks": ${section === "hooks" ? `["string", "string", "string", "string", "string"]` : "[]"},
   "hashtags": ${section === "hashtags" ? `["#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag", "#tag"]` : "[]"},
   "promos": ${section === "promos" ? `[{ "label": "string", "text": "string" }, { "label": "string", "text": "string" }, { "label": "string", "text": "string" }]` : "[]"},
-  "sms": ${section === "sms" ? `["string", "string", "string"]` : "[]"}
+  "sms": ${section === "sms" ? `["string", "string", "string"]` : "[]"},
+  "_meta": { "viralScore": 0, "engagement": "low|medium|high", "bestPlatform": "Instagram|TikTok|SMS|Google", "reasoning": "one short sentence" }
 }` : `OUTPUT — return ONLY this raw JSON. No markdown, no code fences, no commentary:
 {
   "reviews": ["string", "string", "string"],
@@ -264,8 +333,25 @@ ${section ? `SECTION-ONLY MODE: regenerate ONLY the "${section}" field with FRES
     { "label": "string", "text": "string" },
     { "label": "string", "text": "string" }
   ],
-  "sms": ["string", "string", "string"]
-}`}`;
+  "sms": ["string", "string", "string"],
+  "_meta": {
+    "viralScore": 0,
+    "engagement": "low|medium|high",
+    "bestPlatform": "Instagram|TikTok|SMS|Google",
+    "reasoning": "ONE short sentence (max 18 words) explaining WHY this set will perform — name the lever (curiosity, local relatability, urgency, scarcity, novelty, etc.). Do NOT be generic."
+  }${generateVariants ? `,
+  "_variants": {
+    "safe":            { "captions": ["string","string","string"], "hooks": ["string","string","string"], "sms": ["string","string"] },
+    "balanced":        { "captions": ["string","string","string"], "hooks": ["string","string","string"], "sms": ["string","string"] },
+    "high_conversion": { "captions": ["string","string","string"], "hooks": ["string","string","string"], "sms": ["string","string"] }
+  }` : ""}
+}
+
+META RULES (MANDATORY):
+- "viralScore" is an integer 1–100. Be HONEST and discriminating — most safe local content scores 35–60. Reserve 80+ for genuinely sharp, specific, hook-driven sets. Do not inflate.
+- "engagement" reflects expected likes/replies/saves on the chosen platform.
+- "bestPlatform" is the single channel where THIS set will perform best (one of: Instagram, TikTok, SMS, Google).
+- "reasoning" must reference a CONCRETE lever from the actual outputs, not generic praise.`}`;
 
           const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",

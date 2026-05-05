@@ -518,7 +518,11 @@
       <div class="wizard-step active" data-step="1">
         <div class="form-group">
           <label>Business Name</label>
-          <input type="text" id="businessName" placeholder="e.g. Crown & Bean" maxlength="80">
+          <div style="display:flex;gap:6px;align-items:stretch;">
+            <input type="text" id="businessName" placeholder="e.g. Crown & Bean" maxlength="80" style="flex:1;">
+            <button type="button" id="autoNameBtn" title="Suggest 5 names" style="white-space:nowrap;padding:0 12px;font-size:11px;font-family:'DM Mono',monospace;background:var(--bg2);border:1px solid var(--border2);color:var(--gold2);border-radius:8px;cursor:pointer;">✦ Suggest</button>
+          </div>
+          <div id="autoNameSuggest" style="display:none;margin-top:6px;flex-wrap:wrap;gap:6px;"></div>
         </div>
         <div class="form-group">
           <label>Business Type</label>
@@ -554,6 +558,18 @@
         <div class="form-group" id="businessTypeOtherWrap" style="display:none">
           <label>Describe your business</label>
           <input type="text" id="businessTypeOther" placeholder="e.g. Vinyl record store" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label>Price Level</label>
+          <select id="priceLevel">
+            <option value="mid">💰 Mid — everyday quality</option>
+            <option value="budget">🪙 Budget — value-driven</option>
+            <option value="premium">✨ Premium — refined, restrained</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Brand Personality <span class="optional-tag">(optional — we'll auto-fill)</span></label>
+          <input type="text" id="brandPersonality" placeholder="e.g. cozy, witty, no-BS — or leave blank" maxlength="160">
         </div>
         <div class="wizard-nav">
           <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
@@ -625,6 +641,28 @@
           <span class="mode-desc">Multiple style versions</span>
         </button>
       </div>
+    </div>
+
+    <div class="form-group">
+      <label>Goal — what should this content do?</label>
+      <div class="mode-grid" id="goalGrid" style="grid-template-columns:1fr 1fr;">
+        <button type="button" class="mode-btn active" data-goal="foot_traffic"><span class="mode-name">🚶 Foot traffic</span><span class="mode-desc">Get them in the door</span></button>
+        <button type="button" class="mode-btn" data-goal="repeat"><span class="mode-name">🔁 Repeat customers</span><span class="mode-desc">Loyalty & return visits</span></button>
+        <button type="button" class="mode-btn" data-goal="viral"><span class="mode-name">🔥 Go viral</span><span class="mode-desc">Pattern-break & share</span></button>
+        <button type="button" class="mode-btn" data-goal="premium"><span class="mode-name">✨ Premium positioning</span><span class="mode-desc">Status by restraint</span></button>
+      </div>
+    </div>
+
+    <div class="form-group" style="display:flex;flex-direction:column;gap:8px;">
+      <label class="reminder-toggle visible" style="margin:0;">
+        <span class="reminder-toggle-label">🧍 Real-Owner Voice<small>Imperfect, human phrasing — like the owner wrote it</small></span>
+        <span class="switch"><input type="checkbox" id="ownerVoiceToggle" checked><span class="slider"></span></span>
+      </label>
+      <label class="reminder-toggle visible" style="margin:0;">
+        <span class="reminder-toggle-label">⚔️ Make this stand out from competitors<small>Differentiates against generic local copy</small></span>
+        <span class="switch"><input type="checkbox" id="standOutToggle"><span class="slider"></span></span>
+      </label>
+      <div id="localMomentChip" style="font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;padding:8px 10px;background:var(--bg2);border:1px dashed var(--border2);border-radius:8px;">📍 Local moment: <span id="localMomentText">—</span></div>
     </div>
 
     <button class="btn-generate" id="generateBtn" onclick="generate()">
@@ -1475,7 +1513,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // ===== Onboarding wizard =====
   initWizard();
+  // Auto-name suggester
+  document.getElementById('autoNameBtn')?.addEventListener('click', suggestBusinessNames);
 });
+
+function suggestBusinessNames(){
+  const type = (getBusinessTypeValue() || '').toLowerCase();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  const cityWord = (loc.split(',')[0] || '').trim() || 'Local';
+  const street = ['Rosewood','Elm','Maple','Crown','Ironside','Harbor','Park','Linden','Oak','Cedar'];
+  const seedByType = {
+    'coffee shop': ['Bean','Roast','Brew','Pour','Grind','Daybreak'],
+    'barber shop': ['Cuts','Razor','Chair','Fade','Trim'],
+    'bakery': ['Crumb','Loaf','Hearth','Butter','Knead'],
+    'gym': ['Iron','Forge','Reps','Pulse','Field'],
+    'restaurant': ['Table','Kitchen','Plate','Garden','Smoke'],
+    'salon': ['Mane','Glow','Mirror','Rouge','Bloom'],
+    'bar': ['Lantern','Cellar','Half Step','Pour House','North Room'],
+  };
+  const seeds = seedByType[type] || ['House','Co.','Studio','Works','Room'];
+  const out = [];
+  for(let i=0;i<5;i++){
+    const a = street[Math.floor(Math.random()*street.length)];
+    const b = seeds[Math.floor(Math.random()*seeds.length)];
+    const fmt = i%2 ? `${a} ${b}` : `${b} & ${cityWord.split(' ')[0]}`;
+    if(!out.includes(fmt)) out.push(fmt);
+  }
+  const wrap = document.getElementById('autoNameSuggest');
+  if(!wrap) return;
+  wrap.style.display = 'flex';
+  wrap.innerHTML = out.map(n => `<button type="button" class="hashtag-chip" style="cursor:pointer;" onclick="document.getElementById('businessName').value='${n.replace(/'/g,"\\'")}';document.getElementById('autoNameSuggest').style.display='none';">${n}</button>`).join('');
+}
+window.suggestBusinessNames = suggestBusinessNames;
+
 
 function getBusinessTypeValue(){
   const sel = document.getElementById('businessType');
@@ -1649,7 +1719,9 @@ const TONES = {
 };
 
 let currentMode = 'instant';
+let currentGoal = 'foot_traffic';
 let lastData = null;
+let lastVariants = null; // { safe, balanced, high_conversion }
 let activeTab = 'reviews';
 
 const MODE_BANNERS = {
@@ -1659,20 +1731,85 @@ const MODE_BANNERS = {
   variation: 'Returning <strong>multiple stylistic versions</strong> per section.'
 };
 
-document.querySelectorAll('.mode-btn').forEach(btn => {
+document.querySelectorAll('#modeGrid .mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const mode = btn.dataset.mode;
     if(!planLimits().modes.includes(mode)){
       openPricing(`${mode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature.`);
       return;
     }
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#modeGrid .mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentMode = mode;
   });
 });
+document.querySelectorAll('#goalGrid .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#goalGrid .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentGoal = btn.dataset.goal;
+  });
+});
 
-async function generate(section){
+// ===== Local Moment chip (client-side mirror of server logic) =====
+function computeLocalMoment(){
+  const d = new Date();
+  const m = d.getMonth();
+  const season = (m<=1||m===11)?'winter':(m<=4)?'spring':(m<=7)?'summer':'fall';
+  const dow = d.getDay();
+  const dayVibe = (dow===0||dow===6)?'weekend chill':'weekday grind';
+  const h = d.getHours();
+  const part = h<5?'late night':h<11?'morning rush':h<14?'lunch hour':h<17?'afternoon lull':h<21?'evening':'late night';
+  return `${season} · ${dayVibe} · ${part}`;
+}
+function refreshLocalMoment(){
+  const el = document.getElementById('localMomentText');
+  if(el) el.textContent = computeLocalMoment();
+}
+setInterval(refreshLocalMoment, 60000);
+document.addEventListener('DOMContentLoaded', refreshLocalMoment);
+
+// ===== Memory: avoid recently-shown phrases / liked examples =====
+const MEM_KEY = 'lb_memory_v1';
+function loadMemory(){
+  try { return JSON.parse(localStorage.getItem(K(MEM_KEY))||'{}'); } catch { return {}; }
+}
+function saveMemory(m){ localStorage.setItem(K(MEM_KEY), JSON.stringify(m)); }
+function memoryForBiz(){
+  const key = (document.getElementById('businessName')?.value||'').trim().toLowerCase() + '|' + (document.getElementById('location')?.value||'').trim().toLowerCase();
+  const all = loadMemory();
+  return { key, all, bucket: all[key] || { avoid: [], liked: [] } };
+}
+function rememberShown(data){
+  if(!data) return;
+  const { key, all, bucket } = memoryForBiz();
+  const opener = (s) => String(s||'').split(/[.!?\n]/)[0].trim().slice(0,120);
+  const seeds = [
+    ...(data.captions||[]).map(opener),
+    ...(data.hooks||[]).map(opener),
+    ...(data.promos||[]).map(p => opener(p?.label)),
+  ].filter(Boolean);
+  bucket.avoid = Array.from(new Set([...seeds, ...bucket.avoid])).slice(0, 25);
+  all[key] = bucket;
+  saveMemory(all);
+}
+function recordFeedback(text, liked){
+  if(!text) return;
+  const { key, all, bucket } = memoryForBiz();
+  if(liked){
+    bucket.liked = Array.from(new Set([String(text).slice(0,240), ...bucket.liked])).slice(0, 10);
+  } else {
+    bucket.avoid = Array.from(new Set([String(text).slice(0,200), ...bucket.avoid])).slice(0, 25);
+  }
+  all[key] = bucket;
+  saveMemory(all);
+  showToast(liked ? '👍 Will write more like this' : '👎 Won\'t repeat that');
+}
+window.recordFeedback = recordFeedback;
+
+
+async function generate(section, opts){
+  opts = opts || {};
   const businessName=(document.getElementById('businessName')?.value||'').trim();
   const biz=getBusinessTypeValue();
   const loc=document.getElementById('location').value.trim();
@@ -1715,7 +1852,19 @@ async function generate(section){
     const res = await fetch('/api/generate-content', {
       method:'POST',
       headers,
-      body: JSON.stringify({ businessName, businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section, snapshot })
+      body: JSON.stringify({
+        businessName, businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section, snapshot,
+        priceLevel: (document.getElementById('priceLevel')?.value || 'mid'),
+        brandPersonality: (document.getElementById('brandPersonality')?.value || '').trim(),
+        goal: currentGoal,
+        realOwnerVoice: !!document.getElementById('ownerVoiceToggle')?.checked,
+        standOut: !!document.getElementById('standOutToggle')?.checked,
+        variant: opts.variant || '',
+        generateVariants: !!opts.generateVariants,
+        avoidPhrases: memoryForBiz().bucket.avoid,
+        likedExamples: memoryForBiz().bucket.liked,
+        clientLocalMoment: computeLocalMoment()
+      })
     });
     const data = await res.json();
     if(!res.ok){
@@ -1731,10 +1880,13 @@ async function generate(section){
 
     if(section && lastData){
       if(data[section]) lastData[section] = data[section];
+      if(data._meta) lastData._meta = data._meta;
       renderResults(lastData);
     } else {
       lastData = data;
+      lastVariants = data._variants || null;
       bumpDailyCount();
+      rememberShown(data);
       renderResults(data);
       const saveBtn = document.getElementById('saveBizBtn');
       if(saveBtn) saveBtn.classList.add('visible');
@@ -1744,7 +1896,6 @@ async function generate(section){
         businessName, businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
         data
       });
-      // Reset weekly reminder timer if this business has one enabled
       const pid = findCurrentProfileId();
       if(pid){
         const map = loadReminders();
@@ -1787,12 +1938,59 @@ function deriveHooks(data){
   }).filter(Boolean);
 }
 
+function renderViralPanel(meta){
+  if(!meta) return '';
+  const score = Math.max(1, Math.min(100, parseInt(meta.viralScore, 10) || 50));
+  const eng = String(meta.engagement || 'medium').toLowerCase();
+  const platform = String(meta.bestPlatform || 'Instagram');
+  const reasoning = String(meta.reasoning || '').slice(0, 240);
+  const color = score >= 75 ? 'var(--gold)' : score >= 55 ? '#c9a84c' : '#8c8c8c';
+  return `<div style="margin-bottom:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(201,168,76,.02));border:1px solid var(--border2);border-radius:12px;">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.4px;color:var(--white-muted);text-transform:uppercase;">Viral Score</span>
+        <span style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:24px;color:${color};">${score}</span>
+        <span style="font-size:11px;color:var(--white-muted);">/100</span>
+      </div>
+      <div style="height:18px;width:1px;background:var(--border2);"></div>
+      <div style="font-size:12px;color:var(--white-dim);"><strong style="color:var(--white);text-transform:capitalize;">${eng}</strong> engagement</div>
+      <div style="height:18px;width:1px;background:var(--border2);"></div>
+      <div style="font-size:12px;color:var(--white-dim);">Best on <strong style="color:var(--gold2);">${platform}</strong></div>
+      <button type="button" id="strongerBtn" style="margin-left:auto;padding:8px 14px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;background:var(--bg2);color:var(--gold2);border:1px solid var(--gold);border-radius:8px;cursor:pointer;">⚡ Generate Stronger Version</button>
+    </div>
+    ${reasoning ? `<div style="margin-top:10px;font-size:12.5px;color:var(--white-dim);line-height:1.5;font-style:italic;">"${reasoning}"</div>` : ''}
+    ${lastVariants ? renderVariantSwitcher() : ''}
+  </div>`;
+}
+function renderVariantSwitcher(){
+  if(!lastVariants) return '';
+  const opts = [
+    ['safe','🛡 Safe'],
+    ['balanced','⚖ Balanced'],
+    ['high_conversion','🔥 High-conversion'],
+  ];
+  return `<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;">
+    <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.4px;color:var(--white-muted);text-transform:uppercase;align-self:center;">A/B variants:</span>
+    ${opts.map(([k,l]) => `<button type="button" onclick="applyVariant('${k}')" style="padding:6px 12px;font-size:11.5px;font-family:'DM Sans',sans-serif;background:var(--bg2);color:var(--white-dim);border:1px solid var(--border2);border-radius:6px;cursor:pointer;">${l}</button>`).join('')}
+  </div>`;
+}
+window.applyVariant = function(key){
+  if(!lastVariants || !lastVariants[key] || !lastData) return;
+  const v = lastVariants[key];
+  if(v.captions?.length) lastData.captions = v.captions.concat(lastData.captions||[]).slice(0,5);
+  if(v.hooks?.length)    lastData.hooks    = v.hooks.concat(lastData.hooks||[]).slice(0,5);
+  if(v.sms?.length)      lastData.sms      = v.sms.concat(lastData.sms||[]).slice(0,3);
+  showToast('Switched to ' + key.replace('_',' ') + ' variant');
+  renderResults(lastData);
+};
+
 function renderResults(data){
   const out=document.getElementById('output');
   const banner = MODE_BANNERS[currentMode] || '';
 
   out.innerHTML = `
     ${currentMode==='weekly' ? renderCalendar(data) : ''}
+    ${renderViralPanel(data._meta)}
     <div class="tabs-wrap">
       <div class="tabs-bar" id="tabsBar">
         ${TABS.map(t => {
@@ -1825,7 +2023,20 @@ function renderResults(data){
   });
   const sel = document.getElementById('tabSelect');
   if(sel) sel.addEventListener('change', e => switchTab(e.target.value));
+  document.getElementById('strongerBtn')?.addEventListener('click', generateStrongerVersion);
 }
+
+async function generateStrongerVersion(){
+  // One call, asks for all 3 variants. Counts as 1 generation.
+  const btn = document.getElementById('strongerBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Generating variants…'; }
+  try {
+    await generate(undefined, { generateVariants: true });
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = '⚡ Generate Stronger Version'; }
+  }
+}
+window.generateStrongerVersion = generateStrongerVersion;
 
 const CAL_PLAN = [
   { day:'Mon', section:'captions', icon:'📸', type:'Caption' },
@@ -1899,7 +2110,11 @@ function renderItems(arr,prefix){
     <div class="item">
       <div class="item-number">${prefix} ${String(i+1).padStart(2,'0')}</div>
       <div class="item-text">${txt}</div>
-      <button class="item-copy" onclick="copyText('${escapeAttr(txt)}',this)">⧉</button>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <button class="item-copy" title="Keep — write more like this" onclick="recordFeedback('${escapeAttr(txt)}',true)" style="background:none;border:none;color:var(--white-muted);cursor:pointer;font-size:13px;padding:4px 6px;">👍</button>
+        <button class="item-copy" title="Don't repeat this" onclick="recordFeedback('${escapeAttr(txt)}',false)" style="background:none;border:none;color:var(--white-muted);cursor:pointer;font-size:13px;padding:4px 6px;">👎</button>
+        <button class="item-copy" onclick="copyText('${escapeAttr(txt)}',this)">⧉</button>
+      </div>
     </div>`).join('')+`</div>`;
 }
 function renderHashtags(tags){
