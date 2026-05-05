@@ -1409,8 +1409,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if(clr) clr.addEventListener('click', clearRecent);
 
   // Reminder wiring
-  ['businessType','location'].forEach(id => {
+  ['businessName','businessType','location'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', refreshReminderToggle);
+    document.getElementById(id)?.addEventListener('change', refreshReminderToggle);
   });
   const cb = document.getElementById('reminderCheckbox');
   if(cb) cb.addEventListener('change', () => {
