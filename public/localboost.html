@@ -1385,7 +1385,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const profiles = loadProfiles();
   const activeProfile = profiles.find(p => p.id === activeId);
   if(activeProfile){
-    document.getElementById('businessType').value = activeProfile.businessType || '';
+    const bn = document.getElementById('businessName'); if(bn) bn.value = activeProfile.businessName || '';
+    setBusinessTypeValue(activeProfile.businessType || '');
     document.getElementById('location').value = activeProfile.location || '';
     document.getElementById('audience').value = activeProfile.audience || '';
     document.getElementById('tone').value = activeProfile.tone || 'friendly';
