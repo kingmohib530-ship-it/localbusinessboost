@@ -2006,6 +2006,13 @@ function renderViralPanel(meta){
   const platform = String(meta.bestPlatform || 'Instagram');
   const reasoning = String(meta.reasoning || '').slice(0, 240);
   const color = score >= 75 ? 'var(--gold)' : score >= 55 ? '#c9a84c' : '#8c8c8c';
+  const GOAL_LABELS = {
+    foot_traffic: '🚶 Designed to bring new customers through your door',
+    repeat: '🔁 Designed to increase repeat visits & loyalty',
+    viral: '🔥 Designed to pattern-break & get shared',
+    premium: '✨ Designed to position you as the premium choice',
+  };
+  const goalLine = GOAL_LABELS[currentGoal] || '';
   return `<div style="margin-bottom:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(201,168,76,.02));border:1px solid var(--border2);border-radius:12px;">
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
       <div style="display:flex;align-items:baseline;gap:6px;">
@@ -2019,7 +2026,8 @@ function renderViralPanel(meta){
       <div style="font-size:12px;color:var(--white-dim);">Best on <strong style="color:var(--gold2);">${platform}</strong></div>
       <button type="button" id="strongerBtn" style="margin-left:auto;padding:8px 14px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;background:var(--bg2);color:var(--gold2);border:1px solid var(--gold);border-radius:8px;cursor:pointer;">⚡ Generate Stronger Version</button>
     </div>
-    ${reasoning ? `<div style="margin-top:10px;font-size:12.5px;color:var(--white-dim);line-height:1.5;font-style:italic;">"${reasoning}"</div>` : ''}
+    ${goalLine ? `<div style="margin-top:10px;display:inline-block;padding:5px 10px;background:var(--bg2);border:1px solid var(--gold);border-radius:6px;font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;">${goalLine}</div>` : ''}
+    ${reasoning ? `<div style="margin-top:10px;font-size:12.5px;color:var(--white-dim);line-height:1.5;"><strong style="color:var(--white);font-style:normal;">Why this works: </strong><span style="font-style:italic;">${reasoning}</span></div>` : ''}
     ${lastVariants ? renderVariantSwitcher() : ''}
   </div>`;
 }
