@@ -69,7 +69,30 @@
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 340px; gap: 16px; border: 1px dashed var(--border2); border-radius: 16px; text-align: center; padding: 40px; }
   .empty-icon { width: 64px; height: 64px; background: var(--bg2); border-radius: 50%; display: grid; place-items: center; font-size: 28px; color: var(--gold); }
   .empty-state h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--white-dim); }
-  .empty-state p { font-size: 14px; color: var(--white-muted); max-width: 280px; line-height: 1.6; }
+  .empty-state p { font-size: 14px; color: var(--white-muted); max-width: 320px; line-height: 1.6; }
+  .trust-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-family:'DM Mono',monospace; font-size:10.5px; letter-spacing:1px; color:var(--white-muted); text-transform:uppercase; }
+  .trust-row span { display:inline-flex; align-items:center; gap:6px; }
+  .trust-row span::before { content:'✓'; color:var(--gold); font-weight:700; }
+  .how-section { max-width:1100px; margin:0 auto; padding: 40px clamp(16px,5vw,60px) 20px; }
+  .section-title { font-family:'Bebas Neue', sans-serif; font-size:clamp(28px,4vw,42px); letter-spacing:2px; color:var(--white); text-align:center; margin-bottom:8px; }
+  .section-sub { font-size:14px; color:var(--white-muted); text-align:center; margin-bottom:36px; }
+  .how-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  @media(max-width:760px){ .how-grid{ grid-template-columns:1fr; } .compare-grid{ grid-template-columns:1fr !important; } }
+  .how-card { padding:24px; background:var(--bg2); border:1px solid var(--border2); border-radius:14px; position:relative; }
+  .how-step { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
+  .how-card h3 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:var(--white); margin-bottom:8px; }
+  .how-card p { font-size:13.5px; color:var(--white-dim); line-height:1.6; }
+  .how-num { position:absolute; top:14px; right:18px; font-family:'Bebas Neue',sans-serif; font-size:48px; color:rgba(201,168,76,.15); }
+  .compare-section { max-width:1100px; margin:0 auto; padding: 30px clamp(16px,5vw,60px) 50px; }
+  .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .compare-card { padding:26px; border-radius:14px; border:1px solid var(--border2); background:var(--bg2); }
+  .compare-card.win { border-color:var(--gold); background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(201,168,76,.02)); }
+  .compare-card h4 { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:1.5px; color:var(--white); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+  .compare-card.win h4 { color:var(--gold); }
+  .compare-card ul { list-style:none; padding:0; margin:0; }
+  .compare-card li { font-size:13.5px; color:var(--white-dim); padding:7px 0; display:flex; gap:10px; align-items:flex-start; }
+  .compare-card li::before { content:'✕'; color:#8c8c8c; font-weight:700; flex-shrink:0; }
+  .compare-card.win li::before { content:'✓'; color:var(--gold); }
   .results-grid { display: flex; flex-direction: column; gap: 20px; }
   /* Weekly Marketing Plan */
   .wp-wrap { display:flex; flex-direction:column; gap:18px; animation:fadeUp .4s ease both; }
