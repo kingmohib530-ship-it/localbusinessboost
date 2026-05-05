@@ -643,6 +643,28 @@
       </div>
     </div>
 
+    <div class="form-group">
+      <label>Goal — what should this content do?</label>
+      <div class="mode-grid" id="goalGrid" style="grid-template-columns:1fr 1fr;">
+        <button type="button" class="mode-btn active" data-goal="foot_traffic"><span class="mode-name">🚶 Foot traffic</span><span class="mode-desc">Get them in the door</span></button>
+        <button type="button" class="mode-btn" data-goal="repeat"><span class="mode-name">🔁 Repeat customers</span><span class="mode-desc">Loyalty & return visits</span></button>
+        <button type="button" class="mode-btn" data-goal="viral"><span class="mode-name">🔥 Go viral</span><span class="mode-desc">Pattern-break & share</span></button>
+        <button type="button" class="mode-btn" data-goal="premium"><span class="mode-name">✨ Premium positioning</span><span class="mode-desc">Status by restraint</span></button>
+      </div>
+    </div>
+
+    <div class="form-group" style="display:flex;flex-direction:column;gap:8px;">
+      <label class="reminder-toggle visible" style="margin:0;">
+        <span class="reminder-toggle-label">🧍 Real-Owner Voice<small>Imperfect, human phrasing — like the owner wrote it</small></span>
+        <span class="switch"><input type="checkbox" id="ownerVoiceToggle" checked><span class="slider"></span></span>
+      </label>
+      <label class="reminder-toggle visible" style="margin:0;">
+        <span class="reminder-toggle-label">⚔️ Make this stand out from competitors<small>Differentiates against generic local copy</small></span>
+        <span class="switch"><input type="checkbox" id="standOutToggle"><span class="slider"></span></span>
+      </label>
+      <div id="localMomentChip" style="font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;padding:8px 10px;background:var(--bg2);border:1px dashed var(--border2);border-radius:8px;">📍 Local moment: <span id="localMomentText">—</span></div>
+    </div>
+
     <button class="btn-generate" id="generateBtn" onclick="generate()">
       <span class="btn-icon">✦</span>
       <span class="btn-label">Generate My Content</span>
