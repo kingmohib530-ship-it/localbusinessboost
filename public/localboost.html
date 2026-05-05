@@ -1906,12 +1906,59 @@ function deriveHooks(data){
   }).filter(Boolean);
 }
 
+function renderViralPanel(meta){
+  if(!meta) return '';
+  const score = Math.max(1, Math.min(100, parseInt(meta.viralScore, 10) || 50));
+  const eng = String(meta.engagement || 'medium').toLowerCase();
+  const platform = String(meta.bestPlatform || 'Instagram');
+  const reasoning = String(meta.reasoning || '').slice(0, 240);
+  const color = score >= 75 ? 'var(--gold)' : score >= 55 ? '#c9a84c' : '#8c8c8c';
+  return `<div style="margin-bottom:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(201,168,76,.02));border:1px solid var(--border2);border-radius:12px;">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.4px;color:var(--white-muted);text-transform:uppercase;">Viral Score</span>
+        <span style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:24px;color:${color};">${score}</span>
+        <span style="font-size:11px;color:var(--white-muted);">/100</span>
+      </div>
+      <div style="height:18px;width:1px;background:var(--border2);"></div>
+      <div style="font-size:12px;color:var(--white-dim);"><strong style="color:var(--white);text-transform:capitalize;">${eng}</strong> engagement</div>
+      <div style="height:18px;width:1px;background:var(--border2);"></div>
+      <div style="font-size:12px;color:var(--white-dim);">Best on <strong style="color:var(--gold2);">${platform}</strong></div>
+      <button type="button" id="strongerBtn" style="margin-left:auto;padding:8px 14px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;background:var(--bg2);color:var(--gold2);border:1px solid var(--gold);border-radius:8px;cursor:pointer;">⚡ Generate Stronger Version</button>
+    </div>
+    ${reasoning ? `<div style="margin-top:10px;font-size:12.5px;color:var(--white-dim);line-height:1.5;font-style:italic;">"${reasoning}"</div>` : ''}
+    ${lastVariants ? renderVariantSwitcher() : ''}
+  </div>`;
+}
+function renderVariantSwitcher(){
+  if(!lastVariants) return '';
+  const opts = [
+    ['safe','🛡 Safe'],
+    ['balanced','⚖ Balanced'],
+    ['high_conversion','🔥 High-conversion'],
+  ];
+  return `<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;">
+    <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.4px;color:var(--white-muted);text-transform:uppercase;align-self:center;">A/B variants:</span>
+    ${opts.map(([k,l]) => `<button type="button" onclick="applyVariant('${k}')" style="padding:6px 12px;font-size:11.5px;font-family:'DM Sans',sans-serif;background:var(--bg2);color:var(--white-dim);border:1px solid var(--border2);border-radius:6px;cursor:pointer;">${l}</button>`).join('')}
+  </div>`;
+}
+window.applyVariant = function(key){
+  if(!lastVariants || !lastVariants[key] || !lastData) return;
+  const v = lastVariants[key];
+  if(v.captions?.length) lastData.captions = v.captions.concat(lastData.captions||[]).slice(0,5);
+  if(v.hooks?.length)    lastData.hooks    = v.hooks.concat(lastData.hooks||[]).slice(0,5);
+  if(v.sms?.length)      lastData.sms      = v.sms.concat(lastData.sms||[]).slice(0,3);
+  showToast('Switched to ' + key.replace('_',' ') + ' variant');
+  renderResults(lastData);
+};
+
 function renderResults(data){
   const out=document.getElementById('output');
   const banner = MODE_BANNERS[currentMode] || '';
 
   out.innerHTML = `
     ${currentMode==='weekly' ? renderCalendar(data) : ''}
+    ${renderViralPanel(data._meta)}
     <div class="tabs-wrap">
       <div class="tabs-bar" id="tabsBar">
         ${TABS.map(t => {
@@ -1944,7 +1991,20 @@ function renderResults(data){
   });
   const sel = document.getElementById('tabSelect');
   if(sel) sel.addEventListener('change', e => switchTab(e.target.value));
+  document.getElementById('strongerBtn')?.addEventListener('click', generateStrongerVersion);
 }
+
+async function generateStrongerVersion(){
+  // One call, asks for all 3 variants. Counts as 1 generation.
+  const btn = document.getElementById('strongerBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Generating variants…'; }
+  try {
+    await generate(undefined, { generateVariants: true });
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = '⚡ Generate Stronger Version'; }
+  }
+}
+window.generateStrongerVersion = generateStrongerVersion;
 
 const CAL_PLAN = [
   { day:'Mon', section:'captions', icon:'📸', type:'Caption' },
