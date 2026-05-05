@@ -72,6 +72,45 @@ export const Route = createFileRoute("/api/generate-content")({
               ? (sectionRaw as SectionKey)
               : null;
 
+          // New intelligence-layer fields (sanitized)
+          const PRICE_LEVELS = new Set(["budget", "mid", "premium"]);
+          const GOALS = new Set(["foot_traffic", "repeat", "viral", "premium"]);
+          const VARIANTS = new Set(["safe", "balanced", "high_conversion"]);
+          const priceLevel = PRICE_LEVELS.has((body.priceLevel || "").toLowerCase())
+            ? (body.priceLevel as string).toLowerCase()
+            : "";
+          const brandPersonality = (body.brandPersonality || "").toString().slice(0, 200).trim();
+          const goal = GOALS.has((body.goal || "").toLowerCase()) ? (body.goal as string).toLowerCase() : "";
+          const realOwnerVoice = !!body.realOwnerVoice;
+          const standOut = !!body.standOut;
+          const variant = VARIANTS.has((body.variant || "").toLowerCase()) ? (body.variant as string).toLowerCase() : "";
+          const generateVariants = !!body.generateVariants;
+          const avoidPhrases = Array.isArray(body.avoidPhrases)
+            ? body.avoidPhrases.filter((s) => typeof s === "string").slice(0, 30).map((s) => s.slice(0, 200))
+            : [];
+          const likedExamples = Array.isArray(body.likedExamples)
+            ? body.likedExamples.filter((s) => typeof s === "string").slice(0, 10).map((s) => s.slice(0, 240))
+            : [];
+
+          // Server-derived "local moment" — keeps content alive without trusting client
+          const now = new Date();
+          const month = now.getUTCMonth();
+          const season =
+            month <= 1 || month === 11 ? "winter" :
+            month <= 4 ? "spring" :
+            month <= 7 ? "summer" : "fall";
+          const dow = now.getUTCDay();
+          const dayVibe = dow === 0 || dow === 6 ? "weekend chill" : "weekday grind";
+          const hourLocal = (now.getUTCHours() + 24) % 24;
+          const partOfDay =
+            hourLocal < 5 ? "late night" :
+            hourLocal < 11 ? "morning rush" :
+            hourLocal < 14 ? "lunch hour" :
+            hourLocal < 17 ? "afternoon lull" :
+            hourLocal < 21 ? "evening" : "late night";
+          const clientLocalMoment = (body.clientLocalMoment || "").toString().slice(0, 120).trim();
+          const localMoment = clientLocalMoment || `${season} · ${dayVibe} · ${partOfDay}`;
+
           if (!businessType || !location) {
             return new Response(
               JSON.stringify({ error: "businessType and location are required" }),
