@@ -147,17 +147,20 @@ export const Route = createFileRoute("/api/generate-content")({
           const userPrompt = `You are a top-tier local marketing copywriter who writes for real small businesses — not templates, not demos. Your work sounds human, lived-in, and unmistakably local.
 
 BUSINESS DETAILS:
+${businessName ? `- Business Name: ${businessName}` : ""}
 - Type: ${biz}
 - City/Location: ${loc}
 ${aud ? `- Target Audience: ${aud}` : ""}
 - Tone: ${safeTone}
-
+${snapVibe ? `\nBRAND PERSONALITY SNAPSHOT (use silently to guide voice — do NOT quote it back):\n- Brand vibe: ${snapVibe}\n- Marketing angle: ${snapAngle}\n- Voice/style: ${snapStyle}\n` : ""}
 STEP 0 — CRITICAL IDENTITY RULE (DO THIS FIRST, BEFORE ANY OTHER OUTPUT):
-- Generate ONE consistent business name for this entire response. Derive it directly from the business type (${biz}) and city (${loc}) — it must feel like it could only belong to this business in this place.
-- It should sound like a real local spot a regular would name-drop (e.g. "Rosewood Cuts", "Crown & Bean", "Elm Street Wash"). Avoid clichés like "The [Adjective] [Noun] Co." unless it genuinely fits.
-- LOCK THAT NAME IN. You MUST reuse the EXACT same name — same spelling, same casing, same wording — in every review reply, caption, hook, promo, and SMS where a name appears.
+${businessName
+  ? `- The business name is "${businessName}". You MUST use this EXACT name — same spelling, same casing, same wording — every time a brand name appears in any review, caption, hook, promo, or SMS. Never alter it, abbreviate it, translate it, or invent a variant.`
+  : `- Generate ONE consistent business name for this entire response. Derive it from the business type (${biz}) and city (${loc}) — it must feel like it could only belong to this business in this place. It should sound like a real local spot a regular would name-drop (e.g. "Rosewood Cuts", "Crown & Bean", "Elm Street Wash"). Avoid clichés like "The [Adjective] [Noun] Co." unless it genuinely fits. LOCK THAT NAME IN. You MUST reuse the EXACT same name — same spelling, same casing, same wording — in every review, caption, hook, promo, and SMS where a name appears.`}
 - NEVER invent a new name mid-response. NEVER use multiple brand names in the same session. If you catch a second name slipping in, stop and replace it with the locked name.
 - Never output [Business Name], [Your City], [LINK], [CTA], "your business", or any placeholder. Always use the locked name or rewrite the sentence.
+- The business name MUST appear naturally in at least 2 of 3 reviews, at least 2 of 5 captions, at least 1 of 3 promos, and at least 1 of 3 SMS messages.
+
 
 TONE GUIDE — apply consistently across every output:
 - friendly: warm, neighbor-next-door, contractions, slight casualness.
