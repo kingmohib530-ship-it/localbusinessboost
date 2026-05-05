@@ -518,7 +518,11 @@
       <div class="wizard-step active" data-step="1">
         <div class="form-group">
           <label>Business Name</label>
-          <input type="text" id="businessName" placeholder="e.g. Crown & Bean" maxlength="80">
+          <div style="display:flex;gap:6px;align-items:stretch;">
+            <input type="text" id="businessName" placeholder="e.g. Crown & Bean" maxlength="80" style="flex:1;">
+            <button type="button" id="autoNameBtn" title="Suggest 5 names" style="white-space:nowrap;padding:0 12px;font-size:11px;font-family:'DM Mono',monospace;background:var(--bg2);border:1px solid var(--border2);color:var(--gold2);border-radius:8px;cursor:pointer;">✦ Suggest</button>
+          </div>
+          <div id="autoNameSuggest" style="display:none;margin-top:6px;flex-wrap:wrap;gap:6px;"></div>
         </div>
         <div class="form-group">
           <label>Business Type</label>
@@ -554,6 +558,18 @@
         <div class="form-group" id="businessTypeOtherWrap" style="display:none">
           <label>Describe your business</label>
           <input type="text" id="businessTypeOther" placeholder="e.g. Vinyl record store" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label>Price Level</label>
+          <select id="priceLevel">
+            <option value="mid">💰 Mid — everyday quality</option>
+            <option value="budget">🪙 Budget — value-driven</option>
+            <option value="premium">✨ Premium — refined, restrained</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Brand Personality <span class="optional-tag">(optional — we'll auto-fill)</span></label>
+          <input type="text" id="brandPersonality" placeholder="e.g. cozy, witty, no-BS — or leave blank" maxlength="160">
         </div>
         <div class="wizard-nav">
           <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
