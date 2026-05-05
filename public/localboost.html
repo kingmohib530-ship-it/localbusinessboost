@@ -1119,15 +1119,19 @@ function nextResetText(){
 function showHardLimitModal(){
   showConvertModal({
     eyebrow: '✦ Daily limit reached ✦',
-    title: "You've hit your <span>daily limit</span>",
-    sub: "Don't stop now — keep generating without limits and grow your business faster.",
+    title: "You're getting <span>real results</span> — don't stop now.",
+    sub: "You've used your free generations. Upgrade to keep growing your business with unlimited content.",
     bullets: [
-      'Unlimited content, anytime',
+      'Unlimited content, every day',
       'All advanced modes unlocked',
-      'Refresh sections individually',
+      'Refresh any section in one click',
+      'Less than $0.30/day to grow your business',
     ],
-    ghostText: nextResetText(),
-    onGhost: () => { showToast(nextResetText()); },
+    primaryText: 'Upgrade to Pro — $7.99/month',
+    ghostText: 'Maybe later',
+    meta: nextResetText(),
+    onGhost: closeConvertModal,
+    dismissible: false,
   });
 }
 
