@@ -1315,11 +1315,13 @@ function setReminderForProfile(profileId, enabled){
   persistReminders(map);
 }
 function findCurrentProfileId(){
-  const businessType = document.getElementById('businessType').value.trim();
-  const location = document.getElementById('location').value.trim();
-  if(!businessType || !location) return null;
-  const key = (businessType + '|' + location).toLowerCase();
-  const match = loadProfiles().find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  const businessName = (document.getElementById('businessName')?.value || '').trim();
+  const businessType = getBusinessTypeValue();
+  const location = (document.getElementById('location')?.value || '').trim();
+  const idLeft = businessName || businessType;
+  if(!idLeft || !location) return null;
+  const key = (idLeft + '|' + location).toLowerCase();
+  const match = loadProfiles().find(p => ((p.businessName||p.businessType) + '|' + p.location).toLowerCase() === key);
   return match ? match.id : null;
 }
 function refreshReminderToggle(){
