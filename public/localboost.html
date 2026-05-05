@@ -1970,14 +1970,18 @@ function applySession(session){
     syncSubscription();
     // Restore active profile fields
     const ap = (typeof loadProfiles === 'function') ? loadProfiles().find(p => p.id === getActiveClientId()) : null;
-    ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+    const bn = document.getElementById('businessName'); if(bn) bn.value = '';
+    setBusinessTypeValue('');
+    ['location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
     const tone = document.getElementById('tone'); if(tone) tone.value = 'friendly';
     if(ap){
-      document.getElementById('businessType').value = ap.businessType || '';
+      const bn2 = document.getElementById('businessName'); if(bn2) bn2.value = ap.businessName || '';
+      setBusinessTypeValue(ap.businessType || '');
       document.getElementById('location').value = ap.location || '';
       document.getElementById('audience').value = ap.audience || '';
       document.getElementById('tone').value = ap.tone || 'friendly';
     }
+    if(typeof maybeCollapseWizard === 'function') maybeCollapseWizard();
     lastData = null;
     if(typeof resetOutputPanel === 'function') resetOutputPanel();
   } else {
