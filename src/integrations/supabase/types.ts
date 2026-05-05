@@ -110,6 +110,27 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_plan_usage: {
+        Row: {
+          count: number
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          count?: number
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          count?: number
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -121,6 +142,14 @@ export type Database = {
       }
       try_consume_generation: {
         Args: { daily_cap: number; user_uuid: string }
+        Returns: {
+          allowed: boolean
+          cap: number
+          used: number
+        }[]
+      }
+      try_consume_weekly_plan: {
+        Args: { user_uuid: string; weekly_cap: number }
         Returns: {
           allowed: boolean
           cap: number

@@ -71,6 +71,38 @@
   .empty-state h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--white-dim); }
   .empty-state p { font-size: 14px; color: var(--white-muted); max-width: 280px; line-height: 1.6; }
   .results-grid { display: flex; flex-direction: column; gap: 20px; }
+  /* Weekly Marketing Plan */
+  .wp-wrap { display:flex; flex-direction:column; gap:18px; animation:fadeUp .4s ease both; }
+  .wp-head { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .wp-eyebrow { font-size:11px; letter-spacing:2px; color:var(--gold); font-weight:600; text-transform:uppercase; margin-bottom:4px; }
+  .wp-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:1.5px; color:var(--white); margin:0; line-height:1; }
+  .wp-sub { font-size:13px; color:var(--white-muted); margin:6px 0 0; max-width:520px; }
+  .wp-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .wp-copy-all { background:var(--gold); color:#1a1408; border:none; padding:10px 16px; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .wp-copy-all:hover { filter:brightness(1.1); }
+  .wp-regen-all { background:transparent; color:var(--white-dim); border:1px solid var(--border2); padding:10px 16px; border-radius:10px; font-weight:600; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .wp-regen-all:hover { border-color:var(--gold); color:var(--gold2); }
+  .wp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+  .wp-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; transition:border-color .2s; }
+  .wp-card:hover { border-color:rgba(201,168,76,.4); }
+  .wp-card-head { display:flex; justify-content:space-between; align-items:center; gap:8px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .wp-day { display:flex; align-items:center; gap:8px; }
+  .wp-icon { font-size:18px; }
+  .wp-day-name { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; color:var(--gold2); letter-spacing:.4px; }
+  .wp-theme { font-size:11px; color:var(--white-muted); font-style:italic; text-align:right; max-width:55%; }
+  .wp-row { display:flex; flex-direction:column; gap:3px; }
+  .wp-row-label { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--white-muted); text-transform:uppercase; }
+  .wp-row-val { font-size:13px; color:var(--white-dim); line-height:1.5; white-space:pre-wrap; }
+  .wp-cta .wp-row-val { color:var(--gold2); font-weight:600; }
+  .wp-tags { display:flex; flex-wrap:wrap; gap:5px; }
+  .wp-tag { font-family:'DM Mono',monospace; font-size:11px; color:var(--gold); background:rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.2); padding:3px 7px; border-radius:6px; }
+  .wp-card-foot { display:flex; gap:8px; margin-top:auto; padding-top:10px; border-top:1px solid var(--border); }
+  .wp-copy, .wp-regen { flex:1; background:transparent; border:1px solid var(--border2); color:var(--white-dim); padding:8px 10px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+  .wp-copy:hover { border-color:var(--gold); color:var(--gold2); }
+  .wp-regen:hover { border-color:var(--gold); color:var(--gold2); }
+  .wp-regen-locked { opacity:.6; }
+  #weeklyPlanBtn:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
+  #weeklyPlanBtn:disabled { opacity:.6; cursor:not-allowed; }
   .result-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; animation: fadeUp .4s ease both; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
   .result-card:nth-child(1) { animation-delay: .05s; }
@@ -599,6 +631,12 @@
       <span class="btn-icon">✦</span>
       <span class="btn-label">Generate My Content</span>
       <div class="spinner" id="spinner"></div>
+    </button>
+
+    <button type="button" class="btn-weekly-plan" id="weeklyPlanBtn" onclick="generateWeeklyPlan()" style="margin-top:10px;width:100%;padding:14px;background:linear-gradient(135deg,rgba(201,168,76,.18),rgba(201,168,76,.06));border:1px solid var(--gold);color:var(--gold2);border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;">
+      <span>📅</span>
+      <span class="btn-label">Generate Weekly Plan</span>
+      <div class="spinner" id="weeklySpinner" style="display:none;"></div>
     </button>
 
     <button type="button" class="btn-save-biz" id="saveBizBtn" onclick="saveCurrentBusiness()">★ Save This Business</button>
@@ -1887,6 +1925,185 @@ function copyTab(id){
   else text = items.join('\n\n');
   copyText(text);
 }
+
+// ===== Weekly Marketing Plan =====
+let lastWeeklyPlan = null;
+const DAY_META = [
+  { n:1, name:'Monday',    short:'Mon', icon:'🌅' },
+  { n:2, name:'Tuesday',   short:'Tue', icon:'☕' },
+  { n:3, name:'Wednesday', short:'Wed', icon:'💬' },
+  { n:4, name:'Thursday',  short:'Thu', icon:'🎯' },
+  { n:5, name:'Friday',    short:'Fri', icon:'🎬' },
+  { n:6, name:'Saturday',  short:'Sat', icon:'⭐' },
+  { n:7, name:'Sunday',    short:'Sun', icon:'🏘️' },
+];
+
+async function generateWeeklyPlan(regenerateDay){
+  const businessName=(document.getElementById('businessName')?.value||'').trim();
+  const biz=getBusinessTypeValue();
+  const loc=document.getElementById('location').value.trim();
+  const aud=document.getElementById('audience').value.trim()||'locals';
+  const tone=document.getElementById('tone').value;
+  if(!businessName||!biz||!loc){
+    showToast('Finish setup first — name, type & location');
+    const wiz = document.getElementById('setupWizard'); if(wiz) wiz.style.display = 'block';
+    const recap = document.getElementById('setupRecap'); if(recap) recap.style.display = 'none';
+    if(typeof showWizardStep === 'function') showWizardStep(!businessName||!biz?1:2);
+    return;
+  }
+
+  const plan = getPlan();
+  // Per-day regeneration is Pro+ only
+  if(regenerateDay && plan === 'free'){
+    openPricing('Per-day regeneration is a Pro feature. Upgrade for unlimited weekly plans.');
+    return;
+  }
+
+  const btn=document.getElementById('weeklyPlanBtn');
+  const spin=document.getElementById('weeklySpinner');
+  if(!regenerateDay && btn){ btn.disabled=true; if(spin) spin.style.display='inline-block'; }
+
+  const snapshot = buildPersonalitySnapshot({ name: businessName, type: biz, loc, audience: aud === 'locals' ? '' : aud });
+
+  try {
+    let accessToken = null;
+    try { const { data } = await sb.auth.getSession(); accessToken = data?.session?.access_token || null; } catch(_){}
+    if(!accessToken){ showToast('Please sign in first'); return; }
+    const res = await fetch('/api/generate-weekly-plan', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+accessToken },
+      body: JSON.stringify({ businessName, businessType:biz, location:loc, audience:aud, tone, snapshot, regenerateDay: regenerateDay || undefined })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      if(res.status === 402 || data.code === 'limit_reached'){
+        openPricing(data.error || 'Weekly plan limit reached. Upgrade to Pro for unlimited weekly plans.');
+      } else if(res.status === 403 || data.code === 'upgrade_required'){
+        openPricing(data.error || 'Upgrade to Pro to continue.');
+      } else {
+        showToast(data.error || 'Weekly plan failed');
+      }
+      return;
+    }
+    if(regenerateDay && lastWeeklyPlan){
+      const newDay = (data.days || []).find(d => d.day === regenerateDay);
+      if(newDay){
+        lastWeeklyPlan.days = lastWeeklyPlan.days.map(d => d.day === regenerateDay ? newDay : d);
+        renderWeeklyPlan(lastWeeklyPlan);
+        showToast(`Day ${regenerateDay} refreshed`);
+      }
+    } else {
+      lastWeeklyPlan = data;
+      renderWeeklyPlan(data);
+    }
+  } catch(e){
+    console.error(e);
+    showToast('Network error — try again');
+  } finally {
+    if(btn){ btn.disabled=false; }
+    if(spin) spin.style.display='none';
+  }
+}
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderWeeklyPlan(plan){
+  const out = document.getElementById('output');
+  if(!plan || !Array.isArray(plan.days) || plan.days.length === 0){
+    out.innerHTML = `<div class="empty-state"><p>No plan returned. Try again.</p></div>`;
+    return;
+  }
+  const isPro = getPlan() !== 'free';
+  const cardsHtml = plan.days.map(d => {
+    const meta = DAY_META.find(m => m.n === d.day) || { name: d.name || `Day ${d.day}`, short:'', icon:'📅' };
+    const tags = (d.hashtags || []).map(t => `<span class="wp-tag">${escapeHtml(t)}</span>`).join('');
+    const optional = [
+      d.engagement && { label:'💬 Engagement', val: d.engagement },
+      d.promo && { label:'🎯 Promo idea', val: d.promo },
+      d.story && { label:'🎬 Story / Reel', val: d.story },
+      d.review && { label:'⭐ Review-style', val: d.review },
+      d.community && { label:'🏘️ Community', val: d.community },
+    ].filter(Boolean).map(o => `
+      <div class="wp-row"><div class="wp-row-label">${o.label}</div><div class="wp-row-val">${escapeHtml(o.val)}</div></div>
+    `).join('');
+    const regenBtn = isPro
+      ? `<button class="wp-regen" onclick="generateWeeklyPlan(${d.day})" title="Regenerate this day">↻ Regenerate day</button>`
+      : `<button class="wp-regen wp-regen-locked" onclick="openPricing('Per-day regeneration is a Pro feature.')" title="Pro feature">↻ Regenerate day 🔒</button>`;
+    return `
+      <article class="wp-card">
+        <header class="wp-card-head">
+          <div class="wp-day">
+            <span class="wp-icon">${meta.icon}</span>
+            <span class="wp-day-name">Day ${d.day} — ${escapeHtml(meta.name)}</span>
+          </div>
+          ${d.theme ? `<span class="wp-theme">${escapeHtml(d.theme)}</span>` : ''}
+        </header>
+        <div class="wp-row"><div class="wp-row-label">📸 Caption</div><div class="wp-row-val">${escapeHtml(d.caption)}</div></div>
+        ${d.hook ? `<div class="wp-row"><div class="wp-row-label">🪝 Hook</div><div class="wp-row-val">${escapeHtml(d.hook)}</div></div>` : ''}
+        ${d.imageIdea ? `<div class="wp-row"><div class="wp-row-label">🖼 Image idea</div><div class="wp-row-val">${escapeHtml(d.imageIdea)}</div></div>` : ''}
+        ${tags ? `<div class="wp-row"><div class="wp-row-label">#️⃣ Hashtags</div><div class="wp-tags">${tags}</div></div>` : ''}
+        ${optional}
+        ${d.cta ? `<div class="wp-row wp-cta"><div class="wp-row-label">✦ CTA</div><div class="wp-row-val">${escapeHtml(d.cta)}</div></div>` : ''}
+        <footer class="wp-card-foot">
+          <button class="wp-copy" onclick='copyWeeklyDay(${d.day})'>⧉ Copy day</button>
+          ${regenBtn}
+        </footer>
+      </article>`;
+  }).join('');
+
+  out.innerHTML = `
+    <div class="wp-wrap">
+      <div class="wp-head">
+        <div>
+          <div class="wp-eyebrow">✦ Weekly Marketing Plan ✦</div>
+          <h2 class="wp-title">Your <span style="color:var(--gold);">7-day plan</span></h2>
+          <p class="wp-sub">A real content calendar for your business — built around your tone, type, and city.</p>
+        </div>
+        <div class="wp-actions">
+          <button class="wp-copy-all" onclick="copyAllWeek()">⧉ Copy All Week</button>
+          <button class="wp-regen-all" onclick="generateWeeklyPlan()">↻ Regenerate plan</button>
+        </div>
+      </div>
+      <div class="wp-grid">${cardsHtml}</div>
+    </div>
+  `;
+}
+
+function weeklyDayToText(d){
+  const meta = DAY_META.find(m => m.n === d.day) || { name: d.name || `Day ${d.day}` };
+  const lines = [
+    `Day ${d.day} — ${meta.name}${d.theme ? ` · ${d.theme}` : ''}`,
+    '',
+    `Caption:\n${d.caption || ''}`,
+  ];
+  if(d.hook) lines.push('', `Hook: ${d.hook}`);
+  if(d.imageIdea) lines.push('', `Image idea: ${d.imageIdea}`);
+  if(d.hashtags && d.hashtags.length) lines.push('', `Hashtags: ${d.hashtags.join(' ')}`);
+  if(d.engagement) lines.push('', `Engagement: ${d.engagement}`);
+  if(d.promo) lines.push('', `Promo: ${d.promo}`);
+  if(d.story) lines.push('', `Story/Reel: ${d.story}`);
+  if(d.review) lines.push('', `Review-style: ${d.review}`);
+  if(d.community) lines.push('', `Community: ${d.community}`);
+  if(d.cta) lines.push('', `CTA: ${d.cta}`);
+  return lines.join('\n');
+}
+function copyWeeklyDay(day){
+  if(!lastWeeklyPlan) return;
+  const d = lastWeeklyPlan.days.find(x => x.day === day);
+  if(!d) return;
+  copyText(weeklyDayToText(d));
+}
+function copyAllWeek(){
+  if(!lastWeeklyPlan || !lastWeeklyPlan.days.length){ showToast('No plan to copy yet'); return; }
+  const businessName = (document.getElementById('businessName')?.value||'').trim();
+  const loc = document.getElementById('location').value.trim();
+  const header = `${businessName || 'Weekly Plan'}${loc ? ' — ' + loc : ''}\n7-Day Marketing Plan\n${'='.repeat(40)}\n`;
+  const body = lastWeeklyPlan.days.map(weeklyDayToText).join('\n\n' + '-'.repeat(40) + '\n\n');
+  copyText(header + '\n' + body);
+}
+
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter' && document.activeElement && document.activeElement.tagName==='INPUT' && !document.getElementById('generateBtn').disabled) generate();
 });
