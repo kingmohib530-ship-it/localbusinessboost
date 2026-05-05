@@ -1820,7 +1820,19 @@ async function generate(section, opts){
     const res = await fetch('/api/generate-content', {
       method:'POST',
       headers,
-      body: JSON.stringify({ businessName, businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section, snapshot })
+      body: JSON.stringify({
+        businessName, businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section, snapshot,
+        priceLevel: (document.getElementById('priceLevel')?.value || 'mid'),
+        brandPersonality: (document.getElementById('brandPersonality')?.value || '').trim(),
+        goal: currentGoal,
+        realOwnerVoice: !!document.getElementById('ownerVoiceToggle')?.checked,
+        standOut: !!document.getElementById('standOutToggle')?.checked,
+        variant: opts.variant || '',
+        generateVariants: !!opts.generateVariants,
+        avoidPhrases: memoryForBiz().bucket.avoid,
+        likedExamples: memoryForBiz().bucket.liked,
+        clientLocalMoment: computeLocalMoment()
+      })
     });
     const data = await res.json();
     if(!res.ok){
