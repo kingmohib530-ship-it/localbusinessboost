@@ -2078,7 +2078,11 @@ function renderItems(arr,prefix){
     <div class="item">
       <div class="item-number">${prefix} ${String(i+1).padStart(2,'0')}</div>
       <div class="item-text">${txt}</div>
-      <button class="item-copy" onclick="copyText('${escapeAttr(txt)}',this)">⧉</button>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <button class="item-copy" title="Keep — write more like this" onclick="recordFeedback('${escapeAttr(txt)}',true)" style="background:none;border:none;color:var(--white-muted);cursor:pointer;font-size:13px;padding:4px 6px;">👍</button>
+        <button class="item-copy" title="Don't repeat this" onclick="recordFeedback('${escapeAttr(txt)}',false)" style="background:none;border:none;color:var(--white-muted);cursor:pointer;font-size:13px;padding:4px 6px;">👎</button>
+        <button class="item-copy" onclick="copyText('${escapeAttr(txt)}',this)">⧉</button>
+      </div>
     </div>`).join('')+`</div>`;
 }
 function renderHashtags(tags){
