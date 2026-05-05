@@ -461,6 +461,7 @@
   </div>
   <div class="header-right">
     <span class="badge" id="planBadge">Starter Plan</span>
+    <span class="badge" id="betaBadge" style="background:linear-gradient(135deg,#c9a84c,#e2c870);color:#0a0a0a;font-weight:700;">Free beta access</span>
     <button class="btn-pro" id="upgradeBtn" onclick="openPricing()">⚡ Upgrade</button>
     <span class="user-chip" id="userChip" style="display:none">
       <span class="user-chip-avatar" id="userAvatar">?</span>
@@ -872,7 +873,7 @@ const PLANS = {
       { ok:true, t:'1 saved business' },
       { ok:true, t:'Limited history (last 5 results)' },
     ],
-    cta: 'Stay on Starter', limits: { dailyGenerations: 3, savedBusinesses: 1, history: 5, modes: ['instant'] }
+    cta: 'Stay on Starter', limits: { dailyGenerations: 20, savedBusinesses: 1, history: 5, modes: ['instant'] }
   },
   pro: {
     name: 'Pro', price: '$19', period: '/month',
@@ -1095,52 +1096,16 @@ function closeConvertModal(){
 }
 
 function maybeShowFirstGenPrompt(){
-  if(getPlan() !== 'free') return;
-  const k = K(FIRST_GEN_PROMPT_KEY);
-  if(localStorage.getItem(k)) return;
-  localStorage.setItem(k, '1');
-  setTimeout(() => {
-    showConvertModal({
-      eyebrow: '✦ You just made your first piece ✦',
-      title: 'Want <span>unlimited content</span> like this?',
-      sub: 'Keep generating without limits and scale your business faster.',
-      bullets: [
-        'Unlimited content, every day',
-        'All planning and SEO modes unlocked',
-        'Refresh any section in one click',
-      ],
-    });
-  }, 900);
+  // FREE BETA: no upgrade interruptions.
+  return;
 }
 
-// Session-level upgrade triggers
+// Session-level upgrade triggers — disabled during free beta.
 let _sessionGenCount = 0;
 let _resultsViewTimer = null;
 function trackSessionGeneration(){
-  if(getPlan() !== 'free') return;
-  _sessionGenCount++;
-  if(_sessionGenCount === 2){
-    setTimeout(() => {
-      if(getPlan() !== 'free') return;
-      showConvertModal({
-        eyebrow: '✦ You\'re on a roll ✦',
-        title: 'Want <span>unlimited content</span> like this?',
-        sub: 'Upgrade in 1 click — less than $0.30/day to grow your business.',
-        bullets: ['Unlimited generations','All advanced modes','Section regeneration'],
-        primaryText: 'Upgrade to Pro — $7.99/month',
-      });
-    }, 600);
-  }
-  // Reset 60s timer on results
-  if(_resultsViewTimer) clearTimeout(_resultsViewTimer);
-  _resultsViewTimer = setTimeout(() => {
-    if(getPlan() !== 'free') return;
-    if(document.querySelector('.upgrade-soft')) return;
-    softUpgrade({
-      title: 'Want unlimited content like this?',
-      text: 'Upgrade in 1 click — less than $0.30/day.',
-    });
-  }, 60000);
+  // FREE BETA: no automatic upgrade modals or nudges.
+  return;
 }
 
 function renderLimitWarnBanner(){
@@ -1162,10 +1127,10 @@ function renderLimitWarnBanner(){
   const div = document.createElement('div');
   div.id = 'limitWarnBanner';
   div.className = 'limit-warn';
-  const tone = left === 1 ? `<strong>You have 1 free generation left today.</strong>` : `<strong>You have ${left} free generations left today.</strong>`;
+  const tone = left === 1 ? `<strong>1 generation left today (free beta).</strong>` : `<strong>${left} generations left today (free beta).</strong>`;
   div.innerHTML = `
-    <div class="limit-warn-text">${tone} Less than $0.30/day for unlimited.</div>
-    <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">Upgrade to Pro</button>
+    <div class="limit-warn-text">${tone} Resets at 00:00 UTC.</div>
+    <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">See plans</button>
     <button type="button" class="limit-warn-close" id="limitWarnClose" aria-label="Dismiss">×</button>`;
   const main = document.querySelector('main');
   if(main && main.firstChild) main.insertBefore(div, main.firstChild);
@@ -1187,21 +1152,10 @@ function nextResetText(){
 }
 
 function showHardLimitModal(){
-  showConvertModal({
-    eyebrow: '✦ Daily limit reached ✦',
-    title: "You're getting <span>real results</span> — don't stop now.",
-    sub: "You've used your free generations. Upgrade to keep growing your business with unlimited content.",
-    bullets: [
-      'Unlimited content, every day',
-      'All advanced modes unlocked',
-      'Refresh any section in one click',
-      'Less than $0.30/day to grow your business',
-    ],
-    primaryText: 'Upgrade to Pro — $7.99/month',
-    ghostText: 'Maybe later',
-    meta: nextResetText(),
-    onGhost: closeConvertModal,
-    dismissible: false,
+  // FREE BETA: no hard paywall — show a soft, dismissible nudge instead.
+  softUpgrade({
+    title: 'You\'ve hit today\'s free beta limit',
+    text: 'Come back tomorrow for more — or explore the upgrade options anytime.',
   });
 }
 

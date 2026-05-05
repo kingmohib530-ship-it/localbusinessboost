@@ -3,9 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Weekly cap per plan. -1 = unlimited.
+// FREE BETA: payments temporarily disabled — generous caps for all plans.
 const PLAN_WEEKLY_CAP: Record<string, number> = {
-  free: 1,
-  starter: 1,
+  free: -1,
+  starter: -1,
   pro: -1,
   agency: -1,
 };
