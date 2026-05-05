@@ -270,7 +270,28 @@
    .active-client-banner { display: none; align-items: center; gap: 8px; padding: 8px 12px; background: linear-gradient(135deg, var(--gold-dim), transparent); border-left: 3px solid var(--gold); border-radius: 6px; margin-bottom: 14px; font-size: 12px; color: var(--white-dim); }
    .active-client-banner.visible { display: flex; }
    .active-client-banner strong { color: var(--gold2); font-weight: 600; }
-  .recent-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+   /* Onboarding wizard */
+   .wizard { background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+   .wizard-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+   .wizard-step-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.4px; color: var(--gold); text-transform: uppercase; }
+   .wizard-step-title { font-size: 13px; color: var(--white); font-weight: 600; }
+   .wizard-progress { display: flex; gap: 4px; margin-bottom: 14px; }
+   .wizard-progress-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--border2); transition: background .25s; }
+   .wizard-progress-dot.done { background: var(--gold); }
+   .wizard-progress-dot.current { background: var(--gold2); }
+   .wizard-step { display: none; animation: fadeUp .25s ease; }
+   .wizard-step.active { display: block; }
+   .wizard-step .form-group { margin-bottom: 14px; }
+   .wizard-nav { display: flex; gap: 8px; margin-top: 12px; }
+   .wizard-btn { flex: 1; padding: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all .15s; border: 1px solid var(--border2); background: var(--bg2); color: var(--white-dim); }
+   .wizard-btn:hover:not(:disabled) { color: var(--white); border-color: var(--gold); }
+   .wizard-btn.primary { background: linear-gradient(135deg, var(--gold), #a8722e); color: #0a0a0a; border: none; }
+   .wizard-btn.primary:hover:not(:disabled) { opacity: .9; }
+   .wizard-btn:disabled { opacity: .4; cursor: not-allowed; }
+   .wizard-summary { margin-top: 10px; padding: 10px 12px; background: var(--bg2); border: 1px dashed var(--border2); border-radius: 8px; font-size: 11.5px; color: var(--white-muted); line-height: 1.5; }
+   .wizard-summary strong { color: var(--gold2); font-weight: 600; }
+   .wizard-edit { background: none; border: none; color: var(--gold); font-size: 11px; cursor: pointer; padding: 0; margin-left: 6px; }
+   .recent-block { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
   .recent-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
   .recent-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 11px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; cursor: pointer; transition: all .15s; text-align: left; font-family: 'DM Sans', sans-serif; }
   .recent-item:hover { border-color: var(--gold); background: var(--gold-dim); }
@@ -447,29 +468,109 @@
     </div>
 
 
-    <div class="form-group">
-      <label>Business Type</label>
-      <input type="text" id="businessType" placeholder="e.g. Coffee shop, Salon, Gym">
+    <div class="wizard" id="setupWizard">
+      <div class="wizard-head">
+        <div>
+          <div class="wizard-step-label" id="wizardStepLabel">Step 1 of 4</div>
+          <div class="wizard-step-title" id="wizardStepTitle">Business Identity</div>
+        </div>
+        <div style="font-size:11px;color:var(--white-muted);font-family:'DM Mono',monospace;">~30 sec setup</div>
+      </div>
+      <div class="wizard-progress" id="wizardProgress">
+        <div class="wizard-progress-dot current"></div>
+        <div class="wizard-progress-dot"></div>
+        <div class="wizard-progress-dot"></div>
+        <div class="wizard-progress-dot"></div>
+      </div>
+
+      <div class="wizard-step active" data-step="1">
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" id="businessName" placeholder="e.g. Crown & Bean" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label>Business Type</label>
+          <select id="businessType">
+            <option value="">Select a type…</option>
+            <option value="coffee shop">☕ Coffee shop</option>
+            <option value="barber shop">💈 Barber shop</option>
+            <option value="bakery">🥐 Bakery</option>
+            <option value="gym">🏋️ Gym / Fitness</option>
+            <option value="restaurant">🍽 Restaurant</option>
+            <option value="salon">💇 Hair salon</option>
+            <option value="nail salon">💅 Nail salon</option>
+            <option value="spa">🧖 Spa / Wellness</option>
+            <option value="dental clinic">🦷 Dental clinic</option>
+            <option value="med spa">✨ Med spa</option>
+            <option value="auto repair">🔧 Auto repair</option>
+            <option value="car wash">🚗 Car wash</option>
+            <option value="real estate">🏠 Real estate</option>
+            <option value="florist">🌷 Florist</option>
+            <option value="pet groomer">🐶 Pet groomer</option>
+            <option value="tattoo studio">🎨 Tattoo studio</option>
+            <option value="cleaning service">🧽 Cleaning service</option>
+            <option value="landscaping">🌿 Landscaping</option>
+            <option value="photography">📸 Photography</option>
+            <option value="boutique">👗 Boutique / Retail</option>
+            <option value="bookstore">📚 Bookstore</option>
+            <option value="bar">🍸 Bar / Lounge</option>
+            <option value="ice cream shop">🍦 Ice cream shop</option>
+            <option value="yoga studio">🧘 Yoga studio</option>
+            <option value="other">✏️ Other (type below)</option>
+          </select>
+        </div>
+        <div class="form-group" id="businessTypeOtherWrap" style="display:none">
+          <label>Describe your business</label>
+          <input type="text" id="businessTypeOther" placeholder="e.g. Vinyl record store" maxlength="80">
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="2">
+        <div class="form-group">
+          <label>City + State</label>
+          <input type="text" id="location" placeholder="e.g. Brooklyn, NY">
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn" data-wiz-back>← Back</button>
+          <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="3">
+        <div class="form-group">
+          <label>Target Audience <span class="optional-tag">(optional)</span></label>
+          <input type="text" id="audience" placeholder="e.g. Young professionals, families, students, luxury clients">
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn" data-wiz-back>← Back</button>
+          <button type="button" class="wizard-btn primary" data-wiz-next>Continue →</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="4">
+        <div class="form-group">
+          <label>Brand Tone</label>
+          <select id="tone">
+            <option value="friendly">😊 Friendly — warm & approachable</option>
+            <option value="professional">💼 Professional — polished & confident</option>
+            <option value="funny">😄 Funny — witty & playful</option>
+            <option value="luxury">✨ Luxury — refined & aspirational</option>
+          </select>
+        </div>
+        <div class="wizard-summary" id="wizardSummary"></div>
+        <div class="wizard-nav">
+          <button type="button" class="wizard-btn" data-wiz-back>← Back</button>
+          <button type="button" class="wizard-btn primary" data-wiz-finish>Finish setup ✓</button>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>Location</label>
-      <input type="text" id="location" placeholder="e.g. Brooklyn, NY">
-    </div>
-
-    <div class="form-group">
-      <label>Target Audience <span class="optional-tag">(optional)</span></label>
-      <input type="text" id="audience" placeholder="e.g. Young professionals">
-    </div>
-
-    <div class="form-group">
-      <label>Tone</label>
-      <select id="tone">
-        <option value="friendly">😊 Friendly</option>
-        <option value="professional">💼 Professional</option>
-        <option value="funny">😄 Funny</option>
-        <option value="luxury">✨ Luxury</option>
-      </select>
+    <div class="wizard-summary" id="setupRecap" style="display:none;margin-bottom:14px;">
+      <span id="setupRecapText"></span>
+      <button type="button" class="wizard-edit" id="setupEditBtn">Edit setup</button>
     </div>
 
     <div class="form-group">
@@ -906,7 +1007,7 @@ function clientColor(id){
   return CLIENT_PALETTE[h % CLIENT_PALETTE.length];
 }
 function clientInitials(p){
-  const src = (p.businessType || p.location || '?').trim();
+  const src = (p.businessName || p.businessType || p.location || '?').trim();
   const words = src.split(/\s+/);
   return ((words[0]||'?')[0] + (words[1]?words[1][0]:'')).toUpperCase();
 }
@@ -946,12 +1047,13 @@ function switchClient(id){
   setActiveClientId(id);
   const p = loadProfiles().find(x => x.id === id);
   if(p){
-    document.getElementById('businessType').value = p.businessType || '';
+    const bn = document.getElementById('businessName'); if(bn) bn.value = p.businessName || '';
+    setBusinessTypeValue(p.businessType || '');
     document.getElementById('location').value = p.location || '';
     document.getElementById('audience').value = p.audience || '';
     document.getElementById('tone').value = p.tone || 'friendly';
+    if(typeof maybeCollapseWizard === 'function') maybeCollapseWizard();
   }
-  // Clear current results (they belong to the previous client)
   lastData = null;
   resetOutputPanel();
   renderClientBar();
@@ -964,7 +1066,9 @@ function switchClient(id){
 }
 function newClient(){
   setActiveClientId('');
-  ['businessType','location','audience'].forEach(i => { document.getElementById(i).value=''; });
+  const bn = document.getElementById('businessName'); if(bn) bn.value = '';
+  setBusinessTypeValue('');
+  ['location','audience'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
   document.getElementById('tone').value = 'friendly';
   lastData = null;
   resetOutputPanel();
@@ -974,7 +1078,11 @@ function newClient(){
   if(saveBtn) saveBtn.classList.remove('visible');
   renderRecent();
   refreshReminderToggle();
-  document.getElementById('businessType').focus();
+  // Reopen wizard for the new client
+  const wiz = document.getElementById('setupWizard'); if(wiz) wiz.style.display = 'block';
+  const recap = document.getElementById('setupRecap'); if(recap) recap.style.display = 'none';
+  if(typeof showWizardStep === 'function') showWizardStep(1);
+  document.getElementById('businessName')?.focus();
   showToast('New client workspace');
 }
 function resetOutputPanel(){
@@ -998,6 +1106,7 @@ function persistProfiles(list){
   localStorage.setItem(K(PROFILES_KEY), JSON.stringify(list));
 }
 function profileLabel(p){
+  if(p.businessName) return p.businessName + (p.location ? ' — ' + p.location : '');
   const parts = [p.businessType, p.location].filter(Boolean);
   return parts.join(' — ') || 'Untitled';
 }
@@ -1021,25 +1130,27 @@ function applyProfile(id){
   switchClient(id);
 }
 function saveCurrentBusiness(){
-  const businessType = document.getElementById('businessType').value.trim();
+  const businessName = (document.getElementById('businessName')?.value || '').trim();
+  const businessType = getBusinessTypeValue();
   const location = document.getElementById('location').value.trim();
   const audience = document.getElementById('audience').value.trim();
   const tone = document.getElementById('tone').value;
-  if(!businessType || !location){ showToast('Fill Business Type & Location first'); return; }
+  if(!businessName || !businessType || !location){ showToast('Complete setup first (name, type, location)'); return; }
 
   const list = loadProfiles();
-  // Dedupe by businessType + location (case-insensitive)
-  const key = (businessType + '|' + location).toLowerCase();
-  const existing = list.find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  // Dedupe by businessName + location (case-insensitive)
+  const key = (businessName + '|' + location).toLowerCase();
+  const existing = list.find(p => ((p.businessName||p.businessType) + '|' + p.location).toLowerCase() === key);
   if(!existing && list.length >= planLimits().savedBusinesses){
     openPricing(`Your ${PLANS[getPlan()].name} plan saves up to ${planLimits().savedBusinesses} business. Upgrade to manage unlimited clients.`);
     return;
   }
   if(existing){
+    existing.businessName = businessName;
+    existing.businessType = businessType;
     existing.audience = audience; existing.tone = tone;
     persistProfiles(list);
     setActiveClientId(existing.id);
-    // Re-tag any unassigned recents to this client
     const all = loadAllRecent();
     let changed = false;
     all.forEach(r => { if(!r.clientId){ r.clientId = existing.id; changed = true; } });
@@ -1052,7 +1163,7 @@ function saveCurrentBusiness(){
     showToast('Updated saved business');
     return;
   }
-  const profile = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), businessType, location, audience, tone };
+  const profile = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), businessName, businessType, location, audience, tone };
   list.unshift(profile);
   persistProfiles(list);
   setActiveClientId(profile.id);
@@ -1137,7 +1248,7 @@ function renderRecent(){
   if(!list.length && all.length === 0){ block.style.display = 'none'; return; }
   block.style.display = 'block';
   ul.innerHTML = list.map(item => {
-    const name = (item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
+    const name = (item.businessName || item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
     return `<button type="button" class="recent-item" data-id="${item.id}">
       <div class="recent-item-main">
         <div class="recent-item-name">${name.replace(/</g,'&lt;')}</div>
@@ -1156,10 +1267,12 @@ function renderRecent(){
 function restoreRecent(id){
   const item = loadRecent().find(x => x.id === id);
   if(!item) return;
-  document.getElementById('businessType').value = item.businessType || '';
+  const bn = document.getElementById('businessName'); if(bn) bn.value = item.businessName || '';
+  setBusinessTypeValue(item.businessType || '');
   document.getElementById('location').value = item.location || '';
   document.getElementById('audience').value = item.audience || '';
   document.getElementById('tone').value = item.tone || 'friendly';
+  if(typeof maybeCollapseWizard === 'function') maybeCollapseWizard();
   if(item.mode){
     currentMode = item.mode;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode===item.mode));
@@ -1169,7 +1282,7 @@ function restoreRecent(id){
   renderResults(item.data);
   const saveBtn = document.getElementById('saveBizBtn');
   if(saveBtn) saveBtn.classList.add('visible');
-  showToast('Restored "' + (item.businessType || 'previous') + '"');
+  showToast('Restored "' + (item.businessName || item.businessType || 'previous') + '"');
 }
 function clearRecent(){
   const active = getActiveClientId();
@@ -1202,11 +1315,13 @@ function setReminderForProfile(profileId, enabled){
   persistReminders(map);
 }
 function findCurrentProfileId(){
-  const businessType = document.getElementById('businessType').value.trim();
-  const location = document.getElementById('location').value.trim();
-  if(!businessType || !location) return null;
-  const key = (businessType + '|' + location).toLowerCase();
-  const match = loadProfiles().find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  const businessName = (document.getElementById('businessName')?.value || '').trim();
+  const businessType = getBusinessTypeValue();
+  const location = (document.getElementById('location')?.value || '').trim();
+  const idLeft = businessName || businessType;
+  if(!idLeft || !location) return null;
+  const key = (idLeft + '|' + location).toLowerCase();
+  const match = loadProfiles().find(p => ((p.businessName||p.businessType) + '|' + p.location).toLowerCase() === key);
   return match ? match.id : null;
 }
 function refreshReminderToggle(){
@@ -1270,7 +1385,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const profiles = loadProfiles();
   const activeProfile = profiles.find(p => p.id === activeId);
   if(activeProfile){
-    document.getElementById('businessType').value = activeProfile.businessType || '';
+    const bn = document.getElementById('businessName'); if(bn) bn.value = activeProfile.businessName || '';
+    setBusinessTypeValue(activeProfile.businessType || '');
     document.getElementById('location').value = activeProfile.location || '';
     document.getElementById('audience').value = activeProfile.audience || '';
     document.getElementById('tone').value = activeProfile.tone || 'friendly';
@@ -1293,8 +1409,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if(clr) clr.addEventListener('click', clearRecent);
 
   // Reminder wiring
-  ['businessType','location'].forEach(id => {
+  ['businessName','businessType','location'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', refreshReminderToggle);
+    document.getElementById(id)?.addEventListener('change', refreshReminderToggle);
   });
   const cb = document.getElementById('reminderCheckbox');
   if(cb) cb.addEventListener('change', () => {
@@ -1318,7 +1435,173 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape') closePricing();
   });
+  // ===== Onboarding wizard =====
+  initWizard();
 });
+
+function getBusinessTypeValue(){
+  const sel = document.getElementById('businessType');
+  if(!sel) return '';
+  if(sel.value === 'other'){
+    return (document.getElementById('businessTypeOther')?.value || '').trim();
+  }
+  return (sel.value || '').trim();
+}
+function setBusinessTypeValue(val){
+  const sel = document.getElementById('businessType');
+  const otherWrap = document.getElementById('businessTypeOtherWrap');
+  const otherInput = document.getElementById('businessTypeOther');
+  if(!sel) return;
+  const v = (val || '').trim();
+  const hasOption = Array.from(sel.options).some(o => o.value === v);
+  if(hasOption && v !== 'other' && v !== ''){
+    sel.value = v;
+    if(otherWrap) otherWrap.style.display = 'none';
+    if(otherInput) otherInput.value = '';
+  } else if(v) {
+    sel.value = 'other';
+    if(otherWrap) otherWrap.style.display = 'block';
+    if(otherInput) otherInput.value = v;
+  } else {
+    sel.value = '';
+    if(otherWrap) otherWrap.style.display = 'none';
+    if(otherInput) otherInput.value = '';
+  }
+}
+
+let wizardStep = 1;
+const WIZ_STEPS = [
+  { n:1, title:'Business Identity' },
+  { n:2, title:'Location' },
+  { n:3, title:'Audience' },
+  { n:4, title:'Tone' },
+];
+function showWizardStep(n){
+  wizardStep = Math.max(1, Math.min(4, n));
+  document.querySelectorAll('.wizard-step').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.step) === wizardStep);
+  });
+  const dots = document.querySelectorAll('.wizard-progress-dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('done','current');
+    if(i+1 < wizardStep) d.classList.add('done');
+    else if(i+1 === wizardStep) d.classList.add('current');
+  });
+  const step = WIZ_STEPS[wizardStep-1];
+  const lbl = document.getElementById('wizardStepLabel');
+  const ttl = document.getElementById('wizardStepTitle');
+  if(lbl) lbl.textContent = `Step ${step.n} of 4`;
+  if(ttl) ttl.textContent = step.title;
+  if(wizardStep === 4) renderWizardSummary();
+}
+function validateWizardStep(n){
+  if(n === 1){
+    const name = (document.getElementById('businessName')?.value || '').trim();
+    const type = getBusinessTypeValue();
+    if(!name){ showToast('Add your Business Name to continue'); return false; }
+    if(!type){ showToast('Choose your business type'); return false; }
+  } else if(n === 2){
+    const loc = (document.getElementById('location')?.value || '').trim();
+    if(!loc){ showToast('Enter your city + state'); return false; }
+  }
+  return true;
+}
+function renderWizardSummary(){
+  const name = (document.getElementById('businessName')?.value || '').trim();
+  const type = getBusinessTypeValue();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  const aud = (document.getElementById('audience')?.value || '').trim();
+  const snap = buildPersonalitySnapshot({ name, type, loc, audience: aud });
+  const el = document.getElementById('wizardSummary');
+  if(!el) return;
+  el.innerHTML = `<strong>${(name||'Your business').replace(/</g,'&lt;')}</strong> — ${snap.vibe}<br><span style="color:var(--white-dim)">Angle:</span> ${snap.angle}`;
+}
+// Smart personalization layer — silent personality snapshot per business type
+const TYPE_PERSONALITY = {
+  'coffee shop':       { vibe:'cozy neighborhood café', angle:'morning routines, caffeine culture, regulars by name', style:'warm, lived-in, slightly sleepy mornings' },
+  'barber shop':       { vibe:'classic grooming spot', angle:'fresh look, confidence, the chair as a ritual', style:'sharp, masculine, no-nonsense friendly' },
+  'bakery':            { vibe:'small-batch bakery',   angle:'fresh-from-the-oven, weekend treats, pastry obsessions', style:'inviting, sensory, slightly indulgent' },
+  'gym':               { vibe:'community gym',         angle:'discipline, transformation, daily energy', style:'motivating, direct, real progress over hype' },
+  'restaurant':        { vibe:'local restaurant',      angle:'dining experience, taste, atmosphere, the table you keep coming back to', style:'flavor-led, atmospheric, hospitable' },
+  'salon':             { vibe:'hair salon',            angle:'self-care, transformation, looking like yourself again', style:'confident, personal, glow-up energy' },
+  'nail salon':        { vibe:'nail studio',           angle:'self-care, design, the small ritual', style:'detail-loving, personal, soft confidence' },
+  'spa':               { vibe:'wellness spa',          angle:'unwind, reset, slow down', style:'calm, sensory, low-volume' },
+  'dental clinic':     { vibe:'modern dental clinic',  angle:'comfort, trust, gentle care', style:'reassuring, clear, professional warmth' },
+  'med spa':           { vibe:'med spa',               angle:'subtle results, expert hands, glow', style:'refined, clinical-but-warm' },
+  'auto repair':       { vibe:'trusted local mechanic',angle:'honest work, fair pricing, back on the road', style:'plain-spoken, dependable' },
+  'car wash':          { vibe:'neighborhood car wash', angle:'quick clean, that fresh-car feeling', style:'breezy, fast, satisfying' },
+  'real estate':       { vibe:'local real estate pro', angle:'finding home, knowing the neighborhood', style:'grounded, neighborhood-savvy' },
+  'florist':           { vibe:'local florist',         angle:'occasions, small gestures, seasonal blooms', style:'soft, sensory, thoughtful' },
+  'pet groomer':       { vibe:'pet grooming studio',   angle:'happy pets, fresh look, gentle handling', style:'cheerful, gentle, pet-loving' },
+  'tattoo studio':     { vibe:'tattoo studio',         angle:'craft, story, ink that means something', style:'bold, artistic, unfiltered' },
+  'cleaning service':  { vibe:'cleaning service',      angle:'time back, spotless space, peace of mind', style:'reliable, warm, no-nonsense' },
+  'landscaping':       { vibe:'landscaping crew',      angle:'curb appeal, outdoor living, the yard you wanted', style:'practical, seasonal, proud-of-craft' },
+  'photography':       { vibe:'photography studio',    angle:'real moments, frame-worthy memories', style:'visual, story-led, intimate' },
+  'boutique':          { vibe:'curated boutique',      angle:'pieces you won\'t see everywhere, personal style', style:'taste-driven, friendly, in-the-know' },
+  'bookstore':         { vibe:'indie bookstore',       angle:'staff picks, getting lost in stacks, finding the next read', style:'literary, warm, slightly nerdy' },
+  'bar':               { vibe:'neighborhood bar',      angle:'after-work pours, weekend nights, regulars at the bar', style:'easy, unpretentious, social' },
+  'ice cream shop':    { vibe:'ice cream shop',        angle:'summer evenings, small joys, flavor of the week', style:'playful, sweet, nostalgic' },
+  'yoga studio':       { vibe:'yoga studio',           angle:'breath, intention, showing up for yourself', style:'calm, grounding, encouraging' },
+};
+function buildPersonalitySnapshot({ name, type, loc, audience }){
+  const t = (type||'').toLowerCase();
+  const fb = { vibe:`local ${t || 'business'}`, angle:'real customers, real moments, neighborhood credibility', style:'grounded, human, locally specific' };
+  const base = TYPE_PERSONALITY[t] || fb;
+  const audPart = audience ? ` for ${audience}` : '';
+  return {
+    vibe: `${base.vibe}${audPart} in ${loc || 'your city'}`,
+    angle: base.angle,
+    style: base.style,
+  };
+}
+
+function initWizard(){
+  // Event delegation for wizard buttons
+  document.querySelectorAll('[data-wiz-next]').forEach(b => b.addEventListener('click', () => {
+    if(!validateWizardStep(wizardStep)) return;
+    showWizardStep(wizardStep + 1);
+  }));
+  document.querySelectorAll('[data-wiz-back]').forEach(b => b.addEventListener('click', () => {
+    showWizardStep(wizardStep - 1);
+  }));
+  document.querySelectorAll('[data-wiz-finish]').forEach(b => b.addEventListener('click', () => {
+    finishWizard();
+  }));
+  // Other type toggle
+  const typeSel = document.getElementById('businessType');
+  const otherWrap = document.getElementById('businessTypeOtherWrap');
+  if(typeSel) typeSel.addEventListener('change', () => {
+    if(otherWrap) otherWrap.style.display = typeSel.value === 'other' ? 'block' : 'none';
+  });
+  document.getElementById('setupEditBtn')?.addEventListener('click', () => {
+    document.getElementById('setupRecap').style.display = 'none';
+    document.getElementById('setupWizard').style.display = 'block';
+    showWizardStep(1);
+  });
+  // If existing profile prefilled, collapse wizard into recap on load
+  maybeCollapseWizard();
+}
+function finishWizard(){
+  if(!validateWizardStep(1) || !validateWizardStep(2)) return;
+  collapseWizard();
+}
+function collapseWizard(){
+  const wiz = document.getElementById('setupWizard');
+  const recap = document.getElementById('setupRecap');
+  const txt = document.getElementById('setupRecapText');
+  if(wiz) wiz.style.display = 'none';
+  const name = (document.getElementById('businessName')?.value || '').trim();
+  const type = getBusinessTypeValue();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  if(txt) txt.innerHTML = `<strong>${(name||type).replace(/</g,'&lt;')}</strong> · ${type} · ${loc}`;
+  if(recap) recap.style.display = 'block';
+}
+function maybeCollapseWizard(){
+  const name = (document.getElementById('businessName')?.value || '').trim();
+  const type = getBusinessTypeValue();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  if(name && type && loc) collapseWizard();
+}
 
 const TONES = {
   friendly:{adj:'amazing',vibe:'so welcoming',emoji:'😊'},
@@ -1352,13 +1635,19 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 });
 
 async function generate(section){
-  const biz=document.getElementById('businessType').value.trim();
+  const businessName=(document.getElementById('businessName')?.value||'').trim();
+  const biz=getBusinessTypeValue();
   const loc=document.getElementById('location').value.trim();
   const aud=document.getElementById('audience').value.trim()||'locals';
   const tone=document.getElementById('tone').value;
-  if(!biz||!loc){ showToast('Please fill Business Type & Location'); return; }
+  if(!businessName||!biz||!loc){
+    showToast('Finish setup first — name, type & location');
+    const wiz = document.getElementById('setupWizard'); if(wiz) wiz.style.display = 'block';
+    const recap = document.getElementById('setupRecap'); if(recap) recap.style.display = 'none';
+    if(typeof showWizardStep === 'function') showWizardStep(!businessName||!biz?1:2);
+    return;
+  }
 
-  // Plan gates (soft — show modal, do not silently block)
   const limits = planLimits();
   if(!limits.modes.includes(currentMode)){
     openPricing(`${currentMode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature. Upgrade to unlock.`);
@@ -1377,6 +1666,9 @@ async function generate(section){
   const spin=document.getElementById('spinner');
   if(!section){ btn.disabled=true; spin.style.display='inline-block'; }
 
+  // Smart personalization snapshot — silent, passed to backend
+  const snapshot = buildPersonalitySnapshot({ name: businessName, type: biz, loc, audience: aud === 'locals' ? '' : aud });
+
   try {
     let accessToken = null;
     try { const { data } = await sb.auth.getSession(); accessToken = data?.session?.access_token || null; } catch(_){}
@@ -1385,7 +1677,7 @@ async function generate(section){
     const res = await fetch('/api/generate-content', {
       method:'POST',
       headers,
-      body: JSON.stringify({ businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section })
+      body: JSON.stringify({ businessName, businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section, snapshot })
     });
     const data = await res.json();
     if(!res.ok){
@@ -1411,7 +1703,7 @@ async function generate(section){
       addRecent({
         id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
         ts: Date.now(),
-        businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
+        businessName, businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
         data
       });
       // Reset weekly reminder timer if this business has one enabled
@@ -1678,14 +1970,18 @@ function applySession(session){
     syncSubscription();
     // Restore active profile fields
     const ap = (typeof loadProfiles === 'function') ? loadProfiles().find(p => p.id === getActiveClientId()) : null;
-    ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+    const bn = document.getElementById('businessName'); if(bn) bn.value = '';
+    setBusinessTypeValue('');
+    ['location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
     const tone = document.getElementById('tone'); if(tone) tone.value = 'friendly';
     if(ap){
-      document.getElementById('businessType').value = ap.businessType || '';
+      const bn2 = document.getElementById('businessName'); if(bn2) bn2.value = ap.businessName || '';
+      setBusinessTypeValue(ap.businessType || '');
       document.getElementById('location').value = ap.location || '';
       document.getElementById('audience').value = ap.audience || '';
       document.getElementById('tone').value = ap.tone || 'friendly';
     }
+    if(typeof maybeCollapseWizard === 'function') maybeCollapseWizard();
     lastData = null;
     if(typeof resetOutputPanel === 'function') resetOutputPanel();
   } else {
@@ -1725,7 +2021,9 @@ async function signOut(){
   // Clear in-memory state — storage is namespaced so no cross-user leakage
   currentUserId = null;
   lastData = null;
-  ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  const bn = document.getElementById('businessName'); if(bn) bn.value = '';
+  setBusinessTypeValue('');
+  ['location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
   showAuthShell(true);
 }
 async function openBillingPortal(){
