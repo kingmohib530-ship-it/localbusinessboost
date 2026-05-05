@@ -1893,6 +1893,185 @@ function copyTab(id){
   else text = items.join('\n\n');
   copyText(text);
 }
+
+// ===== Weekly Marketing Plan =====
+let lastWeeklyPlan = null;
+const DAY_META = [
+  { n:1, name:'Monday',    short:'Mon', icon:'🌅' },
+  { n:2, name:'Tuesday',   short:'Tue', icon:'☕' },
+  { n:3, name:'Wednesday', short:'Wed', icon:'💬' },
+  { n:4, name:'Thursday',  short:'Thu', icon:'🎯' },
+  { n:5, name:'Friday',    short:'Fri', icon:'🎬' },
+  { n:6, name:'Saturday',  short:'Sat', icon:'⭐' },
+  { n:7, name:'Sunday',    short:'Sun', icon:'🏘️' },
+];
+
+async function generateWeeklyPlan(regenerateDay){
+  const businessName=(document.getElementById('businessName')?.value||'').trim();
+  const biz=getBusinessTypeValue();
+  const loc=document.getElementById('location').value.trim();
+  const aud=document.getElementById('audience').value.trim()||'locals';
+  const tone=document.getElementById('tone').value;
+  if(!businessName||!biz||!loc){
+    showToast('Finish setup first — name, type & location');
+    const wiz = document.getElementById('setupWizard'); if(wiz) wiz.style.display = 'block';
+    const recap = document.getElementById('setupRecap'); if(recap) recap.style.display = 'none';
+    if(typeof showWizardStep === 'function') showWizardStep(!businessName||!biz?1:2);
+    return;
+  }
+
+  const plan = getPlan();
+  // Per-day regeneration is Pro+ only
+  if(regenerateDay && plan === 'free'){
+    openPricing('Per-day regeneration is a Pro feature. Upgrade for unlimited weekly plans.');
+    return;
+  }
+
+  const btn=document.getElementById('weeklyPlanBtn');
+  const spin=document.getElementById('weeklySpinner');
+  if(!regenerateDay && btn){ btn.disabled=true; if(spin) spin.style.display='inline-block'; }
+
+  const snapshot = buildPersonalitySnapshot({ name: businessName, type: biz, loc, audience: aud === 'locals' ? '' : aud });
+
+  try {
+    let accessToken = null;
+    try { const { data } = await sb.auth.getSession(); accessToken = data?.session?.access_token || null; } catch(_){}
+    if(!accessToken){ showToast('Please sign in first'); return; }
+    const res = await fetch('/api/generate-weekly-plan', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+accessToken },
+      body: JSON.stringify({ businessName, businessType:biz, location:loc, audience:aud, tone, snapshot, regenerateDay: regenerateDay || undefined })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      if(res.status === 402 || data.code === 'limit_reached'){
+        openPricing(data.error || 'Weekly plan limit reached. Upgrade to Pro for unlimited weekly plans.');
+      } else if(res.status === 403 || data.code === 'upgrade_required'){
+        openPricing(data.error || 'Upgrade to Pro to continue.');
+      } else {
+        showToast(data.error || 'Weekly plan failed');
+      }
+      return;
+    }
+    if(regenerateDay && lastWeeklyPlan){
+      const newDay = (data.days || []).find(d => d.day === regenerateDay);
+      if(newDay){
+        lastWeeklyPlan.days = lastWeeklyPlan.days.map(d => d.day === regenerateDay ? newDay : d);
+        renderWeeklyPlan(lastWeeklyPlan);
+        showToast(`Day ${regenerateDay} refreshed`);
+      }
+    } else {
+      lastWeeklyPlan = data;
+      renderWeeklyPlan(data);
+    }
+  } catch(e){
+    console.error(e);
+    showToast('Network error — try again');
+  } finally {
+    if(btn){ btn.disabled=false; }
+    if(spin) spin.style.display='none';
+  }
+}
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderWeeklyPlan(plan){
+  const out = document.getElementById('output');
+  if(!plan || !Array.isArray(plan.days) || plan.days.length === 0){
+    out.innerHTML = `<div class="empty-state"><p>No plan returned. Try again.</p></div>`;
+    return;
+  }
+  const isPro = getPlan() !== 'free';
+  const cardsHtml = plan.days.map(d => {
+    const meta = DAY_META.find(m => m.n === d.day) || { name: d.name || `Day ${d.day}`, short:'', icon:'📅' };
+    const tags = (d.hashtags || []).map(t => `<span class="wp-tag">${escapeHtml(t)}</span>`).join('');
+    const optional = [
+      d.engagement && { label:'💬 Engagement', val: d.engagement },
+      d.promo && { label:'🎯 Promo idea', val: d.promo },
+      d.story && { label:'🎬 Story / Reel', val: d.story },
+      d.review && { label:'⭐ Review-style', val: d.review },
+      d.community && { label:'🏘️ Community', val: d.community },
+    ].filter(Boolean).map(o => `
+      <div class="wp-row"><div class="wp-row-label">${o.label}</div><div class="wp-row-val">${escapeHtml(o.val)}</div></div>
+    `).join('');
+    const regenBtn = isPro
+      ? `<button class="wp-regen" onclick="generateWeeklyPlan(${d.day})" title="Regenerate this day">↻ Regenerate day</button>`
+      : `<button class="wp-regen wp-regen-locked" onclick="openPricing('Per-day regeneration is a Pro feature.')" title="Pro feature">↻ Regenerate day 🔒</button>`;
+    return `
+      <article class="wp-card">
+        <header class="wp-card-head">
+          <div class="wp-day">
+            <span class="wp-icon">${meta.icon}</span>
+            <span class="wp-day-name">Day ${d.day} — ${escapeHtml(meta.name)}</span>
+          </div>
+          ${d.theme ? `<span class="wp-theme">${escapeHtml(d.theme)}</span>` : ''}
+        </header>
+        <div class="wp-row"><div class="wp-row-label">📸 Caption</div><div class="wp-row-val">${escapeHtml(d.caption)}</div></div>
+        ${d.hook ? `<div class="wp-row"><div class="wp-row-label">🪝 Hook</div><div class="wp-row-val">${escapeHtml(d.hook)}</div></div>` : ''}
+        ${d.imageIdea ? `<div class="wp-row"><div class="wp-row-label">🖼 Image idea</div><div class="wp-row-val">${escapeHtml(d.imageIdea)}</div></div>` : ''}
+        ${tags ? `<div class="wp-row"><div class="wp-row-label">#️⃣ Hashtags</div><div class="wp-tags">${tags}</div></div>` : ''}
+        ${optional}
+        ${d.cta ? `<div class="wp-row wp-cta"><div class="wp-row-label">✦ CTA</div><div class="wp-row-val">${escapeHtml(d.cta)}</div></div>` : ''}
+        <footer class="wp-card-foot">
+          <button class="wp-copy" onclick='copyWeeklyDay(${d.day})'>⧉ Copy day</button>
+          ${regenBtn}
+        </footer>
+      </article>`;
+  }).join('');
+
+  out.innerHTML = `
+    <div class="wp-wrap">
+      <div class="wp-head">
+        <div>
+          <div class="wp-eyebrow">✦ Weekly Marketing Plan ✦</div>
+          <h2 class="wp-title">Your <span style="color:var(--gold);">7-day plan</span></h2>
+          <p class="wp-sub">A real content calendar for your business — built around your tone, type, and city.</p>
+        </div>
+        <div class="wp-actions">
+          <button class="wp-copy-all" onclick="copyAllWeek()">⧉ Copy All Week</button>
+          <button class="wp-regen-all" onclick="generateWeeklyPlan()">↻ Regenerate plan</button>
+        </div>
+      </div>
+      <div class="wp-grid">${cardsHtml}</div>
+    </div>
+  `;
+}
+
+function weeklyDayToText(d){
+  const meta = DAY_META.find(m => m.n === d.day) || { name: d.name || `Day ${d.day}` };
+  const lines = [
+    `Day ${d.day} — ${meta.name}${d.theme ? ` · ${d.theme}` : ''}`,
+    '',
+    `Caption:\n${d.caption || ''}`,
+  ];
+  if(d.hook) lines.push('', `Hook: ${d.hook}`);
+  if(d.imageIdea) lines.push('', `Image idea: ${d.imageIdea}`);
+  if(d.hashtags && d.hashtags.length) lines.push('', `Hashtags: ${d.hashtags.join(' ')}`);
+  if(d.engagement) lines.push('', `Engagement: ${d.engagement}`);
+  if(d.promo) lines.push('', `Promo: ${d.promo}`);
+  if(d.story) lines.push('', `Story/Reel: ${d.story}`);
+  if(d.review) lines.push('', `Review-style: ${d.review}`);
+  if(d.community) lines.push('', `Community: ${d.community}`);
+  if(d.cta) lines.push('', `CTA: ${d.cta}`);
+  return lines.join('\n');
+}
+function copyWeeklyDay(day){
+  if(!lastWeeklyPlan) return;
+  const d = lastWeeklyPlan.days.find(x => x.day === day);
+  if(!d) return;
+  copyText(weeklyDayToText(d));
+}
+function copyAllWeek(){
+  if(!lastWeeklyPlan || !lastWeeklyPlan.days.length){ showToast('No plan to copy yet'); return; }
+  const businessName = (document.getElementById('businessName')?.value||'').trim();
+  const loc = document.getElementById('location').value.trim();
+  const header = `${businessName || 'Weekly Plan'}${loc ? ' — ' + loc : ''}\n7-Day Marketing Plan\n${'='.repeat(40)}\n`;
+  const body = lastWeeklyPlan.days.map(weeklyDayToText).join('\n\n' + '-'.repeat(40) + '\n\n');
+  copyText(header + '\n' + body);
+}
+
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter' && document.activeElement && document.activeElement.tagName==='INPUT' && !document.getElementById('generateBtn').disabled) generate();
 });
