@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGenerateWeeklyPlanRoute = ApiGenerateWeeklyPlanRouteImport.update({
+  id: '/api/generate-weekly-plan',
+  path: '/api/generate-weekly-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGenerateContentRoute = ApiGenerateContentRouteImport.update({
@@ -45,6 +51,7 @@ const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
+  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -52,6 +59,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
+  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
+  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -69,6 +78,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api/generate-content'
+    | '/api/generate-weekly-plan'
     | '/checkout/return'
     | '/api/public/billing/portal'
     | '/api/public/payments/webhook'
@@ -76,6 +86,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/generate-content'
+    | '/api/generate-weekly-plan'
     | '/checkout/return'
     | '/api/public/billing/portal'
     | '/api/public/payments/webhook'
@@ -83,6 +94,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api/generate-content'
+    | '/api/generate-weekly-plan'
     | '/checkout/return'
     | '/api/public/billing/portal'
     | '/api/public/payments/webhook'
@@ -91,6 +103,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
+  ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -110,6 +123,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout/return'
       fullPath: '/checkout/return'
       preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate-weekly-plan': {
+      id: '/api/generate-weekly-plan'
+      path: '/api/generate-weekly-plan'
+      fullPath: '/api/generate-weekly-plan'
+      preLoaderRoute: typeof ApiGenerateWeeklyPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/generate-content': {
@@ -139,6 +159,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
+  ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
