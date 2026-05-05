@@ -1127,10 +1127,10 @@ function renderLimitWarnBanner(){
   const div = document.createElement('div');
   div.id = 'limitWarnBanner';
   div.className = 'limit-warn';
-  const tone = left === 1 ? `<strong>You have 1 free generation left today.</strong>` : `<strong>You have ${left} free generations left today.</strong>`;
+  const tone = left === 1 ? `<strong>1 generation left today (free beta).</strong>` : `<strong>${left} generations left today (free beta).</strong>`;
   div.innerHTML = `
-    <div class="limit-warn-text">${tone} Less than $0.30/day for unlimited.</div>
-    <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">Upgrade to Pro</button>
+    <div class="limit-warn-text">${tone} Resets at 00:00 UTC.</div>
+    <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">See plans</button>
     <button type="button" class="limit-warn-close" id="limitWarnClose" aria-label="Dismiss">×</button>`;
   const main = document.querySelector('main');
   if(main && main.firstChild) main.insertBefore(div, main.firstChild);
