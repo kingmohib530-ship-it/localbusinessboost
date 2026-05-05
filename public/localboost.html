@@ -1513,7 +1513,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // ===== Onboarding wizard =====
   initWizard();
+  // Auto-name suggester
+  document.getElementById('autoNameBtn')?.addEventListener('click', suggestBusinessNames);
 });
+
+function suggestBusinessNames(){
+  const type = (getBusinessTypeValue() || '').toLowerCase();
+  const loc = (document.getElementById('location')?.value || '').trim();
+  const cityWord = (loc.split(',')[0] || '').trim() || 'Local';
+  const street = ['Rosewood','Elm','Maple','Crown','Ironside','Harbor','Park','Linden','Oak','Cedar'];
+  const seedByType = {
+    'coffee shop': ['Bean','Roast','Brew','Pour','Grind','Daybreak'],
+    'barber shop': ['Cuts','Razor','Chair','Fade','Trim'],
+    'bakery': ['Crumb','Loaf','Hearth','Butter','Knead'],
+    'gym': ['Iron','Forge','Reps','Pulse','Field'],
+    'restaurant': ['Table','Kitchen','Plate','Garden','Smoke'],
+    'salon': ['Mane','Glow','Mirror','Rouge','Bloom'],
+    'bar': ['Lantern','Cellar','Half Step','Pour House','North Room'],
+  };
+  const seeds = seedByType[type] || ['House','Co.','Studio','Works','Room'];
+  const out = [];
+  for(let i=0;i<5;i++){
+    const a = street[Math.floor(Math.random()*street.length)];
+    const b = seeds[Math.floor(Math.random()*seeds.length)];
+    const fmt = i%2 ? `${a} ${b}` : `${b} & ${cityWord.split(' ')[0]}`;
+    if(!out.includes(fmt)) out.push(fmt);
+  }
+  const wrap = document.getElementById('autoNameSuggest');
+  if(!wrap) return;
+  wrap.style.display = 'flex';
+  wrap.innerHTML = out.map(n => `<button type="button" class="hashtag-chip" style="cursor:pointer;" onclick="document.getElementById('businessName').value='${n.replace(/'/g,"\\'")}';document.getElementById('autoNameSuggest').style.display='none';">${n}</button>`).join('');
+}
+window.suggestBusinessNames = suggestBusinessNames;
+
 
 function getBusinessTypeValue(){
   const sel = document.getElementById('businessType');
