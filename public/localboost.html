@@ -1687,7 +1687,9 @@ const TONES = {
 };
 
 let currentMode = 'instant';
+let currentGoal = 'foot_traffic';
 let lastData = null;
+let lastVariants = null; // { safe, balanced, high_conversion }
 let activeTab = 'reviews';
 
 const MODE_BANNERS = {
@@ -1697,18 +1699,82 @@ const MODE_BANNERS = {
   variation: 'Returning <strong>multiple stylistic versions</strong> per section.'
 };
 
-document.querySelectorAll('.mode-btn').forEach(btn => {
+document.querySelectorAll('#modeGrid .mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const mode = btn.dataset.mode;
     if(!planLimits().modes.includes(mode)){
       openPricing(`${mode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature.`);
       return;
     }
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#modeGrid .mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentMode = mode;
   });
 });
+document.querySelectorAll('#goalGrid .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#goalGrid .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentGoal = btn.dataset.goal;
+  });
+});
+
+// ===== Local Moment chip (client-side mirror of server logic) =====
+function computeLocalMoment(){
+  const d = new Date();
+  const m = d.getMonth();
+  const season = (m<=1||m===11)?'winter':(m<=4)?'spring':(m<=7)?'summer':'fall';
+  const dow = d.getDay();
+  const dayVibe = (dow===0||dow===6)?'weekend chill':'weekday grind';
+  const h = d.getHours();
+  const part = h<5?'late night':h<11?'morning rush':h<14?'lunch hour':h<17?'afternoon lull':h<21?'evening':'late night';
+  return `${season} · ${dayVibe} · ${part}`;
+}
+function refreshLocalMoment(){
+  const el = document.getElementById('localMomentText');
+  if(el) el.textContent = computeLocalMoment();
+}
+setInterval(refreshLocalMoment, 60000);
+document.addEventListener('DOMContentLoaded', refreshLocalMoment);
+
+// ===== Memory: avoid recently-shown phrases / liked examples =====
+const MEM_KEY = 'lb_memory_v1';
+function loadMemory(){
+  try { return JSON.parse(localStorage.getItem(K(MEM_KEY))||'{}'); } catch { return {}; }
+}
+function saveMemory(m){ localStorage.setItem(K(MEM_KEY), JSON.stringify(m)); }
+function memoryForBiz(){
+  const key = (document.getElementById('businessName')?.value||'').trim().toLowerCase() + '|' + (document.getElementById('location')?.value||'').trim().toLowerCase();
+  const all = loadMemory();
+  return { key, all, bucket: all[key] || { avoid: [], liked: [] } };
+}
+function rememberShown(data){
+  if(!data) return;
+  const { key, all, bucket } = memoryForBiz();
+  const opener = (s) => String(s||'').split(/[.!?\n]/)[0].trim().slice(0,120);
+  const seeds = [
+    ...(data.captions||[]).map(opener),
+    ...(data.hooks||[]).map(opener),
+    ...(data.promos||[]).map(p => opener(p?.label)),
+  ].filter(Boolean);
+  bucket.avoid = Array.from(new Set([...seeds, ...bucket.avoid])).slice(0, 25);
+  all[key] = bucket;
+  saveMemory(all);
+}
+function recordFeedback(text, liked){
+  if(!text) return;
+  const { key, all, bucket } = memoryForBiz();
+  if(liked){
+    bucket.liked = Array.from(new Set([String(text).slice(0,240), ...bucket.liked])).slice(0, 10);
+  } else {
+    bucket.avoid = Array.from(new Set([String(text).slice(0,200), ...bucket.avoid])).slice(0, 25);
+  }
+  all[key] = bucket;
+  saveMemory(all);
+  showToast(liked ? '👍 Will write more like this' : '👎 Won\'t repeat that');
+}
+window.recordFeedback = recordFeedback;
+
 
 async function generate(section){
   const businessName=(document.getElementById('businessName')?.value||'').trim();
