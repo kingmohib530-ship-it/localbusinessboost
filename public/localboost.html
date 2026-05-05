@@ -69,7 +69,30 @@
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 340px; gap: 16px; border: 1px dashed var(--border2); border-radius: 16px; text-align: center; padding: 40px; }
   .empty-icon { width: 64px; height: 64px; background: var(--bg2); border-radius: 50%; display: grid; place-items: center; font-size: 28px; color: var(--gold); }
   .empty-state h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--white-dim); }
-  .empty-state p { font-size: 14px; color: var(--white-muted); max-width: 280px; line-height: 1.6; }
+  .empty-state p { font-size: 14px; color: var(--white-muted); max-width: 320px; line-height: 1.6; }
+  .trust-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-family:'DM Mono',monospace; font-size:10.5px; letter-spacing:1px; color:var(--white-muted); text-transform:uppercase; }
+  .trust-row span { display:inline-flex; align-items:center; gap:6px; }
+  .trust-row span::before { content:'✓'; color:var(--gold); font-weight:700; }
+  .how-section { max-width:1100px; margin:0 auto; padding: 40px clamp(16px,5vw,60px) 20px; }
+  .section-title { font-family:'Bebas Neue', sans-serif; font-size:clamp(28px,4vw,42px); letter-spacing:2px; color:var(--white); text-align:center; margin-bottom:8px; }
+  .section-sub { font-size:14px; color:var(--white-muted); text-align:center; margin-bottom:36px; }
+  .how-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  @media(max-width:760px){ .how-grid{ grid-template-columns:1fr; } .compare-grid{ grid-template-columns:1fr !important; } }
+  .how-card { padding:24px; background:var(--bg2); border:1px solid var(--border2); border-radius:14px; position:relative; }
+  .how-step { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
+  .how-card h3 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:var(--white); margin-bottom:8px; }
+  .how-card p { font-size:13.5px; color:var(--white-dim); line-height:1.6; }
+  .how-num { position:absolute; top:14px; right:18px; font-family:'Bebas Neue',sans-serif; font-size:48px; color:rgba(201,168,76,.15); }
+  .compare-section { max-width:1100px; margin:0 auto; padding: 30px clamp(16px,5vw,60px) 50px; }
+  .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .compare-card { padding:26px; border-radius:14px; border:1px solid var(--border2); background:var(--bg2); }
+  .compare-card.win { border-color:var(--gold); background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(201,168,76,.02)); }
+  .compare-card h4 { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:1.5px; color:var(--white); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+  .compare-card.win h4 { color:var(--gold); }
+  .compare-card ul { list-style:none; padding:0; margin:0; }
+  .compare-card li { font-size:13.5px; color:var(--white-dim); padding:7px 0; display:flex; gap:10px; align-items:flex-start; }
+  .compare-card li::before { content:'✕'; color:#8c8c8c; font-weight:700; flex-shrink:0; }
+  .compare-card.win li::before { content:'✓'; color:var(--gold); }
   .results-grid { display: flex; flex-direction: column; gap: 20px; }
   /* Weekly Marketing Plan */
   .wp-wrap { display:flex; flex-direction:column; gap:18px; animation:fadeUp .4s ease both; }
@@ -449,9 +472,9 @@
 </header>
 
 <section class="hero">
-  <div class="eyebrow">✦ AI-powered marketing ✦</div>
-  <h1>Grow Your<br><span>Business Instantly</span></h1>
-  <p>Generate reviews, captions, promos & SMS messages tailored to your business — in seconds.</p>
+  <div class="eyebrow">✦ AI marketing assistant for local businesses ✦</div>
+  <h1>Stop Guessing<br><span>What To Post.</span></h1>
+  <p>LocalBoost AI learns your business, your audience, and what works — then generates content designed to get real people through your door.</p>
   <div class="hero-stats">
     <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">Businesses Boosted</div></div>
     <div class="stat"><div class="stat-num">50+</div><div class="stat-label">Content Types</div></div>
@@ -459,7 +482,40 @@
   </div>
 </section>
 
-<div class="divider"></div>
+<section class="how-section">
+  <h2 class="section-title">How It Works</h2>
+  <p class="section-sub">Three steps. Less than a minute. Real customers walking in.</p>
+  <div class="how-grid">
+    <div class="how-card"><div class="how-num">01</div><div class="how-step">Step 1</div><h3>Tell us about your business</h3><p>Name, type, location, vibe. A 30-second setup — no marketing experience needed.</p></div>
+    <div class="how-card"><div class="how-num">02</div><div class="how-step">Step 2</div><h3>We generate high-performing content</h3><p>Captions, hooks, promos & SMS — written in your voice, tuned to your local audience.</p></div>
+    <div class="how-card"><div class="how-num">03</div><div class="how-step">Step 3</div><h3>You post → get more customers</h3><p>Copy, paste, post. Watch foot traffic, repeat visits & engagement climb.</p></div>
+  </div>
+</section>
+
+<section class="compare-section">
+  <h2 class="section-title">Why Not Just Use ChatGPT?</h2>
+  <p class="section-sub">Generic AI gives you generic content. Local businesses need something sharper.</p>
+  <div class="compare-grid">
+    <div class="compare-card">
+      <h4>🤖 ChatGPT</h4>
+      <ul>
+        <li>Generic, one-size-fits-all responses</li>
+        <li>No memory of your business</li>
+        <li>No local context or seasonality</li>
+        <li>No marketing strategy baked in</li>
+      </ul>
+    </div>
+    <div class="compare-card win">
+      <h4>✦ LocalBoost AI</h4>
+      <ul>
+        <li>Learns your business over time</li>
+        <li>Adapts tone, audience & price level</li>
+        <li>Built for local growth & foot traffic</li>
+        <li>Actionable marketing content, instantly</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
 <div class="reminder-banner" id="reminderBanner" role="button" tabindex="0">
   <div class="reminder-banner-text" id="reminderBannerText">It's time to refresh your content</div>
@@ -667,9 +723,14 @@
 
     <button class="btn-generate" id="generateBtn" onclick="generate()">
       <span class="btn-icon">✦</span>
-      <span class="btn-label">Generate My Content</span>
+      <span class="btn-label">Generate My First Post</span>
       <div class="spinner" id="spinner"></div>
     </button>
+    <div class="trust-row">
+      <span>No marketing experience needed</span>
+      <span>Takes less than 10 seconds</span>
+      <span>Built for real small businesses</span>
+    </div>
 
     <button type="button" class="btn-weekly-plan" id="weeklyPlanBtn" onclick="generateWeeklyPlan()" style="margin-top:10px;width:100%;padding:14px;background:linear-gradient(135deg,rgba(201,168,76,.18),rgba(201,168,76,.06));border:1px solid var(--gold);color:var(--gold2);border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;">
       <span>📅</span>
@@ -696,8 +757,8 @@
   <section class="output-panel" id="output">
     <div class="empty-state">
       <div class="empty-icon">✦</div>
-      <h3>Ready to Boost</h3>
-      <p>Fill in your business details and click Generate to get customized marketing content instantly.</p>
+      <h3>Your Marketing Assistant Is Ready</h3>
+      <p>Tell us about your business and we'll build content that sounds like YOU — not AI.</p>
     </div>
   </section>
 </main>
@@ -1166,8 +1227,8 @@ function resetOutputPanel(){
   if(!out) return;
   out.innerHTML = `<div class="empty-state">
     <div class="empty-icon">✦</div>
-    <h3>Ready to Boost</h3>
-    <p>Fill in your business details and click Generate to get customized marketing content instantly.</p>
+    <h3>Your Marketing Assistant Is Ready</h3>
+    <p>Tell us about your business and we'll build content that sounds like YOU — not AI.</p>
   </div>`;
 }
 
@@ -1945,6 +2006,13 @@ function renderViralPanel(meta){
   const platform = String(meta.bestPlatform || 'Instagram');
   const reasoning = String(meta.reasoning || '').slice(0, 240);
   const color = score >= 75 ? 'var(--gold)' : score >= 55 ? '#c9a84c' : '#8c8c8c';
+  const GOAL_LABELS = {
+    foot_traffic: '🚶 Designed to bring new customers through your door',
+    repeat: '🔁 Designed to increase repeat visits & loyalty',
+    viral: '🔥 Designed to pattern-break & get shared',
+    premium: '✨ Designed to position you as the premium choice',
+  };
+  const goalLine = GOAL_LABELS[currentGoal] || '';
   return `<div style="margin-bottom:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(201,168,76,.02));border:1px solid var(--border2);border-radius:12px;">
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
       <div style="display:flex;align-items:baseline;gap:6px;">
@@ -1958,7 +2026,8 @@ function renderViralPanel(meta){
       <div style="font-size:12px;color:var(--white-dim);">Best on <strong style="color:var(--gold2);">${platform}</strong></div>
       <button type="button" id="strongerBtn" style="margin-left:auto;padding:8px 14px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;background:var(--bg2);color:var(--gold2);border:1px solid var(--gold);border-radius:8px;cursor:pointer;">⚡ Generate Stronger Version</button>
     </div>
-    ${reasoning ? `<div style="margin-top:10px;font-size:12.5px;color:var(--white-dim);line-height:1.5;font-style:italic;">"${reasoning}"</div>` : ''}
+    ${goalLine ? `<div style="margin-top:10px;display:inline-block;padding:5px 10px;background:var(--bg2);border:1px solid var(--gold);border-radius:6px;font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;">${goalLine}</div>` : ''}
+    ${reasoning ? `<div style="margin-top:10px;font-size:12.5px;color:var(--white-dim);line-height:1.5;"><strong style="color:var(--white);font-style:normal;">Why this works: </strong><span style="font-style:italic;">${reasoning}</span></div>` : ''}
     ${lastVariants ? renderVariantSwitcher() : ''}
   </div>`;
 }
