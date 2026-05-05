@@ -1096,52 +1096,16 @@ function closeConvertModal(){
 }
 
 function maybeShowFirstGenPrompt(){
-  if(getPlan() !== 'free') return;
-  const k = K(FIRST_GEN_PROMPT_KEY);
-  if(localStorage.getItem(k)) return;
-  localStorage.setItem(k, '1');
-  setTimeout(() => {
-    showConvertModal({
-      eyebrow: '✦ You just made your first piece ✦',
-      title: 'Want <span>unlimited content</span> like this?',
-      sub: 'Keep generating without limits and scale your business faster.',
-      bullets: [
-        'Unlimited content, every day',
-        'All planning and SEO modes unlocked',
-        'Refresh any section in one click',
-      ],
-    });
-  }, 900);
+  // FREE BETA: no upgrade interruptions.
+  return;
 }
 
-// Session-level upgrade triggers
+// Session-level upgrade triggers — disabled during free beta.
 let _sessionGenCount = 0;
 let _resultsViewTimer = null;
 function trackSessionGeneration(){
-  if(getPlan() !== 'free') return;
-  _sessionGenCount++;
-  if(_sessionGenCount === 2){
-    setTimeout(() => {
-      if(getPlan() !== 'free') return;
-      showConvertModal({
-        eyebrow: '✦ You\'re on a roll ✦',
-        title: 'Want <span>unlimited content</span> like this?',
-        sub: 'Upgrade in 1 click — less than $0.30/day to grow your business.',
-        bullets: ['Unlimited generations','All advanced modes','Section regeneration'],
-        primaryText: 'Upgrade to Pro — $7.99/month',
-      });
-    }, 600);
-  }
-  // Reset 60s timer on results
-  if(_resultsViewTimer) clearTimeout(_resultsViewTimer);
-  _resultsViewTimer = setTimeout(() => {
-    if(getPlan() !== 'free') return;
-    if(document.querySelector('.upgrade-soft')) return;
-    softUpgrade({
-      title: 'Want unlimited content like this?',
-      text: 'Upgrade in 1 click — less than $0.30/day.',
-    });
-  }, 60000);
+  // FREE BETA: no automatic upgrade modals or nudges.
+  return;
 }
 
 function renderLimitWarnBanner(){
