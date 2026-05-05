@@ -2,14 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+// FREE BETA: payments temporarily disabled — high daily cap for all plans.
 const PLAN_DAILY_CAP: Record<string, number> = {
-  free: 5,      // legacy rows still labeled 'free' = Starter cap
-  starter: 5,   // future-proof
-  pro: -1,      // unlimited
+  free: 20,
+  starter: 20,
+  pro: -1,
   agency: -1,
 };
 
-const SECTION_ALLOWED_PLANS = new Set(["pro", "agency"]);
+// FREE BETA: section regeneration available to everyone.
+const SECTION_ALLOWED_PLANS = new Set(["free", "starter", "pro", "agency"]);
 
 type GenerateInput = {
   businessName?: string;
