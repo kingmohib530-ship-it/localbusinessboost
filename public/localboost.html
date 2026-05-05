@@ -2021,7 +2021,9 @@ async function signOut(){
   // Clear in-memory state — storage is namespaced so no cross-user leakage
   currentUserId = null;
   lastData = null;
-  ['businessType','location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  const bn = document.getElementById('businessName'); if(bn) bn.value = '';
+  setBusinessTypeValue('');
+  ['location','audience'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
   showAuthShell(true);
 }
 async function openBillingPortal(){
