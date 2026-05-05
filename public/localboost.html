@@ -919,6 +919,8 @@ function setPlan(p){
 }
 function planLimits(){ return PLANS[getPlan()].limits; }
 function refreshPlanBadge(){
+  const lp = document.getElementById('lockedPreview');
+  if(lp) lp.style.display = (getPlan() === 'free') ? '' : 'none';
   const b = document.getElementById('planBadge');
   const btn = document.getElementById('upgradeBtn');
   const plan = getPlan();
