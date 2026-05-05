@@ -1248,7 +1248,7 @@ function renderRecent(){
   if(!list.length && all.length === 0){ block.style.display = 'none'; return; }
   block.style.display = 'block';
   ul.innerHTML = list.map(item => {
-    const name = (item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
+    const name = (item.businessName || item.businessType || 'Untitled') + (item.location ? ' — ' + item.location : '');
     return `<button type="button" class="recent-item" data-id="${item.id}">
       <div class="recent-item-main">
         <div class="recent-item-name">${name.replace(/</g,'&lt;')}</div>
