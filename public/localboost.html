@@ -1084,17 +1084,19 @@ function renderLimitWarnBanner(){
   if(!cap || cap === Infinity){ if(existing) existing.remove(); return; }
   const ratio = used / cap;
   const dismissedDay = localStorage.getItem(K(WARN_DISMISS_KEY));
-  if(ratio < 0.7 || used >= cap || dismissedDay === todayKey()){
+  // Always show remaining once user has generated at least once
+  if(used < 1 || used >= cap){
     if(existing) existing.remove();
     return;
   }
-  if(existing) return;
+  if(existing) existing.remove();
   const left = cap - used;
   const div = document.createElement('div');
   div.id = 'limitWarnBanner';
   div.className = 'limit-warn';
+  const tone = left === 1 ? `<strong>You have 1 free generation left today.</strong>` : `<strong>You have ${left} free generations left today.</strong>`;
   div.innerHTML = `
-    <div class="limit-warn-text"><strong>You're close to your daily limit</strong> — ${left} generation${left===1?'':'s'} left today. Unlock unlimited content with Pro.</div>
+    <div class="limit-warn-text">${tone} Less than $0.30/day for unlimited.</div>
     <button type="button" class="limit-warn-btn" id="limitWarnUpgrade">Upgrade to Pro</button>
     <button type="button" class="limit-warn-close" id="limitWarnClose" aria-label="Dismiss">×</button>`;
   const main = document.querySelector('main');
