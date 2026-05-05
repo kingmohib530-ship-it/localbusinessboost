@@ -2001,6 +2001,7 @@ async function generate(section, opts){
       checkReminderBanner();
       renderLimitWarnBanner();
       maybeShowFirstGenPrompt();
+      trackSessionGeneration();
     }
   } catch(e){
     console.error(e);
