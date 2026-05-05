@@ -1106,6 +1106,7 @@ function persistProfiles(list){
   localStorage.setItem(K(PROFILES_KEY), JSON.stringify(list));
 }
 function profileLabel(p){
+  if(p.businessName) return p.businessName + (p.location ? ' — ' + p.location : '');
   const parts = [p.businessType, p.location].filter(Boolean);
   return parts.join(' — ') || 'Untitled';
 }
