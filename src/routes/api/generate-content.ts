@@ -202,7 +202,19 @@ ${businessName ? `- Business Name: ${businessName}` : ""}
 - City/Location: ${loc}
 ${aud ? `- Target Audience: ${aud}` : ""}
 - Tone: ${safeTone}
+${priceLevel ? `- Price level: ${priceLevel} (budget = value/affordable signals; mid = balanced everyday quality; premium = restraint, craft, fewer adjectives)` : ""}
+${brandPersonality ? `- Brand personality keywords: ${brandPersonality}` : ""}
 ${snapVibe ? `\nBRAND PERSONALITY SNAPSHOT (use silently to guide voice — do NOT quote it back):\n- Brand vibe: ${snapVibe}\n- Marketing angle: ${snapAngle}\n- Voice/style: ${snapStyle}\n` : ""}
+LOCAL MOMENT (use silently to anchor 1–2 outputs in the real world right now — do NOT mention it explicitly): ${localMoment}.
+${goal ? `\nPRIMARY GOAL — ${goal.toUpperCase()}. Tilt persuasion accordingly:
+- foot_traffic: low-friction first visit, today/this-week urgency, easy directions vibe, "come by"
+- repeat: loyalty mechanics, "your usual", small perks for coming back, familiar tone
+- viral: pattern-breaking hooks, share-worthy framings, mild controversy or curiosity, replicable formats
+- premium: restraint, fewer words, status-by-implication, no discounting language\n` : ""}
+${standOut ? `\nCOMPETITOR-AWARE MODE — assume nearby competitors of the same type are using safe, generic copy ("amazing service", "great team", "quality you can trust"). Your job is to sound like the OPPOSITE: more specific, more opinionated, more local, more confident. Do NOT mention competitors. Just out-write them.\n` : ""}
+${realOwnerVoice ? `\nREAL-OWNER VOICE — outputs should feel like the actual owner wrote them on their phone between customers. Lightly imperfect: occasional sentence fragment, a contraction, a stray "honestly" or "tbh", a lowercase start. NEVER over-polished. NEVER agency-speak.\n` : ""}
+${avoidPhrases.length ? `\nAVOID REPEATING (recently shown to this user — produce FRESH wording, do not reuse these openers, hooks, or stock phrases):\n${avoidPhrases.map((p) => `- "${p}"`).join("\n")}\n` : ""}
+${likedExamples.length ? `\nSTYLE REFERENCES (the user previously kept these — match the rhythm, density, and voice; do NOT copy):\n${likedExamples.map((p) => `- "${p}"`).join("\n")}\n` : ""}
 STEP 0 — CRITICAL IDENTITY RULE (DO THIS FIRST, BEFORE ANY OTHER OUTPUT):
 ${businessName
   ? `- The business name is "${businessName}". You MUST use this EXACT name — same spelling, same casing, same wording — every time a brand name appears in any review, caption, hook, promo, or SMS. Never alter it, abbreviate it, translate it, or invent a variant.`
