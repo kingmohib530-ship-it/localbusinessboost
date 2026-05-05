@@ -46,10 +46,15 @@ export const Route = createFileRoute("/api/generate-content")({
         };
         try {
           const body = (await request.json()) as GenerateInput;
+          const businessName = (body.businessName || "").toString().slice(0, 120).trim();
           const businessType = (body.businessType || "").toString().slice(0, 200).trim();
           const location = (body.location || "").toString().slice(0, 200).trim();
           const audience = (body.audience || "locals").toString().slice(0, 200).trim();
           const tone = (body.tone || "friendly").toString().slice(0, 50).trim();
+          const snap = body.snapshot || {};
+          const snapVibe = (snap.vibe || "").toString().slice(0, 240).trim();
+          const snapAngle = (snap.angle || "").toString().slice(0, 240).trim();
+          const snapStyle = (snap.style || "").toString().slice(0, 240).trim();
           const sectionRaw = (body.section || "").toString().trim().toLowerCase();
           const section: SectionKey | null =
             (ALLOWED_SECTIONS as readonly string[]).includes(sectionRaw)
