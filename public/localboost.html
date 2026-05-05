@@ -914,6 +914,8 @@ function setPlan(p){
   renderClientBar?.();
   renderRecent?.();
   showToast(p === 'free' ? 'Switched to Free plan' : `Welcome to ${PLANS[p].name}!`);
+  const lp = document.getElementById('lockedPreview');
+  if(lp) lp.style.display = (p === 'free') ? '' : 'none';
 }
 function planLimits(){ return PLANS[getPlan()].limits; }
 function refreshPlanBadge(){
