@@ -1634,13 +1634,19 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 });
 
 async function generate(section){
-  const biz=document.getElementById('businessType').value.trim();
+  const businessName=(document.getElementById('businessName')?.value||'').trim();
+  const biz=getBusinessTypeValue();
   const loc=document.getElementById('location').value.trim();
   const aud=document.getElementById('audience').value.trim()||'locals';
   const tone=document.getElementById('tone').value;
-  if(!biz||!loc){ showToast('Please fill Business Type & Location'); return; }
+  if(!businessName||!biz||!loc){
+    showToast('Finish setup first — name, type & location');
+    const wiz = document.getElementById('setupWizard'); if(wiz) wiz.style.display = 'block';
+    const recap = document.getElementById('setupRecap'); if(recap) recap.style.display = 'none';
+    if(typeof showWizardStep === 'function') showWizardStep(!businessName||!biz?1:2);
+    return;
+  }
 
-  // Plan gates (soft — show modal, do not silently block)
   const limits = planLimits();
   if(!limits.modes.includes(currentMode)){
     openPricing(`${currentMode === 'weekly' ? 'Weekly Planner' : 'This mode'} is a Pro feature. Upgrade to unlock.`);
@@ -1659,6 +1665,9 @@ async function generate(section){
   const spin=document.getElementById('spinner');
   if(!section){ btn.disabled=true; spin.style.display='inline-block'; }
 
+  // Smart personalization snapshot — silent, passed to backend
+  const snapshot = buildPersonalitySnapshot({ name: businessName, type: biz, loc, audience: aud === 'locals' ? '' : aud });
+
   try {
     let accessToken = null;
     try { const { data } = await sb.auth.getSession(); accessToken = data?.session?.access_token || null; } catch(_){}
@@ -1667,7 +1676,7 @@ async function generate(section){
     const res = await fetch('/api/generate-content', {
       method:'POST',
       headers,
-      body: JSON.stringify({ businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section })
+      body: JSON.stringify({ businessName, businessType:biz, location:loc, audience:aud, tone, mode: currentMode, section, snapshot })
     });
     const data = await res.json();
     if(!res.ok){
@@ -1693,7 +1702,7 @@ async function generate(section){
       addRecent({
         id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
         ts: Date.now(),
-        businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
+        businessName, businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
         data
       });
       // Reset weekly reminder timer if this business has one enabled
