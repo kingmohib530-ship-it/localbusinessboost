@@ -12,12 +12,14 @@ const PLAN_DAILY_CAP: Record<string, number> = {
 const SECTION_ALLOWED_PLANS = new Set(["pro", "agency"]);
 
 type GenerateInput = {
+  businessName?: string;
   businessType?: string;
   location?: string;
   audience?: string;
   tone?: string;
   mode?: string;
   section?: string;
+  snapshot?: { vibe?: string; angle?: string; style?: string };
 };
 
 const ALLOWED_SECTIONS = ["reviews", "captions", "hooks", "hashtags", "promos", "sms"] as const;
