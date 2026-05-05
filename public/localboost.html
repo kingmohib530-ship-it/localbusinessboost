@@ -1848,10 +1848,13 @@ async function generate(section, opts){
 
     if(section && lastData){
       if(data[section]) lastData[section] = data[section];
+      if(data._meta) lastData._meta = data._meta;
       renderResults(lastData);
     } else {
       lastData = data;
+      lastVariants = data._variants || null;
       bumpDailyCount();
+      rememberShown(data);
       renderResults(data);
       const saveBtn = document.getElementById('saveBizBtn');
       if(saveBtn) saveBtn.classList.add('visible');
@@ -1861,7 +1864,6 @@ async function generate(section, opts){
         businessName, businessType: biz, location: loc, audience: aud, tone, mode: currentMode,
         data
       });
-      // Reset weekly reminder timer if this business has one enabled
       const pid = findCurrentProfileId();
       if(pid){
         const map = loadReminders();
