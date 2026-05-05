@@ -1130,25 +1130,27 @@ function applyProfile(id){
   switchClient(id);
 }
 function saveCurrentBusiness(){
-  const businessType = document.getElementById('businessType').value.trim();
+  const businessName = (document.getElementById('businessName')?.value || '').trim();
+  const businessType = getBusinessTypeValue();
   const location = document.getElementById('location').value.trim();
   const audience = document.getElementById('audience').value.trim();
   const tone = document.getElementById('tone').value;
-  if(!businessType || !location){ showToast('Fill Business Type & Location first'); return; }
+  if(!businessName || !businessType || !location){ showToast('Complete setup first (name, type, location)'); return; }
 
   const list = loadProfiles();
-  // Dedupe by businessType + location (case-insensitive)
-  const key = (businessType + '|' + location).toLowerCase();
-  const existing = list.find(p => (p.businessType + '|' + p.location).toLowerCase() === key);
+  // Dedupe by businessName + location (case-insensitive)
+  const key = (businessName + '|' + location).toLowerCase();
+  const existing = list.find(p => ((p.businessName||p.businessType) + '|' + p.location).toLowerCase() === key);
   if(!existing && list.length >= planLimits().savedBusinesses){
     openPricing(`Your ${PLANS[getPlan()].name} plan saves up to ${planLimits().savedBusinesses} business. Upgrade to manage unlimited clients.`);
     return;
   }
   if(existing){
+    existing.businessName = businessName;
+    existing.businessType = businessType;
     existing.audience = audience; existing.tone = tone;
     persistProfiles(list);
     setActiveClientId(existing.id);
-    // Re-tag any unassigned recents to this client
     const all = loadAllRecent();
     let changed = false;
     all.forEach(r => { if(!r.clientId){ r.clientId = existing.id; changed = true; } });
@@ -1161,7 +1163,7 @@ function saveCurrentBusiness(){
     showToast('Updated saved business');
     return;
   }
-  const profile = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), businessType, location, audience, tone };
+  const profile = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), businessName, businessType, location, audience, tone };
   list.unshift(profile);
   persistProfiles(list);
   setActiveClientId(profile.id);
