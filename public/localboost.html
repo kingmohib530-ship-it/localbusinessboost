@@ -1267,10 +1267,12 @@ function renderRecent(){
 function restoreRecent(id){
   const item = loadRecent().find(x => x.id === id);
   if(!item) return;
-  document.getElementById('businessType').value = item.businessType || '';
+  const bn = document.getElementById('businessName'); if(bn) bn.value = item.businessName || '';
+  setBusinessTypeValue(item.businessType || '');
   document.getElementById('location').value = item.location || '';
   document.getElementById('audience').value = item.audience || '';
   document.getElementById('tone').value = item.tone || 'friendly';
+  if(typeof maybeCollapseWizard === 'function') maybeCollapseWizard();
   if(item.mode){
     currentMode = item.mode;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode===item.mode));
@@ -1280,7 +1282,7 @@ function restoreRecent(id){
   renderResults(item.data);
   const saveBtn = document.getElementById('saveBizBtn');
   if(saveBtn) saveBtn.classList.add('visible');
-  showToast('Restored "' + (item.businessType || 'previous') + '"');
+  showToast('Restored "' + (item.businessName || item.businessType || 'previous') + '"');
 }
 function clearRecent(){
   const active = getActiveClientId();
