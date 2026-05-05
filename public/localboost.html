@@ -1152,21 +1152,10 @@ function nextResetText(){
 }
 
 function showHardLimitModal(){
-  showConvertModal({
-    eyebrow: '✦ Daily limit reached ✦',
-    title: "You're getting <span>real results</span> — don't stop now.",
-    sub: "You've used your free generations. Upgrade to keep growing your business with unlimited content.",
-    bullets: [
-      'Unlimited content, every day',
-      'All advanced modes unlocked',
-      'Refresh any section in one click',
-      'Less than $0.30/day to grow your business',
-    ],
-    primaryText: 'Upgrade to Pro — $7.99/month',
-    ghostText: 'Maybe later',
-    meta: nextResetText(),
-    onGhost: closeConvertModal,
-    dismissible: false,
+  // FREE BETA: no hard paywall — show a soft, dismissible nudge instead.
+  softUpgrade({
+    title: 'You\'ve hit today\'s free beta limit',
+    text: 'Come back tomorrow for more — or explore the upgrade options anytime.',
   });
 }
 
