@@ -13,7 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
+import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicChatbotBusiness_idRouteImport } from './routes/api/public/chatbot/$business_id'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
 
 const IndexRoute = IndexRouteImport.update({
@@ -36,10 +38,21 @@ const ApiGenerateContentRoute = ApiGenerateContentRouteImport.update({
   path: '/api/generate-content',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
+  id: '/api/public/leads',
+  path: '/api/public/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
     path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicChatbotBusiness_idRoute =
+  ApiPublicChatbotBusiness_idRouteImport.update({
+    id: '/api/public/chatbot/$business_id',
+    path: '/api/public/chatbot/$business_id',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
@@ -53,7 +66,9 @@ export interface FileRoutesByFullPath {
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -61,7 +76,9 @@ export interface FileRoutesByTo {
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -70,7 +87,9 @@ export interface FileRoutesById {
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -80,7 +99,9 @@ export interface FileRouteTypes {
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/checkout/return'
+    | '/api/public/leads'
     | '/api/public/billing/portal'
+    | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,7 +109,9 @@ export interface FileRouteTypes {
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/checkout/return'
+    | '/api/public/leads'
     | '/api/public/billing/portal'
+    | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -96,7 +119,9 @@ export interface FileRouteTypes {
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/checkout/return'
+    | '/api/public/leads'
     | '/api/public/billing/portal'
+    | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -105,7 +130,9 @@ export interface RootRouteChildren {
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
+  ApiPublicChatbotBusiness_idRoute: typeof ApiPublicChatbotBusiness_idRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -139,11 +166,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGenerateContentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/leads': {
+      id: '/api/public/leads'
+      path: '/api/public/leads'
+      fullPath: '/api/public/leads'
+      preLoaderRoute: typeof ApiPublicLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
       fullPath: '/api/public/payments/webhook'
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/chatbot/$business_id': {
+      id: '/api/public/chatbot/$business_id'
+      path: '/api/public/chatbot/$business_id'
+      fullPath: '/api/public/chatbot/$business_id'
+      preLoaderRoute: typeof ApiPublicChatbotBusiness_idRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/billing/portal': {
@@ -161,9 +202,20 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  ApiPublicLeadsRoute: ApiPublicLeadsRoute,
   ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
+  ApiPublicChatbotBusiness_idRoute: ApiPublicChatbotBusiness_idRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
