@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      businesses: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chatbot_settings: {
+        Row: {
+          booking_link: string
+          business_id: string
+          created_at: string
+          faq: string
+          id: string
+          offers: string
+          pricing: string
+          services: string
+          updated_at: string
+          welcome_message: string
+        }
+        Insert: {
+          booking_link?: string
+          business_id: string
+          created_at?: string
+          faq?: string
+          id?: string
+          offers?: string
+          pricing?: string
+          services?: string
+          updated_at?: string
+          welcome_message?: string
+        }
+        Update: {
+          booking_link?: string
+          business_id?: string
+          created_at?: string
+          faq?: string
+          id?: string
+          offers?: string
+          pricing?: string
+          services?: string
+          updated_at?: string
+          welcome_message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generation_usage: {
         Row: {
           count: number
@@ -34,6 +108,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      leads: {
+        Row: {
+          business_id: string
+          created_at: string
+          email: string | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          source: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          source?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
