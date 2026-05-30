@@ -10,83 +10,102 @@ import {
   MessageSquare,
   Users,
   Check,
-  Star,
-  TrendingUp,
+  Calendar,
+  Inbox,
+  Target,
   Activity,
+  Briefcase,
+  Palette,
+  Building2,
+  UserCircle,
   Globe,
+  Play,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Zyvora — AI That Turns Conversations Into Customers" },
+      { title: "Zyvora — Turn Attention Into Customers, Automatically" },
       {
         name: "description",
         content:
-          "Zyvora is the enterprise AI platform for automating customer engagement, lead generation and business growth. Built for modern teams.",
+          "Zyvora is an AI Growth & Automation System that captures leads, starts conversations, and converts visitors into paying customers across your entire business.",
       },
-      { property: "og:title", content: "Zyvora — Enterprise AI for Growth" },
+      { property: "og:title", content: "Zyvora — AI Growth & Automation OS" },
       {
         property: "og:description",
         content:
-          "AI automation, intelligent lead generation and customer engagement — in one premium platform.",
+          "Capture leads, automate follow-ups, manage conversations, and turn traffic into revenue — in one premium AI platform.",
       },
     ],
   }),
   component: Landing,
 });
 
-/* ------------------------------ Layout ------------------------------ */
+/* ------------------------------ Shell ------------------------------ */
 
 function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
-      />
+    <div className="min-h-screen bg-background text-foreground antialiased font-sans">
       <Nav />
-      <main>
-        <Hero />
-        <LogoStrip />
-        <Features />
-        <DashboardPreview />
-        <HowItWorks />
-        <Testimonials />
-        <Pricing />
-        <CTASection />
-      </main>
+      <Hero />
+      <LogoStrip />
+      <FlowSection />
+      <Ecosystem />
+      <Dashboard />
+      <Industries />
+      <Automations />
+      <Testimonials />
+      <Pricing />
+      <CTA />
       <Footer />
     </div>
   );
 }
 
-/* -------------------------------- Nav ------------------------------- */
+/* ------------------------------ Nav ------------------------------ */
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 backdrop-blur-xl bg-background/70">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10 h-16 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2.5 group">
-          <Logo />
-          <span className="font-display text-[17px] font-semibold tracking-tight">Zyvora</span>
-        </a>
-        <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-          <a href="#features" className="hover:text-foreground transition-colors">Platform</a>
-          <a href="#dashboard" className="hover:text-foreground transition-colors">Product</a>
-          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          <a href="#customers" className="hover:text-foreground transition-colors">Customers</a>
-        </nav>
-        <div className="flex items-center gap-2">
-          <a
-            href="#pricing"
-            className="hidden sm:inline-flex text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition-colors"
-          >
-            Sign in
+    <header className="sticky top-0 z-50 w-full">
+      <div className="glass border-b border-border/60">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <a href="#" className="flex items-center gap-2">
+            <Logo />
+            <span className="font-display text-lg font-semibold tracking-tight">
+              Zyvora
+            </span>
           </a>
-          <PrimaryButton href="#pricing" small>
-            Start free
-          </PrimaryButton>
+          <nav className="hidden items-center gap-8 md:flex">
+            {[
+              ["Platform", "#platform"],
+              ["Automations", "#automations"],
+              ["Industries", "#industries"],
+              ["Pricing", "#pricing"],
+            ].map(([l, h]) => (
+              <a
+                key={l}
+                href={h}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {l}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-2">
+            <a
+              href="#"
+              className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline"
+            >
+              Sign in
+            </a>
+            <a
+              href="#"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.02] glow-primary"
+            >
+              Start free trial
+            </a>
+          </div>
         </div>
       </div>
     </header>
@@ -95,59 +114,62 @@ function Nav() {
 
 function Logo() {
   return (
-    <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-[10px] gradient-primary glow-primary">
-      <svg viewBox="0 0 24 24" className="h-4 w-4 text-primary-foreground" fill="none">
-        <path d="M4 6h16L8 18h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
+    <div className="relative h-8 w-8 rounded-lg gradient-primary glow-primary">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="font-display text-sm font-bold text-primary-foreground">
+          Z
+        </span>
+      </div>
+    </div>
   );
 }
 
-/* ------------------------------- Hero ------------------------------- */
+/* ------------------------------ Hero ------------------------------ */
 
 function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-radial-glow pointer-events-none" />
-      <div className="absolute inset-0 bg-grid opacity-[0.35] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)] pointer-events-none" />
-      <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-24 pb-28 lg:pt-32 lg:pb-36">
+      <div className="bg-radial-glow absolute inset-0" />
+      <div className="bg-grid absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
+      <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-20 lg:pt-28">
         <div className="mx-auto max-w-3xl text-center animate-fade-up">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-pulse-glow" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-            </span>
-            Introducing Zyvora 2.0 — AI Workflows
-            <ArrowRight className="h-3 w-3" />
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/60 px-3 py-1 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-glow" />
+            AI Growth & Automation OS · v3 launching
           </div>
-
-          <h1 className="font-display mt-6 text-balance text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-[-0.03em] leading-[1.02]">
-            AI that turns conversations
-            <br className="hidden sm:block" />{" "}
-            into <span className="gradient-text">customers</span>.
+          <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
+            Turn attention into{" "}
+            <span className="gradient-text">customers</span> — automatically.
           </h1>
-
-          <p className="mt-6 text-balance text-lg leading-relaxed text-muted-foreground max-w-xl mx-auto">
-            Zyvora automates engagement, qualifies leads and grows revenue — a single intelligent
-            platform for the operations behind modern businesses.
+          <p className="mt-6 text-base text-muted-foreground sm:text-lg">
+            Zyvora is an AI Growth & Automation System that captures leads,
+            starts conversations, and converts visitors into paying customers
+            across your entire business.
           </p>
-
-          <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <PrimaryButton href="#pricing">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              href="#"
+              className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.02] glow-primary sm:w-auto"
+            >
               Start free trial
-              <ArrowRight className="h-4 w-4" />
-            </PrimaryButton>
-            <SecondaryButton href="#dashboard">Book a demo</SecondaryButton>
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
+            <a
+              href="#"
+              className="inline-flex h-11 w-full items-center justify-center rounded-md border border-border bg-card px-6 text-sm font-medium text-foreground transition-colors hover:bg-elevated sm:w-auto"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Watch demo
+            </a>
           </div>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> No credit card</span>
-            <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> SOC 2 Type II</span>
-            <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> 14-day trial</span>
-          </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            No credit card · 14-day trial · Cancel anytime
+          </p>
         </div>
 
-        <HeroVisual />
+        <div className="mt-16 animate-fade-up">
+          <HeroVisual />
+        </div>
       </div>
     </section>
   );
@@ -155,249 +177,157 @@ function Hero() {
 
 function HeroVisual() {
   return (
-    <div className="relative mx-auto mt-20 max-w-5xl animate-fade-up">
-      <div className="absolute -inset-x-10 -top-10 -bottom-10 gradient-primary opacity-20 blur-3xl rounded-full pointer-events-none" />
-      <div className="relative rounded-2xl border border-border glass p-2 shadow-2xl">
-        <div className="rounded-xl bg-[color:var(--surface)] border border-border overflow-hidden">
-          <div className="flex items-center gap-1.5 px-4 py-3 border-b border-border">
-            <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--border)]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--border)]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--border)]" />
-            <span className="ml-3 text-xs text-muted-foreground font-mono">zyvora.app / workspace</span>
+    <div className="relative mx-auto max-w-6xl">
+      <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-tr from-primary/10 via-accent-2/10 to-transparent blur-2xl" />
+      <div className="glass rounded-2xl p-3 shadow-2xl">
+        <div className="grid gap-3 rounded-xl bg-background/60 p-4 lg:grid-cols-12">
+          {/* Left: chat capture */}
+          <div className="lg:col-span-4 rounded-xl border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium">Zyvora AI Chat</span>
+              <span className="ml-auto text-[10px] text-muted-foreground">
+                Live
+              </span>
+            </div>
+            <div className="space-y-2 text-xs">
+              <Bubble side="ai">
+                Hi 👋 Looking to book a service or get a quote?
+              </Bubble>
+              <Bubble side="user">A quote for a kitchen redesign.</Bubble>
+              <Bubble side="ai">
+                Perfect. What's the best number to text the estimate to?
+              </Bubble>
+              <div className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-2 text-[11px] text-primary">
+                ✓ Lead captured · routed to Inbox
+              </div>
+            </div>
           </div>
-          <MockDashboard compact />
+
+          {/* Middle: workflow */}
+          <div className="lg:col-span-4 rounded-xl border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Workflow className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium">Automation</span>
+              <span className="ml-auto text-[10px] text-muted-foreground">
+                Active
+              </span>
+            </div>
+            <FlowNodes />
+          </div>
+
+          {/* Right: analytics */}
+          <div className="lg:col-span-4 rounded-xl border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <LineChart className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium">Conversions</span>
+              <span className="ml-auto text-[10px] text-success">+34%</span>
+            </div>
+            <Spark />
+            <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+              <Stat label="Visitors" value="12.4k" />
+              <Stat label="Leads" value="1,284" />
+              <Stat label="Booked" value="392" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------------------------- Logo Strip ---------------------------- */
-
-function LogoStrip() {
-  const logos = ["acme", "lumen", "northwind", "vertex", "halcyon", "monolith"];
+function Bubble({ side, children }: { side: "ai" | "user"; children: React.ReactNode }) {
   return (
-    <section className="border-y border-border/60 bg-[color:var(--surface)]/40">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10 py-10">
-        <p className="text-center text-xs uppercase tracking-[0.18em] text-muted-foreground mb-6">
-          Trusted by teams at innovative companies
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-6 gap-y-4 items-center">
-          {logos.map((l) => (
-            <div
-              key={l}
-              className="font-display text-center text-lg font-semibold tracking-tight text-muted-foreground/70 hover:text-foreground transition-colors"
-            >
-              {l.charAt(0).toUpperCase() + l.slice(1)}
-            </div>
-          ))}
-        </div>
+    <div className={side === "user" ? "flex justify-end" : "flex"}>
+      <div
+        className={
+          side === "user"
+            ? "rounded-lg bg-elevated px-2.5 py-1.5 text-foreground max-w-[85%]"
+            : "rounded-lg bg-primary/15 border border-primary/30 px-2.5 py-1.5 text-foreground max-w-[85%]"
+        }
+      >
+        {children}
       </div>
-    </section>
+    </div>
   );
 }
 
-/* ----------------------------- Features ----------------------------- */
-
-function Features() {
-  const items = [
-    { icon: Bot, title: "Intelligent Agents", desc: "Autonomous AI that handles inquiries, books meetings and qualifies leads in real time — across every channel." },
-    { icon: Workflow, title: "Workflow Automation", desc: "Compose multi-step automations that connect your CRM, inbox, calendar and data warehouse without code." },
-    { icon: LineChart, title: "Predictive Analytics", desc: "Surface revenue signals before they happen. Models trained on your data, your customers, your funnel." },
-    { icon: MessageSquare, title: "Omnichannel Engagement", desc: "Unified inbox for web, email, SMS and voice — each conversation enriched with intent and context." },
-    { icon: ShieldCheck, title: "Enterprise Security", desc: "SOC 2 Type II, SSO/SAML, data residency, granular RBAC. Built for procurement teams." },
-    { icon: Zap, title: "Instant Deployment", desc: "From signup to first automation in under five minutes. Native integrations, transparent pricing." },
+function FlowNodes() {
+  const nodes = [
+    { icon: MessageSquare, label: "New chat" },
+    { icon: Target, label: "Qualify lead" },
+    { icon: Calendar, label: "Book call" },
+    { icon: Zap, label: "Send SMS + email" },
   ];
   return (
-    <section id="features" className="relative py-24 lg:py-32">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <SectionHeading
-          eyebrow="Platform"
-          title="One platform. Every automation surface."
-          subtitle="Zyvora unifies the systems behind growth — engagement, workflows, analytics, and AI — into a single calm interface."
-        />
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {items.map((f) => (
-            <FeatureCard key={f.title} {...f} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeatureCard({ icon: Icon, title, desc }: { icon: typeof Bot; title: string; desc: string }) {
-  return (
-    <div className="group relative rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_40px_-12px_color-mix(in_oklab,var(--primary)_25%,transparent)]">
-      <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--elevated)] border border-border text-primary transition-colors group-hover:gradient-primary group-hover:text-primary-foreground group-hover:border-transparent">
-        <Icon className="h-5 w-5" />
-      </div>
-      <h3 className="font-display mt-5 text-lg font-semibold tracking-tight">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
-
-/* ------------------------- Dashboard Preview ------------------------ */
-
-function DashboardPreview() {
-  return (
-    <section id="dashboard" className="relative py-24 lg:py-32 border-t border-border/60">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <SectionHeading
-          eyebrow="Product"
-          title="A workspace built for clarity."
-          subtitle="Every signal, every conversation, every automation — in one place. Designed for operators who care about craft."
-        />
-        <div className="mt-16 rounded-3xl border border-border glass p-2 shadow-2xl">
-          <div className="rounded-[20px] bg-[color:var(--surface)] border border-border overflow-hidden">
-            <MockDashboard />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function MockDashboard({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className="grid grid-cols-12">
-      {/* Sidebar */}
-      <aside className="hidden sm:flex col-span-3 lg:col-span-2 flex-col gap-1 p-3 border-r border-border bg-[color:var(--background)]/40">
-        {[
-          { i: Activity, l: "Overview", a: true },
-          { i: Users, l: "Contacts" },
-          { i: MessageSquare, l: "Inbox" },
-          { i: Workflow, l: "Workflows" },
-          { i: LineChart, l: "Analytics" },
-          { i: ShieldCheck, l: "Security" },
-        ].map((it, i) => (
-          <div
-            key={i}
-            className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-[12.5px] ${
-              it.a
-                ? "bg-[color:var(--elevated)] text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <it.i className="h-3.5 w-3.5" /> {it.l}
-          </div>
-        ))}
-      </aside>
-
-      {/* Main */}
-      <div className="col-span-12 sm:col-span-9 lg:col-span-10 p-5 lg:p-7">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">Workspace overview</p>
-            <h4 className="font-display text-lg sm:text-xl font-semibold tracking-tight">Good morning, Avery</h4>
-          </div>
-          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[color:var(--elevated)] border border-border px-3 py-1 text-[11px] text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--success)]" /> All systems normal
+    <ol className="space-y-1.5">
+      {nodes.map((n, i) => (
+        <li
+          key={n.label}
+          className="flex items-center gap-2 rounded-md border border-border bg-background/60 px-2 py-1.5 text-[11px]"
+        >
+          <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/15 text-primary">
+            <n.icon className="h-3 w-3" />
           </span>
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Metric label="Active conversations" value="12,847" delta="+18.2%" />
-          <Metric label="Qualified leads" value="3,294" delta="+9.4%" />
-          <Metric label="Avg. response" value="1.8s" delta="-22%" good />
-          <Metric label="Revenue impact" value="$284k" delta="+31.5%" />
-        </div>
-
-        {!compact && (
-          <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Engagement</p>
-                  <p className="font-display text-base font-semibold">Conversations this week</p>
-                </div>
-                <span className="text-xs text-primary inline-flex items-center gap-1">
-                  <TrendingUp className="h-3.5 w-3.5" /> +24% WoW
-                </span>
-              </div>
-              <SparkChart />
-            </div>
-            <div className="rounded-xl border border-border bg-card p-5">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Live agents</p>
-              <p className="font-display text-base font-semibold">Top performers</p>
-              <ul className="mt-4 space-y-3">
-                {[
-                  { n: "Atlas", t: "Sales qualification", v: "98%" },
-                  { n: "Iris", t: "Customer support", v: "94%" },
-                  { n: "Onyx", t: "Booking flow", v: "91%" },
-                ].map((a) => (
-                  <li key={a.n} className="flex items-center gap-3">
-                    <span className="h-7 w-7 rounded-lg gradient-primary grid place-items-center text-[11px] font-semibold text-primary-foreground">
-                      {a.n[0]}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{a.n}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{a.t}</p>
-                    </div>
-                    <span className="text-xs text-primary">{a.v}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+          <span className="text-foreground">{n.label}</span>
+          <span className="ml-auto text-muted-foreground">
+            {i === nodes.length - 1 ? "" : "→"}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
-function Metric({ label, value, delta, good }: { label: string; value: string; delta: string; good?: boolean }) {
+function Spark() {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="font-display mt-1 text-xl sm:text-2xl font-semibold tracking-tight">{value}</p>
-      <p className={`mt-1 text-[11px] ${good || delta.startsWith("+") ? "text-[color:var(--success)]" : "text-primary"}`}>
-        {delta} vs last week
-      </p>
-    </div>
-  );
-}
-
-function SparkChart() {
-  // Static SVG sparkline — purely decorative.
-  const pts = [8, 22, 14, 30, 26, 42, 36, 54, 48, 62, 58, 78, 70, 86, 80];
-  const w = 600, h = 120, max = 100;
-  const step = w / (pts.length - 1);
-  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${i * step} ${h - (p / max) * h}`).join(" ");
-  const area = `${d} L ${w} ${h} L 0 ${h} Z`;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-28" preserveAspectRatio="none">
+    <svg viewBox="0 0 200 60" className="h-16 w-full">
       <defs>
-        <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#00E7C4" stopOpacity="0.35" />
+        <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#00E7C4" stopOpacity="0.4" />
           <stop offset="100%" stopColor="#00E7C4" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill="url(#grad)" />
-      <path d={d} fill="none" stroke="#00E7C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M0,45 L20,40 L40,42 L60,30 L80,33 L100,22 L120,26 L140,15 L160,18 L180,8 L200,12 L200,60 L0,60 Z"
+        fill="url(#g)"
+      />
+      <path
+        d="M0,45 L20,40 L40,42 L60,30 L80,33 L100,22 L120,26 L140,15 L160,18 L180,8 L200,12"
+        fill="none"
+        stroke="#00E7C4"
+        strokeWidth="1.5"
+      />
     </svg>
   );
 }
 
-/* ----------------------------- How it works ----------------------------- */
-
-function HowItWorks() {
-  const steps = [
-    { n: "01", t: "Connect your stack", d: "Plug Zyvora into your CRM, inbox, calendar and data sources in minutes." },
-    { n: "02", t: "Train your agents", d: "Bring your brand voice, knowledge base and policies. Agents calibrate instantly." },
-    { n: "03", t: "Launch and scale", d: "Deploy across channels. Watch engagement, qualified leads and revenue compound." },
-  ];
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <section className="py-24 lg:py-32 border-t border-border/60">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <SectionHeading eyebrow="How it works" title="From signup to revenue, in three steps." />
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {steps.map((s) => (
-            <div key={s.n} className="relative rounded-2xl border border-border bg-card p-7">
-              <span className="font-display text-sm text-primary">{s.n}</span>
-              <h3 className="font-display mt-3 text-xl font-semibold tracking-tight">{s.t}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.d}</p>
+    <div className="rounded-md border border-border bg-background/60 px-2 py-1.5">
+      <div className="font-display text-sm font-semibold">{value}</div>
+      <div className="text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+/* ------------------------------ Logos ------------------------------ */
+
+function LogoStrip() {
+  const names = ["Northwind", "Acme", "Lumen", "Vertex", "Helios", "Quanta"];
+  return (
+    <section className="border-y border-border/60 bg-surface/40">
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <p className="text-center text-xs uppercase tracking-widest text-muted-foreground">
+          Powering growth at modern teams
+        </p>
+        <div className="mt-6 grid grid-cols-2 items-center gap-6 sm:grid-cols-3 md:grid-cols-6">
+          {names.map((n) => (
+            <div
+              key={n}
+              className="text-center font-display text-base font-medium text-muted-foreground/80"
+            >
+              {n}
             </div>
           ))}
         </div>
@@ -406,49 +336,326 @@ function HowItWorks() {
   );
 }
 
-/* ---------------------------- Testimonials -------------------------- */
+/* ----------------------------- Flow ----------------------------- */
 
-function Testimonials() {
-  const items = [
+function FlowSection() {
+  const steps = [
+    { label: "Traffic", icon: Globe },
+    { label: "Conversations", icon: MessageSquare },
+    { label: "Leads", icon: Target },
+    { label: "Customers", icon: Users },
+    { label: "Revenue", icon: TrendingUp },
+  ];
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          One system. The entire growth loop.
+        </h2>
+        <p className="mt-3 text-muted-foreground">
+          Zyvora connects every step from first visit to closed revenue — so
+          nothing leaks, nothing is manual.
+        </p>
+      </div>
+      <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-5">
+        {steps.map((s, i) => (
+          <div
+            key={s.label}
+            className="relative rounded-xl border border-border bg-card p-5 text-center"
+          >
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <s.icon className="h-5 w-5" />
+            </div>
+            <div className="font-display text-sm font-medium">{s.label}</div>
+            {i < steps.length - 1 && (
+              <ArrowRight className="absolute -right-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-muted-foreground md:block" />
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------- Ecosystem --------------------------- */
+
+function TrendingUp(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+      <polyline points="16 7 22 7 22 13" />
+    </svg>
+  );
+}
+
+function Ecosystem() {
+  const products = [
     {
-      q: "Zyvora replaced four tools and a contractor. Our pipeline grew 3x in the first quarter without growing headcount.",
-      a: "Maya Okonkwo",
-      r: "VP Operations, Halcyon Labs",
+      icon: Bot,
+      name: "Zyvora AI Chat",
+      tag: "Conversations",
+      desc: "AI agents that talk to every visitor and capture intent 24/7.",
     },
     {
-      q: "It's the first AI platform our security and revenue teams both championed. That alone says everything.",
-      a: "Daniel Reyes",
-      r: "Chief Revenue Officer, Vertex",
+      icon: Target,
+      name: "Zyvora Leads",
+      tag: "Qualification",
+      desc: "Score, route, and enrich prospects in real time.",
     },
     {
-      q: "We measure ROI in days, not quarters. Zyvora paid for itself before the trial ended.",
-      a: "Priya Shah",
-      r: "Head of Growth, Northwind",
+      icon: Workflow,
+      name: "Zyvora Automations",
+      tag: "Workflows",
+      desc: "Trigger-based SMS, email, and internal follow-ups.",
+    },
+    {
+      icon: Calendar,
+      name: "Zyvora Booking",
+      tag: "Appointments",
+      desc: "Let AI book qualified calls straight into your calendar.",
+    },
+    {
+      icon: Inbox,
+      name: "Zyvora Inbox",
+      tag: "Unified hub",
+      desc: "Every channel, every conversation, one shared workspace.",
+    },
+    {
+      icon: Activity,
+      name: "Zyvora Analytics",
+      tag: "Conversion",
+      desc: "Track traffic → revenue with attribution baked in.",
     },
   ];
   return (
-    <section id="customers" className="py-24 lg:py-32 border-t border-border/60 bg-[color:var(--surface)]/30">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <SectionHeading
-          eyebrow="Customers"
-          title="Trusted by teams who measure outcomes."
-        />
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {items.map((t) => (
-            <figure key={t.a} className="rounded-2xl border border-border bg-card p-7 flex flex-col">
-              <div className="flex gap-0.5 text-primary mb-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-current" />
+    <section id="platform" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-2xl text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+          <Sparkles className="h-3 w-3 text-primary" />
+          Platform
+        </div>
+        <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          A complete AI growth stack — not another point tool.
+        </h2>
+        <p className="mt-3 text-muted-foreground">
+          Six tightly integrated systems that replace chatbots, CRMs, schedulers,
+          and follow-up tools.
+        </p>
+      </div>
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((p) => (
+          <div
+            key={p.name}
+            className="group relative rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/40"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <p.icon className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {p.tag}
+              </span>
+            </div>
+            <h3 className="font-display text-lg font-semibold">{p.name}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------- Dashboard --------------------------- */
+
+function Dashboard() {
+  return (
+    <section className="relative mx-auto max-w-7xl px-6 py-20">
+      <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+            <Activity className="h-3 w-3 text-primary" />
+            Operator dashboard
+          </div>
+          <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            The control room for your growth engine.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Watch conversations, leads, and revenue update in real time. Every
+            automation, every conversion — measurable.
+          </p>
+          <ul className="mt-6 space-y-3 text-sm">
+            {[
+              "Real-time pipeline from visit → booked call",
+              "AI-suggested next actions per lead",
+              "Attribution across every channel",
+              "SOC 2-ready audit trail",
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span className="text-foreground/90">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="glass rounded-2xl p-3">
+          <div className="rounded-xl bg-background/60 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground">This week</div>
+                <div className="font-display text-2xl font-semibold">
+                  $48,210 <span className="text-sm text-success">+22%</span>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                {["7D", "30D", "90D"].map((t, i) => (
+                  <span
+                    key={t}
+                    className={
+                      "rounded-md px-2 py-1 text-[11px] " +
+                      (i === 0
+                        ? "bg-primary/15 text-primary"
+                        : "text-muted-foreground")
+                    }
+                  >
+                    {t}
+                  </span>
                 ))}
               </div>
-              <blockquote className="text-[15px] leading-relaxed text-foreground/90 flex-1">
-                "{t.q}"
-              </blockquote>
-              <figcaption className="mt-6 pt-5 border-t border-border">
-                <p className="text-sm font-medium">{t.a}</p>
-                <p className="text-xs text-muted-foreground">{t.r}</p>
-              </figcaption>
-            </figure>
+            </div>
+            <div className="mt-4">
+              <Spark />
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <Stat label="Conversations" value="3,481" />
+              <Stat label="Qualified" value="1,102" />
+              <Stat label="Booked" value="392" />
+            </div>
+            <div className="mt-4 space-y-2">
+              {[
+                ["New lead · Sarah K.", "Booked discovery call", "2m"],
+                ["Workflow · No-show recovery", "Sent SMS to 14 leads", "11m"],
+                ["AI Chat · Pricing inquiry", "Routed to Sales inbox", "18m"],
+              ].map(([a, b, c]) => (
+                <div
+                  key={a}
+                  className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-xs"
+                >
+                  <div>
+                    <div className="font-medium">{a}</div>
+                    <div className="text-muted-foreground">{b}</div>
+                  </div>
+                  <span className="text-muted-foreground">{c}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------- Industries --------------------------- */
+
+function Industries() {
+  const items = [
+    { icon: Building2, name: "Businesses", desc: "Local & online businesses scaling customer acquisition." },
+    { icon: UserCircle, name: "Freelancers", desc: "Solo operators turning inbound traffic into clients." },
+    { icon: Briefcase, name: "Agencies", desc: "Deploy growth systems for every client portfolio." },
+    { icon: Palette, name: "Creators", desc: "Monetize attention with conversations that convert." },
+    { icon: Globe, name: "Online services", desc: "SaaS, coaching, and digital products — automated." },
+  ];
+  return (
+    <section id="industries" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          Built for anyone selling anything.
+        </h2>
+        <p className="mt-3 text-muted-foreground">
+          Zyvora flexes to your business model — not the other way around.
+        </p>
+      </div>
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {items.map((i) => (
+          <div
+            key={i.name}
+            className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-2/15 text-[color:var(--accent-2)]">
+              <i.icon className="h-5 w-5" />
+            </div>
+            <h3 className="mt-4 font-display text-base font-semibold">
+              {i.name}
+            </h3>
+            <p className="mt-1.5 text-sm text-muted-foreground">{i.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------- Automations --------------------------- */
+
+function Automations() {
+  const flows = [
+    {
+      title: "Instant lead response",
+      desc: "AI replies within seconds, qualifies intent, and books a call.",
+      steps: ["New chat", "Qualify", "Book"],
+    },
+    {
+      title: "No-show recovery",
+      desc: "Auto SMS + email sequence brings back missed appointments.",
+      steps: ["Missed", "SMS", "Reschedule"],
+    },
+    {
+      title: "Pipeline nurture",
+      desc: "Stay top-of-mind with personalized AI follow-ups for weeks.",
+      steps: ["Stalled", "AI nudge", "Reopen"],
+    },
+  ];
+  return (
+    <section id="automations" className="border-y border-border/60 bg-surface/40">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            Automations that move revenue, not noise.
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Pre-built playbooks proven across thousands of businesses — live in
+            minutes.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
+          {flows.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-2xl border border-border bg-card p-6"
+            >
+              <h3 className="font-display text-lg font-semibold">{f.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
+              <div className="mt-5 flex items-center gap-2 text-[11px]">
+                {f.steps.map((s, i) => (
+                  <span key={s} className="flex items-center gap-2">
+                    <span className="rounded-md border border-border bg-background/60 px-2 py-1">
+                      {s}
+                    </span>
+                    {i < f.steps.length - 1 && (
+                      <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -456,126 +663,171 @@ function Testimonials() {
   );
 }
 
-/* ------------------------------ Pricing ----------------------------- */
+/* --------------------------- Testimonials --------------------------- */
+
+function Testimonials() {
+  const quotes = [
+    {
+      q: "Zyvora replaced three tools and doubled our booked calls in 6 weeks.",
+      n: "Maya R.",
+      t: "Founder, Helios Studio",
+    },
+    {
+      q: "It's the first automation platform that actually feels like a product, not a hack.",
+      n: "Jordan T.",
+      t: "Head of Growth, Vertex",
+    },
+    {
+      q: "We treat Zyvora as our growth operating system. It's that core.",
+      n: "Priya M.",
+      t: "CEO, Northwind",
+    },
+  ];
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-20">
+      <div className="grid gap-4 md:grid-cols-3">
+        {quotes.map((q) => (
+          <figure
+            key={q.n}
+            className="rounded-2xl border border-border bg-card p-6"
+          >
+            <blockquote className="text-sm leading-relaxed text-foreground">
+              "{q.q}"
+            </blockquote>
+            <figcaption className="mt-5 flex items-center gap-3 border-t border-border pt-4 text-xs">
+              <div className="h-8 w-8 rounded-full gradient-primary" />
+              <div>
+                <div className="font-medium text-foreground">{q.n}</div>
+                <div className="text-muted-foreground">{q.t}</div>
+              </div>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------------- Pricing ----------------------------- */
 
 function Pricing() {
   const tiers = [
     {
       name: "Starter",
       price: "$0",
-      period: "/mo",
-      desc: "For teams exploring AI automation.",
-      features: ["1 workspace", "500 AI conversations / mo", "Email support", "Core integrations"],
+      cadence: "free 14 days",
+      desc: "For solos testing Zyvora's growth engine.",
+      features: ["AI Chat on 1 site", "500 conversations", "Email follow-ups", "Basic analytics"],
       cta: "Start free",
-      featured: false,
     },
     {
       name: "Growth",
-      price: "$249",
-      period: "/mo",
-      desc: "For growing teams running real pipelines.",
+      price: "$79",
+      cadence: "/ month",
+      desc: "For businesses turning traffic into revenue.",
       features: [
-        "Unlimited workspaces",
-        "25,000 conversations / mo",
-        "Workflow automations",
-        "Priority support",
-        "SSO (Google, Microsoft)",
+        "Unlimited conversations",
+        "Leads + Booking + Inbox",
+        "SMS + email automations",
+        "Conversion analytics",
       ],
-      cta: "Start 14-day trial",
+      cta: "Start free trial",
       featured: true,
     },
     {
-      name: "Enterprise",
+      name: "Scale",
       price: "Custom",
-      period: "",
-      desc: "For organizations with security & scale needs.",
-      features: [
-        "Volume conversations",
-        "SAML SSO, SCIM, audit logs",
-        "Data residency & DPAs",
-        "Dedicated success manager",
-        "99.99% SLA",
-      ],
+      cadence: "talk to sales",
+      desc: "For agencies and teams running many brands.",
+      features: ["Multi-brand workspaces", "Role-based access", "Priority AI capacity", "Onboarding & SLAs"],
       cta: "Contact sales",
-      featured: false,
     },
   ];
   return (
-    <section id="pricing" className="py-24 lg:py-32 border-t border-border/60">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <SectionHeading
-          eyebrow="Pricing"
-          title="Transparent pricing. Enterprise-ready."
-          subtitle="Start free. Scale on your terms. No surprises."
-        />
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {tiers.map((t) => (
-            <div
-              key={t.name}
-              className={`relative rounded-2xl p-7 flex flex-col ${
-                t.featured
-                  ? "border border-primary/40 bg-card glow-primary"
-                  : "border border-border bg-card"
-              }`}
-            >
-              {t.featured && (
-                <span className="absolute -top-3 left-7 inline-flex items-center gap-1 rounded-full gradient-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
-                  <Sparkles className="h-3 w-3" /> Most popular
-                </span>
-              )}
-              <h3 className="font-display text-lg font-semibold tracking-tight">{t.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{t.desc}</p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="font-display text-4xl font-semibold tracking-tight">{t.price}</span>
-                <span className="text-sm text-muted-foreground">{t.period}</span>
-              </div>
-              <ul className="mt-6 space-y-2.5 flex-1">
-                {t.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-foreground/90">
-                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" /> {f}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-7">
-                {t.featured ? (
-                  <PrimaryButton href="#" full>
-                    {t.cta}
-                  </PrimaryButton>
-                ) : (
-                  <SecondaryButton href="#" full>
-                    {t.cta}
-                  </SecondaryButton>
-                )}
-              </div>
+    <section id="pricing" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          Pricing that scales with revenue, not seats.
+        </h2>
+        <p className="mt-3 text-muted-foreground">
+          Start free. Upgrade when Zyvora is paying for itself.
+        </p>
+      </div>
+      <div className="mt-12 grid gap-4 lg:grid-cols-3">
+        {tiers.map((t) => (
+          <div
+            key={t.name}
+            className={
+              "relative rounded-2xl border p-6 " +
+              (t.featured
+                ? "border-primary/50 bg-card glow-primary"
+                : "border-border bg-card")
+            }
+          >
+            {t.featured && (
+              <span className="absolute -top-2 right-6 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                Most popular
+              </span>
+            )}
+            <h3 className="font-display text-lg font-semibold">{t.name}</h3>
+            <div className="mt-3 flex items-baseline gap-1.5">
+              <span className="font-display text-3xl font-semibold">{t.price}</span>
+              <span className="text-xs text-muted-foreground">{t.cadence}</span>
             </div>
-          ))}
-        </div>
+            <p className="mt-2 text-sm text-muted-foreground">{t.desc}</p>
+            <ul className="mt-5 space-y-2 text-sm">
+              {t.features.map((f) => (
+                <li key={f} className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="#"
+              className={
+                "mt-6 inline-flex h-10 w-full items-center justify-center rounded-md px-4 text-sm font-medium transition-transform hover:scale-[1.01] " +
+                (t.featured
+                  ? "bg-primary text-primary-foreground glow-primary"
+                  : "border border-border bg-elevated text-foreground")
+              }
+            >
+              {t.cta}
+            </a>
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
-/* ------------------------------ CTA --------------------------------- */
+/* ------------------------------ CTA ------------------------------ */
 
-function CTASection() {
+function CTA() {
   return (
-    <section className="py-24 lg:py-32 border-t border-border/60">
-      <div className="mx-auto max-w-5xl px-6 lg:px-10">
-        <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 lg:p-16 text-center">
-          <div className="absolute inset-0 bg-radial-glow opacity-80 pointer-events-none" />
-          <div className="relative">
-            <h2 className="font-display text-balance text-3xl sm:text-5xl font-semibold tracking-tight leading-tight">
-              Operate at the speed of <span className="gradient-text">intelligence</span>.
-            </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Join the teams using Zyvora to automate engagement, win more customers and reclaim their week.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <PrimaryButton href="#pricing">
-                Start free trial <ArrowRight className="h-4 w-4" />
-              </PrimaryButton>
-              <SecondaryButton href="#dashboard">Talk to sales</SecondaryButton>
-            </div>
+    <section className="mx-auto max-w-7xl px-6 pb-20">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 text-center">
+        <div className="bg-radial-glow absolute inset-0 opacity-70" />
+        <div className="relative">
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            Your next customer is already on your site.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+            Let Zyvora talk to them, qualify them, and book them — automatically.
+          </p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              href="#"
+              className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground glow-primary"
+            >
+              Start free trial <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
+            <a
+              href="#"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-elevated px-6 text-sm font-medium"
+            >
+              Book a demo
+            </a>
           </div>
         </div>
       </div>
@@ -583,111 +835,56 @@ function CTASection() {
   );
 }
 
-/* ------------------------------ Footer ------------------------------ */
+/* ----------------------------- Footer ----------------------------- */
 
 function Footer() {
-  const cols: { h: string; links: string[] }[] = [
-    { h: "Platform", links: ["Agents", "Workflows", "Analytics", "Inbox", "Integrations"] },
-    { h: "Solutions", links: ["Sales", "Support", "Marketing", "Operations", "Enterprise"] },
-    { h: "Resources", links: ["Docs", "Changelog", "Blog", "Customers", "Security"] },
-    { h: "Company", links: ["About", "Careers", "Press", "Contact", "Legal"] },
-  ];
   return (
-    <footer className="border-t border-border/60 bg-[color:var(--surface)]/40">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-10">
-          <div className="col-span-2">
-            <a href="#" className="flex items-center gap-2.5">
-              <Logo />
-              <span className="font-display text-[17px] font-semibold tracking-tight">Zyvora</span>
-            </a>
-            <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-              The enterprise AI platform for automating customer engagement and growth.
-            </p>
-            <div className="mt-5 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <Globe className="h-3.5 w-3.5" /> Global • SOC 2 Type II
-            </div>
+    <footer className="border-t border-border/60 bg-surface/40">
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-5">
+        <div className="md:col-span-2">
+          <div className="flex items-center gap-2">
+            <Logo />
+            <span className="font-display text-base font-semibold">Zyvora</span>
           </div>
-          {cols.map((c) => (
-            <div key={c.h}>
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground/80">{c.h}</p>
-              <ul className="mt-4 space-y-2.5 text-sm">
-                {c.links.map((l) => (
-                  <li key={l}>
-                    <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">{l}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+            The AI Growth & Automation OS. Turn attention into customers —
+            automatically.
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            SOC 2 Type II · GDPR · 99.99% uptime
+          </div>
         </div>
-        <div className="mt-14 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} Zyvora, Inc. All rights reserved.</p>
-          <div className="flex items-center gap-5">
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Terms</a>
-            <a href="#" className="hover:text-foreground">Status</a>
+        {[
+          { h: "Platform", links: ["AI Chat", "Leads", "Automations", "Booking", "Inbox", "Analytics"] },
+          { h: "Company", links: ["About", "Customers", "Careers", "Press"] },
+          { h: "Resources", links: ["Docs", "Guides", "Status", "Security"] },
+        ].map((c) => (
+          <div key={c.h}>
+            <div className="text-xs font-semibold uppercase tracking-widest text-foreground">
+              {c.h}
+            </div>
+            <ul className="mt-3 space-y-2 text-sm">
+              {c.links.map((l) => (
+                <li key={l}>
+                  <a
+                    href="#"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {l}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
+        ))}
+      </div>
+      <div className="border-t border-border/60">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-muted-foreground sm:flex-row">
+          <span>© {new Date().getFullYear()} Zyvora, Inc.</span>
+          <span>Built for teams who move on revenue, not vanity.</span>
         </div>
       </div>
     </footer>
-  );
-}
-
-/* ---------------------------- Primitives ---------------------------- */
-
-function SectionHeading({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle?: string }) {
-  return (
-    <div className="mx-auto max-w-2xl text-center">
-      <p className="text-xs uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
-      <h2 className="font-display mt-3 text-balance text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-[1.08]">
-        {title}
-      </h2>
-      {subtitle && <p className="mt-4 text-muted-foreground text-balance">{subtitle}</p>}
-    </div>
-  );
-}
-
-function PrimaryButton({
-  children,
-  href,
-  small,
-  full,
-}: {
-  children: React.ReactNode;
-  href: string;
-  small?: boolean;
-  full?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl gradient-primary text-primary-foreground font-semibold transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)] ${
-        small ? "px-4 py-2 text-sm" : "px-5 py-3 text-sm"
-      } ${full ? "w-full" : ""}`}
-    >
-      {children}
-    </a>
-  );
-}
-
-function SecondaryButton({
-  children,
-  href,
-  full,
-}: {
-  children: React.ReactNode;
-  href: string;
-  full?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-primary/50 text-primary font-semibold px-5 py-3 text-sm bg-transparent transition-all hover:bg-primary/10 hover:border-primary ${
-        full ? "w-full" : ""
-      }`}
-    >
-      {children}
-    </a>
   );
 }
