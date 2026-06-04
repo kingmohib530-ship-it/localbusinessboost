@@ -9,15 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicChatbotBusiness_idRouteImport } from './routes/api/public/chatbot/$business_id'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,6 +49,11 @@ const ApiGenerateContentRoute = ApiGenerateContentRouteImport.update({
   id: '/api/generate-content',
   path: '/api/generate-content',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
   id: '/api/public/leads',
@@ -63,6 +80,8 @@ const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app': typeof AuthenticatedAppRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -73,6 +92,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app': typeof AuthenticatedAppRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -84,6 +105,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/app': typeof AuthenticatedAppRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -96,6 +120,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/checkout/return'
@@ -106,6 +132,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
+    | '/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/checkout/return'
@@ -116,6 +144,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/checkout/return'
@@ -127,6 +158,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -138,6 +171,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -165,6 +212,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/generate-content'
       preLoaderRoute: typeof ApiGenerateContentRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/leads': {
       id: '/api/public/leads'
@@ -197,8 +251,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppRoute: AuthenticatedAppRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
@@ -210,3 +277,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
