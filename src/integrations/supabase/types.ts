@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_runs: {
+        Row: {
+          agent_name: string
+          completed_at: string | null
+          duration_ms: number | null
+          error: string | null
+          id: string
+          input: Json | null
+          output: Json | null
+          started_at: string
+          status: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          completed_at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          started_at?: string
+          status?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          completed_at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          started_at?: string
+          status?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_runs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           created_at: string
@@ -84,6 +134,47 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: true
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_logs: {
+        Row: {
+          agent_name: string | null
+          created_at: string
+          id: string
+          level: string
+          message: string
+          metadata: Json | null
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_name?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          message: string
+          metadata?: Json | null
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_name?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          metadata?: Json | null
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -225,6 +316,51 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          assigned_agents: string[]
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          final_output: Json | null
+          id: string
+          input: string
+          plan: Json | null
+          stage: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_agents?: string[]
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          final_output?: Json | null
+          id?: string
+          input: string
+          plan?: Json | null
+          stage?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_agents?: string[]
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          final_output?: Json | null
+          id?: string
+          input?: string
+          plan?: Json | null
+          stage?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_plan_usage: {
         Row: {
           count: number
@@ -243,6 +379,36 @@ export type Database = {
           updated_at?: string
           user_id?: string
           week_start?: string
+        }
+        Relationships: []
+      }
+      workflows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          steps: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          steps?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          steps?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
