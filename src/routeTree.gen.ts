@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as ApiTestMondayRouteImport } from './routes/api/test-monday'
 import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
@@ -45,6 +46,11 @@ const IndexRoute = IndexRouteImport.update({
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTestMondayRoute = ApiTestMondayRouteImport.update({
+  id: '/api/test-monday',
+  path: '/api/test-monday',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGenerateWeeklyPlanRoute = ApiGenerateWeeklyPlanRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/test-monday': typeof ApiTestMondayRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/test-monday': typeof ApiTestMondayRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/test-monday': typeof ApiTestMondayRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
+    | '/api/test-monday'
     | '/checkout/return'
     | '/app/agents'
     | '/app/chat'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
+    | '/api/test-monday'
     | '/checkout/return'
     | '/app/agents'
     | '/app/chat'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
+    | '/api/test-monday'
     | '/checkout/return'
     | '/_authenticated/app/agents'
     | '/_authenticated/app/chat'
@@ -246,6 +258,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
+  ApiTestMondayRoute: typeof ApiTestMondayRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
@@ -281,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout/return'
       fullPath: '/checkout/return'
       preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/test-monday': {
+      id: '/api/test-monday'
+      path: '/api/test-monday'
+      fullPath: '/api/test-monday'
+      preLoaderRoute: typeof ApiTestMondayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/generate-weekly-plan': {
@@ -424,6 +444,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
+  ApiTestMondayRoute: ApiTestMondayRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   ApiPublicLeadsRoute: ApiPublicLeadsRoute,
   ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
@@ -433,3 +454,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
