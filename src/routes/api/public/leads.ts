@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createMondayItem } from "@/lib/monday.server";
+
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -72,6 +74,20 @@ export const Route = createFileRoute("/api/public/leads")({
             });
 
           if (insertErr) throw insertErr;
+
+          // Push to monday.com (non-blocking — don't fail the lead capture)
+          try {
+            await createMondayItem(name, {
+              email: email ? { email, text: email } : undefined,
+              phone: phone || undefined,
+              status: { label: "New from Chatbot" },
+              text: message || undefined,
+            });
+          } catch (mondayErr) {
+            console.error("[leads POST] monday.com sync failed", mondayErr);
+          }
+
+
 
           return Response.json(
             { success: true, message: "Lead saved successfully" },
