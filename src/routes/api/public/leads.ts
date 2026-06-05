@@ -77,12 +77,17 @@ export const Route = createFileRoute("/api/public/leads")({
 
           // Push to monday.com (non-blocking — don't fail the lead capture)
           try {
-            await createMondayItem(name, {
-              email: email ? { email, text: email } : undefined,
-              phone: phone || undefined,
-              status: { label: "New from Chatbot" },
-              text: message || undefined,
-            });
+            const columnValues: Record<string, unknown> = {
+              color_mm40t58z: { label: "New from Chatbot" },
+              text_mm408bbv: "Chatbot",
+            };
+            if (email) {
+              columnValues.email_mm40q7z1 = { email, text: email };
+            }
+            if (phone) {
+              columnValues.text_mm40k4r8 = phone;
+            }
+            await createMondayItem(name, columnValues);
           } catch (mondayErr) {
             console.error("[leads POST] monday.com sync failed", mondayErr);
           }
