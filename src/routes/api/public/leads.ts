@@ -75,6 +75,20 @@ export const Route = createFileRoute("/api/public/leads")({
 
           if (insertErr) throw insertErr;
 
+          // Push to monday.com (non-blocking — don't fail the lead capture)
+          try {
+            await createMondayItem(name, {
+              email: email ? { email, text: email } : undefined,
+              phone: phone || undefined,
+              status: { label: "New from Chatbot" },
+              text: message || undefined,
+            });
+          } catch (mondayErr) {
+            console.error("[leads POST] monday.com sync failed", mondayErr);
+          }
+
+
+
           return Response.json(
             { success: true, message: "Lead saved successfully" },
             { status: 201, headers: CORS },
