@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/leads")({
           // Push to monday.com (non-blocking — don't fail the lead capture)
           try {
             const columnValues: Record<string, unknown> = {
-              color_mm40t58z: { label: "New from Chatbot" },
+              color_mm40t58z: { label: "Warm" },
               text_mm408bbv: "Chatbot",
             };
             if (business_name) {
