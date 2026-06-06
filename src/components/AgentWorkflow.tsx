@@ -94,6 +94,16 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Create an automation that reactivates past HVAC customers in Tampa, FL with seasonal tune-up offers via email + SMS, and books them straight into Calendly.",
   },
+  {
+    label: "💰 Roofing revenue engine",
+    prompt:
+      "Build and configure a complete automated follow-up system for a roofing company that sends emails + SMS and books appointments. Include lead-capture form, Twilio + Resend integrations, Calendly booking, reminder sequence, post-job Google review automation, and the dollar-impact ROI.",
+  },
+  {
+    label: "🔁 HVAC win-back campaign",
+    prompt:
+      "Create a reactivation campaign for past customers of an HVAC business including phone call script, 5-email sequence, SMS touches, Calendly booking link, and an automated Google review request after the tune-up.",
+  },
 ];
 
 // Per-agent visual identity.
