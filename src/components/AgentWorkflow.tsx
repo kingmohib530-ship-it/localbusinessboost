@@ -606,7 +606,9 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
       <div className="flex flex-wrap items-center gap-2">
         <SaveToMondayButton forge={data} title={title} />
         <CopyButton text={fullGuide} label="Copy Full Implementation Guide" />
+        <DownloadGuideButton text={fullGuide} title={title} />
       </div>
+
 
       {/* Headline ROI */}
       {(data?.estimatedRoi || data?.roiProjection) && (
