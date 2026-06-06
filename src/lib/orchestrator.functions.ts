@@ -14,15 +14,30 @@ export const createTask = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => createSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // Resolve current organization (tenant boundary)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("current_organization_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const orgId = profile?.current_organization_id;
+    if (!orgId) throw new Error("No active organization for this user.");
+
     const { data: task, error } = await supabase
       .from("tasks")
-      .insert({ user_id: userId, input: data.input, status: "queued", stage: "incoming" })
+      .insert({
+        organization_id: orgId,
+        user_id: userId,
+        input: data.input,
+        status: "queued",
+        stage: "incoming",
+      })
       .select()
       .single();
     if (error) throw new Error(error.message);
 
-    // Fire and forget execution in background (await but don't block too long? — await for MVP)
-    runTaskInBackground(task.id, userId, data.input, data.singleAgent).catch((e) => {
+    runTaskInBackground(task.id, orgId, userId, data.input, data.singleAgent).catch((e) => {
       console.error("[orchestrator] background error", e);
     });
 
@@ -31,6 +46,7 @@ export const createTask = createServerFn({ method: "POST" })
 
 async function runTaskInBackground(
   taskId: string,
+  orgId: string,
   userId: string,
   input: string,
   singleAgent?: string
@@ -48,6 +64,7 @@ async function runTaskInBackground(
     await supabaseAdmin
       .from("execution_logs")
       .insert({
+        organization_id: orgId,
         task_id: taskId,
         user_id: userId,
         agent_name: agent_name ?? null,
@@ -62,6 +79,7 @@ async function runTaskInBackground(
     const { data: run } = await supabaseAdmin
       .from("agent_runs")
       .insert({
+        organization_id: orgId,
         task_id: taskId,
         user_id: userId,
         agent_name: agent,
