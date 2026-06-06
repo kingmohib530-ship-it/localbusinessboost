@@ -80,11 +80,11 @@ function Hero() {
           Now in open beta · Free access
         </Badge>
         <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight text-balance max-w-4xl mx-auto animate-fade-up">
-          Deploy an <span className="gradient-text">AI Workforce</span> for your business
+          Your <span className="gradient-text">AI Team</span> that gets you more clients &amp; bookings
         </h1>
         <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-          LUNAVX is a multi-agent operating system that automates lead generation, marketing,
-          outreach and operations — orchestrated by intelligent AI workers.
+          Whether you run a local business or freelance, LUNAVX deploys AI employees that find leads,
+          write outreach, book jobs, and follow up — while you sleep.
         </p>
         <div className="mt-10 flex items-center justify-center gap-3">
           <Link to="/auth"><Button size="lg" className="glow-primary">Get Started <ArrowRight className="h-4 w-4" /></Button></Link>
