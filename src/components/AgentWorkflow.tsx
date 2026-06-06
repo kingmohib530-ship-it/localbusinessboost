@@ -827,7 +827,7 @@ function Kv({ k, v }: { k: string; v: string }) {
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -838,9 +838,9 @@ function CopyButton({ text }: { text: string }) {
           setTimeout(() => setCopied(false), 1500);
         });
       }}
-      className="rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
+      className="rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
     >
-      {copied ? "Copied!" : "Copy"}
+      {copied ? "Copied!" : label}
     </button>
   );
 }
