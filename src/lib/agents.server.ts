@@ -414,6 +414,25 @@ export type ForgeReviewRequest = {
   message?: string;
 };
 export type ForgeSnippet = { title: string; language: string; code: string };
+export type ForgeRoiProjection = {
+  bookedJobsLiftPct?: string;
+  noShowReductionPct?: string;
+  reviewVelocityMultiplier?: string;
+  monthlyRevenueLiftUsd?: string;
+  paybackPeriod?: string;
+};
+export type ForgeIntegrationGuideEntry = {
+  provider: string;
+  purpose?: string;
+  setupSteps?: string[];
+  envVars?: string[];
+};
+export type ForgeNextAction = {
+  title: string;
+  owner?: string;
+  eta?: string;
+  why?: string;
+};
 
 export type ForgeResult = {
   trigger: string;
@@ -425,6 +444,9 @@ export type ForgeResult = {
   reviewRequest?: ForgeReviewRequest;
   kpis?: string[];
   estimatedRoi?: string;
+  roiProjection?: ForgeRoiProjection;
+  integrationGuide?: ForgeIntegrationGuideEntry[];
+  nextActions?: ForgeNextAction[];
   snippets?: ForgeSnippet[];
 };
 
