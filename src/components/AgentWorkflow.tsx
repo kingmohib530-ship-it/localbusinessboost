@@ -173,87 +173,135 @@ async function runWorkflow(userRequest: string): Promise<WorkflowResult> {
 // ─────────────────────────────────────────────────────────────────────────────
 export function AgentWorkflow() {
   const [input, setInput] = useState("");
+  const [showCustom, setShowCustom] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<CampaignTemplate | null>(null);
 
   const mutation = useMutation({ mutationFn: runWorkflow });
   const result = mutation.data;
   const isLoading = mutation.isPending;
 
-  const handleRun = () => {
-    const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
-    mutation.mutate(trimmed);
+  const handleRun = (prompt?: string, template?: CampaignTemplate) => {
+    const text = (prompt ?? input).trim();
+    if (!text || isLoading) return;
+    if (template) setActiveTemplate(template);
+    else setActiveTemplate(null);
+    mutation.mutate(text);
+  };
+
+  const handleLaunchTemplate = (t: CampaignTemplate) => {
+    setInput(t.prompt);
+    handleRun(t.prompt, t);
   };
 
   const atlasResult =
     result?.success && result.results.Atlas
       ? (result.results.Atlas as AtlasResult)
       : undefined;
+  const forgeResult =
+    result?.success && result.results.Forge
+      ? (result.results.Forge as ForgeResult)
+      : undefined;
+  const pulseResult =
+    result?.success && result.results.Pulse
+      ? (result.results.Pulse as PulseResult)
+      : undefined;
   const mondayNote =
     atlasResult?.monday && atlasResult.monday.synced > 0
       ? `${atlasResult.monday.synced}/${atlasResult.monday.total} leads synced to Monday.com`
       : null;
 
+  const metrics: ResultsMetrics = (() => {
+    const leadsGenerated = atlasResult?.leads?.length ?? 0;
+    const emailsReady =
+      (pulseResult ? 1 + (pulseResult.variants?.length ?? 0) : 0) +
+      (forgeResult?.emailTemplates?.length ?? 0) +
+      (forgeResult?.smsTemplates?.length ?? 0);
+    // Conservative model: ~18% lead→booked when Forge automation exists, else ~8%.
+    const bookRate = forgeResult ? 0.18 : 0.08;
+    const estimatedBookings = Math.round(leadsGenerated * bookRate);
+    // Default avg ticket $1,200 for local service work — Forge ROI overrides when present.
+    const projectedRevenueUsd = estimatedBookings * 1200;
+    return { leadsGenerated, emailsReady, estimatedBookings, projectedRevenueUsd };
+  })();
+
+  const showTracker = result?.success || isLoading;
+  const trackerStatus: "active" | "idle" =
+    result?.success && (atlasResult || forgeResult || pulseResult) ? "active" : "idle";
+
   return (
     <div className="space-y-6">
-      {/* ── Input card ───────────────────────────────────────────────────── */}
-      <Card className="border-border/60 bg-card/60 backdrop-blur">
+      {/* ── Hero / value framing ──────────────────────────────────────────── */}
+      <Card className="border-border/60 bg-gradient-to-br from-violet-500/5 via-card/60 to-sky-500/5 backdrop-blur">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 shadow-lg shadow-violet-500/20">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 shadow-lg shadow-violet-500/20">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl">LUNAVX AI Workforce</CardTitle>
+              <CardTitle className="text-xl">Your AI Employee Team</CardTitle>
               <CardDescription>
-                Describe what you need. Orbis plans, and your six agents execute end-to-end.
+                Six AI agents that find leads, write outreach, and book jobs — while you sleep.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-5">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+        <CardContent className="space-y-6">
+          <AutomationTemplates
+            onLaunch={handleLaunchTemplate}
             disabled={isLoading}
-            placeholder="e.g. Generate 15 plumbing leads in Austin, TX and write cold outreach emails"
-            className="min-h-32 resize-none text-base"
+            activeId={activeTemplate?.id}
           />
 
-          <div className="flex flex-wrap gap-2">
-            {EXAMPLES.map((ex) => (
-              <button
-                key={ex.label}
-                type="button"
-                disabled={isLoading}
-                onClick={() => setInput(ex.prompt)}
-                className="rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/60 hover:text-foreground disabled:opacity-50"
-              >
-                {ex.label}
-              </button>
-            ))}
-          </div>
+          <div className="rounded-xl border border-dashed border-border/60 bg-background/30 p-4">
+            <button
+              type="button"
+              onClick={() => setShowCustom((s) => !s)}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <span className="text-sm font-medium text-muted-foreground">
+                Or describe a custom request →
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {showCustom ? "Hide" : "Show"}
+              </span>
+            </button>
 
-          <Button
-            size="lg"
-            disabled={!input.trim() || isLoading}
-            onClick={handleRun}
-            className="w-full bg-gradient-to-r from-violet-600 to-sky-600 text-base font-semibold shadow-lg shadow-violet-500/20 hover:from-violet-500 hover:to-sky-500"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Agents working…
-              </>
-            ) : (
-              <>
-                <Rocket className="mr-2 h-5 w-5" />
-                Run AI Workforce
-              </>
+            {showCustom && (
+              <div className="mt-4 space-y-3">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={isLoading}
+                  placeholder="e.g. Generate 15 plumbing leads in Austin, TX and write cold outreach emails"
+                  className="min-h-28 resize-none text-base"
+                />
+                <Button
+                  size="lg"
+                  disabled={!input.trim() || isLoading}
+                  onClick={() => handleRun()}
+                  className="w-full bg-gradient-to-r from-violet-600 to-sky-600 text-base font-semibold shadow-lg shadow-violet-500/20 hover:from-violet-500 hover:to-sky-500"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Agents working…
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="mr-2 h-5 w-5" />
+                      Run Custom Workflow
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
-          </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* ── Results Tracker ──────────────────────────────────────────────── */}
+      {showTracker && <ResultsTracker metrics={metrics} status={trackerStatus} />}
 
       {/* ── Loading state ─────────────────────────────────────────────────── */}
       {isLoading && <LoadingPanel />}
