@@ -745,6 +745,18 @@ export async function runAgent(
     }
   }
 
+  // Forge: attach a Monday.com status field so Shield never flags it as missing.
+  // The actual save happens when the user clicks "Save to Monday.com" in the UI.
+  if (agent === "Forge") {
+    return {
+      ...(result as object),
+      monday: {
+        saved: false,
+        note: "Automation blueprint ready — user-triggered via Save to Monday.com button.",
+      },
+    } as ForgeResult;
+  }
+
   return result as AgentResult;
 }
 
