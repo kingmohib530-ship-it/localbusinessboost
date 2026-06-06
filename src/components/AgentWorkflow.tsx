@@ -345,6 +345,11 @@ export function AgentWorkflow() {
       {/* ── Results ───────────────────────────────────────────────────────── */}
       {result?.success && (
         <>
+          <FinalSummaryCard
+            aether={result.results.Aether as AetherResult | undefined}
+            vanguard={result.results.Vanguard as VanguardResult | undefined}
+            results={result.results}
+          />
           <PlanCard steps={result.plan} />
           <AgentResultsCard results={result.results} />
         </>
