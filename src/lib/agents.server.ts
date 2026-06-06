@@ -590,11 +590,19 @@ export type ForgeResult = {
 
 export type ShieldResult = { ok: boolean; issues: string[]; summary: string };
 
+export type AetherProjections = {
+  leads?: string;
+  bookings?: string;
+  monthlyRevenue?: string;
+  timeSavedPerWeek?: string;
+};
+
 export type AetherResult = {
   headline: string;
   executiveSummary: string;
   keyOutcomes: string[];
   revenueImpact?: string;
+  projections?: AetherProjections;
   nextSteps: string[];
 };
 
