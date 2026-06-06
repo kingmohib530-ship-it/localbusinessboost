@@ -781,6 +781,18 @@ export async function runLunavxWorkflow(
       throw new Error("Orbis failed to produce any executable steps.");
     }
 
+    // Always append leader agents (Aether → Vanguard) AFTER Shield.
+    plan.steps.push({
+      agent: "Aether",
+      instruction:
+        "Synthesize a clean, non-technical executive summary of all prior agent outputs for the business owner.",
+    });
+    plan.steps.push({
+      agent: "Vanguard",
+      instruction:
+        "Final executive QC: verify accuracy, deliverability, legal safety, and revenue potential of the entire package.",
+    });
+
     console.log(
       `📋 Plan (${plan.steps.length} steps): ${plan.steps.map((s) => s.agent).join(" → ")}`,
     );
@@ -792,9 +804,18 @@ export async function runLunavxWorkflow(
       const step = plan.steps[i];
       console.log(`⚡ [${i + 1}/${plan.steps.length}] ${step.agent}: ${step.instruction}`);
 
-      const result = await runAgent(step.agent, step.instruction, fullContext);
-      results[step.agent] = result;
-      fullContext[step.agent] = result;
+      try {
+        const result = await runAgent(step.agent, step.instruction, fullContext);
+        results[step.agent] = result;
+        fullContext[step.agent] = result;
+      } catch (stepErr) {
+        const msg = stepErr instanceof Error ? stepErr.message : String(stepErr);
+        console.error(`⚠️  ${step.agent} failed:`, msg);
+        // Non-fatal: record the failure and keep going so the user still
+        // gets value from the agents that did succeed.
+        results[step.agent] = { error: msg } as AgentResult;
+        fullContext[step.agent] = { error: msg };
+      }
 
       if (i < plan.steps.length - 1) {
         await sleep(AGENT_DELAY_MS);
@@ -805,6 +826,8 @@ export async function runLunavxWorkflow(
     const syncNote = atlas?.monday
       ? ` Atlas synced ${atlas.monday.synced}/${atlas.monday.total} leads to Monday.com.`
       : "";
+    const aether = results.Aether as AetherResult | undefined;
+    const headline = aether?.headline?.trim();
 
     console.log("✅ LUNAVX workflow complete.");
 
@@ -812,7 +835,9 @@ export async function runLunavxWorkflow(
       success: true,
       plan: plan.steps,
       results,
-      summary: `Completed ${plan.steps.length} agent steps.${syncNote}`,
+      summary:
+        headline ||
+        `Completed ${plan.steps.length} agent steps.${syncNote}`,
     };
   } catch (error) {
     console.error("❌ LUNAVX workflow failed:", error);
