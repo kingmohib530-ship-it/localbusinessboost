@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
-const COLS = [
+type FooterLink = { to: string; label: string; anchor?: boolean };
+type FooterCol = { title: string; links: FooterLink[] };
+
+const COLS: FooterCol[] = [
   {
     title: "Product",
     links: [
@@ -26,7 +29,7 @@ const COLS = [
       { to: "/#terms", label: "Terms", anchor: true },
     ],
   },
-] as const;
+];
 
 export function SiteFooter() {
   return (
