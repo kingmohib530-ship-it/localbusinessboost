@@ -63,7 +63,7 @@ export function SiteFooter() {
                     </li>
                   ) : (
                     <li key={l.label}>
-                      <Link to={l.to} className="hover:text-foreground transition-colors">
+                      <Link to={l.to as string} className="hover:text-foreground transition-colors">
                         {l.label}
                       </Link>
                     </li>
