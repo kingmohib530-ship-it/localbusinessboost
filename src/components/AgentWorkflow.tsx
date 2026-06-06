@@ -1,10 +1,40 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Play, CheckCircle2, AlertCircle, Sparkles, ExternalLink } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+  Loader2,
+  Rocket,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  Mail,
+  Phone,
+  Globe,
+  MapPin,
+  Target,
+  Lightbulb,
+  Workflow,
+  ShieldCheck,
+  Users,
+  PenLine,
+} from "lucide-react";
 import type {
   WorkflowResult,
   AgentResult,
@@ -13,340 +43,629 @@ import type {
   NexusResult,
   ForgeResult,
   ShieldResult,
+  AtlasLead,
 } from "@/lib/agents.server";
 
-const EXAMPLES = [
-  "Generate 15 plumbing leads in Austin, TX and write cold outreach emails.",
-  "Find 10 dental clinics in Miami, analyze competitors, and design a follow-up automation.",
-  "Generate 20 HVAC business leads in Phoenix and write SMS follow-ups.",
+// ─────────────────────────────────────────────────────────────────────────────
+// Example prompts to spark ideas for local-service business owners.
+// ─────────────────────────────────────────────────────────────────────────────
+const EXAMPLES: { label: string; prompt: string }[] = [
+  {
+    label: "🔧 Plumbing leads — Austin",
+    prompt: "Generate 10 plumbing business leads in Austin, TX with emails and phone numbers.",
+  },
+  {
+    label: "❄️ HVAC outreach — Miami",
+    prompt:
+      "Create a full outreach campaign for an HVAC company targeting property managers in Miami, FL. Include 15 leads, cold email copy, and a follow-up automation.",
+  },
+  {
+    label: "🦷 Dental competitors — Chicago",
+    prompt:
+      "Research competitors for a new family dental clinic in Chicago, IL and recommend positioning opportunities.",
+  },
+  {
+    label: "🏠 Roofing campaign — Dallas",
+    prompt:
+      "Generate 20 residential roofing leads in Dallas, TX and write SMS + email follow-up sequences.",
+  },
+  {
+    label: "💇 Salon launch — Brooklyn",
+    prompt:
+      "Plan a new salon launch in Brooklyn, NY: research the local market, design a referral automation, and write Instagram + Google Business posts.",
+  },
+  {
+    label: "🧹 Cleaning service — Phoenix",
+    prompt:
+      "Find 15 property managers in Phoenix, AZ that need recurring cleaning services and draft a B2B cold email sequence.",
+  },
 ];
 
+// Per-agent visual identity.
+const AGENT_STYLE: Record<
+  string,
+  { icon: React.ComponentType<{ className?: string }>; tint: string; label: string }
+> = {
+  Orbis: { icon: Sparkles, tint: "text-violet-400", label: "Strategy" },
+  Atlas: { icon: Users, tint: "text-emerald-400", label: "Leads" },
+  Nexus: { icon: Target, tint: "text-amber-400", label: "Market" },
+  Pulse: { icon: PenLine, tint: "text-sky-400", label: "Copy" },
+  Forge: { icon: Workflow, tint: "text-orange-400", label: "Automation" },
+  Shield: { icon: ShieldCheck, tint: "text-rose-400", label: "QC" },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// API call
+// ─────────────────────────────────────────────────────────────────────────────
 async function runWorkflow(userRequest: string): Promise<WorkflowResult> {
   const res = await fetch("/api/workflow", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userRequest }),
   });
-  const data = (await res.json()) as WorkflowResult;
-  return data;
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Workflow failed with status ${res.status}`);
+  }
+  return (await res.json()) as WorkflowResult;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────────────────────────
 export function AgentWorkflow() {
   const [input, setInput] = useState("");
 
-  const mutation = useMutation({
-    mutationFn: runWorkflow,
-  });
-
+  const mutation = useMutation({ mutationFn: runWorkflow });
   const result = mutation.data;
+  const isLoading = mutation.isPending;
+
+  const handleRun = () => {
+    const trimmed = input.trim();
+    if (!trimmed || isLoading) return;
+    mutation.mutate(trimmed);
+  };
+
+  const atlasResult =
+    result?.success && result.results.Atlas
+      ? (result.results.Atlas as AtlasResult)
+      : undefined;
+  const mondayNote =
+    atlasResult?.monday && atlasResult.monday.synced > 0
+      ? `${atlasResult.monday.synced}/${atlasResult.monday.total} leads synced to Monday.com`
+      : null;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+    <div className="space-y-6">
+      {/* ── Input card ───────────────────────────────────────────────────── */}
+      <Card className="border-border/60 bg-card/60 backdrop-blur">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 shadow-lg shadow-violet-500/20">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">LUNAVX AI Workforce</CardTitle>
+              <CardDescription>
+                Describe what you need. Orbis plans, and your six agents execute end-to-end.
+              </CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-lg">AI Workforce</CardTitle>
-            <CardDescription>
-              Describe what you need. Orbis will plan and orchestrate the agents.
-            </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-5">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={isLoading}
+            placeholder="e.g. Generate 15 plumbing leads in Austin, TX and write cold outreach emails"
+            className="min-h-32 resize-none text-base"
+          />
+
+          <div className="flex flex-wrap gap-2">
+            {EXAMPLES.map((ex) => (
+              <button
+                key={ex.label}
+                type="button"
+                disabled={isLoading}
+                onClick={() => setInput(ex.prompt)}
+                className="rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/60 hover:text-foreground disabled:opacity-50"
+              >
+                {ex.label}
+              </button>
+            ))}
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="e.g. Generate 15 plumbing leads in Austin, TX and write outreach emails"
-          rows={4}
-          className="resize-none"
-          disabled={mutation.isPending}
-        />
 
-        <div className="flex flex-wrap gap-2">
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex}
-              type="button"
-              onClick={() => setInput(ex)}
-              disabled={mutation.isPending}
-              className="text-xs px-2 py-1 rounded-md border border-border/60 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
-            >
-              {ex}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            Atlas leads are auto-synced to your Monday.com board.
-          </p>
           <Button
-            onClick={() => mutation.mutate(input.trim())}
-            disabled={!input.trim() || mutation.isPending}
             size="lg"
+            disabled={!input.trim() || isLoading}
+            onClick={handleRun}
+            className="w-full bg-gradient-to-r from-violet-600 to-sky-600 text-base font-semibold shadow-lg shadow-violet-500/20 hover:from-violet-500 hover:to-sky-500"
           >
-            {mutation.isPending ? (
+            {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Running workforce…
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Agents working…
               </>
             ) : (
               <>
-                <Play className="h-4 w-4" />
+                <Rocket className="mr-2 h-5 w-5" />
                 Run AI Workforce
               </>
             )}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* ── Loading state ─────────────────────────────────────────────────── */}
+      {isLoading && <LoadingPanel />}
+
+      {/* ── Error state ───────────────────────────────────────────────────── */}
+      {mutation.isError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Workflow failed</AlertTitle>
+          <AlertDescription>
+            {mutation.error instanceof Error ? mutation.error.message : "Unknown error"}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {result && !result.success && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Workflow failed</AlertTitle>
+          <AlertDescription>{result.error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* ── Success — Monday.com sync banner ──────────────────────────────── */}
+      {result?.success && mondayNote && (
+        <Alert className="border-emerald-500/30 bg-emerald-500/5">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <AlertTitle className="text-emerald-300">Monday.com sync complete</AlertTitle>
+          <AlertDescription className="text-emerald-200/80">{mondayNote}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* ── Results ───────────────────────────────────────────────────────── */}
+      {result?.success && (
+        <>
+          <PlanCard steps={result.plan} />
+          <AgentResultsCard results={result.results} />
+        </>
+      )}
+    </div>
+  );
+}
+
+export default AgentWorkflow;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Loading panel
+// ─────────────────────────────────────────────────────────────────────────────
+function LoadingPanel() {
+  return (
+    <Card className="border-border/60 bg-card/60">
+      <CardContent className="flex items-center gap-4 py-6">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Orbis is planning your workforce…</p>
+          <p className="text-xs text-muted-foreground">
+            Atlas, Nexus, Pulse, Forge, and Shield will execute in sequence. This can take 20–60 seconds.
+          </p>
         </div>
-
-        {mutation.isError && (
-          <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/40 bg-destructive/5 text-sm">
-            <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
-            <div>
-              <div className="font-medium text-destructive">Workflow failed</div>
-              <div className="text-muted-foreground">
-                {mutation.error instanceof Error ? mutation.error.message : "Unknown error"}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {result && !result.success && (
-          <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/40 bg-destructive/5 text-sm">
-            <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
-            <div>
-              <div className="font-medium text-destructive">Workflow failed</div>
-              <div className="text-muted-foreground">{result.error}</div>
-            </div>
-          </div>
-        )}
-
-        {result && result.success && <WorkflowOutput result={result} />}
       </CardContent>
     </Card>
   );
 }
 
-function WorkflowOutput({
-  result,
+// ─────────────────────────────────────────────────────────────────────────────
+// Orbis plan
+// ─────────────────────────────────────────────────────────────────────────────
+function PlanCard({
+  steps,
 }: {
-  result: Extract<WorkflowResult, { success: true }>;
+  steps: { agent: string; instruction: string }[];
 }) {
   return (
-    <div className="space-y-4 pt-2">
-      {/* Orbis Plan */}
-      <Card className="border-primary/30 bg-primary/5">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" /> Orbis Plan
-            </CardTitle>
-            <Badge variant="secondary">{result.plan.length} steps</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ol className="space-y-2">
-            {result.plan.map((step, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm">
-                <span className="h-5 w-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-semibold shrink-0">
+    <Card className="border-border/60 bg-card/60">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-violet-400" />
+          <CardTitle className="text-base">Orbis Plan</CardTitle>
+        </div>
+        <CardDescription>Ordered sequence Orbis chose for this request.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ol className="space-y-3">
+          {steps.map((step, i) => {
+            const style = AGENT_STYLE[step.agent];
+            const Icon = style?.icon ?? Sparkles;
+            return (
+              <li
+                key={`${step.agent}-${i}`}
+                className="flex gap-3 rounded-lg border border-border/40 bg-background/40 p-3"
+              >
+                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
                   {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <div className="font-medium">{step.agent}</div>
-                  <div className="text-muted-foreground text-xs">{step.instruction}</div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <Icon className={`h-4 w-4 ${style?.tint ?? ""}`} />
+                    <span className="text-sm font-semibold">{step.agent}</span>
+                    {style?.label && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {style.label}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{step.instruction}</p>
                 </div>
               </li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
-
-      {/* Per-agent results */}
-      <div className="grid grid-cols-1 gap-3">
-        {Object.entries(result.results).map(([agent, output]) => (
-          <AgentOutputCard key={agent} agent={agent} output={output} />
-        ))}
-      </div>
-
-      <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-        {result.summary}
-      </div>
-    </div>
-  );
-}
-
-function AgentOutputCard({ agent, output }: { agent: string; output: AgentResult }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center justify-between">
-          <span>{agent}</span>
-          {agent === "Atlas" && (output as AtlasResult).monday && (
-            <Badge variant="default" className="gap-1">
-              <ExternalLink className="h-3 w-3" />
-              Monday: {(output as AtlasResult).monday!.synced}/
-              {(output as AtlasResult).monday!.total} synced
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">{renderAgentBody(agent, output)}</CardContent>
+            );
+          })}
+        </ol>
+      </CardContent>
     </Card>
   );
 }
 
-function renderAgentBody(agent: string, output: AgentResult) {
-  if (agent === "Atlas") {
-    const o = output as AtlasResult;
-    return (
-      <div className="space-y-2">
-        {(o.leads ?? []).map((lead, i) => {
-          const synced = o.monday?.items.find((m) => m.name === lead.name);
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent results accordion
+// ─────────────────────────────────────────────────────────────────────────────
+function AgentResultsCard({ results }: { results: Record<string, AgentResult> }) {
+  const entries = Object.entries(results);
+  if (!entries.length) return null;
+
+  return (
+    <Card className="border-border/60 bg-card/60">
+      <CardHeader>
+        <CardTitle className="text-base">Agent Results</CardTitle>
+        <CardDescription>Click any agent to expand its output.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Accordion type="multiple" defaultValue={entries.map(([k]) => k)} className="w-full">
+          {entries.map(([agent, output]) => {
+            const style = AGENT_STYLE[agent];
+            const Icon = style?.icon ?? Sparkles;
+            return (
+              <AccordionItem key={agent} value={agent} className="border-border/40">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <Icon className={`h-4 w-4 ${style?.tint ?? ""}`} />
+                    <span className="font-semibold">{agent}</span>
+                    {style?.label && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {style.label}
+                      </Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <AgentOutput agent={agent} output={output} />
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-agent rich rendering
+// ─────────────────────────────────────────────────────────────────────────────
+function AgentOutput({ agent, output }: { agent: string; output: AgentResult }) {
+  if (agent === "Atlas") return <AtlasOutput data={output as AtlasResult} />;
+  if (agent === "Pulse") return <PulseOutput data={output as PulseResult} />;
+  if (agent === "Nexus") return <NexusOutput data={output as NexusResult} />;
+  if (agent === "Forge") return <ForgeOutput data={output as ForgeResult} />;
+  if (agent === "Shield") return <ShieldOutput data={output as ShieldResult} />;
+  return <JsonFallback data={output} />;
+}
+
+function AtlasOutput({ data }: { data: AtlasResult }) {
+  const leads = data?.leads ?? [];
+  const monday = data?.monday;
+  const idByName = new Map<string, MondayItemId>();
+  monday?.items.forEach((i) => idByName.set(i.name, { itemId: i.itemId, error: i.error }));
+
+  return (
+    <div className="space-y-4">
+      {monday && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          <Badge className="bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/15">
+            <CheckCircle2 className="mr-1 h-3 w-3" />
+            {monday.synced}/{monday.total} synced to Monday.com
+          </Badge>
+          {monday.synced < monday.total && (
+            <Badge variant="destructive" className="text-[10px]">
+              {monday.total - monday.synced} failed
+            </Badge>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {leads.map((lead: AtlasLead, i) => {
+          const sync = idByName.get(lead.name);
           return (
             <div
-              key={i}
-              className="flex items-start justify-between gap-3 p-2 rounded-md border border-border/60 text-sm"
+              key={`${lead.name}-${i}`}
+              className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
             >
-              <div className="min-w-0">
-                <div className="font-medium truncate">{lead.name}</div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {[lead.industry, lead.location].filter(Boolean).join(" · ")}
-                </div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {[lead.email, lead.phone, lead.website].filter(Boolean).join(" · ")}
-                </div>
+              <div className="mb-1 flex items-start justify-between gap-2">
+                <p className="font-semibold leading-tight">{lead.name}</p>
+                {sync?.itemId ? (
+                  <Badge variant="outline" className="shrink-0 text-[10px] text-emerald-300">
+                    #{sync.itemId}
+                  </Badge>
+                ) : sync?.error ? (
+                  <Badge variant="destructive" className="shrink-0 text-[10px]">
+                    sync failed
+                  </Badge>
+                ) : null}
               </div>
-              {synced?.itemId ? (
-                <Badge variant="secondary" className="shrink-0">#{synced.itemId}</Badge>
-              ) : synced?.error ? (
-                <Badge variant="destructive" className="shrink-0">sync failed</Badge>
-              ) : null}
+              {lead.industry && (
+                <p className="mb-2 text-xs text-muted-foreground">{lead.industry}</p>
+              )}
+              <div className="space-y-1 text-xs text-muted-foreground">
+                {lead.email && (
+                  <Row icon={Mail}>
+                    <span className="truncate">{lead.email}</span>
+                  </Row>
+                )}
+                {lead.phone && <Row icon={Phone}>{lead.phone}</Row>}
+                {lead.website && (
+                  <Row icon={Globe}>
+                    <span className="truncate">{lead.website}</span>
+                  </Row>
+                )}
+                {lead.location && <Row icon={MapPin}>{lead.location}</Row>}
+              </div>
             </div>
           );
         })}
       </div>
-    );
-  }
+    </div>
+  );
+}
+type MondayItemId = { itemId?: number; error?: string };
 
-  if (agent === "Pulse") {
-    const o = output as PulseResult;
-    return (
-      <div className="space-y-3 text-sm">
-        <div>
-          <div className="text-xs text-muted-foreground">Subject</div>
-          <div className="font-medium">{o.subject}</div>
-        </div>
-        <div>
-          <div className="text-xs text-muted-foreground">Body</div>
-          <p className="whitespace-pre-wrap">{o.body}</p>
-        </div>
-        {o.variants?.length > 0 && (
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">Variants</div>
-            {o.variants.map((v, i) => (
-              <div key={i} className="p-2 rounded-md border border-border/60">
-                <div className="font-medium text-xs">{v.subject}</div>
-                <p className="text-xs whitespace-pre-wrap text-muted-foreground">{v.body}</p>
+function PulseOutput({ data }: { data: PulseResult }) {
+  return (
+    <div className="space-y-4">
+      <MessageBlock label="Primary" subject={data?.subject} body={data?.body} />
+      {data?.variants?.length ? (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              A/B variants
+            </p>
+            {data.variants.map((v, i) => (
+              <MessageBlock
+                key={i}
+                label={`Variant ${String.fromCharCode(65 + i)}`}
+                subject={v.subject}
+                body={v.body}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function MessageBlock({
+  label,
+  subject,
+  body,
+}: {
+  label: string;
+  subject?: string;
+  body?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm">
+      <div className="mb-2 flex items-center gap-2">
+        <Mail className="h-3.5 w-3.5 text-sky-400" />
+        <Badge variant="outline" className="text-[10px]">
+          {label}
+        </Badge>
+      </div>
+      {subject && (
+        <p className="mb-2 text-sm font-semibold">
+          <span className="text-muted-foreground">Subject:</span> {subject}
+        </p>
+      )}
+      {body && (
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{body}</p>
+      )}
+    </div>
+  );
+}
+
+function NexusOutput({ data }: { data: NexusResult }) {
+  return (
+    <div className="space-y-4">
+      {data?.competitors?.length ? (
+        <Section title="Competitors" icon={Target} tint="text-amber-400">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {data.competitors.map((c, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
+              >
+                <p className="mb-1 font-semibold">{c.name}</p>
+                <p className="text-xs text-emerald-300/90">
+                  <span className="font-semibold">Strength:</span> {c.strength}
+                </p>
+                <p className="text-xs text-rose-300/90">
+                  <span className="font-semibold">Weakness:</span> {c.weakness}
+                </p>
               </div>
             ))}
           </div>
-        )}
-      </div>
-    );
-  }
+        </Section>
+      ) : null}
 
-  if (agent === "Nexus") {
-    const o = output as NexusResult;
-    return (
-      <div className="space-y-3 text-sm">
-        {o.competitors?.length > 0 && (
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Competitors</div>
-            <div className="space-y-1">
-              {o.competitors.map((c, i) => (
-                <div key={i} className="p-2 rounded-md border border-border/60">
-                  <div className="font-medium">{c.name}</div>
-                  <div className="text-xs text-success">+ {c.strength}</div>
-                  <div className="text-xs text-destructive">- {c.weakness}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {o.opportunities?.length > 0 && (
-          <BulletList label="Opportunities" items={o.opportunities} />
-        )}
-        {o.insights?.length > 0 && <BulletList label="Insights" items={o.insights} />}
-      </div>
-    );
-  }
+      {data?.opportunities?.length ? (
+        <Section title="Opportunities" icon={Lightbulb} tint="text-amber-400">
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            {data.opportunities.map((o, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="text-amber-400">→</span>
+                <span>{o}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
 
-  if (agent === "Forge") {
-    const o = output as ForgeResult;
-    return (
-      <div className="space-y-2 text-sm">
-        <div>
-          <span className="text-xs text-muted-foreground">Trigger: </span>
-          <span className="font-medium">{o.trigger}</span>
+      {data?.insights?.length ? (
+        <Section title="Insights" icon={Sparkles} tint="text-violet-400">
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            {data.insights.map((o, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="text-violet-400">✦</span>
+                <span>{o}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
+    </div>
+  );
+}
+
+function ForgeOutput({ data }: { data: ForgeResult }) {
+  return (
+    <div className="space-y-4">
+      {data?.trigger && (
+        <div className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Trigger
+          </p>
+          <p className="mt-1">{data.trigger}</p>
         </div>
-        <ol className="space-y-1 list-decimal list-inside">
-          {(o.steps ?? []).map((s, i) => (
-            <li key={i}>
-              <span className="font-medium">{s.action}</span>{" "}
-              <span className="text-muted-foreground">— {s.details}</span>
+      )}
+
+      {data?.steps?.length ? (
+        <ol className="space-y-2">
+          {data.steps.map((s, i) => (
+            <li
+              key={i}
+              className="flex gap-3 rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
+            >
+              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-xs font-semibold text-orange-300">
+                {i + 1}
+              </div>
+              <div>
+                <p className="font-semibold">{s.action}</p>
+                <p className="text-xs text-muted-foreground">{s.details}</p>
+              </div>
             </li>
           ))}
         </ol>
-        {o.integrations?.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {o.integrations.map((it, i) => (
-              <Badge key={i} variant="outline">{it}</Badge>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
+      ) : null}
 
-  if (agent === "Shield") {
-    const o = output as ShieldResult;
-    return (
-      <div className="space-y-2 text-sm">
-        <div className="flex items-center gap-2">
-          {o.ok ? (
-            <Badge variant="default" className="gap-1">
-              <CheckCircle2 className="h-3 w-3" /> Passed
+      {data?.integrations?.length ? (
+        <div className="flex flex-wrap gap-2">
+          {data.integrations.map((tool, i) => (
+            <Badge key={i} variant="secondary" className="text-[11px]">
+              {tool}
             </Badge>
-          ) : (
-            <Badge variant="destructive">Issues found</Badge>
-          )}
+          ))}
         </div>
-        <p className="text-muted-foreground">{o.summary}</p>
-        {o.issues?.length > 0 && <BulletList label="Issues" items={o.issues} />}
-      </div>
-    );
-  }
+      ) : null}
+    </div>
+  );
+}
 
+function ShieldOutput({ data }: { data: ShieldResult }) {
   return (
-    <pre className="text-xs bg-muted/40 p-2 rounded-md overflow-auto max-h-64">
-      {JSON.stringify(output, null, 2)}
+    <div className="space-y-3">
+      <div
+        className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
+          data?.ok
+            ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-200"
+            : "border-rose-500/30 bg-rose-500/5 text-rose-200"
+        }`}
+      >
+        {data?.ok ? (
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+        ) : (
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+        )}
+        <p>{data?.summary}</p>
+      </div>
+      {data?.issues?.length ? (
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Issues
+          </p>
+          <ul className="space-y-1 text-sm text-muted-foreground">
+            {data.issues.map((iss, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="text-rose-400">!</span>
+                <span>{iss}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function JsonFallback({ data }: { data: unknown }) {
+  return (
+    <pre className="overflow-x-auto rounded-lg border border-border/40 bg-background/60 p-3 text-xs text-muted-foreground">
+      {JSON.stringify(data, null, 2)}
     </pre>
   );
 }
 
-function BulletList({ label, items }: { label: string; items: string[] }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Small helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function Row({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Icon className="h-3 w-3 shrink-0" />
+      {children}
+    </div>
+  );
+}
+
+function Section({
+  title,
+  icon: Icon,
+  tint,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground mb-1">{label}</div>
-      <ul className="list-disc list-inside space-y-0.5 text-sm">
-        {items.map((it, i) => (
-          <li key={i}>{it}</li>
-        ))}
-      </ul>
+      <div className="mb-2 flex items-center gap-2">
+        <Icon className={`h-4 w-4 ${tint ?? ""}`} />
+        <p className="text-sm font-semibold">{title}</p>
+      </div>
+      {children}
     </div>
   );
 }
