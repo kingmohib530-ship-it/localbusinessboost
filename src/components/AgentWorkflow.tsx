@@ -1539,18 +1539,19 @@ function FinalSummaryCard({
   if (!aether && !vanguard) return null;
 
   return (
-    <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-card/60 to-cyan-500/10">
+    <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-card/60 to-cyan-500/10 shadow-xl shadow-yellow-500/5 animate-fade-in">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <Crown className="h-5 w-5 text-yellow-400" />
             <div>
-              <CardTitle className="text-base">
-                {aether?.headline || "Your AI workforce delivered"}
+              <CardTitle className="text-base tracking-tight">
+                {aether?.headline || "Your AI Team just delivered — here's what they built for you"}
               </CardTitle>
               <CardDescription>
-                Final summary, validated and ready to act on.
+                Validated, ready to act on, and tuned for real revenue.
               </CardDescription>
+
             </div>
           </div>
           <Button
