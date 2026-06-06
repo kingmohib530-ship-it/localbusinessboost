@@ -109,6 +109,12 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Build a complete end-to-end automated sales system for a roofing company that captures leads, nurtures them with email + SMS, books appointments, and asks for reviews. Include exact Resend, Twilio, Cal.com, and Monday.com setup steps plus realistic ROI projections.",
   },
+  {
+    label: "💵 HVAC lead-to-booking machine",
+    prompt:
+      "Design and implement a complete automated lead-to-booking system for a local HVAC company that maximizes revenue through email + SMS nurturing and easy online booking. Include exact Resend, Twilio, and Cal.com setup steps, ready-to-paste templates, a Week 1 action plan for the owner, and realistic dollar-impact ROI projections.",
+  },
+
 ];
 
 // Per-agent visual identity.
@@ -600,7 +606,9 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
       <div className="flex flex-wrap items-center gap-2">
         <SaveToMondayButton forge={data} title={title} />
         <CopyButton text={fullGuide} label="Copy Full Implementation Guide" />
+        <DownloadGuideButton text={fullGuide} title={title} />
       </div>
+
 
       {/* Headline ROI */}
       {(data?.estimatedRoi || data?.roiProjection) && (
@@ -953,6 +961,38 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
     </button>
   );
 }
+
+function DownloadGuideButton({ text, title }: { text: string; title: string }) {
+  const onClick = () => {
+    const slug =
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "lunavx-automation";
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${slug}-implementation-guide.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={onClick}
+      className="border-orange-500/40 text-orange-200 hover:bg-orange-500/10"
+    >
+      <Workflow className="mr-2 h-3.5 w-3.5" />
+      Download Implementation Guide
+    </Button>
+  );
+}
+
 
 function ShieldOutput({ data }: { data: ShieldResult }) {
   return (
