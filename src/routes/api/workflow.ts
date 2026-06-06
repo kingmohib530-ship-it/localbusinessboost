@@ -2,35 +2,42 @@ import { createFileRoute } from "@tanstack/react-router";
 import { runLunavxWorkflow } from "@/lib/agents.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const AUTH_ERROR = "Authentication required. Please sign in.";
+
 export const Route = createFileRoute("/api/workflow")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
-          // ===== Auth: verify JWT signature server-side via Supabase Auth =====
+          // ===== Auth: verify Supabase JWT (consistent with other protected routes) =====
           const authHeader = request.headers.get("authorization") || "";
-          if (!authHeader.startsWith("Bearer ")) {
+          if (!authHeader.toLowerCase().startsWith("bearer ")) {
+            console.warn("[/api/workflow] missing bearer token");
             return Response.json(
-              { success: false, error: "Sign in required" },
+              { success: false, error: AUTH_ERROR },
               { status: 401 },
             );
           }
-          const token = authHeader.slice("Bearer ".length).trim();
+          const token = authHeader.slice(7).trim();
           if (!token) {
             return Response.json(
-              { success: false, error: "Sign in required" },
-              { status: 401 },
-            );
-          }
-          const { data: userData, error: userErr } =
-            await supabaseAdmin.auth.getUser(token);
-          if (userErr || !userData?.user) {
-            return Response.json(
-              { success: false, error: "Invalid session" },
+              { success: false, error: AUTH_ERROR },
               { status: 401 },
             );
           }
 
+          const { data: userData, error: userErr } =
+            await supabaseAdmin.auth.getUser(token);
+          const user = userData?.user;
+          if (userErr || !user) {
+            console.warn("[/api/workflow] invalid session:", userErr?.message);
+            return Response.json(
+              { success: false, error: AUTH_ERROR },
+              { status: 401 },
+            );
+          }
+
+          // ===== Input validation =====
           const body = (await request.json().catch(() => ({}))) as {
             userRequest?: unknown;
           };
@@ -50,7 +57,12 @@ export const Route = createFileRoute("/api/workflow")({
             );
           }
 
-          const result = await runLunavxWorkflow(userRequest);
+          console.log(
+            `[/api/workflow] user=${user.id} request="${userRequest.slice(0, 80)}${userRequest.length > 80 ? "…" : ""}"`,
+          );
+
+          // Pass userId for future per-user Monday.com boards / personalization.
+          const result = await runLunavxWorkflow(userRequest, user.id);
           return Response.json(result, { status: result.success ? 200 : 500 });
         } catch (err) {
           console.error("/api/workflow error:", err);
