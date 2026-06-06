@@ -587,11 +587,14 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
   return (
     <div className="space-y-5">
       {data?.estimatedRoi && (
-        <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 p-3 text-sm text-orange-100">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-orange-300">
-            💰 Estimated ROI
-          </p>
-          <p className="leading-relaxed">{data.estimatedRoi}</p>
+        <div className="rounded-xl border border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent p-4 shadow-lg shadow-orange-500/5">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-lg">💰</span>
+            <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
+              Estimated Revenue Impact
+            </p>
+          </div>
+          <p className="text-sm leading-relaxed text-orange-50">{data.estimatedRoi}</p>
         </div>
       )}
 
