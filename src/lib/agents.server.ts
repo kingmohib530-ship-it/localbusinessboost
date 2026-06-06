@@ -402,12 +402,15 @@ RULES:
 - "keyOutcomes" is 3-5 bullets — each is a concrete win the user just got
   (e.g. "12 ready-to-call HVAC leads in Tampa, FL synced to your CRM").
 - "revenueImpact" is one sentence with a dollar range when possible.
+- "projections" gives short, realistic estimates the user can quote back —
+  each value is a SHORT string like "8-15", "$2k-$5k/mo", "4-6 hrs". Omit a
+  key if you genuinely cannot estimate it.
 - "nextSteps" is 3-5 short imperative actions the user should do TODAY or
   this week. Each starts with a verb.
 - "headline" is under 80 chars, encouraging and specific.
 
 Return ONLY JSON in this exact shape:
-{"headline":"","executiveSummary":"","keyOutcomes":[""],"revenueImpact":"","nextSteps":[""]}`,
+{"headline":"","executiveSummary":"","keyOutcomes":[""],"revenueImpact":"","projections":{"leads":"","bookings":"","monthlyRevenue":"","timeSavedPerWeek":""},"nextSteps":[""]}`,
 
   Vanguard: `You are VANGUARD, the LUNAVX Executive QC & Validator. You are
 the FINAL safety layer after Shield and Aether. You audit the ENTIRE package
