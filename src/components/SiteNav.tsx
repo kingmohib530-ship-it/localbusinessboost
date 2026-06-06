@@ -31,7 +31,7 @@ export function SiteNav() {
                 {l.label}
               </a>
             ) : (
-              <Link key={l.label} to={l.to} className="hover:text-foreground transition-colors">
+              <Link key={l.label} to={l.to as string} className="hover:text-foreground transition-colors">
                 {l.label}
               </Link>
             ),
