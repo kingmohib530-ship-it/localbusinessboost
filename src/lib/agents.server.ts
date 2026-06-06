@@ -257,12 +257,16 @@ READY-TO-USE CONTENT (these fields MUST be populated, not empty):
       (e.g. ["RESEND_API_KEY", "RESEND_FROM_EMAIL"]).
   REQUIRED: include Resend, Twilio, one booking platform (Cal.com OR
   Calendly), and Monday.com. Add more only if the steps reference them.
-- "nextActions": 4-7 concrete things the BUSINESS OWNER (not a developer)
-  should do THIS WEEK to go live, in priority order. Each entry:
+- "nextActions" IS the "Week 1 Action Plan" — 4-7 concrete things the
+  BUSINESS OWNER (not a developer) should do in the next 7 days to go live,
+  in priority order. Bias toward Day 1-2 quick wins first (sign up for
+  Resend/Twilio, paste API keys, deploy the lead form), then mid-week
+  template + booking setup, then Friday go-live test. Each entry:
     • title: short imperative ("Verify your Resend sending domain")
     • owner: "Owner" | "Office Manager" | "Developer" | "Marketing"
-    • eta: like "15 min", "1 hr", "Today"
+    • eta: like "15 min", "1 hr", "Day 2", "Friday"
     • why: one sentence on revenue impact.
+
 - "snippets": 3-5 copy-paste-ready, WORKING code/config blocks. Each has
   title, language ("html" | "javascript" | "json" | "bash" | "text"),
   and code. REQUIRED set:
