@@ -1548,6 +1548,28 @@ function FinalSummaryCard({
             <span>{aether.revenueImpact}</span>
           </div>
         )}
+        {aether?.projections && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { label: "New Leads", value: aether.projections.leads },
+              { label: "Bookings", value: aether.projections.bookings },
+              { label: "Monthly Revenue", value: aether.projections.monthlyRevenue },
+              { label: "Time Saved / wk", value: aether.projections.timeSavedPerWeek },
+            ]
+              .filter((s) => s.value)
+              .map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-lg border border-yellow-500/20 bg-card/60 p-2.5 text-center"
+                >
+                  <div className="text-sm font-bold text-yellow-100">{s.value}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
         {vanguard && (
           <div
             className={`flex items-center gap-2 rounded-lg border p-2.5 text-xs ${
