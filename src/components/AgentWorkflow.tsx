@@ -45,6 +45,12 @@ import type {
   ShieldResult,
   AtlasLead,
 } from "@/lib/agents.server";
+import {
+  AutomationTemplates,
+  ResultsTracker,
+  type CampaignTemplate,
+  type ResultsMetrics,
+} from "./AutomationTemplates";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Example prompts to spark ideas for local-service business owners.
