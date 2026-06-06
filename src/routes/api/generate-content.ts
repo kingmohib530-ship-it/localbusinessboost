@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // FREE BETA: payments temporarily disabled — high daily cap for all plans.
