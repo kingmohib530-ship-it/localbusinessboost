@@ -46,6 +46,7 @@ export const createTask = createServerFn({ method: "POST" })
 
 async function runTaskInBackground(
   taskId: string,
+  orgId: string,
   userId: string,
   input: string,
   singleAgent?: string
@@ -63,6 +64,7 @@ async function runTaskInBackground(
     await supabaseAdmin
       .from("execution_logs")
       .insert({
+        organization_id: orgId,
         task_id: taskId,
         user_id: userId,
         agent_name: agent_name ?? null,
@@ -77,6 +79,7 @@ async function runTaskInBackground(
     const { data: run } = await supabaseAdmin
       .from("agent_runs")
       .insert({
+        organization_id: orgId,
         task_id: taskId,
         user_id: userId,
         agent_name: agent,
