@@ -94,7 +94,7 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Create an automation that reactivates past HVAC customers in Tampa, FL with seasonal tune-up offers via email + SMS, and books them straight into Calendly.",
   },
-],
+];
 
 // Per-agent visual identity.
 const AGENT_STYLE: Record<
