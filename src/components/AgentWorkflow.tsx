@@ -109,6 +109,12 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Build a complete end-to-end automated sales system for a roofing company that captures leads, nurtures them with email + SMS, books appointments, and asks for reviews. Include exact Resend, Twilio, Cal.com, and Monday.com setup steps plus realistic ROI projections.",
   },
+  {
+    label: "💵 HVAC lead-to-booking machine",
+    prompt:
+      "Design and implement a complete automated lead-to-booking system for a local HVAC company that maximizes revenue through email + SMS nurturing and easy online booking. Include exact Resend, Twilio, and Cal.com setup steps, ready-to-paste templates, a Week 1 action plan for the owner, and realistic dollar-impact ROI projections.",
+  },
+
 ];
 
 // Per-agent visual identity.
