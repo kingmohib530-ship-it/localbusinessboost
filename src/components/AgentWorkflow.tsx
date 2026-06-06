@@ -238,9 +238,9 @@ export function AgentWorkflow() {
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl">Your AI Employee Team</CardTitle>
+              <CardTitle className="text-xl">Your AI Workforce OS</CardTitle>
               <CardDescription>
-                Six AI agents that find leads, write outreach, and book jobs — while you sleep.
+                Your AI team that gets you more clients &amp; bookings — whether you run a local business or freelance.
               </CardDescription>
             </div>
           </div>
