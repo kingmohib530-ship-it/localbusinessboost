@@ -564,6 +564,13 @@ export type ForgeNextAction = {
   why?: string;
 };
 
+export type ForgeMondayStatus = {
+  saved: boolean;
+  itemId?: number;
+  note?: string;
+  error?: string;
+};
+
 export type ForgeResult = {
   trigger: string;
   steps: { action: string; details: string }[];
@@ -578,9 +585,33 @@ export type ForgeResult = {
   integrationGuide?: ForgeIntegrationGuideEntry[];
   nextActions?: ForgeNextAction[];
   snippets?: ForgeSnippet[];
+  monday?: ForgeMondayStatus;
 };
 
 export type ShieldResult = { ok: boolean; issues: string[]; summary: string };
+
+export type AetherResult = {
+  headline: string;
+  executiveSummary: string;
+  keyOutcomes: string[];
+  revenueImpact?: string;
+  nextSteps: string[];
+};
+
+export type VanguardCheck = {
+  name: string;
+  status: "pass" | "warn" | "fail";
+  note?: string;
+};
+
+export type VanguardResult = {
+  approved: boolean;
+  score?: number;
+  checks: VanguardCheck[];
+  blockers?: string[];
+  recommendations?: string[];
+  finalVerdict: string;
+};
 
 export type AgentResult =
   | AtlasResult
@@ -588,6 +619,8 @@ export type AgentResult =
   | PulseResult
   | ForgeResult
   | ShieldResult
+  | AetherResult
+  | VanguardResult
   | Record<string, unknown>;
 
 export type WorkflowResult =
