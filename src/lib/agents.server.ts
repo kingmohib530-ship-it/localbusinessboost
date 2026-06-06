@@ -104,8 +104,8 @@ PLANNING RULES (apply in this order):
    • "end-to-end" / "full automated sales system" / "complete sales system"
      → Atlas → Nexus → Pulse → Forge → Shield
 6. ALWAYS finish the plan with SHIELD for quality control. This is mandatory.
-6. Never include Orbis itself. Never invent agent names. Never repeat an agent.
-7. Keep the plan minimal — only the agents actually needed for the request.
+7. Never include Orbis itself. Never invent agent names. Never repeat an agent.
+8. Keep the plan minimal — only the agents actually needed for the request.
 
 Each step's "instruction" must be a CONCRETE, single-sentence task that
 references the local business vertical and city when present in the request
