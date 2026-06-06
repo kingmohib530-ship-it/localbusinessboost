@@ -3,13 +3,14 @@ import { useState } from "react";
 import { Sparkles, ArrowRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const NAV_LINKS = [
+type NavLink = { to: string; label: string; anchor?: boolean };
+const NAV_LINKS: NavLink[] = [
   { to: "/", label: "Home" },
   { to: "/#features", label: "Features", anchor: true },
   { to: "/#agents", label: "Agents", anchor: true },
   { to: "/pricing", label: "Pricing" },
   { to: "/#blog", label: "Blog", anchor: true },
-] as const;
+];
 
 export function SiteNav() {
   const [open, setOpen] = useState(false);
