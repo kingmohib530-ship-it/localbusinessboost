@@ -3,11 +3,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: {
     priceId: string;
     quantity?: number;
     customerEmail?: string;
-    userId?: string;
     returnUrl: string;
     environment: StripeEnv;
   }) => {
@@ -20,7 +20,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     }
     return data;
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // SECURITY: userId is derived from the verified auth session, never from client input,
+    // to prevent attackers attributing paid subscriptions to arbitrary user accounts.
+    const userId = context.userId;
     const stripe = createStripeClient(data.environment);
 
     const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
@@ -34,10 +37,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       ui_mode: "embedded_page",
       return_url: data.returnUrl,
       ...(data.customerEmail && { customer_email: data.customerEmail }),
-      ...(data.userId && {
-        metadata: { userId: data.userId },
-        ...(isRecurring && { subscription_data: { metadata: { userId: data.userId } } }),
-      }),
+      metadata: { userId },
+      ...(isRecurring && { subscription_data: { metadata: { userId } } }),
     });
 
     return session.client_secret;

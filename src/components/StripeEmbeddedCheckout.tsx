@@ -7,18 +7,16 @@ interface Props {
   priceId: string;
   quantity?: number;
   customerEmail?: string;
-  userId?: string;
   returnUrl?: string;
 }
 
-export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, userId, returnUrl }: Props) {
+export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, returnUrl }: Props) {
   const fetchClientSecret = async (): Promise<string> => {
     const result = await createCheckoutSession({
       data: {
         priceId,
         quantity,
         customerEmail,
-        userId,
         returnUrl: returnUrl || absoluteUrl("/checkout/return?session_id={CHECKOUT_SESSION_ID}"),
         environment: getStripeEnvironment(),
       },
