@@ -34,6 +34,10 @@ import {
   ShieldCheck,
   Users,
   PenLine,
+  Crown,
+  Award,
+  Copy,
+  TrendingUp,
 } from "lucide-react";
 import type {
   WorkflowResult,
@@ -43,6 +47,8 @@ import type {
   NexusResult,
   ForgeResult,
   ShieldResult,
+  AetherResult,
+  VanguardResult,
   AtlasLead,
 } from "@/lib/agents.server";
 import {
