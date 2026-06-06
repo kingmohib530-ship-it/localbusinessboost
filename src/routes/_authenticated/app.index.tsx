@@ -1,11 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useState } from "react";
 import { dashboardStats, listTasks } from "@/lib/orchestrator.functions";
+import {
+  getOnboardingProfile,
+  resetOnboarding,
+} from "@/lib/onboarding.functions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, CheckCircle2, Cpu, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Activity,
+  CheckCircle2,
+  Cpu,
+  AlertTriangle,
+  Sparkles,
+} from "lucide-react";
 import { AgentWorkflow } from "@/components/AgentWorkflow";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: Overview,
@@ -14,8 +27,43 @@ export const Route = createFileRoute("/_authenticated/app/")({
 function Overview() {
   const statsFn = useServerFn(dashboardStats);
   const tasksFn = useServerFn(listTasks);
+  const onboardingFn = useServerFn(getOnboardingProfile);
+  const resetFn = useServerFn(resetOnboarding);
+  const qc = useQueryClient();
+
   const stats = useQuery({ queryKey: ["stats"], queryFn: () => statsFn(), refetchInterval: 4000 });
   const tasks = useQuery({ queryKey: ["tasks"], queryFn: () => tasksFn(), refetchInterval: 3000 });
+  const onboarding = useQuery({
+    queryKey: ["onboarding-profile"],
+    queryFn: () => onboardingFn(),
+    staleTime: 60_000,
+  });
+  const resetMut = useMutation({
+    mutationFn: () => resetFn(),
+    onSuccess: () => {
+      try {
+        localStorage.removeItem("lunavx:onboarded");
+      } catch {
+        // ignore
+      }
+      qc.invalidateQueries({ queryKey: ["onboarding-profile"] });
+      setWizardOpen(true);
+    },
+  });
+
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
+  const [autoRun, setAutoRun] = useState(false);
+
+  // Auto-open the wizard on first visit when the profile has never been onboarded.
+  useEffect(() => {
+    if (onboarding.isLoading || !onboarding.data) return;
+    const localFlag =
+      typeof window !== "undefined" && localStorage.getItem("lunavx:onboarded") === "1";
+    if (!onboarding.data.onboarded_at && !localFlag) {
+      setWizardOpen(true);
+    }
+  }, [onboarding.isLoading, onboarding.data]);
 
   const s = stats.data;
   const cards = [
@@ -27,9 +75,24 @@ function Overview() {
 
   return (
     <div className="p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-display font-bold tracking-tight">Overview</h1>
-        <p className="text-muted-foreground mt-1">Your AI workforce at a glance.</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-display font-bold tracking-tight">Overview</h1>
+          <p className="text-muted-foreground mt-1">
+            {onboarding.data?.business_name
+              ? `Welcome back, ${onboarding.data.business_name}. Your AI workforce is ready.`
+              : "Your AI workforce at a glance."}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => resetMut.mutate()}
+          disabled={resetMut.isPending}
+        >
+          <Sparkles className="h-4 w-4 mr-1.5" />
+          Restart onboarding
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -44,8 +107,14 @@ function Overview() {
         ))}
       </div>
 
-      <AgentWorkflow />
-
+      <AgentWorkflow
+        initialPrompt={pendingPrompt}
+        autoRun={autoRun}
+        onConsumed={() => {
+          setAutoRun(false);
+          setPendingPrompt(undefined);
+        }}
+      />
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
@@ -93,6 +162,23 @@ function Overview() {
           )}
         </div>
       </Card>
+
+      <OnboardingWizard
+        open={wizardOpen}
+        onClose={() => {
+          setWizardOpen(false);
+          qc.invalidateQueries({ queryKey: ["onboarding-profile"] });
+        }}
+        onComplete={(prompt) => {
+          setWizardOpen(false);
+          qc.invalidateQueries({ queryKey: ["onboarding-profile"] });
+          setPendingPrompt(prompt);
+          setAutoRun(true);
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }}
+      />
     </div>
   );
 }
