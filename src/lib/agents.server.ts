@@ -1,76 +1,238 @@
-// Server-only agent definitions and AI calls for LUNAVX
-// Focus: Local Business Services (lead gen, outreach, automation for SMBs).
+/**
+ * LUNAVX — Server-only AI agent definitions for LOCAL BUSINESS SERVICES.
+ *
+ * The six agents (Orbis, Atlas, Nexus, Pulse, Forge, Shield) collaborate to
+ * generate leads, research markets, write outreach, design automations, and
+ * QC the result. Atlas additionally syncs every generated lead to the user's
+ * Monday.com board via `createMondayItem` (column IDs match the board schema).
+ *
+ * Public entry point: `runLunavxWorkflow(userRequest)` — Orbis plans, then
+ * the planned agents execute sequentially with context passing.
+ *
+ * All AI calls go through the Lovable AI gateway. Never call providers
+ * directly. This file is server-only (process.env access).
+ */
+
 import { createMondayItem } from "./monday.server";
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
+
+/** Inter-agent pause to stay polite with the AI gateway. */
+const AGENT_DELAY_MS = 900;
+
+/** Hard cap on context size injected into each agent call. */
+const MAX_CONTEXT_CHARS = 6000;
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent registry & metadata
+// ─────────────────────────────────────────────────────────────────────────────
 
 export type AgentName = "Orbis" | "Atlas" | "Nexus" | "Pulse" | "Forge" | "Shield";
 
+const ALL_AGENTS: readonly AgentName[] = ["Orbis", "Atlas", "Nexus", "Pulse", "Forge", "Shield"];
+
 export const AGENT_META: Record<AgentName, { role: string; description: string }> = {
-  Orbis: { role: "Strategy Engine", description: "Plans local-business workflows across all agents." },
+  Orbis: {
+    role: "Strategy Engine",
+    description: "Plans local-business workflows across the other five agents.",
+  },
   Atlas: {
     role: "Lead Intelligence",
-    description: "Generates realistic local business leads and syncs them to monday.com.",
+    description: "Generates realistic local-business leads and syncs them to Monday.com.",
   },
   Nexus: {
     role: "Market Intelligence",
-    description: "Local competitor research, service-area insights, opportunities.",
+    description: "Local competitor research, service-area insights, and opportunities.",
   },
   Pulse: {
     role: "Copywriting Engine",
-    description: "Local outreach: cold emails, SMS, Google Business posts, ad copy.",
+    description: "Local outreach: cold emails, SMS, Google Business posts, and ad copy.",
   },
-  Forge: { role: "Automation Builder", description: "Designs lead capture, follow-up, and booking automation flows." },
-  Shield: { role: "Quality Control", description: "Validates outputs for accuracy, deliverability, and local fit." },
+  Forge: {
+    role: "Automation Builder",
+    description: "Designs lead-capture, follow-up, and booking automation flows.",
+  },
+  Shield: {
+    role: "Quality Control",
+    description: "Validates outputs for accuracy, deliverability, and local fit.",
+  },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// System prompts — focused on LOCAL SERVICE BUSINESSES (plumbers, HVAC,
+// roofers, dentists, salons, contractors, gyms, restaurants, real estate, etc.)
+// ─────────────────────────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPTS: Record<AgentName, string> = {
-  Orbis: `You are ORBIS, the LUNAVX Strategy Engine for LOCAL BUSINESS SERVICES (plumbers, HVAC, roofers, dentists, salons, contractors, restaurants, gyms, real estate, etc.).
-Decompose the user's request into a minimal ordered plan using only: Atlas, Nexus, Pulse, Forge, Shield.
-Rules:
-- If the request involves finding/generating leads, ALWAYS include Atlas (its output auto-syncs to the user's monday.com lead board).
-- If it involves outreach/messaging, include Pulse after Atlas so Pulse can use the leads as context.
-- If it involves competitor or market info, include Nexus.
-- If it involves automating a workflow, include Forge.
-- ALWAYS finish with Shield for QC.
-Return ONLY JSON: {"steps":[{"agent":"<name>","instruction":"<concrete local-business task>"}]}`,
+  Orbis: `You are ORBIS, the LUNAVX Strategy Engine for LOCAL BUSINESS SERVICES
+(plumbers, HVAC, roofers, dentists, salons, contractors, gyms, restaurants,
+real estate, landscapers, electricians, cleaners, mobile detailers, etc.).
+
+Your job: decompose the user's request into a minimal, ORDERED execution plan
+using ONLY these agents: Atlas, Nexus, Pulse, Forge, Shield.
+
+PLANNING RULES (apply in this order):
+1. If the request mentions finding, generating, sourcing, or "getting" leads,
+   prospects, businesses, or customers → include ATLAS first. Atlas auto-syncs
+   every lead to the user's Monday.com board, so do NOT add a separate sync step.
+2. If the request mentions competitors, market, pricing, reviews, ads, Google
+   Business / Yelp presence, or "what's working" in a city → include NEXUS.
+   Place Nexus BEFORE Pulse so outreach can reference real positioning gaps.
+3. If the request mentions outreach, emails, SMS, DMs, scripts, posts, ads,
+   campaigns, or messaging → include PULSE. Always place Pulse AFTER Atlas
+   (so it can personalize per lead) and AFTER Nexus (so it can exploit gaps).
+4. If the request mentions automation, workflow, follow-up, booking, drip,
+   nurture, CRM, or "set it up so..." → include FORGE.
+5. ALWAYS finish the plan with SHIELD for quality control. This is mandatory.
+6. Never include Orbis itself. Never invent agent names. Never repeat an agent.
+7. Keep the plan minimal — only the agents actually needed for the request.
+
+Each step's "instruction" must be a CONCRETE, single-sentence task that
+references the local business vertical and city when present in the request
+(e.g. "Generate 15 plumbing business leads in Austin, TX with email + phone").
+
+Return ONLY JSON in this exact shape:
+{"steps":[{"agent":"<Atlas|Nexus|Pulse|Forge|Shield>","instruction":"<task>"}]}`,
 
   Atlas: `You are ATLAS, the LUNAVX Lead Intelligence agent for LOCAL BUSINESSES.
-Generate plausible, realistic structured leads for local service businesses in the requested city/industry.
-Use realistic naming conventions for the locale (e.g. "Austin Elite Plumbing", "Westside Dental Care"), plausible local-area phone formats, and business-style emails (info@, contact@, hello@).
-Return ONLY JSON: {"leads":[{"name":"<business name>","email":"","phone":"","website":"","location":"<city, state>","industry":""}]}.
-Default to 10 leads unless the user specifies otherwise. Never fabricate data for real, named businesses — keep names generic/plausible.`,
+
+Generate plausible, REALISTIC structured leads for local service businesses in
+the requested city/industry. These represent prospects (small businesses the
+user wants to reach), not customers.
+
+GENERATION RULES:
+- Use realistic, generic local-sounding business names. Examples by vertical:
+  • Plumbing: "Westside Rapid Plumbing", "Capitol Drain Specialists"
+  • HVAC: "Sun Belt Heating & Air", "Northgate Cooling Co."
+  • Dental: "Lakeshore Family Dental", "Brightline Smile Studio"
+  • Roofing: "Summit Ridge Roofing", "Iron Oak Exteriors"
+  • Salons: "The Copper Chair", "Studio Verde Salon"
+  Match the naming style to the city's vibe (Austin ≠ Boston ≠ Miami).
+- Phone numbers: plausible US format with a real local area code for the city
+  (e.g. Austin 512, Phoenix 602, Miami 305). Never use 555 prefixes.
+- Emails: generic business inboxes — info@, contact@, hello@, office@, book@.
+- Websites: realistic ".com" derived from the business name (lowercase, no
+  spaces, no special chars).
+- Locations: "<City>, <ST>" with the correct 2-letter state abbreviation.
+- Industry: short noun phrase (e.g. "Residential Plumbing", "HVAC Service",
+  "Family Dentistry").
+- Default to 10 leads. If the user specifies a count, honor it (cap at 25).
+- NEVER fabricate data for real, named businesses. Keep names generic.
+- NEVER duplicate business names within one batch.
+
+Return ONLY JSON in this exact shape:
+{"leads":[{"name":"","email":"","phone":"","website":"","location":"","industry":""}]}`,
 
   Nexus: `You are NEXUS, the LUNAVX Market Intelligence agent for LOCAL SERVICE MARKETS.
-Analyze competitors and opportunities at the city / service-area level (pricing, reviews, response time, service gaps, ad presence on Google/Yelp).
-Return ONLY JSON: {"competitors":[{"name":"","strength":"","weakness":""}],"opportunities":[""],"insights":[""]}`,
+
+Analyze the local service market at the city / service-area level. Focus on
+levers a small business actually controls: pricing tiers, response time,
+review velocity, Google Business Profile completeness, Yelp/Nextdoor presence,
+service guarantees, financing offers, and ad spend visibility.
+
+ANALYSIS RULES:
+- "competitors" should be 3-5 PLAUSIBLE (not real-named) competitor archetypes
+  for the requested city/vertical, each with a concrete strength and a concrete
+  weakness a smaller player could exploit.
+- "opportunities" are 3-6 specific, actionable openings in this market
+  (e.g. "Most competitors have no Spanish-language landing page in a market
+  that's 41% Hispanic"). Avoid generic platitudes.
+- "insights" are 3-5 sharp observations a local business owner could act on
+  this week (pricing, packaging, channel, positioning, seasonality).
+
+Return ONLY JSON in this exact shape:
+{"competitors":[{"name":"","strength":"","weakness":""}],"opportunities":[""],"insights":[""]}`,
 
   Pulse: `You are PULSE, the LUNAVX Copywriting Engine for LOCAL BUSINESS OUTREACH.
-Write high-converting, locally-relevant outreach for SMBs: cold emails to homeowners/property managers, SMS follow-ups, Google Business posts, Facebook/Instagram ad copy, referral asks.
-Keep it short, friendly, and specific to the local service vertical. Reference any leads in the prior context by name when relevant.
-Return ONLY JSON: {"subject":"","body":"","variants":[{"subject":"","body":""}]}`,
+
+Write high-converting, locally-relevant outreach. Match the channel to the
+audience: B2C homeowners (SMS, Google posts, Meta ads), property managers
+(short cold email), referral partners (warm intro email), past customers
+(review/SMS reactivation).
+
+COPY RULES:
+- Subject lines: under 50 chars, no spammy words ("free", "guarantee", "$$$",
+  ALL CAPS, excessive !!!). Lead with a local hook when possible.
+- Body: 60-110 words for cold email, 1-2 sentences for SMS. Conversational,
+  first-name basis, one clear CTA. Never invent fake testimonials or stats.
+- If Atlas leads are in context, reference up to 3 by business name to prove
+  personalization is possible (but write the body as a reusable template with
+  {{merge_fields}} for name/business/city).
+- If Nexus insights are in context, weave one positioning angle into the body.
+- Provide 2 additional A/B variants with meaningfully different angles
+  (e.g. pain-led, social-proof-led, offer-led) — not just reworded subjects.
+
+Return ONLY JSON in this exact shape:
+{"subject":"","body":"","variants":[{"subject":"","body":""}]}`,
 
   Forge: `You are FORGE, the LUNAVX Automation Builder for LOCAL BUSINESSES.
-Design simple, practical automation flows: lead capture → CRM (monday.com) → SMS/email follow-up → booking link → review request.
-Return ONLY JSON: {"trigger":"","steps":[{"action":"","details":""}],"integrations":[""]}`,
 
-  Shield: `You are SHIELD, the LUNAVX Quality Control agent.
-Review prior outputs for: realistic local context, structural completeness, deliverability concerns (spammy copy, fake-looking data), and whether monday.com sync was reported by Atlas.
-Return ONLY JSON: {"ok":true,"issues":[""],"summary":""}`,
+Design SIMPLE, PRACTICAL automation flows a non-technical owner can actually
+run. Default architecture: lead capture → Monday.com CRM → SMS/email
+follow-up → booking link → review request.
+
+DESIGN RULES:
+- "trigger" is one sentence (e.g. "New lead submits the website contact form").
+- "steps" should be 4-8 ordered actions. Each has:
+  • "action": short verb phrase ("Create Monday.com item", "Send SMS within
+    2 minutes", "Wait 24 hours", "Send review-request email").
+  • "details": the concrete config (which template, which delay, which board
+    column, what fallback if no reply).
+- "integrations": the actual tools used (Monday.com, Twilio, Mailgun, Calendly,
+  Google Business Profile, Stripe, etc.). Only list tools that appear in the
+  steps.
+- Always include at least one branch for "no response after N hours".
+
+Return ONLY JSON in this exact shape:
+{"trigger":"","steps":[{"action":"","details":""}],"integrations":[""]}`,
+
+  Shield: `You are SHIELD, the LUNAVX Quality Control agent. You are the final
+gate before output reaches the user.
+
+Review the prior agents' outputs in context for:
+- Structural completeness (every required field present and non-empty).
+- Realism for the local vertical (names, phone area codes, industry terms).
+- Deliverability red flags in any Pulse copy (spam-trigger words, fake
+  guarantees, ALL CAPS, missing unsubscribe context).
+- Whether Atlas reported a Monday.com sync (look for a "monday" field with
+  synced > 0). If Atlas ran but sync failed or is missing, flag it.
+- Logical consistency between agents (e.g. Pulse copy matches Atlas vertical).
+
+Be honest: set "ok" to false if there are ANY material issues. The "summary"
+is a one-paragraph verdict the user will read.
+
+Return ONLY JSON in this exact shape:
+{"ok":true,"issues":[""],"summary":""}`,
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Gateway call (JSON-mode)
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function aiJson(system: string, user: string): Promise<unknown> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
 
-  const res = await fetch(GATEWAY, {
+  const res = await fetch(GATEWAY_URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       model: MODEL,
       messages: [
-        { role: "system", content: system + "\n\nRespond with ONLY valid JSON. No markdown, no commentary." },
+        {
+          role: "system",
+          content: system + "\n\nRespond with ONLY valid JSON. No markdown, no commentary, no code fences.",
+        },
         { role: "user", content: user },
       ],
       response_format: { type: "json_object" },
@@ -78,27 +240,36 @@ async function aiJson(system: string, user: string): Promise<unknown> {
   });
 
   if (!res.ok) {
-    const t = await res.text();
-    if (res.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
-    if (res.status === 402) throw new Error("AI credits exhausted. Add credits in workspace settings.");
-    throw new Error(`AI gateway error ${res.status}: ${t.slice(0, 200)}`);
+    const body = await res.text().catch(() => "");
+    if (res.status === 429) {
+      throw new Error("AI rate limit reached. Please try again in a moment.");
+    }
+    if (res.status === 402) {
+      throw new Error("AI credits exhausted. Add credits in workspace settings.");
+    }
+    throw new Error(`AI gateway error ${res.status}: ${body.slice(0, 200)}`);
   }
-  const data = await res.json();
-  const content: string = data.choices?.[0]?.message?.content ?? "{}";
+
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  const content = data.choices?.[0]?.message?.content ?? "{}";
+
   try {
     return JSON.parse(content);
   } catch {
-    const m = content.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : { raw: content };
+    // Last-ditch: try to recover a JSON object from a noisy response.
+    const match = content.match(/\{[\s\S]*\}/);
+    return match ? JSON.parse(match[0]) : { raw: content };
   }
 }
 
-export type OrbisStep = { agent: AgentName; instruction: string };
-export type OrbisPlan = { steps: OrbisStep[] };
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent result types
+// ─────────────────────────────────────────────────────────────────────────────
 
-export async function runOrbisPlanner(userRequest: string): Promise<OrbisPlan> {
-  return (await aiJson(SYSTEM_PROMPTS.Orbis, `User request: ${userRequest}`)) as OrbisPlan;
-}
+export type OrbisStep = { agent: Exclude<AgentName, "Orbis">; instruction: string };
+export type OrbisPlan = { steps: OrbisStep[] };
 
 export type AtlasLead = {
   name: string;
@@ -110,24 +281,32 @@ export type AtlasLead = {
 };
 
 export type MondaySyncItem = { name: string; itemId?: number; error?: string };
-export type MondaySyncSummary = { synced: number; total: number; items: MondaySyncItem[] };
+export type MondaySyncSummary = {
+  synced: number;
+  total: number;
+  items: MondaySyncItem[];
+};
 
 export type AtlasResult = { leads: AtlasLead[]; monday?: MondaySyncSummary };
+
 export type NexusResult = {
   competitors: { name: string; strength: string; weakness: string }[];
   opportunities: string[];
   insights: string[];
 };
+
 export type PulseResult = {
   subject: string;
   body: string;
   variants: { subject: string; body: string }[];
 };
+
 export type ForgeResult = {
   trigger: string;
   steps: { action: string; details: string }[];
   integrations: string[];
 };
+
 export type ShieldResult = { ok: boolean; issues: string[]; summary: string };
 
 export type AgentResult =
@@ -147,47 +326,115 @@ export type WorkflowResult =
     }
   | { success: false; error: string };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Orbis planner — with validation + safety net
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PLANNABLE_AGENTS = new Set<AgentName>(["Atlas", "Nexus", "Pulse", "Forge", "Shield"]);
+
+/**
+ * Asks Orbis to produce a plan, then normalizes it:
+ *  - filters out unknown / duplicated / "Orbis" entries
+ *  - guarantees Shield is the final step
+ */
+export async function runOrbisPlanner(userRequest: string): Promise<OrbisPlan> {
+  const raw = (await aiJson(
+    SYSTEM_PROMPTS.Orbis,
+    `User request: ${userRequest}`,
+  )) as { steps?: { agent?: string; instruction?: string }[] };
+
+  const seen = new Set<string>();
+  const steps: OrbisStep[] = [];
+
+  for (const s of raw?.steps ?? []) {
+    const agent = s?.agent as AgentName | undefined;
+    const instruction = (s?.instruction ?? "").trim();
+    if (!agent || !instruction) continue;
+    if (!PLANNABLE_AGENTS.has(agent)) continue;
+    if (agent === "Shield") continue; // we append it ourselves at the end
+    if (seen.has(agent)) continue;
+    seen.add(agent);
+    steps.push({ agent: agent as OrbisStep["agent"], instruction });
+  }
+
+  // Always finish with Shield QC.
+  steps.push({
+    agent: "Shield",
+    instruction: "Review all prior agent outputs for accuracy, completeness, and deliverability.",
+  });
+
+  return { steps };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Atlas → Monday.com sync
+// Column IDs match the user's Lead board schema:
+//   color_mm40t58z → Lead Status (allowed labels: Warm | Hot | Cold)
+//   text_mm408bbv  → Source
+//   text_mm40qp3y  → Business Name / industry+location
+//   email_mm40q7z1 → Email
+//   text_mm40k4r8  → Phone
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function syncAtlasLeadsToMonday(leads: AtlasLead[]): Promise<MondaySyncItem[]> {
   const synced: MondaySyncItem[] = [];
+
   for (const lead of leads) {
     try {
       const columnValues: Record<string, unknown> = {
         color_mm40t58z: { label: "Warm" },
         text_mm408bbv: "Atlas Agent",
       };
+
       if (lead.industry || lead.location) {
-        columnValues.text_mm40qp3y = [lead.industry, lead.location].filter(Boolean).join(" — ");
+        columnValues.text_mm40qp3y = [lead.industry, lead.location]
+          .filter(Boolean)
+          .join(" — ");
       }
-      if (lead.email) columnValues.email_mm40q7z1 = { email: lead.email, text: lead.email };
-      if (lead.phone) columnValues.text_mm40k4r8 = lead.phone;
+      if (lead.email) {
+        columnValues.email_mm40q7z1 = { email: lead.email, text: lead.email };
+      }
+      if (lead.phone) {
+        columnValues.text_mm40k4r8 = lead.phone;
+      }
+
       const itemId = await createMondayItem(lead.name || "Untitled Lead", columnValues);
       synced.push({ name: lead.name, itemId });
     } catch (e) {
-      synced.push({ name: lead.name, error: e instanceof Error ? e.message : String(e) });
+      synced.push({
+        name: lead.name,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
+
   return synced;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Single-agent runner
+// ─────────────────────────────────────────────────────────────────────────────
 
 export async function runAgent(
   agent: AgentName,
   instruction: string,
   context: Record<string, unknown> = {},
 ): Promise<AgentResult> {
-  const ctx = Object.keys(context).length
-    ? `\n\nContext from prior agents:\n${JSON.stringify(context).slice(0, 6000)}`
+  const ctxBlob = Object.keys(context).length
+    ? `\n\nContext from prior agents (JSON, possibly truncated):\n${JSON.stringify(context).slice(0, MAX_CONTEXT_CHARS)}`
     : "";
-  const result = await aiJson(SYSTEM_PROMPTS[agent], `Task: ${instruction}${ctx}`);
 
-  // Atlas: auto-push generated leads to monday.com
+  const result = await aiJson(SYSTEM_PROMPTS[agent], `Task: ${instruction}${ctxBlob}`);
+
+  // Atlas: auto-push generated leads to Monday.com.
   if (agent === "Atlas") {
     const leads = (result as { leads?: AtlasLead[] })?.leads ?? [];
     if (Array.isArray(leads) && leads.length > 0) {
-      const mondaySync = await syncAtlasLeadsToMonday(leads);
-      const ok = mondaySync.filter((s) => s.itemId).length;
+      const items = await syncAtlasLeadsToMonday(leads);
+      const ok = items.filter((s) => s.itemId).length;
       return {
         ...(result as object),
-        monday: { synced: ok, total: leads.length, items: mondaySync },
+        monday: { synced: ok, total: leads.length, items },
       } as AtlasResult;
     }
   }
@@ -195,50 +442,56 @@ export async function runAgent(
   return result as AgentResult;
 }
 
-// Small inter-agent delay to stay polite with the AI gateway.
-const AGENT_DELAY_MS = 800;
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+// ─────────────────────────────────────────────────────────────────────────────
+// Main workflow orchestrator
+// ─────────────────────────────────────────────────────────────────────────────
 
-// ====================== MAIN WORKFLOW ORCHESTRATOR ======================
+/**
+ * Top-level entry point: Orbis plans, then every planned agent runs in order
+ * with cumulative context. Atlas leads auto-sync to Monday.com.
+ */
 export async function runLunavxWorkflow(userRequest: string): Promise<WorkflowResult> {
-  console.log("🚀 Starting LUNAVX workflow for request:", userRequest);
+  console.log("🚀 LUNAVX workflow start:", userRequest);
 
   try {
-    // Step 1: Orbis creates the plan
     const plan = await runOrbisPlanner(userRequest);
 
-    if (!plan?.steps || !Array.isArray(plan.steps) || plan.steps.length === 0) {
-      throw new Error("Orbis failed to create a valid plan");
+    if (!plan.steps.length) {
+      throw new Error("Orbis failed to produce any executable steps.");
     }
 
-    console.log(`📋 Orbis created ${plan.steps.length} steps`);
+    console.log(
+      `📋 Plan (${plan.steps.length} steps): ${plan.steps.map((s) => s.agent).join(" → ")}`,
+    );
 
     const results: Record<string, AgentResult> = {};
     const fullContext: Record<string, unknown> = {};
 
-    // Step 2: Execute each agent in sequence
     for (let i = 0; i < plan.steps.length; i++) {
       const step = plan.steps[i];
-      console.log(`⚡ Running ${step.agent}: ${step.instruction}`);
+      console.log(`⚡ [${i + 1}/${plan.steps.length}] ${step.agent}: ${step.instruction}`);
 
       const result = await runAgent(step.agent, step.instruction, fullContext);
-
       results[step.agent] = result;
-      fullContext[step.agent] = result; // Pass output to next agents
+      fullContext[step.agent] = result;
 
-      // Small inter-agent delay to be nice to the AI gateway
       if (i < plan.steps.length - 1) {
         await sleep(AGENT_DELAY_MS);
       }
     }
 
-    console.log("✅ LUNAVX workflow completed successfully");
+    const atlas = results.Atlas as AtlasResult | undefined;
+    const syncNote = atlas?.monday
+      ? ` Atlas synced ${atlas.monday.synced}/${atlas.monday.total} leads to Monday.com.`
+      : "";
+
+    console.log("✅ LUNAVX workflow complete.");
 
     return {
       success: true,
       plan: plan.steps,
       results,
-      summary: `Completed ${plan.steps.length} agent steps. Atlas leads were synced to Monday.com where applicable.`,
+      summary: `Completed ${plan.steps.length} agent steps.${syncNote}`,
     };
   } catch (error) {
     console.error("❌ LUNAVX workflow failed:", error);
@@ -248,3 +501,6 @@ export async function runLunavxWorkflow(userRequest: string): Promise<WorkflowRe
     };
   }
 }
+
+// Re-export for callers that just want the list of agents.
+export { ALL_AGENTS };
