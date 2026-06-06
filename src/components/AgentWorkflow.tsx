@@ -104,6 +104,11 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Create a reactivation campaign for past customers of an HVAC business including phone call script, 5-email sequence, SMS touches, Calendly booking link, and an automated Google review request after the tune-up.",
   },
+  {
+    label: "🚀 End-to-end roofing sales system",
+    prompt:
+      "Build a complete end-to-end automated sales system for a roofing company that captures leads, nurtures them with email + SMS, books appointments, and asks for reviews. Include exact Resend, Twilio, Cal.com, and Monday.com setup steps plus realistic ROI projections.",
+  },
 ];
 
 // Per-agent visual identity.
