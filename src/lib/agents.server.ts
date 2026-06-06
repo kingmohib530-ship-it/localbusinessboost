@@ -34,18 +34,35 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 // Agent registry & metadata
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type AgentName = "Orbis" | "Atlas" | "Nexus" | "Pulse" | "Forge" | "Shield";
+export type AgentName =
+  | "Orbis"
+  | "Atlas"
+  | "Nexus"
+  | "Pulse"
+  | "Forge"
+  | "Shield"
+  | "Aether"
+  | "Vanguard";
 
-const ALL_AGENTS: readonly AgentName[] = ["Orbis", "Atlas", "Nexus", "Pulse", "Forge", "Shield"];
+const ALL_AGENTS: readonly AgentName[] = [
+  "Orbis",
+  "Atlas",
+  "Nexus",
+  "Pulse",
+  "Forge",
+  "Shield",
+  "Aether",
+  "Vanguard",
+];
 
 export const AGENT_META: Record<AgentName, { role: string; description: string }> = {
   Orbis: {
     role: "Strategy Engine",
-    description: "Plans local-business workflows across the other five agents.",
+    description: "Plans workflows across the other agents.",
   },
   Atlas: {
     role: "Lead Intelligence",
-    description: "Generates realistic local-business leads and syncs them to Monday.com.",
+    description: "Generates realistic leads and syncs them to Monday.com.",
   },
   Nexus: {
     role: "Market Intelligence",
@@ -53,7 +70,7 @@ export const AGENT_META: Record<AgentName, { role: string; description: string }
   },
   Pulse: {
     role: "Copywriting Engine",
-    description: "Local outreach: cold emails, SMS, Google Business posts, and ad copy.",
+    description: "Cold emails, SMS, posts, ads, DMs, proposals.",
   },
   Forge: {
     role: "Automation Builder",
@@ -61,7 +78,15 @@ export const AGENT_META: Record<AgentName, { role: string; description: string }
   },
   Shield: {
     role: "Quality Control",
-    description: "Validates outputs for accuracy, deliverability, and local fit.",
+    description: "Validates outputs for accuracy, deliverability, and fit.",
+  },
+  Aether: {
+    role: "Final Orchestrator (Boss)",
+    description: "Reviews the full plan and polishes the final user-facing summary.",
+  },
+  Vanguard: {
+    role: "Executive QC & Validator",
+    description: "Final realism, legal, deliverability and revenue check before user sees it.",
   },
 };
 
