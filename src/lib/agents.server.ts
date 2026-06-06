@@ -9,9 +9,18 @@ export type AgentName = "Orbis" | "Atlas" | "Nexus" | "Pulse" | "Forge" | "Shiel
 
 export const AGENT_META: Record<AgentName, { role: string; description: string }> = {
   Orbis: { role: "Strategy Engine", description: "Plans local-business workflows across all agents." },
-  Atlas: { role: "Lead Intelligence", description: "Generates realistic local business leads and syncs them to monday.com." },
-  Nexus: { role: "Market Intelligence", description: "Local competitor research, service-area insights, opportunities." },
-  Pulse: { role: "Copywriting Engine", description: "Local outreach: cold emails, SMS, Google Business posts, ad copy." },
+  Atlas: {
+    role: "Lead Intelligence",
+    description: "Generates realistic local business leads and syncs them to monday.com.",
+  },
+  Nexus: {
+    role: "Market Intelligence",
+    description: "Local competitor research, service-area insights, opportunities.",
+  },
+  Pulse: {
+    role: "Copywriting Engine",
+    description: "Local outreach: cold emails, SMS, Google Business posts, ad copy.",
+  },
   Forge: { role: "Automation Builder", description: "Designs lead capture, follow-up, and booking automation flows." },
   Shield: { role: "Quality Control", description: "Validates outputs for accuracy, deliverability, and local fit." },
 };
@@ -85,10 +94,9 @@ async function aiJson(system: string, user: string): Promise<unknown> {
 }
 
 export async function runOrbisPlanner(userRequest: string) {
-  return (await aiJson(
-    SYSTEM_PROMPTS.Orbis,
-    `User request: ${userRequest}`
-  )) as { steps: { agent: AgentName; instruction: string }[] };
+  return (await aiJson(SYSTEM_PROMPTS.Orbis, `User request: ${userRequest}`)) as {
+    steps: { agent: AgentName; instruction: string }[];
+  };
 }
 
 type AtlasLead = {
@@ -122,11 +130,7 @@ async function syncAtlasLeadsToMonday(leads: AtlasLead[]) {
   return synced;
 }
 
-export async function runAgent(
-  agent: AgentName,
-  instruction: string,
-  context: Record<string, unknown> = {}
-) {
+export async function runAgent(agent: AgentName, instruction: string, context: Record<string, unknown> = {}) {
   const ctx = Object.keys(context).length
     ? `\n\nContext from prior agents:\n${JSON.stringify(context).slice(0, 6000)}`
     : "";
@@ -150,4 +154,52 @@ export async function runAgent(
   }
 
   return result;
+}
+// ====================== MAIN WORKFLOW ORCHESTRATOR ======================
+export async function runLunavxWorkflow(userRequest: string) {
+  console.log("🚀 Starting LUNAVX workflow for request:", userRequest);
+
+  try {
+    // Step 1: Orbis creates the plan
+    const plan = await runOrbisPlanner(userRequest);
+
+    if (!plan?.steps || !Array.isArray(plan.steps) || plan.steps.length === 0) {
+      throw new Error("Orbis failed to create a valid plan");
+    }
+
+    console.log(`📋 Orbis created ${plan.steps.length} steps`);
+
+    const results: Record<string, unknown> = {};
+    const fullContext: Record<string, unknown> = {};
+
+    // Step 2: Execute each agent in sequence
+    for (const step of plan.steps) {
+      console.log(`⚡ Running ${step.agent}: ${step.instruction}`);
+
+      const result = await runAgent(step.agent, step.instruction, fullContext);
+
+      results[step.agent] = result;
+      fullContext[step.agent] = result; // Pass output to next agents
+
+      // Small delay to be nice to the AI gateway
+      if (plan.steps.indexOf(step) < plan.steps.length - 1) {
+        await new Promise((r) => setTimeout(r, 800));
+      }
+    }
+
+    console.log("✅ LUNAVX workflow completed successfully");
+
+    return {
+      success: true,
+      plan: plan.steps,
+      results,
+      summary: `Completed ${plan.steps.length} agent steps. Atlas leads were synced to Monday.com where applicable.`,
+    };
+  } catch (error) {
+    console.error("❌ LUNAVX workflow failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
