@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
+import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
 import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
@@ -57,6 +58,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
 const ApiWorkflowRoute = ApiWorkflowRouteImport.update({
   id: '/api/workflow',
   path: '/api/workflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSaveAutomationRoute = ApiSaveAutomationRouteImport.update({
+  id: '/api/save-automation',
+  path: '/api/save-automation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGenerateWeeklyPlanRoute = ApiGenerateWeeklyPlanRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/save-automation': typeof ApiSaveAutomationRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/chat': typeof ChatRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/save-automation': typeof ApiSaveAutomationRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/save-automation': typeof ApiSaveAutomationRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
+    | '/api/save-automation'
     | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
+    | '/api/save-automation'
     | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
+    | '/api/save-automation'
     | '/api/workflow'
     | '/checkout/return'
     | '/_authenticated/app/agents'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   ChatRoute: typeof ChatRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
+  ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
   ApiWorkflowRoute: typeof ApiWorkflowRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: '/api/workflow'
       fullPath: '/api/workflow'
       preLoaderRoute: typeof ApiWorkflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/save-automation': {
+      id: '/api/save-automation'
+      path: '/api/save-automation'
+      fullPath: '/api/save-automation'
+      preLoaderRoute: typeof ApiSaveAutomationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/generate-weekly-plan': {
@@ -465,6 +485,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChatRoute: ChatRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
+  ApiSaveAutomationRoute: ApiSaveAutomationRoute,
   ApiWorkflowRoute: ApiWorkflowRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   ApiPublicLeadsRoute: ApiPublicLeadsRoute,

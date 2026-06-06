@@ -104,6 +104,11 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Create a reactivation campaign for past customers of an HVAC business including phone call script, 5-email sequence, SMS touches, Calendly booking link, and an automated Google review request after the tune-up.",
   },
+  {
+    label: "🚀 End-to-end roofing sales system",
+    prompt:
+      "Build a complete end-to-end automated sales system for a roofing company that captures leads, nurtures them with email + SMS, books appointments, and asks for reviews. Include exact Resend, Twilio, Cal.com, and Monday.com setup steps plus realistic ROI projections.",
+  },
 ];
 
 // Per-agent visual identity.
@@ -584,19 +589,46 @@ function NexusOutput({ data }: { data: NexusResult }) {
 }
 
 function ForgeOutput({ data }: { data: ForgeResult }) {
+  const title = data?.trigger
+    ? `Forge — ${data.trigger.slice(0, 60)}`
+    : "Forge Automation Blueprint";
+  const fullGuide = buildClientGuide(data, title);
+
   return (
     <div className="space-y-5">
-      {data?.estimatedRoi && (
-        <div className="rounded-xl border border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent p-4 shadow-lg shadow-orange-500/5">
-          <div className="mb-1 flex items-center gap-2">
+      {/* Action bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <SaveToMondayButton forge={data} title={title} />
+        <CopyButton text={fullGuide} label="Copy Full Implementation Guide" />
+      </div>
+
+      {/* Headline ROI */}
+      {(data?.estimatedRoi || data?.roiProjection) && (
+        <div className="rounded-xl border border-orange-500/40 bg-gradient-to-br from-orange-500/15 via-amber-500/5 to-transparent p-4 shadow-lg shadow-orange-500/10">
+          <div className="mb-2 flex items-center gap-2">
             <span className="text-lg">💰</span>
             <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
               Estimated Revenue Impact
             </p>
           </div>
-          <p className="text-sm leading-relaxed text-orange-50">{data.estimatedRoi}</p>
+          {data.estimatedRoi && (
+            <p className="mb-3 text-sm leading-relaxed text-orange-50">
+              {data.estimatedRoi}
+            </p>
+          )}
+          {data.roiProjection && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              <RoiStat label="Booked jobs" value={data.roiProjection.bookedJobsLiftPct} />
+              <RoiStat label="Fewer no-shows" value={data.roiProjection.noShowReductionPct} />
+              <RoiStat label="Review velocity" value={data.roiProjection.reviewVelocityMultiplier} />
+              <RoiStat label="Monthly lift" value={data.roiProjection.monthlyRevenueLiftUsd} />
+              <RoiStat label="Payback" value={data.roiProjection.paybackPeriod} />
+            </div>
+          )}
         </div>
       )}
+
+
 
       {data?.trigger && (
         <div className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm">
@@ -637,6 +669,83 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
           ))}
         </div>
       ) : null}
+
+      {data?.integrationGuide?.length ? (
+        <Section title="Integration Setup" icon={Workflow} tint="text-violet-400">
+          <div className="space-y-3">
+            {data.integrationGuide.map((g, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
+              >
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <Badge className="bg-violet-500/15 text-violet-200 hover:bg-violet-500/15">
+                    {g.provider}
+                  </Badge>
+                  {g.purpose && (
+                    <span className="text-xs text-muted-foreground">{g.purpose}</span>
+                  )}
+                </div>
+                {g.setupSteps?.length ? (
+                  <ol className="ml-4 list-decimal space-y-1 text-xs text-muted-foreground">
+                    {g.setupSteps.map((s, j) => (
+                      <li key={j}>{s}</li>
+                    ))}
+                  </ol>
+                ) : null}
+                {g.envVars?.length ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {g.envVars.map((v) => (
+                      <code
+                        key={v}
+                        className="rounded bg-background/60 px-1.5 py-0.5 font-mono text-[10px] text-emerald-300"
+                      >
+                        {v}
+                      </code>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {data?.nextActions?.length ? (
+        <Section title="Next Actions This Week" icon={CheckCircle2} tint="text-emerald-400">
+          <ol className="space-y-2">
+            {data.nextActions.map((a, i) => (
+              <li
+                key={i}
+                className="flex gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm"
+              >
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-200">
+                  {i + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-emerald-50">{a.title}</p>
+                    {a.owner && (
+                      <Badge variant="outline" className="text-[10px] text-emerald-200">
+                        {a.owner}
+                      </Badge>
+                    )}
+                    {a.eta && (
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {a.eta}
+                      </span>
+                    )}
+                  </div>
+                  {a.why && (
+                    <p className="text-xs text-muted-foreground">{a.why}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
+      ) : null}
+
 
       {data?.emailTemplates?.length ? (
         <Section title="Email Templates" icon={Mail} tint="text-sky-400">
@@ -927,4 +1036,200 @@ function Section({
       {children}
     </div>
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Forge: Save-to-Monday button + ROI stat + client-side guide builder
+// ─────────────────────────────────────────────────────────────────────────────
+
+function RoiStat({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
+  return (
+    <div className="rounded-lg border border-orange-500/20 bg-background/40 p-2 text-center">
+      <p className="text-sm font-bold text-orange-100">{value}</p>
+      <p className="text-[10px] uppercase tracking-wide text-orange-300/80">{label}</p>
+    </div>
+  );
+}
+
+function SaveToMondayButton({
+  forge,
+  title,
+}: {
+  forge: ForgeResult;
+  title: string;
+}) {
+  const [status, setStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "saving" }
+    | { kind: "ok"; itemId: number }
+    | { kind: "err"; msg: string }
+  >({ kind: "idle" });
+
+  const save = async () => {
+    setStatus({ kind: "saving" });
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sign in required.");
+      const res = await fetch("/api/save-automation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, forge }),
+      });
+      const j = (await res.json()) as {
+        success?: boolean;
+        itemId?: number;
+        error?: string;
+      };
+      if (!res.ok || !j.success || !j.itemId) {
+        throw new Error(j.error || `Save failed (${res.status})`);
+      }
+      setStatus({ kind: "ok", itemId: j.itemId });
+    } catch (e) {
+      setStatus({
+        kind: "err",
+        msg: e instanceof Error ? e.message : "Unknown error",
+      });
+    }
+  };
+
+  if (status.kind === "ok") {
+    return (
+      <Badge className="bg-emerald-500/15 px-3 py-1.5 text-xs text-emerald-200 hover:bg-emerald-500/15">
+        <CheckCircle2 className="mr-1 h-3 w-3" />
+        Saved to Monday.com #{status.itemId}
+      </Badge>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        onClick={save}
+        disabled={status.kind === "saving"}
+        className="bg-gradient-to-r from-orange-600 to-amber-500 text-white hover:from-orange-500 hover:to-amber-400"
+      >
+        {status.kind === "saving" ? (
+          <>
+            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+            Saving…
+          </>
+        ) : (
+          <>
+            <Workflow className="mr-2 h-3.5 w-3.5" />
+            Save Automation to Monday.com
+          </>
+        )}
+      </Button>
+      {status.kind === "err" && (
+        <span className="text-xs text-rose-300">{status.msg}</span>
+      )}
+    </div>
+  );
+}
+
+function buildClientGuide(forge: ForgeResult, title: string): string {
+  const out: string[] = [];
+  const h = (s: string) => out.push("", `## ${s}`, "");
+
+  out.push(`# ${title}`, "", "_Generated by LUNAVX Forge._");
+
+  if (forge.trigger) {
+    h("Trigger");
+    out.push(forge.trigger);
+  }
+  if (forge.estimatedRoi) {
+    h("Estimated Revenue Impact");
+    out.push(forge.estimatedRoi);
+  }
+  if (forge.roiProjection) {
+    const r = forge.roiProjection;
+    [
+      r.bookedJobsLiftPct && `- Booked jobs lift: ${r.bookedJobsLiftPct}`,
+      r.noShowReductionPct && `- No-show reduction: ${r.noShowReductionPct}`,
+      r.reviewVelocityMultiplier &&
+        `- Review velocity: ${r.reviewVelocityMultiplier}`,
+      r.monthlyRevenueLiftUsd &&
+        `- Monthly revenue lift: ${r.monthlyRevenueLiftUsd}`,
+      r.paybackPeriod && `- Payback: ${r.paybackPeriod}`,
+    ]
+      .filter(Boolean)
+      .forEach((line) => out.push(line as string));
+  }
+  if (forge.steps?.length) {
+    h("Automation Flow");
+    forge.steps.forEach((s, i) =>
+      out.push(`${i + 1}. **${s.action}** — ${s.details}`),
+    );
+  }
+  if (forge.integrations?.length) {
+    h("Integrations");
+    out.push(forge.integrations.join(", "));
+  }
+  if (forge.integrationGuide?.length) {
+    h("Integration Setup");
+    forge.integrationGuide.forEach((g) => {
+      out.push(`### ${g.provider}${g.purpose ? ` — ${g.purpose}` : ""}`);
+      g.setupSteps?.forEach((s, i) => out.push(`${i + 1}. ${s}`));
+      if (g.envVars?.length) out.push(`Env vars: ${g.envVars.join(", ")}`);
+      out.push("");
+    });
+  }
+  if (forge.emailTemplates?.length) {
+    h("Email Templates");
+    forge.emailTemplates.forEach((t) => {
+      out.push(`### ${t.name}`, `Subject: ${t.subject}`, "", t.body, "");
+    });
+  }
+  if (forge.smsTemplates?.length) {
+    h("SMS Templates");
+    forge.smsTemplates.forEach((t) => out.push(`- **${t.name}** — ${t.body}`));
+  }
+  if (forge.bookingSetup) {
+    h("Booking Setup");
+    const b = forge.bookingSetup;
+    if (b.platform) out.push(`- Platform: ${b.platform}`);
+    if (b.eventName) out.push(`- Event: ${b.eventName}`);
+    if (b.duration) out.push(`- Duration: ${b.duration}`);
+    if (b.buffer) out.push(`- Buffer: ${b.buffer}`);
+    if (b.intakeQuestions?.length) {
+      out.push("- Intake questions:");
+      b.intakeQuestions.forEach((q) => out.push(`  - ${q}`));
+    }
+    if (b.confirmation) out.push(`- Confirmation: ${b.confirmation}`);
+    if (b.reminders?.length) out.push(`- Reminders: ${b.reminders.join(" • ")}`);
+  }
+  if (forge.reviewRequest) {
+    h("Review Request");
+    const r = forge.reviewRequest;
+    if (r.platform) out.push(`- Platform: ${r.platform}`);
+    if (r.timing) out.push(`- Timing: ${r.timing}`);
+    if (r.linkFormat) out.push(`- Link: ${r.linkFormat}`);
+    if (r.message) out.push(`- Message: ${r.message}`);
+  }
+  if (forge.kpis?.length) {
+    h("KPIs");
+    forge.kpis.forEach((k) => out.push(`- ${k}`));
+  }
+  if (forge.nextActions?.length) {
+    h("Next Actions");
+    forge.nextActions.forEach((a, i) => {
+      const meta = [a.owner, a.eta].filter(Boolean).join(" • ");
+      out.push(`${i + 1}. **${a.title}**${meta ? ` _(${meta})_` : ""}`);
+      if (a.why) out.push(`   ${a.why}`);
+    });
+  }
+  if (forge.snippets?.length) {
+    h("Snippets");
+    forge.snippets.forEach((s) => {
+      out.push(`### ${s.title}`, "```" + (s.language || "text"), s.code, "```", "");
+    });
+  }
+  return out.join("\n").trim();
 }
