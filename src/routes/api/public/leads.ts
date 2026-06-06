@@ -51,10 +51,10 @@ export const Route = createFileRoute("/api/public/leads")({
           const { business_id, name, business_name, email, phone, message } = parsed.data;
           const resolvedBusinessId = business_id ?? DEFAULT_BUSINESS_ID;
 
-          // Ensure business exists (multi-tenant safety)
+          // Ensure business exists and resolve its tenant (multi-tenant safety)
           const { data: business, error: bizErr } = await supabaseAdmin
             .from("businesses")
-            .select("id")
+            .select("id, organization_id")
             .eq("id", resolvedBusinessId)
             .maybeSingle();
 
@@ -69,6 +69,7 @@ export const Route = createFileRoute("/api/public/leads")({
           const { error: insertErr } = await supabaseAdmin
             .from("leads")
             .insert({
+              organization_id: business.organization_id,
               business_id: resolvedBusinessId,
               name,
               email: email || null,
