@@ -1351,3 +1351,270 @@ function buildClientGuide(forge: ForgeResult, title: string): string {
   }
   return out.join("\n").trim();
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Aether (Boss) — final polished executive summary
+// ─────────────────────────────────────────────────────────────────────────────
+function AetherOutput({ data }: { data: AetherResult }) {
+  if (!data) return null;
+  return (
+    <div className="space-y-3">
+      {data.headline && (
+        <p className="text-lg font-bold text-yellow-100">{data.headline}</p>
+      )}
+      {data.executiveSummary && (
+        <p className="text-sm text-muted-foreground">{data.executiveSummary}</p>
+      )}
+      {data.revenueImpact && (
+        <div className="flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3 text-sm text-yellow-100">
+          <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+          <span>{data.revenueImpact}</span>
+        </div>
+      )}
+      {data.keyOutcomes?.length ? (
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Key Outcomes
+          </p>
+          <ul className="space-y-1 text-sm">
+            {data.keyOutcomes.map((k, i) => (
+              <li key={i} className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                <span>{k}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {data.nextSteps?.length ? (
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Do This Next
+          </p>
+          <ol className="list-decimal space-y-1 pl-5 text-sm">
+            {data.nextSteps.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vanguard (Final QC) — executive validation report
+// ─────────────────────────────────────────────────────────────────────────────
+function VanguardOutput({ data }: { data: VanguardResult }) {
+  if (!data) return null;
+  const statusColor = (s: string) =>
+    s === "pass"
+      ? "text-emerald-300"
+      : s === "warn"
+      ? "text-amber-300"
+      : "text-rose-300";
+  return (
+    <div className="space-y-3">
+      <div
+        className={`flex items-center justify-between rounded-lg border p-3 text-sm ${
+          data.approved
+            ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-100"
+            : "border-rose-500/30 bg-rose-500/5 text-rose-100"
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          {data.approved ? (
+            <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+          ) : (
+            <AlertCircle className="h-4 w-4 text-rose-400" />
+          )}
+          <span className="font-semibold">
+            {data.approved ? "Approved for launch" : "Needs revision"}
+          </span>
+        </div>
+        {typeof data.score === "number" && (
+          <Badge variant="outline" className="text-xs">
+            Score {data.score}/10
+          </Badge>
+        )}
+      </div>
+      {data.finalVerdict && (
+        <p className="text-sm text-muted-foreground">{data.finalVerdict}</p>
+      )}
+      {data.checks?.length ? (
+        <ul className="space-y-1 text-sm">
+          {data.checks.map((c, i) => (
+            <li key={i} className="flex gap-2">
+              <span className={`font-mono text-xs ${statusColor(c.status)}`}>
+                [{c.status.toUpperCase()}]
+              </span>
+              <span>
+                <span className="font-medium">{c.name}</span>
+                {c.note ? ` — ${c.note}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {data.blockers?.length ? (
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-rose-400">
+            Blockers
+          </p>
+          <ul className="space-y-1 text-sm text-rose-200">
+            {data.blockers.map((b, i) => (
+              <li key={i}>• {b}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {data.recommendations?.length ? (
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Recommendations
+          </p>
+          <ul className="space-y-1 text-sm text-muted-foreground">
+            {data.recommendations.map((r, i) => (
+              <li key={i}>• {r}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FinalSummaryCard — the polished, user-first hero result panel
+// (Aether headline + Vanguard approval + Copy All)
+// ─────────────────────────────────────────────────────────────────────────────
+function FinalSummaryCard({
+  aether,
+  vanguard,
+  results,
+}: {
+  aether?: AetherResult;
+  vanguard?: VanguardResult;
+  results: Record<string, AgentResult>;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyAll = async () => {
+    const md = buildFullMarkdown(aether, vanguard, results);
+    try {
+      await navigator.clipboard.writeText(md);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // ignore
+    }
+  };
+
+  if (!aether && !vanguard) return null;
+
+  return (
+    <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-card/60 to-cyan-500/10">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-yellow-400" />
+            <div>
+              <CardTitle className="text-base">
+                {aether?.headline || "Your AI workforce delivered"}
+              </CardTitle>
+              <CardDescription>
+                Final summary, validated and ready to act on.
+              </CardDescription>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCopyAll}
+            className="border-yellow-500/40 text-yellow-100 hover:bg-yellow-500/10"
+          >
+            <Copy className="mr-1.5 h-3.5 w-3.5" />
+            {copied ? "Copied!" : "Copy All"}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {aether?.executiveSummary && (
+          <p className="text-sm text-muted-foreground">{aether.executiveSummary}</p>
+        )}
+        {aether?.revenueImpact && (
+          <div className="flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3 text-sm text-yellow-100">
+            <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+            <span>{aether.revenueImpact}</span>
+          </div>
+        )}
+        {vanguard && (
+          <div
+            className={`flex items-center gap-2 rounded-lg border p-2.5 text-xs ${
+              vanguard.approved
+                ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-200"
+                : "border-rose-500/30 bg-rose-500/5 text-rose-200"
+            }`}
+          >
+            {vanguard.approved ? (
+              <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-rose-400" />
+            )}
+            <span>
+              Vanguard:{" "}
+              {vanguard.approved ? "Approved for launch" : "Needs revision"}
+              {typeof vanguard.score === "number" ? ` · ${vanguard.score}/10` : ""}
+            </span>
+          </div>
+        )}
+        {aether?.nextSteps?.length ? (
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Do This Next
+            </p>
+            <ol className="list-decimal space-y-1 pl-5 text-sm">
+              {aether.nextSteps.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function buildFullMarkdown(
+  aether: AetherResult | undefined,
+  vanguard: VanguardResult | undefined,
+  results: Record<string, AgentResult>,
+): string {
+  const out: string[] = [];
+  out.push(`# ${aether?.headline || "LUNAVX Workforce Output"}`, "");
+  if (aether?.executiveSummary) out.push(aether.executiveSummary, "");
+  if (aether?.revenueImpact) out.push(`**Revenue impact:** ${aether.revenueImpact}`, "");
+  if (aether?.keyOutcomes?.length) {
+    out.push("## Key Outcomes");
+    aether.keyOutcomes.forEach((k) => out.push(`- ${k}`));
+    out.push("");
+  }
+  if (aether?.nextSteps?.length) {
+    out.push("## Do This Next");
+    aether.nextSteps.forEach((s, i) => out.push(`${i + 1}. ${s}`));
+    out.push("");
+  }
+  if (vanguard) {
+    out.push(
+      `## Vanguard Verdict — ${vanguard.approved ? "Approved" : "Needs revision"}${
+        typeof vanguard.score === "number" ? ` (${vanguard.score}/10)` : ""
+      }`,
+    );
+    if (vanguard.finalVerdict) out.push(vanguard.finalVerdict);
+    out.push("");
+  }
+  out.push("---", "", "## Full Agent Output (JSON)", "```json");
+  out.push(JSON.stringify(results, null, 2));
+  out.push("```");
+  return out.join("\n");
+}
