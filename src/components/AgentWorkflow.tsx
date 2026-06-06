@@ -781,6 +781,17 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
       {data?.snippets?.length ? (
         <Section title="Copy-Paste Snippets" icon={PenLine} tint="text-sky-400">
           <div className="space-y-3">
+            <div className="flex justify-end">
+              <CopyButton
+                text={data.snippets
+                  .map(
+                    (s) =>
+                      `// ── ${s.title} (${s.language || "text"}) ──\n${s.code}`,
+                  )
+                  .join("\n\n")}
+                label="Copy All Snippets"
+              />
+            </div>
             {data.snippets.map((s, i) => (
               <div
                 key={i}
