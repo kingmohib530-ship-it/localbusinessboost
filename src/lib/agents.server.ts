@@ -231,6 +231,33 @@ READY-TO-USE CONTENT (these fields MUST be populated, not empty):
   — assumed avg ticket, current vs projected close rate, and the monthly
   revenue lift (e.g. "At a $9,000 avg roofing job and ~40 inbound leads/mo,
   lifting close-rate from 18% to 28% adds 4 jobs = +$36k/mo.").
+- "roiProjection": structured numbers backed by REAL industry benchmarks.
+  Fields:
+    • bookedJobsLiftPct: realistic range like "18-35%" (speed-to-lead
+      research, MIT/InsideSales benchmarks).
+    • noShowReductionPct: like "30-50%" (SMS reminders, Solutionreach data).
+    • reviewVelocityMultiplier: like "3-5x" (automated review requests).
+    • monthlyRevenueLiftUsd: like "$8,000-$36,000" — anchored to the
+      vertical's typical ticket size.
+    • paybackPeriod: like "7-14 days".
+  Be honest — these are projected ranges, not guarantees.
+- "integrationGuide": exact, ordered setup instructions for the four core
+  integrations the owner must wire up. Each entry has:
+    • provider: "Resend" | "Twilio" | "Cal.com" | "Calendly" | "Monday.com"
+    • purpose: one sentence
+    • setupSteps: 3-6 numbered, click-by-click steps (where to sign up,
+      which keys/IDs to copy, where to paste them, which webhook URL to
+      register, which scopes/permissions matter).
+    • envVars: env var names this integration needs
+      (e.g. ["RESEND_API_KEY", "RESEND_FROM_EMAIL"]).
+  REQUIRED: include Resend, Twilio, one booking platform (Cal.com OR
+  Calendly), and Monday.com. Add more only if the steps reference them.
+- "nextActions": 4-7 concrete things the BUSINESS OWNER (not a developer)
+  should do THIS WEEK to go live, in priority order. Each entry:
+    • title: short imperative ("Verify your Resend sending domain")
+    • owner: "Owner" | "Office Manager" | "Developer" | "Marketing"
+    • eta: like "15 min", "1 hr", "Today"
+    • why: one sentence on revenue impact.
 - "snippets": 3-5 copy-paste-ready, WORKING code/config blocks. Each has
   title, language ("html" | "javascript" | "json" | "bash" | "text"),
   and code. REQUIRED set:
@@ -240,12 +267,13 @@ READY-TO-USE CONTENT (these fields MUST be populated, not empty):
        with To/From/Body, Basic Auth placeholder.
     3. Resend email send via fetch — POST to https://api.resend.com/emails
        with Authorization: Bearer re_xxx, from/to/subject/html.
-    4. Calendly/Cal.com webhook handler skeleton (JSON) showing how to
-       react to invitee.created and push the booking to Monday.com.
+    4. Cal.com/Calendly webhook handler skeleton (JSON or JS) showing how
+       to react to invitee.created / BOOKING_CREATED and push the booking
+       to Monday.com via create_item mutation.
     5. Optional: Zapier/Make trigger JSON.
   Use realistic placeholders (RESEND_API_KEY, TWILIO_ACCOUNT_SID,
-  TWILIO_AUTH_TOKEN, MONDAY_API_KEY, WEBHOOK_URL). Never invent fake
-  endpoints — only real provider URLs.
+  TWILIO_AUTH_TOKEN, MONDAY_API_KEY, MONDAY_BOARD_ID, WEBHOOK_URL).
+  Never invent fake endpoints — only real provider URLs.
 
 Return ONLY JSON in this exact shape:
 {"trigger":"","steps":[{"action":"","details":""}],"integrations":[""],
@@ -255,6 +283,9 @@ Return ONLY JSON in this exact shape:
 "reviewRequest":{"platform":"","linkFormat":"","timing":"","message":""},
 "kpis":[""],
 "estimatedRoi":"",
+"roiProjection":{"bookedJobsLiftPct":"","noShowReductionPct":"","reviewVelocityMultiplier":"","monthlyRevenueLiftUsd":"","paybackPeriod":""},
+"integrationGuide":[{"provider":"","purpose":"","setupSteps":[""],"envVars":[""]}],
+"nextActions":[{"title":"","owner":"","eta":"","why":""}],
 "snippets":[{"title":"","language":"","code":""}]}`,
 
   Shield: `You are SHIELD, the LUNAVX Quality Control agent. You are the final
