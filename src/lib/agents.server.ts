@@ -93,13 +93,14 @@ async function aiJson(system: string, user: string): Promise<unknown> {
   }
 }
 
-export async function runOrbisPlanner(userRequest: string) {
-  return (await aiJson(SYSTEM_PROMPTS.Orbis, `User request: ${userRequest}`)) as {
-    steps: { agent: AgentName; instruction: string }[];
-  };
+export type OrbisStep = { agent: AgentName; instruction: string };
+export type OrbisPlan = { steps: OrbisStep[] };
+
+export async function runOrbisPlanner(userRequest: string): Promise<OrbisPlan> {
+  return (await aiJson(SYSTEM_PROMPTS.Orbis, `User request: ${userRequest}`)) as OrbisPlan;
 }
 
-type AtlasLead = {
+export type AtlasLead = {
   name: string;
   email?: string;
   phone?: string;
@@ -108,8 +109,46 @@ type AtlasLead = {
   industry?: string;
 };
 
-async function syncAtlasLeadsToMonday(leads: AtlasLead[]) {
-  const synced: Array<{ name: string; itemId?: number; error?: string }> = [];
+export type MondaySyncItem = { name: string; itemId?: number; error?: string };
+export type MondaySyncSummary = { synced: number; total: number; items: MondaySyncItem[] };
+
+export type AtlasResult = { leads: AtlasLead[]; monday?: MondaySyncSummary };
+export type NexusResult = {
+  competitors: { name: string; strength: string; weakness: string }[];
+  opportunities: string[];
+  insights: string[];
+};
+export type PulseResult = {
+  subject: string;
+  body: string;
+  variants: { subject: string; body: string }[];
+};
+export type ForgeResult = {
+  trigger: string;
+  steps: { action: string; details: string }[];
+  integrations: string[];
+};
+export type ShieldResult = { ok: boolean; issues: string[]; summary: string };
+
+export type AgentResult =
+  | AtlasResult
+  | NexusResult
+  | PulseResult
+  | ForgeResult
+  | ShieldResult
+  | Record<string, unknown>;
+
+export type WorkflowResult =
+  | {
+      success: true;
+      plan: OrbisStep[];
+      results: Record<string, AgentResult>;
+      summary: string;
+    }
+  | { success: false; error: string };
+
+async function syncAtlasLeadsToMonday(leads: AtlasLead[]): Promise<MondaySyncItem[]> {
+  const synced: MondaySyncItem[] = [];
   for (const lead of leads) {
     try {
       const columnValues: Record<string, unknown> = {
