@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Card,
@@ -179,7 +179,19 @@ async function runWorkflow(userRequest: string): Promise<WorkflowResult> {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
-export function AgentWorkflow() {
+export type AgentWorkflowHandle = {
+  runPrompt: (prompt: string) => void;
+};
+
+export function AgentWorkflow({
+  initialPrompt,
+  autoRun,
+  onConsumed,
+}: {
+  initialPrompt?: string;
+  autoRun?: boolean;
+  onConsumed?: () => void;
+} = {}) {
   const [input, setInput] = useState("");
   const [showCustom, setShowCustom] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<CampaignTemplate | null>(null);
@@ -200,6 +212,19 @@ export function AgentWorkflow() {
     setInput(t.prompt);
     handleRun(t.prompt, t);
   };
+
+  // Auto-launch a prompt handed in from the onboarding wizard.
+  const consumedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialPrompt || !autoRun) return;
+    if (consumedRef.current === initialPrompt) return;
+    consumedRef.current = initialPrompt;
+    setInput(initialPrompt);
+    setShowCustom(true);
+    handleRun(initialPrompt);
+    onConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt, autoRun]);
 
   const atlasResult =
     result?.success && result.results.Atlas

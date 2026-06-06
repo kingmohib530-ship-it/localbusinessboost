@@ -243,25 +243,43 @@ export type Database = {
       }
       profiles: {
         Row: {
+          business_name: string | null
+          business_type: string | null
           created_at: string
           id: string
+          industry: string | null
+          onboarded_at: string | null
           plan: Database["public"]["Enums"]["app_plan"]
+          primary_goal: string | null
+          service_area: string | null
           stripe_customer_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          business_name?: string | null
+          business_type?: string | null
           created_at?: string
           id?: string
+          industry?: string | null
+          onboarded_at?: string | null
           plan?: Database["public"]["Enums"]["app_plan"]
+          primary_goal?: string | null
+          service_area?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          business_name?: string | null
+          business_type?: string | null
           created_at?: string
           id?: string
+          industry?: string | null
+          onboarded_at?: string | null
           plan?: Database["public"]["Enums"]["app_plan"]
+          primary_goal?: string | null
+          service_area?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
