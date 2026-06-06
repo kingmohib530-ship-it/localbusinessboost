@@ -962,6 +962,38 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
   );
 }
 
+function DownloadGuideButton({ text, title }: { text: string; title: string }) {
+  const onClick = () => {
+    const slug =
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "lunavx-automation";
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${slug}-implementation-guide.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={onClick}
+      className="border-orange-500/40 text-orange-200 hover:bg-orange-500/10"
+    >
+      <Workflow className="mr-2 h-3.5 w-3.5" />
+      Download Implementation Guide
+    </Button>
+  );
+}
+
+
 function ShieldOutput({ data }: { data: ShieldResult }) {
   return (
     <div className="space-y-3">
