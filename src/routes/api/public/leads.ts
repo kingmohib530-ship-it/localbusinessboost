@@ -48,13 +48,14 @@ export const Route = createFileRoute("/api/public/leads")({
               { status: 400, headers: CORS },
             );
           }
-          const { business_id, name, email, phone, message } = parsed.data;
+          const { business_id, name, business_name, email, phone, message } = parsed.data;
+          const resolvedBusinessId = business_id ?? DEFAULT_BUSINESS_ID;
 
           // Ensure business exists (multi-tenant safety)
           const { data: business, error: bizErr } = await supabaseAdmin
             .from("businesses")
             .select("id")
-            .eq("id", business_id)
+            .eq("id", resolvedBusinessId)
             .maybeSingle();
 
           if (bizErr) throw bizErr;
@@ -68,11 +69,11 @@ export const Route = createFileRoute("/api/public/leads")({
           const { error: insertErr } = await supabaseAdmin
             .from("leads")
             .insert({
-              business_id,
+              business_id: resolvedBusinessId,
               name,
               email: email || null,
               phone: phone || null,
-              message: message || null,
+              message: business_name ? `[${business_name}] ${message || ""}`.trim() : (message || null),
               source: "chatbot",
             });
 
@@ -84,6 +85,9 @@ export const Route = createFileRoute("/api/public/leads")({
               color_mm40t58z: { label: "New from Chatbot" },
               text_mm408bbv: "Chatbot",
             };
+            if (business_name) {
+              columnValues.text_mm40qp3y = business_name;
+            }
             if (email) {
               columnValues.email_mm40q7z1 = { email, text: email };
             }
