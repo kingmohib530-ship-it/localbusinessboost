@@ -477,11 +477,22 @@ function AgentResultsCard({ results }: { results: Record<string, AgentResult> })
 // Per-agent rich rendering
 // ─────────────────────────────────────────────────────────────────────────────
 function AgentOutput({ agent, output }: { agent: string; output: AgentResult }) {
+  if ((output as { error?: string })?.error && Object.keys(output).length <= 2) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>{agent} skipped</AlertTitle>
+        <AlertDescription>{(output as { error: string }).error}</AlertDescription>
+      </Alert>
+    );
+  }
   if (agent === "Atlas") return <AtlasOutput data={output as AtlasResult} />;
   if (agent === "Pulse") return <PulseOutput data={output as PulseResult} />;
   if (agent === "Nexus") return <NexusOutput data={output as NexusResult} />;
   if (agent === "Forge") return <ForgeOutput data={output as ForgeResult} />;
   if (agent === "Shield") return <ShieldOutput data={output as ShieldResult} />;
+  if (agent === "Aether") return <AetherOutput data={output as AetherResult} />;
+  if (agent === "Vanguard") return <VanguardOutput data={output as VanguardResult} />;
   return <JsonFallback data={output} />;
 }
 
