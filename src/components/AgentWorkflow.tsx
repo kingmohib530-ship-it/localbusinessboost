@@ -140,6 +140,8 @@ const AGENT_STYLE: Record<
   Pulse: { icon: PenLine, tint: "text-sky-400", label: "Copy" },
   Forge: { icon: Workflow, tint: "text-orange-400", label: "Automation" },
   Shield: { icon: ShieldCheck, tint: "text-rose-400", label: "QC" },
+  Aether: { icon: Crown, tint: "text-yellow-400", label: "Boss" },
+  Vanguard: { icon: Award, tint: "text-cyan-400", label: "Final QC" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
