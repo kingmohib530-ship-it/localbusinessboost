@@ -10,10 +10,10 @@ import { Badge } from "@/components/ui/badge";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LUNAVX — AI Workforce Orchestration System" },
-      { name: "description", content: "Deploy an AI Workforce for your business. Automate lead generation, marketing, outreach and operations with multi-agent AI." },
-      { property: "og:title", content: "LUNAVX — AI Workforce Orchestration" },
-      { property: "og:description", content: "Multi-agent AI operating system for modern businesses." },
+      { title: "LUNAVX — AI Workforce OS for Local Businesses & Freelancers" },
+      { name: "description", content: "Your AI team that gets you more clients & bookings — whether you run a local business or freelance. One-click campaigns for leads, follow-ups, proposals, and revenue automations." },
+      { property: "og:title", content: "LUNAVX — AI Workforce OS" },
+      { property: "og:description", content: "Your AI team that gets you more clients & bookings — whether you run a local business or freelance." },
     ],
   }),
   component: Landing,
