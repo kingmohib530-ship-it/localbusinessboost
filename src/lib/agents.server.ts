@@ -89,7 +89,11 @@ PLANNING RULES (apply in this order):
    campaigns, or messaging → include PULSE. Always place Pulse AFTER Atlas
    (so it can personalize per lead) and AFTER Nexus (so it can exploit gaps).
 4. If the request mentions automation, workflow, follow-up, booking, drip,
-   nurture, CRM, or "set it up so..." → include FORGE.
+   nurture, CRM, reactivation, "set it up so...", OR any revenue/growth
+   language ("make more money", "close more jobs", "book more appointments",
+   "increase revenue", "scale", "no-shows", "review requests", "review
+   generation", "win-back", "phone scripts") → include FORGE. When in doubt
+   for a local-business request, prefer including Forge.
 5. ALWAYS finish the plan with SHIELD for quality control. This is mandatory.
 6. Never include Orbis itself. Never invent agent names. Never repeat an agent.
 7. Keep the plan minimal — only the agents actually needed for the request.
