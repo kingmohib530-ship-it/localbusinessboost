@@ -575,7 +575,16 @@ function NexusOutput({ data }: { data: NexusResult }) {
 
 function ForgeOutput({ data }: { data: ForgeResult }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {data?.estimatedRoi && (
+        <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 p-3 text-sm text-orange-100">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-orange-300">
+            💰 Estimated ROI
+          </p>
+          <p className="leading-relaxed">{data.estimatedRoi}</p>
+        </div>
+      )}
+
       {data?.trigger && (
         <div className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -586,22 +595,24 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
       )}
 
       {data?.steps?.length ? (
-        <ol className="space-y-2">
-          {data.steps.map((s, i) => (
-            <li
-              key={i}
-              className="flex gap-3 rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
-            >
-              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-xs font-semibold text-orange-300">
-                {i + 1}
-              </div>
-              <div>
-                <p className="font-semibold">{s.action}</p>
-                <p className="text-xs text-muted-foreground">{s.details}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
+        <Section title="Automation Flow" icon={Workflow} tint="text-orange-400">
+          <ol className="space-y-2">
+            {data.steps.map((s, i) => (
+              <li
+                key={i}
+                className="relative flex gap-3 rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
+              >
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-xs font-semibold text-orange-300">
+                  {i + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{s.action}</p>
+                  <p className="text-xs text-muted-foreground">{s.details}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
       ) : null}
 
       {data?.integrations?.length ? (
@@ -613,7 +624,200 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
           ))}
         </div>
       ) : null}
+
+      {data?.emailTemplates?.length ? (
+        <Section title="Email Templates" icon={Mail} tint="text-sky-400">
+          <div className="space-y-3">
+            {data.emailTemplates.map((t, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <Badge variant="outline" className="text-[10px]">
+                    {t.name}
+                  </Badge>
+                  <CopyButton text={`Subject: ${t.subject}\n\n${t.body}`} />
+                </div>
+                <p className="mb-2 text-sm font-semibold">
+                  <span className="text-muted-foreground">Subject:</span> {t.subject}
+                </p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                  {t.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {data?.smsTemplates?.length ? (
+        <Section title="SMS Templates" icon={Phone} tint="text-emerald-400">
+          <div className="grid gap-2 sm:grid-cols-3">
+            {data.smsTemplates.map((t, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border/40 bg-background/40 p-3 text-xs"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <Badge variant="outline" className="text-[10px]">
+                    {t.name}
+                  </Badge>
+                  <CopyButton text={t.body} />
+                </div>
+                <p className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                  {t.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {data?.bookingSetup && (data.bookingSetup.platform || data.bookingSetup.eventName) ? (
+        <Section title="Booking Setup" icon={CheckCircle2} tint="text-violet-400">
+          <div className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm">
+            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
+              {data.bookingSetup.platform && (
+                <Kv k="Platform" v={data.bookingSetup.platform} />
+              )}
+              {data.bookingSetup.eventName && (
+                <Kv k="Event" v={data.bookingSetup.eventName} />
+              )}
+              {data.bookingSetup.duration && (
+                <Kv k="Duration" v={data.bookingSetup.duration} />
+              )}
+              {data.bookingSetup.buffer && <Kv k="Buffer" v={data.bookingSetup.buffer} />}
+            </div>
+            {data.bookingSetup.intakeQuestions?.length ? (
+              <div className="mt-3">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Intake questions
+                </p>
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  {data.bookingSetup.intakeQuestions.map((q, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-violet-400">?</span>
+                      <span>{q}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {data.bookingSetup.confirmation && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                <span className="font-semibold">Confirmation:</span>{" "}
+                {data.bookingSetup.confirmation}
+              </p>
+            )}
+            {data.bookingSetup.reminders?.length ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                <span className="font-semibold">Reminders:</span>{" "}
+                {data.bookingSetup.reminders.join(" • ")}
+              </p>
+            ) : null}
+          </div>
+        </Section>
+      ) : null}
+
+      {data?.reviewRequest &&
+      (data.reviewRequest.platform || data.reviewRequest.message) ? (
+        <Section title="Review Request" icon={Sparkles} tint="text-amber-400">
+          <div className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm">
+            {data.reviewRequest.platform && (
+              <Kv k="Platform" v={data.reviewRequest.platform} />
+            )}
+            {data.reviewRequest.timing && (
+              <Kv k="Timing" v={data.reviewRequest.timing} />
+            )}
+            {data.reviewRequest.linkFormat && (
+              <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
+                {data.reviewRequest.linkFormat}
+              </p>
+            )}
+            {data.reviewRequest.message && (
+              <div className="mt-2">
+                <div className="mb-1 flex justify-end">
+                  <CopyButton text={data.reviewRequest.message} />
+                </div>
+                <p className="whitespace-pre-wrap text-xs text-muted-foreground">
+                  {data.reviewRequest.message}
+                </p>
+              </div>
+            )}
+          </div>
+        </Section>
+      ) : null}
+
+      {data?.kpis?.length ? (
+        <Section title="KPIs to Track" icon={Target} tint="text-emerald-400">
+          <div className="flex flex-wrap gap-2">
+            {data.kpis.map((k, i) => (
+              <Badge
+                key={i}
+                variant="outline"
+                className="border-emerald-500/30 text-[11px] text-emerald-200"
+              >
+                {k}
+              </Badge>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {data?.snippets?.length ? (
+        <Section title="Copy-Paste Snippets" icon={PenLine} tint="text-sky-400">
+          <div className="space-y-3">
+            {data.snippets.map((s, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-lg border border-border/40 bg-background/60"
+              >
+                <div className="flex items-center justify-between gap-2 border-b border-border/40 bg-background/40 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold">{s.title}</span>
+                    <Badge variant="outline" className="text-[10px] uppercase">
+                      {s.language || "text"}
+                    </Badge>
+                  </div>
+                  <CopyButton text={s.code} />
+                </div>
+                <pre className="overflow-x-auto p-3 text-[11px] leading-relaxed text-muted-foreground">
+                  {s.code}
+                </pre>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
     </div>
+  );
+}
+
+function Kv({ k, v }: { k: string; v: string }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">{k}</p>
+      <p className="text-foreground">{v}</p>
+    </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+      className="rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
   );
 }
 
