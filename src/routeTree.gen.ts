@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
 import { Route as ApiTestMondayRouteImport } from './routes/api/test-monday'
 import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
@@ -52,6 +53,11 @@ const IndexRoute = IndexRouteImport.update({
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWorkflowRoute = ApiWorkflowRouteImport.update({
+  id: '/api/workflow',
+  path: '/api/workflow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTestMondayRoute = ApiTestMondayRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/test-monday': typeof ApiTestMondayRoute
+  '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/test-monday': typeof ApiTestMondayRoute
+  '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/test-monday': typeof ApiTestMondayRoute
+  '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/api/test-monday'
+    | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
     | '/app/chat'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/api/test-monday'
+    | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
     | '/app/chat'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/api/test-monday'
+    | '/api/workflow'
     | '/checkout/return'
     | '/_authenticated/app/agents'
     | '/_authenticated/app/chat'
@@ -272,6 +284,7 @@ export interface RootRouteChildren {
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
   ApiTestMondayRoute: typeof ApiTestMondayRoute
+  ApiWorkflowRoute: typeof ApiWorkflowRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
@@ -314,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout/return'
       fullPath: '/checkout/return'
       preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/workflow': {
+      id: '/api/workflow'
+      path: '/api/workflow'
+      fullPath: '/api/workflow'
+      preLoaderRoute: typeof ApiWorkflowRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/test-monday': {
@@ -466,6 +486,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
   ApiTestMondayRoute: ApiTestMondayRoute,
+  ApiWorkflowRoute: ApiWorkflowRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   ApiPublicLeadsRoute: ApiPublicLeadsRoute,
   ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,

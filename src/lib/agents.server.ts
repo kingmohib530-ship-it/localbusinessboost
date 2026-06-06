@@ -93,13 +93,14 @@ async function aiJson(system: string, user: string): Promise<unknown> {
   }
 }
 
-export async function runOrbisPlanner(userRequest: string) {
-  return (await aiJson(SYSTEM_PROMPTS.Orbis, `User request: ${userRequest}`)) as {
-    steps: { agent: AgentName; instruction: string }[];
-  };
+export type OrbisStep = { agent: AgentName; instruction: string };
+export type OrbisPlan = { steps: OrbisStep[] };
+
+export async function runOrbisPlanner(userRequest: string): Promise<OrbisPlan> {
+  return (await aiJson(SYSTEM_PROMPTS.Orbis, `User request: ${userRequest}`)) as OrbisPlan;
 }
 
-type AtlasLead = {
+export type AtlasLead = {
   name: string;
   email?: string;
   phone?: string;
@@ -108,8 +109,46 @@ type AtlasLead = {
   industry?: string;
 };
 
-async function syncAtlasLeadsToMonday(leads: AtlasLead[]) {
-  const synced: Array<{ name: string; itemId?: number; error?: string }> = [];
+export type MondaySyncItem = { name: string; itemId?: number; error?: string };
+export type MondaySyncSummary = { synced: number; total: number; items: MondaySyncItem[] };
+
+export type AtlasResult = { leads: AtlasLead[]; monday?: MondaySyncSummary };
+export type NexusResult = {
+  competitors: { name: string; strength: string; weakness: string }[];
+  opportunities: string[];
+  insights: string[];
+};
+export type PulseResult = {
+  subject: string;
+  body: string;
+  variants: { subject: string; body: string }[];
+};
+export type ForgeResult = {
+  trigger: string;
+  steps: { action: string; details: string }[];
+  integrations: string[];
+};
+export type ShieldResult = { ok: boolean; issues: string[]; summary: string };
+
+export type AgentResult =
+  | AtlasResult
+  | NexusResult
+  | PulseResult
+  | ForgeResult
+  | ShieldResult
+  | Record<string, unknown>;
+
+export type WorkflowResult =
+  | {
+      success: true;
+      plan: OrbisStep[];
+      results: Record<string, AgentResult>;
+      summary: string;
+    }
+  | { success: false; error: string };
+
+async function syncAtlasLeadsToMonday(leads: AtlasLead[]): Promise<MondaySyncItem[]> {
+  const synced: MondaySyncItem[] = [];
   for (const lead of leads) {
     try {
       const columnValues: Record<string, unknown> = {
@@ -130,7 +169,11 @@ async function syncAtlasLeadsToMonday(leads: AtlasLead[]) {
   return synced;
 }
 
-export async function runAgent(agent: AgentName, instruction: string, context: Record<string, unknown> = {}) {
+export async function runAgent(
+  agent: AgentName,
+  instruction: string,
+  context: Record<string, unknown> = {},
+): Promise<AgentResult> {
   const ctx = Object.keys(context).length
     ? `\n\nContext from prior agents:\n${JSON.stringify(context).slice(0, 6000)}`
     : "";
@@ -144,19 +187,20 @@ export async function runAgent(agent: AgentName, instruction: string, context: R
       const ok = mondaySync.filter((s) => s.itemId).length;
       return {
         ...(result as object),
-        monday: {
-          synced: ok,
-          total: leads.length,
-          items: mondaySync,
-        },
-      };
+        monday: { synced: ok, total: leads.length, items: mondaySync },
+      } as AtlasResult;
     }
   }
 
-  return result;
+  return result as AgentResult;
 }
+
+// Small inter-agent delay to stay polite with the AI gateway.
+const AGENT_DELAY_MS = 800;
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
 // ====================== MAIN WORKFLOW ORCHESTRATOR ======================
-export async function runLunavxWorkflow(userRequest: string) {
+export async function runLunavxWorkflow(userRequest: string): Promise<WorkflowResult> {
   console.log("🚀 Starting LUNAVX workflow for request:", userRequest);
 
   try {
@@ -169,11 +213,12 @@ export async function runLunavxWorkflow(userRequest: string) {
 
     console.log(`📋 Orbis created ${plan.steps.length} steps`);
 
-    const results: Record<string, unknown> = {};
+    const results: Record<string, AgentResult> = {};
     const fullContext: Record<string, unknown> = {};
 
     // Step 2: Execute each agent in sequence
-    for (const step of plan.steps) {
+    for (let i = 0; i < plan.steps.length; i++) {
+      const step = plan.steps[i];
       console.log(`⚡ Running ${step.agent}: ${step.instruction}`);
 
       const result = await runAgent(step.agent, step.instruction, fullContext);
@@ -181,9 +226,9 @@ export async function runLunavxWorkflow(userRequest: string) {
       results[step.agent] = result;
       fullContext[step.agent] = result; // Pass output to next agents
 
-      // Small delay to be nice to the AI gateway
-      if (plan.steps.indexOf(step) < plan.steps.length - 1) {
-        await new Promise((r) => setTimeout(r, 800));
+      // Small inter-agent delay to be nice to the AI gateway
+      if (i < plan.steps.length - 1) {
+        await sleep(AGENT_DELAY_MS);
       }
     }
 

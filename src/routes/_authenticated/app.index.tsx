@@ -5,6 +5,7 @@ import { dashboardStats, listTasks } from "@/lib/orchestrator.functions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, CheckCircle2, Cpu, AlertTriangle } from "lucide-react";
+import { AgentWorkflow } from "@/components/AgentWorkflow";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: Overview,
@@ -42,6 +43,9 @@ function Overview() {
           </Card>
         ))}
       </div>
+
+      <AgentWorkflow />
+
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
