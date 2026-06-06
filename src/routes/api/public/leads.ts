@@ -10,9 +10,12 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+const DEFAULT_BUSINESS_ID = "00000000-0000-0000-0000-000000000001";
+
 const LeadSchema = z.object({
-  business_id: z.string().uuid(),
+  business_id: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(200),
+  business_name: z.string().trim().max(200).optional().or(z.literal("")),
   email: z.string().trim().email().max(255).optional().or(z.literal("")),
   phone: z.string().trim().max(50).optional().or(z.literal("")),
   message: z.string().trim().max(4000).optional().or(z.literal("")),
