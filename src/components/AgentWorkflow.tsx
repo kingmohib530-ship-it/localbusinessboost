@@ -264,20 +264,21 @@ export function AgentWorkflow({
   return (
     <div className="space-y-6">
       {/* ── Hero / value framing ──────────────────────────────────────────── */}
-      <Card className="border-border/60 bg-gradient-to-br from-violet-500/5 via-card/60 to-sky-500/5 backdrop-blur">
+      <Card className="border-border/60 bg-gradient-to-br from-violet-500/5 via-card/60 to-cyan-500/5 backdrop-blur shadow-xl shadow-violet-500/5">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 shadow-lg shadow-violet-500/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-500 shadow-lg shadow-violet-500/30 ring-1 ring-white/10">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl">Your AI Workforce OS</CardTitle>
-              <CardDescription>
-                Your AI team that gets you more clients &amp; bookings — whether you run a local business or freelance.
+              <CardTitle className="text-xl tracking-tight">Your AI Workforce, ready to work</CardTitle>
+              <CardDescription className="text-[13px]">
+                Pick a one-click campaign and your AI team will do the heavy lifting — more clients, more bookings, more revenue.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
+
 
         <CardContent className="space-y-6">
           <AutomationTemplates
@@ -1538,18 +1539,19 @@ function FinalSummaryCard({
   if (!aether && !vanguard) return null;
 
   return (
-    <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-card/60 to-cyan-500/10">
+    <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-card/60 to-cyan-500/10 shadow-xl shadow-yellow-500/5 animate-fade-in">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <Crown className="h-5 w-5 text-yellow-400" />
             <div>
-              <CardTitle className="text-base">
-                {aether?.headline || "Your AI workforce delivered"}
+              <CardTitle className="text-base tracking-tight">
+                {aether?.headline || "Your AI Team just delivered — here's what they built for you"}
               </CardTitle>
               <CardDescription>
-                Final summary, validated and ready to act on.
+                Validated, ready to act on, and tuned for real revenue.
               </CardDescription>
+
             </div>
           </div>
           <Button
@@ -1574,27 +1576,30 @@ function FinalSummaryCard({
           </div>
         )}
         {aether?.projections && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 animate-fade-in">
             {[
-              { label: "New Leads", value: aether.projections.leads },
-              { label: "Bookings", value: aether.projections.bookings },
-              { label: "Monthly Revenue", value: aether.projections.monthlyRevenue },
-              { label: "Time Saved / wk", value: aether.projections.timeSavedPerWeek },
+              { label: "New Leads", value: aether.projections.leads, accent: "from-emerald-500/20 to-teal-500/10", text: "text-emerald-200", ring: "ring-emerald-400/20" },
+              { label: "Bookings", value: aether.projections.bookings, accent: "from-cyan-500/20 to-sky-500/10", text: "text-cyan-200", ring: "ring-cyan-400/20" },
+              { label: "Monthly Revenue", value: aether.projections.monthlyRevenue, accent: "from-yellow-500/20 to-amber-500/10", text: "text-yellow-100", ring: "ring-yellow-400/20" },
+              { label: "Time Saved / wk", value: aether.projections.timeSavedPerWeek, accent: "from-violet-500/20 to-fuchsia-500/10", text: "text-violet-200", ring: "ring-violet-400/20" },
             ]
               .filter((s) => s.value)
               .map((s) => (
                 <div
                   key={s.label}
-                  className="rounded-lg border border-yellow-500/20 bg-card/60 p-2.5 text-center"
+                  className={`rounded-xl bg-gradient-to-br ${s.accent} ring-1 ${s.ring} p-3 text-center transition-transform hover:scale-[1.03]`}
                 >
-                  <div className="text-sm font-bold text-yellow-100">{s.value}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <div className={`text-xl sm:text-2xl font-extrabold tracking-tight ${s.text}`}>
+                    {s.value}
+                  </div>
+                  <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     {s.label}
                   </div>
                 </div>
               ))}
           </div>
         )}
+
         {vanguard && (
           <div
             className={`flex items-center gap-2 rounded-lg border p-2.5 text-xs ${

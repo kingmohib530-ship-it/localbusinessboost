@@ -74,14 +74,20 @@ function Overview() {
   ];
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-display font-bold tracking-tight">Overview</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="p-6 md:p-10 space-y-8 max-w-7xl mx-auto">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-medium text-violet-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            AI workforce online
+          </div>
+          <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">
             {onboarding.data?.business_name
-              ? `Welcome back, ${onboarding.data.business_name}. Your AI workforce is ready.`
-              : "Your AI workforce at a glance."}
+              ? `Welcome back, ${onboarding.data.business_name} 👋`
+              : "Welcome back"}
+          </h1>
+          <p className="text-muted-foreground">
+            Your AI team is ready to bring in more clients, bookings, and revenue.
           </p>
         </div>
         <Button
@@ -89,23 +95,33 @@ function Overview() {
           size="sm"
           onClick={() => resetMut.mutate()}
           disabled={resetMut.isPending}
+          className="border-border/60 hover:border-violet-500/40 hover:bg-violet-500/5"
         >
-          <Sparkles className="h-4 w-4 mr-1.5" />
+          <Sparkles className="h-4 w-4 mr-1.5 text-violet-300" />
           Restart onboarding
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {cards.map((c) => (
-          <Card key={c.label} className="p-5">
+          <Card
+            key={c.label}
+            className="relative p-5 overflow-hidden border-border/60 bg-gradient-to-br from-card to-card/40 hover:border-border transition-colors group"
+          >
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{c.label}</span>
-              <c.icon className={`h-4 w-4 ${c.color}`} />
+              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{c.label}</span>
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/60 ring-1 ring-border/60">
+                <c.icon className={`h-3.5 w-3.5 ${c.color}`} />
+              </div>
             </div>
-            <div className="text-3xl font-bold mt-2">{c.value}</div>
+            <div className="text-3xl md:text-4xl font-bold mt-3 tracking-tight tabular-nums">
+              {c.value}
+            </div>
           </Card>
         ))}
       </div>
+
 
       <AgentWorkflow
         initialPrompt={pendingPrompt}
