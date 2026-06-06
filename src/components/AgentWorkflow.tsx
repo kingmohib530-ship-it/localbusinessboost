@@ -670,6 +670,83 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
         </div>
       ) : null}
 
+      {data?.integrationGuide?.length ? (
+        <Section title="Integration Setup" icon={Workflow} tint="text-violet-400">
+          <div className="space-y-3">
+            {data.integrationGuide.map((g, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm"
+              >
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <Badge className="bg-violet-500/15 text-violet-200 hover:bg-violet-500/15">
+                    {g.provider}
+                  </Badge>
+                  {g.purpose && (
+                    <span className="text-xs text-muted-foreground">{g.purpose}</span>
+                  )}
+                </div>
+                {g.setupSteps?.length ? (
+                  <ol className="ml-4 list-decimal space-y-1 text-xs text-muted-foreground">
+                    {g.setupSteps.map((s, j) => (
+                      <li key={j}>{s}</li>
+                    ))}
+                  </ol>
+                ) : null}
+                {g.envVars?.length ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {g.envVars.map((v) => (
+                      <code
+                        key={v}
+                        className="rounded bg-background/60 px-1.5 py-0.5 font-mono text-[10px] text-emerald-300"
+                      >
+                        {v}
+                      </code>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {data?.nextActions?.length ? (
+        <Section title="Next Actions This Week" icon={CheckCircle2} tint="text-emerald-400">
+          <ol className="space-y-2">
+            {data.nextActions.map((a, i) => (
+              <li
+                key={i}
+                className="flex gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm"
+              >
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-200">
+                  {i + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-emerald-50">{a.title}</p>
+                    {a.owner && (
+                      <Badge variant="outline" className="text-[10px] text-emerald-200">
+                        {a.owner}
+                      </Badge>
+                    )}
+                    {a.eta && (
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {a.eta}
+                      </span>
+                    )}
+                  </div>
+                  {a.why && (
+                    <p className="text-xs text-muted-foreground">{a.why}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
+      ) : null}
+
+
       {data?.emailTemplates?.length ? (
         <Section title="Email Templates" icon={Mail} tint="text-sky-400">
           <div className="space-y-3">
