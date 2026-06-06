@@ -450,8 +450,11 @@ export async function runAgent(
  * Top-level entry point: Orbis plans, then every planned agent runs in order
  * with cumulative context. Atlas leads auto-sync to Monday.com.
  */
-export async function runLunavxWorkflow(userRequest: string): Promise<WorkflowResult> {
-  console.log("🚀 LUNAVX workflow start:", userRequest);
+export async function runLunavxWorkflow(
+  userRequest: string,
+  userId?: string,
+): Promise<WorkflowResult> {
+  console.log("🚀 LUNAVX workflow start:", { userRequest, userId });
 
   try {
     const plan = await runOrbisPlanner(userRequest);
