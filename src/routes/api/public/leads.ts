@@ -10,9 +10,12 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+const DEFAULT_BUSINESS_ID = "00000000-0000-0000-0000-000000000001";
+
 const LeadSchema = z.object({
-  business_id: z.string().uuid(),
+  business_id: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(200),
+  business_name: z.string().trim().max(200).optional().or(z.literal("")),
   email: z.string().trim().email().max(255).optional().or(z.literal("")),
   phone: z.string().trim().max(50).optional().or(z.literal("")),
   message: z.string().trim().max(4000).optional().or(z.literal("")),
@@ -45,13 +48,14 @@ export const Route = createFileRoute("/api/public/leads")({
               { status: 400, headers: CORS },
             );
           }
-          const { business_id, name, email, phone, message } = parsed.data;
+          const { business_id, name, business_name, email, phone, message } = parsed.data;
+          const resolvedBusinessId = business_id ?? DEFAULT_BUSINESS_ID;
 
           // Ensure business exists (multi-tenant safety)
           const { data: business, error: bizErr } = await supabaseAdmin
             .from("businesses")
             .select("id")
-            .eq("id", business_id)
+            .eq("id", resolvedBusinessId)
             .maybeSingle();
 
           if (bizErr) throw bizErr;
@@ -65,11 +69,11 @@ export const Route = createFileRoute("/api/public/leads")({
           const { error: insertErr } = await supabaseAdmin
             .from("leads")
             .insert({
-              business_id,
+              business_id: resolvedBusinessId,
               name,
               email: email || null,
               phone: phone || null,
-              message: message || null,
+              message: business_name ? `[${business_name}] ${message || ""}`.trim() : (message || null),
               source: "chatbot",
             });
 
@@ -81,6 +85,9 @@ export const Route = createFileRoute("/api/public/leads")({
               color_mm40t58z: { label: "New from Chatbot" },
               text_mm408bbv: "Chatbot",
             };
+            if (business_name) {
+              columnValues.text_mm40qp3y = business_name;
+            }
             if (email) {
               columnValues.email_mm40q7z1 = { email, text: email };
             }
