@@ -337,10 +337,36 @@ export type PulseResult = {
   variants: { subject: string; body: string }[];
 };
 
+export type ForgeEmailTemplate = { name: string; subject: string; body: string };
+export type ForgeSmsTemplate = { name: string; body: string };
+export type ForgeBookingSetup = {
+  platform?: string;
+  eventName?: string;
+  duration?: string;
+  buffer?: string;
+  intakeQuestions?: string[];
+  confirmation?: string;
+  reminders?: string[];
+};
+export type ForgeReviewRequest = {
+  platform?: string;
+  linkFormat?: string;
+  timing?: string;
+  message?: string;
+};
+export type ForgeSnippet = { title: string; language: string; code: string };
+
 export type ForgeResult = {
   trigger: string;
   steps: { action: string; details: string }[];
   integrations: string[];
+  emailTemplates?: ForgeEmailTemplate[];
+  smsTemplates?: ForgeSmsTemplate[];
+  bookingSetup?: ForgeBookingSetup;
+  reviewRequest?: ForgeReviewRequest;
+  kpis?: string[];
+  estimatedRoi?: string;
+  snippets?: ForgeSnippet[];
 };
 
 export type ShieldResult = { ok: boolean; issues: string[]; summary: string };
