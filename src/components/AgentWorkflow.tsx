@@ -264,20 +264,21 @@ export function AgentWorkflow({
   return (
     <div className="space-y-6">
       {/* ── Hero / value framing ──────────────────────────────────────────── */}
-      <Card className="border-border/60 bg-gradient-to-br from-violet-500/5 via-card/60 to-sky-500/5 backdrop-blur">
+      <Card className="border-border/60 bg-gradient-to-br from-violet-500/5 via-card/60 to-cyan-500/5 backdrop-blur shadow-xl shadow-violet-500/5">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 shadow-lg shadow-violet-500/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-500 shadow-lg shadow-violet-500/30 ring-1 ring-white/10">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl">Your AI Workforce OS</CardTitle>
-              <CardDescription>
-                Your AI team that gets you more clients &amp; bookings — whether you run a local business or freelance.
+              <CardTitle className="text-xl tracking-tight">Your AI Workforce, ready to work</CardTitle>
+              <CardDescription className="text-[13px]">
+                Pick a one-click campaign and your AI team will do the heavy lifting — more clients, more bookings, more revenue.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
+
 
         <CardContent className="space-y-6">
           <AutomationTemplates
