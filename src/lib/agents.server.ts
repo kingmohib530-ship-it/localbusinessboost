@@ -213,11 +213,12 @@ export async function runLunavxWorkflow(userRequest: string): Promise<WorkflowRe
 
     console.log(`📋 Orbis created ${plan.steps.length} steps`);
 
-    const results: Record<string, unknown> = {};
+    const results: Record<string, AgentResult> = {};
     const fullContext: Record<string, unknown> = {};
 
     // Step 2: Execute each agent in sequence
-    for (const step of plan.steps) {
+    for (let i = 0; i < plan.steps.length; i++) {
+      const step = plan.steps[i];
       console.log(`⚡ Running ${step.agent}: ${step.instruction}`);
 
       const result = await runAgent(step.agent, step.instruction, fullContext);
@@ -225,9 +226,9 @@ export async function runLunavxWorkflow(userRequest: string): Promise<WorkflowRe
       results[step.agent] = result;
       fullContext[step.agent] = result; // Pass output to next agents
 
-      // Small delay to be nice to the AI gateway
-      if (plan.steps.indexOf(step) < plan.steps.length - 1) {
-        await new Promise((r) => setTimeout(r, 800));
+      // Small inter-agent delay to be nice to the AI gateway
+      if (i < plan.steps.length - 1) {
+        await sleep(AGENT_DELAY_MS);
       }
     }
 
