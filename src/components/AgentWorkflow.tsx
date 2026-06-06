@@ -98,14 +98,30 @@ const AGENT_STYLE: Record<
 // API call
 // ─────────────────────────────────────────────────────────────────────────────
 async function runWorkflow(userRequest: string): Promise<WorkflowResult> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) {
+    throw new Error("Authentication required. Please sign in.");
+  }
   const res = await fetch("/api/workflow", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({ userRequest }),
   });
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Workflow failed with status ${res.status}`);
+    let msg = `Workflow failed with status ${res.status}`;
+    try {
+      const j = await res.json();
+      msg = j?.error || msg;
+    } catch {
+      const t = await res.text().catch(() => "");
+      if (t) msg = t;
+    }
+    throw new Error(msg);
   }
   return (await res.json()) as WorkflowResult;
 }
