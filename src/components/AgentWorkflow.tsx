@@ -79,7 +79,22 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Find 15 property managers in Phoenix, AZ that need recurring cleaning services and draft a B2B cold email sequence.",
   },
-];
+  {
+    label: "⚙️ Roofing automation — Dallas",
+    prompt:
+      "Build a complete follow-up automation system for a roofing company in Dallas, TX. Include lead capture form, instant SMS, 7-day email + SMS nurture, Calendly booking, and an automated Google review request after the job.",
+  },
+  {
+    label: "🦷 Dental booking machine — Chicago",
+    prompt:
+      "Design a full patient acquisition automation for a family dental clinic in Chicago, IL: web form → CRM → instant text → booking → 24h reminder → post-visit review request.",
+  },
+  {
+    label: "❄️ HVAC reactivation — Tampa",
+    prompt:
+      "Create an automation that reactivates past HVAC customers in Tampa, FL with seasonal tune-up offers via email + SMS, and books them straight into Calendly.",
+  },
+],
 
 // Per-agent visual identity.
 const AGENT_STYLE: Record<
