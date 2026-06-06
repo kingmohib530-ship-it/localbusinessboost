@@ -34,18 +34,35 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 // Agent registry & metadata
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type AgentName = "Orbis" | "Atlas" | "Nexus" | "Pulse" | "Forge" | "Shield";
+export type AgentName =
+  | "Orbis"
+  | "Atlas"
+  | "Nexus"
+  | "Pulse"
+  | "Forge"
+  | "Shield"
+  | "Aether"
+  | "Vanguard";
 
-const ALL_AGENTS: readonly AgentName[] = ["Orbis", "Atlas", "Nexus", "Pulse", "Forge", "Shield"];
+const ALL_AGENTS: readonly AgentName[] = [
+  "Orbis",
+  "Atlas",
+  "Nexus",
+  "Pulse",
+  "Forge",
+  "Shield",
+  "Aether",
+  "Vanguard",
+];
 
 export const AGENT_META: Record<AgentName, { role: string; description: string }> = {
   Orbis: {
     role: "Strategy Engine",
-    description: "Plans local-business workflows across the other five agents.",
+    description: "Plans workflows across the other agents.",
   },
   Atlas: {
     role: "Lead Intelligence",
-    description: "Generates realistic local-business leads and syncs them to Monday.com.",
+    description: "Generates realistic leads and syncs them to Monday.com.",
   },
   Nexus: {
     role: "Market Intelligence",
@@ -53,7 +70,7 @@ export const AGENT_META: Record<AgentName, { role: string; description: string }
   },
   Pulse: {
     role: "Copywriting Engine",
-    description: "Local outreach: cold emails, SMS, Google Business posts, and ad copy.",
+    description: "Cold emails, SMS, posts, ads, DMs, proposals.",
   },
   Forge: {
     role: "Automation Builder",
@@ -61,7 +78,15 @@ export const AGENT_META: Record<AgentName, { role: string; description: string }
   },
   Shield: {
     role: "Quality Control",
-    description: "Validates outputs for accuracy, deliverability, and local fit.",
+    description: "Validates outputs for accuracy, deliverability, and fit.",
+  },
+  Aether: {
+    role: "Final Orchestrator (Boss)",
+    description: "Reviews the full plan and polishes the final user-facing summary.",
+  },
+  Vanguard: {
+    role: "Executive QC & Validator",
+    description: "Final realism, legal, deliverability and revenue check before user sees it.",
   },
 };
 
@@ -337,23 +362,79 @@ Return ONLY JSON in this exact shape:
 "nextActions":[{"title":"","owner":"","eta":"","why":""}],
 "snippets":[{"title":"","language":"","code":""}]}`,
 
-  Shield: `You are SHIELD, the LUNAVX Quality Control agent. You are the final
-gate before output reaches the user.
+  Shield: `You are SHIELD, the LUNAVX Quality Control agent. You audit the
+prior agents' outputs in context.
 
-Review the prior agents' outputs in context for:
-- Structural completeness (every required field present and non-empty).
-- Realism for the local vertical (names, phone area codes, industry terms).
-- Deliverability red flags in any Pulse copy (spam-trigger words, fake
-  guarantees, ALL CAPS, missing unsubscribe context).
-- Whether Atlas reported a Monday.com sync (look for a "monday" field with
-  synced > 0). If Atlas ran but sync failed or is missing, flag it.
-- Logical consistency between agents (e.g. Pulse copy matches Atlas vertical).
+CHECK FOR (only flag MATERIAL problems, not stylistic nitpicks):
+- Structural completeness (each agent's required fields present and non-empty).
+- Realism (names, phone area codes, industry terms match the vertical).
+- Deliverability red flags in Pulse copy (true spam-trigger words like
+  "FREE $$$", ALL CAPS subject lines, fake guarantees). Do NOT flag normal
+  professional copy.
+- Cross-agent consistency (Pulse copy roughly matches Atlas vertical).
+- Monday.com sync status:
+    • If Atlas ran, look for atlas.monday.synced > 0. Flag only if Atlas ran
+      AND monday is missing OR synced === 0.
+    • If Forge ran, look for forge.monday. If forge.monday.saved === false
+      with a note (e.g. "user-triggered via Save button"), that is EXPECTED
+      and NOT an issue. Do not flag.
+- DO NOT flag missing agents that simply weren't part of the plan.
 
-Be honest: set "ok" to false if there are ANY material issues. The "summary"
-is a one-paragraph verdict the user will read.
+Be fair. Set "ok" to true unless there is a real, material issue. The
+"summary" is one short paragraph the user will read.
 
 Return ONLY JSON in this exact shape:
 {"ok":true,"issues":[""],"summary":""}`,
+
+  Aether: `You are AETHER, the LUNAVX Final Orchestrator and Boss. You are
+the LAST agent that sees everything and the FIRST voice the user hears.
+
+Your job: take ALL prior agent outputs in context (Atlas leads, Nexus
+research, Pulse copy, Forge automation, Shield QC) and produce a clean,
+non-technical, executive-grade summary the business owner or freelancer can
+act on immediately.
+
+RULES:
+- Plain English. No jargon, no agent names in the headline.
+- Lead with the BUSINESS OUTCOME, not the process.
+- Quote real numbers from prior agents when present (lead count, monthly
+  revenue lift, no-show reduction, etc.).
+- "keyOutcomes" is 3-5 bullets — each is a concrete win the user just got
+  (e.g. "12 ready-to-call HVAC leads in Tampa, FL synced to your CRM").
+- "revenueImpact" is one sentence with a dollar range when possible.
+- "nextSteps" is 3-5 short imperative actions the user should do TODAY or
+  this week. Each starts with a verb.
+- "headline" is under 80 chars, encouraging and specific.
+
+Return ONLY JSON in this exact shape:
+{"headline":"","executiveSummary":"","keyOutcomes":[""],"revenueImpact":"","nextSteps":[""]}`,
+
+  Vanguard: `You are VANGUARD, the LUNAVX Executive QC & Validator. You are
+the FINAL safety layer after Shield and Aether. You audit the ENTIRE package
+(plan + every agent output + Aether's summary) one more time before it
+reaches the user.
+
+VERIFY:
+- Accuracy & realism (no obvious hallucinated facts, no fake guarantees,
+  numbers within industry-plausible ranges).
+- Deliverability (no spam-trigger language; SMS under 160 chars; emails
+  have a clear CTA).
+- Legal/compliance hygiene (no claims like "guaranteed #1 on Google",
+  no impersonation of real named businesses, no protected-class targeting).
+- Revenue potential (the package actually moves the needle for the user's
+  vertical).
+- Completeness (Aether's summary reflects what was produced).
+
+OUTPUT:
+- "approved": true unless there is a real blocker.
+- "score": 1-10 holistic quality score.
+- "checks": 4-7 entries; each has name, status ("pass"|"warn"|"fail"), note.
+- "blockers": only true must-fix items (usually empty).
+- "recommendations": 2-4 polish suggestions for next iteration.
+- "finalVerdict": one short paragraph the user reads as the "all-clear".
+
+Return ONLY JSON in this exact shape:
+{"approved":true,"score":9,"checks":[{"name":"","status":"pass","note":""}],"blockers":[""],"recommendations":[""],"finalVerdict":""}`,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -483,6 +564,13 @@ export type ForgeNextAction = {
   why?: string;
 };
 
+export type ForgeMondayStatus = {
+  saved: boolean;
+  itemId?: number;
+  note?: string;
+  error?: string;
+};
+
 export type ForgeResult = {
   trigger: string;
   steps: { action: string; details: string }[];
@@ -497,9 +585,33 @@ export type ForgeResult = {
   integrationGuide?: ForgeIntegrationGuideEntry[];
   nextActions?: ForgeNextAction[];
   snippets?: ForgeSnippet[];
+  monday?: ForgeMondayStatus;
 };
 
 export type ShieldResult = { ok: boolean; issues: string[]; summary: string };
+
+export type AetherResult = {
+  headline: string;
+  executiveSummary: string;
+  keyOutcomes: string[];
+  revenueImpact?: string;
+  nextSteps: string[];
+};
+
+export type VanguardCheck = {
+  name: string;
+  status: "pass" | "warn" | "fail";
+  note?: string;
+};
+
+export type VanguardResult = {
+  approved: boolean;
+  score?: number;
+  checks: VanguardCheck[];
+  blockers?: string[];
+  recommendations?: string[];
+  finalVerdict: string;
+};
 
 export type AgentResult =
   | AtlasResult
@@ -507,6 +619,8 @@ export type AgentResult =
   | PulseResult
   | ForgeResult
   | ShieldResult
+  | AetherResult
+  | VanguardResult
   | Record<string, unknown>;
 
 export type WorkflowResult =
@@ -631,6 +745,18 @@ export async function runAgent(
     }
   }
 
+  // Forge: attach a Monday.com status field so Shield never flags it as missing.
+  // The actual save happens when the user clicks "Save to Monday.com" in the UI.
+  if (agent === "Forge") {
+    return {
+      ...(result as object),
+      monday: {
+        saved: false,
+        note: "Automation blueprint ready — user-triggered via Save to Monday.com button.",
+      },
+    } as ForgeResult;
+  }
+
   return result as AgentResult;
 }
 
@@ -655,6 +781,18 @@ export async function runLunavxWorkflow(
       throw new Error("Orbis failed to produce any executable steps.");
     }
 
+    // Always append leader agents (Aether → Vanguard) AFTER Shield.
+    plan.steps.push({
+      agent: "Aether",
+      instruction:
+        "Synthesize a clean, non-technical executive summary of all prior agent outputs for the business owner.",
+    });
+    plan.steps.push({
+      agent: "Vanguard",
+      instruction:
+        "Final executive QC: verify accuracy, deliverability, legal safety, and revenue potential of the entire package.",
+    });
+
     console.log(
       `📋 Plan (${plan.steps.length} steps): ${plan.steps.map((s) => s.agent).join(" → ")}`,
     );
@@ -666,9 +804,18 @@ export async function runLunavxWorkflow(
       const step = plan.steps[i];
       console.log(`⚡ [${i + 1}/${plan.steps.length}] ${step.agent}: ${step.instruction}`);
 
-      const result = await runAgent(step.agent, step.instruction, fullContext);
-      results[step.agent] = result;
-      fullContext[step.agent] = result;
+      try {
+        const result = await runAgent(step.agent, step.instruction, fullContext);
+        results[step.agent] = result;
+        fullContext[step.agent] = result;
+      } catch (stepErr) {
+        const msg = stepErr instanceof Error ? stepErr.message : String(stepErr);
+        console.error(`⚠️  ${step.agent} failed:`, msg);
+        // Non-fatal: record the failure and keep going so the user still
+        // gets value from the agents that did succeed.
+        results[step.agent] = { error: msg } as AgentResult;
+        fullContext[step.agent] = { error: msg };
+      }
 
       if (i < plan.steps.length - 1) {
         await sleep(AGENT_DELAY_MS);
@@ -679,6 +826,8 @@ export async function runLunavxWorkflow(
     const syncNote = atlas?.monday
       ? ` Atlas synced ${atlas.monday.synced}/${atlas.monday.total} leads to Monday.com.`
       : "";
+    const aether = results.Aether as AetherResult | undefined;
+    const headline = aether?.headline?.trim();
 
     console.log("✅ LUNAVX workflow complete.");
 
@@ -686,7 +835,9 @@ export async function runLunavxWorkflow(
       success: true,
       plan: plan.steps,
       results,
-      summary: `Completed ${plan.steps.length} agent steps.${syncNote}`,
+      summary:
+        headline ||
+        `Completed ${plan.steps.length} agent steps.${syncNote}`,
     };
   } catch (error) {
     console.error("❌ LUNAVX workflow failed:", error);
