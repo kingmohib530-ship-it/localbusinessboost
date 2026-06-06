@@ -1575,27 +1575,30 @@ function FinalSummaryCard({
           </div>
         )}
         {aether?.projections && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 animate-fade-in">
             {[
-              { label: "New Leads", value: aether.projections.leads },
-              { label: "Bookings", value: aether.projections.bookings },
-              { label: "Monthly Revenue", value: aether.projections.monthlyRevenue },
-              { label: "Time Saved / wk", value: aether.projections.timeSavedPerWeek },
+              { label: "New Leads", value: aether.projections.leads, accent: "from-emerald-500/20 to-teal-500/10", text: "text-emerald-200", ring: "ring-emerald-400/20" },
+              { label: "Bookings", value: aether.projections.bookings, accent: "from-cyan-500/20 to-sky-500/10", text: "text-cyan-200", ring: "ring-cyan-400/20" },
+              { label: "Monthly Revenue", value: aether.projections.monthlyRevenue, accent: "from-yellow-500/20 to-amber-500/10", text: "text-yellow-100", ring: "ring-yellow-400/20" },
+              { label: "Time Saved / wk", value: aether.projections.timeSavedPerWeek, accent: "from-violet-500/20 to-fuchsia-500/10", text: "text-violet-200", ring: "ring-violet-400/20" },
             ]
               .filter((s) => s.value)
               .map((s) => (
                 <div
                   key={s.label}
-                  className="rounded-lg border border-yellow-500/20 bg-card/60 p-2.5 text-center"
+                  className={`rounded-xl bg-gradient-to-br ${s.accent} ring-1 ${s.ring} p-3 text-center transition-transform hover:scale-[1.03]`}
                 >
-                  <div className="text-sm font-bold text-yellow-100">{s.value}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <div className={`text-xl sm:text-2xl font-extrabold tracking-tight ${s.text}`}>
+                    {s.value}
+                  </div>
+                  <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     {s.label}
                   </div>
                 </div>
               ))}
           </div>
         )}
+
         {vanguard && (
           <div
             className={`flex items-center gap-2 rounded-lg border p-2.5 text-xs ${
