@@ -94,6 +94,16 @@ const EXAMPLES: { label: string; prompt: string }[] = [
     prompt:
       "Create an automation that reactivates past HVAC customers in Tampa, FL with seasonal tune-up offers via email + SMS, and books them straight into Calendly.",
   },
+  {
+    label: "💰 Roofing revenue engine",
+    prompt:
+      "Build and configure a complete automated follow-up system for a roofing company that sends emails + SMS and books appointments. Include lead-capture form, Twilio + Resend integrations, Calendly booking, reminder sequence, post-job Google review automation, and the dollar-impact ROI.",
+  },
+  {
+    label: "🔁 HVAC win-back campaign",
+    prompt:
+      "Create a reactivation campaign for past customers of an HVAC business including phone call script, 5-email sequence, SMS touches, Calendly booking link, and an automated Google review request after the tune-up.",
+  },
 ];
 
 // Per-agent visual identity.
@@ -577,11 +587,14 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
   return (
     <div className="space-y-5">
       {data?.estimatedRoi && (
-        <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 p-3 text-sm text-orange-100">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-orange-300">
-            💰 Estimated ROI
-          </p>
-          <p className="leading-relaxed">{data.estimatedRoi}</p>
+        <div className="rounded-xl border border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent p-4 shadow-lg shadow-orange-500/5">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-lg">💰</span>
+            <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
+              Estimated Revenue Impact
+            </p>
+          </div>
+          <p className="text-sm leading-relaxed text-orange-50">{data.estimatedRoi}</p>
         </div>
       )}
 
@@ -768,6 +781,17 @@ function ForgeOutput({ data }: { data: ForgeResult }) {
       {data?.snippets?.length ? (
         <Section title="Copy-Paste Snippets" icon={PenLine} tint="text-sky-400">
           <div className="space-y-3">
+            <div className="flex justify-end">
+              <CopyButton
+                text={data.snippets
+                  .map(
+                    (s) =>
+                      `// ── ${s.title} (${s.language || "text"}) ──\n${s.code}`,
+                  )
+                  .join("\n\n")}
+                label="Copy All Snippets"
+              />
+            </div>
             {data.snippets.map((s, i) => (
               <div
                 key={i}
@@ -803,7 +827,7 @@ function Kv({ k, v }: { k: string; v: string }) {
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -814,9 +838,9 @@ function CopyButton({ text }: { text: string }) {
           setTimeout(() => setCopied(false), 1500);
         });
       }}
-      className="rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
+      className="rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
     >
-      {copied ? "Copied!" : "Copy"}
+      {copied ? "Copied!" : label}
     </button>
   );
 }

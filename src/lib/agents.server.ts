@@ -89,7 +89,11 @@ PLANNING RULES (apply in this order):
    campaigns, or messaging → include PULSE. Always place Pulse AFTER Atlas
    (so it can personalize per lead) and AFTER Nexus (so it can exploit gaps).
 4. If the request mentions automation, workflow, follow-up, booking, drip,
-   nurture, CRM, or "set it up so..." → include FORGE.
+   nurture, CRM, reactivation, "set it up so...", OR any revenue/growth
+   language ("make more money", "close more jobs", "book more appointments",
+   "increase revenue", "scale", "no-shows", "review requests", "review
+   generation", "win-back", "phone scripts") → include FORGE. When in doubt
+   for a local-business request, prefer including Forge.
 5. ALWAYS finish the plan with SHIELD for quality control. This is mandatory.
 6. Never include Orbis itself. Never invent agent names. Never repeat an agent.
 7. Keep the plan minimal — only the agents actually needed for the request.
@@ -196,9 +200,15 @@ DESIGN RULES:
     • "action": short verb phrase
     • "details": concrete config — exact delay, template name, board column,
       branching condition, what to do on no-reply.
-- "integrations": only tools that appear in the steps. Prefer this stack:
-  Monday.com (CRM), Twilio (SMS), Mailgun or Resend (email), Calendly (booking),
-  Stripe (payments), Google Business Profile (reviews), Zapier or Make (glue).
+- "integrations": only tools that appear in the steps. Default stack
+  (use real product names, not generic labels):
+    • CRM: Monday.com
+    • SMS: Twilio Programmable Messaging (REST /Messages.json)
+    • Email: Resend (POST /emails) or Postmark (POST /email)
+    • Booking: Calendly or Cal.com (event-type webhook + invitee.created)
+    • Payments: Stripe (Payment Links or Checkout)
+    • Reviews: Google Business Profile (place review link)
+    • Glue: Zapier or Make.com
 - ALWAYS include at least one "no response after N hours" branch.
 - ALWAYS include the post-job review-request step.
 
@@ -207,17 +217,35 @@ READY-TO-USE CONTENT (these fields MUST be populated, not empty):
   "review_request". Each has name + subject + body with {{merge_fields}}.
 - "smsTemplates": 3 short messages — "instant_sms", "reminder_24h",
   "review_request_sms". Each under 160 chars, with {{merge_fields}}.
-- "bookingSetup": concrete Calendly/Acuity config — platform, eventName,
-  duration, buffer, intakeQuestions, confirmation timing, reminder timing.
-- "reviewRequest": platform, linkFormat (e.g. https://g.page/r/<placeId>/review),
+- "bookingSetup": concrete Calendly/Cal.com/Acuity config — platform,
+  eventName, duration, buffer, intakeQuestions, confirmation timing,
+  reminder timing. Include the webhook event to listen for
+  (e.g. "invitee.created").
+- "reviewRequest": platform, linkFormat (e.g.
+  https://search.google.com/local/writereview?placeid=<PLACE_ID>),
   timing, and the exact message to send.
-- "kpis": 3-5 weekly metrics (e.g. "Speed-to-lead under 5 min",
-  "Booking rate > 35%", "Review velocity > 4/month").
-- "estimatedRoi": one short paragraph quantifying upside in plain English.
-- "snippets": 1-3 copy-paste-ready code/config blocks. Each has title,
-  language ("html" | "javascript" | "json" | "bash" | "text"), and code.
-  Good examples: HTML <form> that POSTs to a webhook, Twilio SMS curl,
-  Zapier/Make trigger JSON.
+- "kpis": 3-5 weekly metrics with TARGET NUMBERS attached
+  (e.g. "Speed-to-lead < 5 min", "Booking rate > 35%",
+  "Review velocity > 4/month", "No-show rate < 10%").
+- "estimatedRoi": ONE paragraph with concrete dollar math for THIS vertical
+  — assumed avg ticket, current vs projected close rate, and the monthly
+  revenue lift (e.g. "At a $9,000 avg roofing job and ~40 inbound leads/mo,
+  lifting close-rate from 18% to 28% adds 4 jobs = +$36k/mo.").
+- "snippets": 3-5 copy-paste-ready, WORKING code/config blocks. Each has
+  title, language ("html" | "javascript" | "json" | "bash" | "text"),
+  and code. REQUIRED set:
+    1. HTML <form> that POSTs JSON to a webhook URL (lead capture).
+    2. Twilio SMS via curl OR fetch — POST to
+       https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json
+       with To/From/Body, Basic Auth placeholder.
+    3. Resend email send via fetch — POST to https://api.resend.com/emails
+       with Authorization: Bearer re_xxx, from/to/subject/html.
+    4. Calendly/Cal.com webhook handler skeleton (JSON) showing how to
+       react to invitee.created and push the booking to Monday.com.
+    5. Optional: Zapier/Make trigger JSON.
+  Use realistic placeholders (RESEND_API_KEY, TWILIO_ACCOUNT_SID,
+  TWILIO_AUTH_TOKEN, MONDAY_API_KEY, WEBHOOK_URL). Never invent fake
+  endpoints — only real provider URLs.
 
 Return ONLY JSON in this exact shape:
 {"trigger":"","steps":[{"action":"","details":""}],"integrations":[""],
