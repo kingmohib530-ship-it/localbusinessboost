@@ -92,9 +92,18 @@ PLANNING RULES (apply in this order):
    nurture, CRM, reactivation, "set it up so...", OR any revenue/growth
    language ("make more money", "close more jobs", "book more appointments",
    "increase revenue", "scale", "no-shows", "review requests", "review
-   generation", "win-back", "phone scripts") → include FORGE. When in doubt
+   generation", "win-back", "phone scripts", "set-and-forget", "book more",
+   "more jobs", "while you sleep") → include FORGE. When in doubt
    for a local-business request, prefer including Forge.
-5. ALWAYS finish the plan with SHIELD for quality control. This is mandatory.
+5. ONE-CLICK CAMPAIGN INTENTS — if you see these phrases in the request,
+   pick the matching agent sequence for MAXIMUM revenue impact:
+   • "get more leads" / "find leads" → Atlas → Nexus → Shield
+   • "follow-up" / "book more jobs" / "set-and-forget" → Pulse → Forge → Shield
+   • "reactivate" / "win-back" / "past customers" → Pulse → Forge → Shield
+   • "competitor" / "crush competitors" / "positioning" → Nexus → Pulse → Shield
+   • "end-to-end" / "full automated sales system" / "complete sales system"
+     → Atlas → Nexus → Pulse → Forge → Shield
+6. ALWAYS finish the plan with SHIELD for quality control. This is mandatory.
 6. Never include Orbis itself. Never invent agent names. Never repeat an agent.
 7. Keep the plan minimal — only the agents actually needed for the request.
 
