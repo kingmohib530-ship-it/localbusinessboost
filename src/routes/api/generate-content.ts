@@ -129,15 +129,10 @@ export const Route = createFileRoute("/api/generate-content")({
           if (!token) {
             return new Response(JSON.stringify({ error: "Sign in required" }), { status: 401, headers: cors });
           }
-          const supaUrl = process.env.SUPABASE_URL!;
-          const supaPub = process.env.SUPABASE_PUBLISHABLE_KEY!;
-          const userClient = createClient(supaUrl, supaPub, {
-            global: { headers: { Authorization: `Bearer ${token}` } },
-            auth: { persistSession: false, autoRefreshToken: false },
-          });
-          const { data: claimData, error: claimErr } = await userClient.auth.getClaims(token);
-          const userId = claimData?.claims?.sub;
-          if (claimErr || !userId) {
+          // Verify JWT signature server-side via Supabase Auth (not just base64 decode).
+          const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+          const userId = userData?.user?.id;
+          if (userErr || !userId) {
             return new Response(JSON.stringify({ error: "Invalid session" }), { status: 401, headers: cors });
           }
 
