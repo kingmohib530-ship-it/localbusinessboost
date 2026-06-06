@@ -589,19 +589,46 @@ function NexusOutput({ data }: { data: NexusResult }) {
 }
 
 function ForgeOutput({ data }: { data: ForgeResult }) {
+  const title = data?.trigger
+    ? `Forge — ${data.trigger.slice(0, 60)}`
+    : "Forge Automation Blueprint";
+  const fullGuide = buildClientGuide(data, title);
+
   return (
     <div className="space-y-5">
-      {data?.estimatedRoi && (
-        <div className="rounded-xl border border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent p-4 shadow-lg shadow-orange-500/5">
-          <div className="mb-1 flex items-center gap-2">
+      {/* Action bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <SaveToMondayButton forge={data} title={title} />
+        <CopyButton text={fullGuide} label="Copy Full Implementation Guide" />
+      </div>
+
+      {/* Headline ROI */}
+      {(data?.estimatedRoi || data?.roiProjection) && (
+        <div className="rounded-xl border border-orange-500/40 bg-gradient-to-br from-orange-500/15 via-amber-500/5 to-transparent p-4 shadow-lg shadow-orange-500/10">
+          <div className="mb-2 flex items-center gap-2">
             <span className="text-lg">💰</span>
             <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
               Estimated Revenue Impact
             </p>
           </div>
-          <p className="text-sm leading-relaxed text-orange-50">{data.estimatedRoi}</p>
+          {data.estimatedRoi && (
+            <p className="mb-3 text-sm leading-relaxed text-orange-50">
+              {data.estimatedRoi}
+            </p>
+          )}
+          {data.roiProjection && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              <RoiStat label="Booked jobs" value={data.roiProjection.bookedJobsLiftPct} />
+              <RoiStat label="Fewer no-shows" value={data.roiProjection.noShowReductionPct} />
+              <RoiStat label="Review velocity" value={data.roiProjection.reviewVelocityMultiplier} />
+              <RoiStat label="Monthly lift" value={data.roiProjection.monthlyRevenueLiftUsd} />
+              <RoiStat label="Payback" value={data.roiProjection.paybackPeriod} />
+            </div>
+          )}
         </div>
       )}
+
+
 
       {data?.trigger && (
         <div className="rounded-lg border border-border/40 bg-background/40 p-3 text-sm">
