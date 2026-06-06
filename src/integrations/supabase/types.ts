@@ -307,7 +307,7 @@ export type Database = {
           id: string
           message: string | null
           name: string
-          organization_id: string | null
+          organization_id: string
           phone: string | null
           source: string
         }
@@ -318,7 +318,7 @@ export type Database = {
           id?: string
           message?: string | null
           name: string
-          organization_id?: string | null
+          organization_id: string
           phone?: string | null
           source?: string
         }
@@ -329,7 +329,7 @@ export type Database = {
           id?: string
           message?: string | null
           name?: string
-          organization_id?: string | null
+          organization_id?: string
           phone?: string | null
           source?: string
         }
