@@ -169,7 +169,11 @@ async function syncAtlasLeadsToMonday(leads: AtlasLead[]): Promise<MondaySyncIte
   return synced;
 }
 
-export async function runAgent(agent: AgentName, instruction: string, context: Record<string, unknown> = {}) {
+export async function runAgent(
+  agent: AgentName,
+  instruction: string,
+  context: Record<string, unknown> = {},
+): Promise<AgentResult> {
   const ctx = Object.keys(context).length
     ? `\n\nContext from prior agents:\n${JSON.stringify(context).slice(0, 6000)}`
     : "";
@@ -183,19 +187,20 @@ export async function runAgent(agent: AgentName, instruction: string, context: R
       const ok = mondaySync.filter((s) => s.itemId).length;
       return {
         ...(result as object),
-        monday: {
-          synced: ok,
-          total: leads.length,
-          items: mondaySync,
-        },
-      };
+        monday: { synced: ok, total: leads.length, items: mondaySync },
+      } as AtlasResult;
     }
   }
 
-  return result;
+  return result as AgentResult;
 }
+
+// Small inter-agent delay to stay polite with the AI gateway.
+const AGENT_DELAY_MS = 800;
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
 // ====================== MAIN WORKFLOW ORCHESTRATOR ======================
-export async function runLunavxWorkflow(userRequest: string) {
+export async function runLunavxWorkflow(userRequest: string): Promise<WorkflowResult> {
   console.log("🚀 Starting LUNAVX workflow for request:", userRequest);
 
   try {
