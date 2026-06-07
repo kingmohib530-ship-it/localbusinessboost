@@ -194,7 +194,9 @@ export function AgentWorkflow({
 } = {}) {
   const [input, setInput] = useState("");
   const [showCustom, setShowCustom] = useState(false);
+  const [showTechnical, setShowTechnical] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<CampaignTemplate | null>(null);
+
 
   const mutation = useMutation({ mutationFn: runWorkflow });
   const result = mutation.data;
@@ -376,13 +378,36 @@ export function AgentWorkflow({
             vanguard={result.results.Vanguard as VanguardResult | undefined}
             results={result.results}
           />
-          <PlanCard steps={result.plan} />
-          <AgentResultsCard results={result.results} />
+
+          {/* Technical details — hidden by default for non-tech business owners */}
+          <div className="rounded-xl border border-dashed border-border/60 bg-background/30">
+            <button
+              type="button"
+              onClick={() => setShowTechnical((s) => !s)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left"
+              aria-expanded={showTechnical}
+            >
+              <span className="text-sm font-medium text-muted-foreground">
+                {showTechnical ? "Hide" : "Show"} technical details
+                <span className="ml-2 text-xs text-muted-foreground/70">
+                  (agent plan, per-step outputs — for advanced users)
+                </span>
+              </span>
+              <span className="text-xs text-muted-foreground">{showTechnical ? "▲" : "▼"}</span>
+            </button>
+            {showTechnical && (
+              <div className="space-y-6 border-t border-border/60 p-4">
+                <PlanCard steps={result.plan} />
+                <AgentResultsCard results={result.results} />
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
   );
 }
+
 
 export default AgentWorkflow;
 
@@ -390,20 +415,54 @@ export default AgentWorkflow;
 // Loading panel
 // ─────────────────────────────────────────────────────────────────────────────
 function LoadingPanel() {
+  const STAGES = [
+    { label: "Understanding your request…", hint: "Reading what you asked for and planning the best approach.", icon: Sparkles },
+    { label: "Finding leads…", hint: "Searching local businesses that match your ideal customer.", icon: Users },
+    { label: "Researching your market…", hint: "Checking competitors and local opportunities.", icon: Target },
+    { label: "Writing your emails & messages…", hint: "Drafting outreach copy ready to send.", icon: PenLine },
+    { label: "Building your automation…", hint: "Wiring up follow-ups, bookings, and reminders.", icon: Workflow },
+    { label: "Polishing the results…", hint: "Double-checking quality before handing it over.", icon: ShieldCheck },
+  ];
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((x) => (x + 1) % STAGES.length), 4000);
+    return () => clearInterval(id);
+  }, [STAGES.length]);
+  const Cur = STAGES[i].icon;
+
   return (
-    <Card className="border-border/60 bg-card/60">
-      <CardContent className="flex items-center gap-4 py-6">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Orbis is planning your workforce…</p>
-          <p className="text-xs text-muted-foreground">
-            Atlas, Nexus, Pulse, Forge, and Shield will execute in sequence. This can take 20–60 seconds.
-          </p>
+    <Card className="border-border/60 bg-gradient-to-br from-violet-500/5 via-card/60 to-cyan-500/5 shadow-lg shadow-violet-500/5">
+      <CardContent className="py-7 px-6">
+        <div className="flex items-center gap-4">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-500 shadow-lg shadow-violet-500/30 ring-1 ring-white/10">
+            <Cur className="h-5 w-5 text-white" />
+            <Loader2 className="absolute -right-1 -bottom-1 h-4 w-4 animate-spin text-violet-300 bg-background rounded-full p-0.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold tracking-tight transition-opacity">{STAGES[i].label}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{STAGES[i].hint}</p>
+          </div>
         </div>
+
+        <div className="mt-5 flex items-center gap-1.5">
+          {STAGES.map((_, idx) => (
+            <div
+              key={idx}
+              className={`h-1 flex-1 rounded-full transition-colors ${
+                idx <= i ? "bg-gradient-to-r from-violet-500 to-cyan-500" : "bg-border/60"
+              }`}
+            />
+          ))}
+        </div>
+
+        <p className="mt-4 text-xs text-muted-foreground">
+          Your AI team is working hard — this usually takes 20–60 seconds. You can keep this tab open.
+        </p>
       </CardContent>
     </Card>
   );
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Orbis plan
