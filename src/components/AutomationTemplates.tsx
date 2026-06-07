@@ -140,14 +140,14 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
 const AUDIENCES: { id: Audience; label: string; sub: string; icon: LucideIcon }[] = [
   {
     id: "local",
-    label: "For Local Service Businesses",
-    sub: "Get Leads → Book Jobs → Automate Follow-ups",
+    label: "If you run a local service business",
+    sub: "Get more calls, book more jobs, and stop chasing customers manually",
     icon: Store,
   },
   {
     id: "freelancer",
-    label: "For Freelancers & Solopreneurs",
-    sub: "Get Clients → Send Proposals → Nurture → Passive Income",
+    label: "If you're a freelancer or solopreneur",
+    sub: "Land more clients, follow up automatically, and turn one-off projects into retainers",
     icon: Briefcase,
   },
 ];
@@ -169,12 +169,13 @@ export function AutomationTemplates({
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-violet-400" />
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          One-Click Campaigns
+          Pick a campaign — your AI team does the rest
         </h3>
         <Badge variant="outline" className="ml-1 text-[10px]">
-          Your AI employees, ready to go
+          One click. No setup.
         </Badge>
       </div>
+
 
       {AUDIENCES.map((aud) => {
         const items = CAMPAIGN_TEMPLATES.filter((t) => t.audience === aud.id);
