@@ -1679,9 +1679,10 @@ function FinalSummaryCard({
               <AlertCircle className="h-4 w-4 text-rose-400" />
             )}
             <span>
-              Vanguard:{" "}
-              {vanguard.approved ? "Approved for launch" : "Needs revision"}
+              Quality check:{" "}
+              {vanguard.approved ? "Ready to use — go for it!" : "Worth a quick review before you send"}
               {typeof vanguard.score === "number" ? ` · ${vanguard.score}/10` : ""}
+
             </span>
           </div>
         )}
