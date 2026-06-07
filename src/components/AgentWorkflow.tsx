@@ -1689,8 +1689,9 @@ function FinalSummaryCard({
         {aether?.nextSteps?.length ? (
           <div>
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Do This Next
+              👉 Do this next (takes 5 minutes)
             </p>
+
             <ol className="list-decimal space-y-1 pl-5 text-sm">
               {aether.nextSteps.map((s, i) => (
                 <li key={i}>{s}</li>
