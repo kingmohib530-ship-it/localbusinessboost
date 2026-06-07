@@ -194,7 +194,9 @@ export function AgentWorkflow({
 } = {}) {
   const [input, setInput] = useState("");
   const [showCustom, setShowCustom] = useState(false);
+  const [showTechnical, setShowTechnical] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<CampaignTemplate | null>(null);
+
 
   const mutation = useMutation({ mutationFn: runWorkflow });
   const result = mutation.data;
