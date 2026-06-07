@@ -273,11 +273,12 @@ export function AgentWorkflow({
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl tracking-tight">Your AI Workforce, ready to work</CardTitle>
+              <CardTitle className="text-xl tracking-tight">Your AI team is ready — what should they do for you today?</CardTitle>
               <CardDescription className="text-[13px]">
-                Pick a one-click campaign and your AI team will do the heavy lifting — more clients, more bookings, more revenue.
+                Pick a campaign below and we'll handle the hard parts: finding customers, writing the messages, and setting up the follow-ups.
               </CardDescription>
             </div>
+
           </div>
         </CardHeader>
 
@@ -296,7 +297,7 @@ export function AgentWorkflow({
               className="flex w-full items-center justify-between text-left"
             >
               <span className="text-sm font-medium text-muted-foreground">
-                Or describe a custom request →
+                Don't see what you need? Tell us in your own words →
               </span>
               <span className="text-xs text-muted-foreground">
                 {showCustom ? "Hide" : "Show"}
@@ -305,11 +306,14 @@ export function AgentWorkflow({
 
             {showCustom && (
               <div className="mt-4 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Plain English works best. Tell us what you want and your AI team figures out the rest.
+                </p>
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   disabled={isLoading}
-                  placeholder="e.g. Generate 15 plumbing leads in Austin, TX and write cold outreach emails"
+                  placeholder="e.g. Find me 15 plumbing customers in Austin and write the first email I should send them"
                   className="min-h-28 resize-none text-base"
                 />
                 <Button
@@ -321,17 +325,18 @@ export function AgentWorkflow({
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Agents working…
+                      Your AI team is on it…
                     </>
                   ) : (
                     <>
                       <Rocket className="mr-2 h-5 w-5" />
-                      Run Custom Workflow
+                      Get More Customers Automatically
                     </>
                   )}
                 </Button>
               </div>
             )}
+
           </div>
         </CardContent>
       </Card>
@@ -1605,11 +1610,12 @@ function FinalSummaryCard({
             <Crown className="h-5 w-5 text-yellow-400" />
             <div>
               <CardTitle className="text-base tracking-tight">
-                {aether?.headline || "Your AI Team just delivered — here's what they built for you"}
+                {aether?.headline || "Great news — here's everything your AI team just put together for you"}
               </CardTitle>
               <CardDescription>
-                Validated, ready to act on, and tuned for real revenue.
+                Double-checked, ready to use, and built to actually bring in customers.
               </CardDescription>
+
 
             </div>
           </div>
@@ -1673,17 +1679,19 @@ function FinalSummaryCard({
               <AlertCircle className="h-4 w-4 text-rose-400" />
             )}
             <span>
-              Vanguard:{" "}
-              {vanguard.approved ? "Approved for launch" : "Needs revision"}
+              Quality check:{" "}
+              {vanguard.approved ? "Ready to use — go for it!" : "Worth a quick review before you send"}
               {typeof vanguard.score === "number" ? ` · ${vanguard.score}/10` : ""}
+
             </span>
           </div>
         )}
         {aether?.nextSteps?.length ? (
           <div>
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Do This Next
+              👉 Do this next (takes 5 minutes)
             </p>
+
             <ol className="list-decimal space-y-1 pl-5 text-sm">
               {aether.nextSteps.map((s, i) => (
                 <li key={i}>{s}</li>

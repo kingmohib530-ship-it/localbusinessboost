@@ -140,14 +140,14 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
 const AUDIENCES: { id: Audience; label: string; sub: string; icon: LucideIcon }[] = [
   {
     id: "local",
-    label: "For Local Service Businesses",
-    sub: "Get Leads → Book Jobs → Automate Follow-ups",
+    label: "If you run a local service business",
+    sub: "Get more calls, book more jobs, and stop chasing customers manually",
     icon: Store,
   },
   {
     id: "freelancer",
-    label: "For Freelancers & Solopreneurs",
-    sub: "Get Clients → Send Proposals → Nurture → Passive Income",
+    label: "If you're a freelancer or solopreneur",
+    sub: "Land more clients, follow up automatically, and turn one-off projects into retainers",
     icon: Briefcase,
   },
 ];
@@ -169,12 +169,13 @@ export function AutomationTemplates({
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-violet-400" />
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          One-Click Campaigns
+          Pick a campaign — your AI team does the rest
         </h3>
         <Badge variant="outline" className="ml-1 text-[10px]">
-          Your AI employees, ready to go
+          One click. No setup.
         </Badge>
       </div>
+
 
       {AUDIENCES.map((aud) => {
         const items = CAMPAIGN_TEMPLATES.filter((t) => t.audience === aud.id);
@@ -217,13 +218,11 @@ export function AutomationTemplates({
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-1">
-                        {t.agents.map((a) => (
-                          <Badge key={a} variant="secondary" className="text-[10px]">
-                            {a}
-                          </Badge>
-                        ))}
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <Sparkles className="h-3 w-3 text-violet-400" />
+                        {t.agents.length} AI specialists will work on this for you
                       </div>
+
 
                       <div className="mt-auto space-y-3">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
@@ -235,9 +234,10 @@ export function AutomationTemplates({
                           disabled={disabled}
                           onClick={() => onLaunch(t)}
                           className={`w-full bg-gradient-to-r ${t.gradient} text-sm font-semibold text-white hover:opacity-90`}
+                          title="Your AI team will go to work right away — usually ready in under a minute."
                         >
                           <Rocket className="mr-2 h-4 w-4" />
-                          Launch Campaign
+                          Start This For Me
                         </Button>
                       </div>
                     </CardContent>
@@ -251,6 +251,7 @@ export function AutomationTemplates({
     </div>
   );
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Results Tracker (estimated impact)
@@ -271,25 +272,25 @@ export function ResultsTracker({
 }) {
   const stats: { label: string; value: string; icon: LucideIcon; tint: string }[] = [
     {
-      label: "Leads / Prospects",
+      label: "New customers found",
       value: metrics.leadsGenerated.toLocaleString(),
       icon: Users,
       tint: "text-emerald-400",
     },
     {
-      label: "Emails / SMS Ready",
+      label: "Messages ready to send",
       value: metrics.emailsReady.toLocaleString(),
       icon: Mail,
       tint: "text-sky-400",
     },
     {
-      label: "Est. Bookings (30d)",
+      label: "Bookings (next 30 days)",
       value: metrics.estimatedBookings.toLocaleString(),
       icon: CalendarRange,
       tint: "text-amber-400",
     },
     {
-      label: "Projected Revenue",
+      label: "Extra revenue (est.)",
       value: `$${metrics.projectedRevenueUsd.toLocaleString()}`,
       icon: DollarSign,
       tint: "text-violet-400",
@@ -301,20 +302,21 @@ export function ResultsTracker({
       <CardContent className="p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold">Results Tracker</h3>
+            <h3 className="text-sm font-semibold">What this is bringing you</h3>
             <p className="text-xs text-muted-foreground">
-              Live estimate of what this campaign will deliver.
+              A real-time estimate of what your AI team is delivering.
             </p>
           </div>
           {status === "active" ? (
             <Badge className="bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/15">
               <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              Campaign Active
+              Working for you
             </Badge>
           ) : (
-            <Badge variant="outline">Idle</Badge>
+            <Badge variant="outline">Waiting</Badge>
           )}
         </div>
+
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {stats.map((s) => {
