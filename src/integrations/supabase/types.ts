@@ -83,7 +83,7 @@ export type Database = {
           id: string
           ip_address: unknown
           metadata: Json | null
-          organization_id: string | null
+          organization_id: string
           user_agent: string | null
           user_id: string | null
         }
@@ -95,7 +95,7 @@ export type Database = {
           id?: string
           ip_address?: unknown
           metadata?: Json | null
-          organization_id?: string | null
+          organization_id: string
           user_agent?: string | null
           user_id?: string | null
         }
@@ -107,7 +107,7 @@ export type Database = {
           id?: string
           ip_address?: unknown
           metadata?: Json | null
-          organization_id?: string | null
+          organization_id?: string
           user_agent?: string | null
           user_id?: string | null
         }
@@ -224,7 +224,7 @@ export type Database = {
           level: string
           message: string
           metadata: Json | null
-          organization_id: string | null
+          organization_id: string
           task_id: string | null
           user_id: string
         }
@@ -235,7 +235,7 @@ export type Database = {
           level?: string
           message: string
           metadata?: Json | null
-          organization_id?: string | null
+          organization_id: string
           task_id?: string | null
           user_id: string
         }
@@ -246,7 +246,7 @@ export type Database = {
           level?: string
           message?: string
           metadata?: Json | null
-          organization_id?: string | null
+          organization_id?: string
           task_id?: string | null
           user_id?: string
         }
