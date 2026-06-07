@@ -1610,11 +1610,12 @@ function FinalSummaryCard({
             <Crown className="h-5 w-5 text-yellow-400" />
             <div>
               <CardTitle className="text-base tracking-tight">
-                {aether?.headline || "Your AI Team just delivered — here's what they built for you"}
+                {aether?.headline || "Great news — here's everything your AI team just put together for you"}
               </CardTitle>
               <CardDescription>
-                Validated, ready to act on, and tuned for real revenue.
+                Double-checked, ready to use, and built to actually bring in customers.
               </CardDescription>
+
 
             </div>
           </div>
