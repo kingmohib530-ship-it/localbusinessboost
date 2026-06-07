@@ -218,13 +218,11 @@ export function AutomationTemplates({
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-1">
-                        {t.agents.map((a) => (
-                          <Badge key={a} variant="secondary" className="text-[10px]">
-                            {a}
-                          </Badge>
-                        ))}
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <Sparkles className="h-3 w-3 text-violet-400" />
+                        {t.agents.length} AI specialists will work on this for you
                       </div>
+
 
                       <div className="mt-auto space-y-3">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
