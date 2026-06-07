@@ -378,13 +378,36 @@ export function AgentWorkflow({
             vanguard={result.results.Vanguard as VanguardResult | undefined}
             results={result.results}
           />
-          <PlanCard steps={result.plan} />
-          <AgentResultsCard results={result.results} />
+
+          {/* Technical details — hidden by default for non-tech business owners */}
+          <div className="rounded-xl border border-dashed border-border/60 bg-background/30">
+            <button
+              type="button"
+              onClick={() => setShowTechnical((s) => !s)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left"
+              aria-expanded={showTechnical}
+            >
+              <span className="text-sm font-medium text-muted-foreground">
+                {showTechnical ? "Hide" : "Show"} technical details
+                <span className="ml-2 text-xs text-muted-foreground/70">
+                  (agent plan, per-step outputs — for advanced users)
+                </span>
+              </span>
+              <span className="text-xs text-muted-foreground">{showTechnical ? "▲" : "▼"}</span>
+            </button>
+            {showTechnical && (
+              <div className="space-y-6 border-t border-border/60 p-4">
+                <PlanCard steps={result.plan} />
+                <AgentResultsCard results={result.results} />
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
   );
 }
+
 
 export default AgentWorkflow;
 
