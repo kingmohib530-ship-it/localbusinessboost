@@ -135,8 +135,8 @@ function Overview() {
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Agent run distribution</h2>
-          <span className="text-xs text-muted-foreground">{s?.runsTotal ?? 0} total runs</span>
+          <h2 className="text-lg font-semibold">Where your AI team spent its time</h2>
+          <span className="text-xs text-muted-foreground">{s?.runsTotal ?? 0} tasks done</span>
         </div>
         <div className="space-y-2">
           {Object.entries(s?.runsByAgent ?? {}).map(([agent, count]) => {
@@ -153,32 +153,33 @@ function Overview() {
             );
           })}
           {Object.keys(s?.runsByAgent ?? {}).length === 0 && (
-            <p className="text-sm text-muted-foreground">No agent runs yet. Start a task from Agents Hub or the Business Assistant.</p>
+            <p className="text-sm text-muted-foreground">No campaigns yet — pick one above and your AI team will get to work in seconds.</p>
           )}
         </div>
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent tasks</h2>
+        <h2 className="text-lg font-semibold mb-4">Your recent campaigns</h2>
         <div className="space-y-2">
           {(tasks.data ?? []).slice(0, 10).map((t) => (
             <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border border-border/60 hover:bg-accent/40">
               <div className="min-w-0 flex-1 pr-4">
                 <div className="text-sm font-medium truncate">{t.input}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">
-                  {new Date(t.created_at).toLocaleString()} · {t.assigned_agents.join(" → ") || "—"}
+                  {new Date(t.created_at).toLocaleString()}
                 </div>
               </div>
               <Badge variant={t.status === "completed" ? "default" : t.status === "failed" ? "destructive" : "secondary"}>
-                {t.status}
+                {t.status === "completed" ? "Done" : t.status === "failed" ? "Needs review" : t.status === "running" ? "Working…" : t.status}
               </Badge>
             </div>
           ))}
           {(tasks.data ?? []).length === 0 && (
-            <p className="text-sm text-muted-foreground">No tasks yet.</p>
+            <p className="text-sm text-muted-foreground">Nothing here yet. Your first campaign will show up the moment you launch one.</p>
           )}
         </div>
       </Card>
+
 
       <OnboardingWizard
         open={wizardOpen}
