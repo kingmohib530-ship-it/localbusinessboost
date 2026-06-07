@@ -236,9 +236,10 @@ export function AutomationTemplates({
                           disabled={disabled}
                           onClick={() => onLaunch(t)}
                           className={`w-full bg-gradient-to-r ${t.gradient} text-sm font-semibold text-white hover:opacity-90`}
+                          title="Your AI team will go to work right away — usually ready in under a minute."
                         >
                           <Rocket className="mr-2 h-4 w-4" />
-                          Launch Campaign
+                          Start This For Me
                         </Button>
                       </div>
                     </CardContent>
@@ -252,6 +253,7 @@ export function AutomationTemplates({
     </div>
   );
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Results Tracker (estimated impact)
