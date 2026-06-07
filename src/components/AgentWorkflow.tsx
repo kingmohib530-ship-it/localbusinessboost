@@ -297,7 +297,7 @@ export function AgentWorkflow({
               className="flex w-full items-center justify-between text-left"
             >
               <span className="text-sm font-medium text-muted-foreground">
-                Or describe a custom request →
+                Don't see what you need? Tell us in your own words →
               </span>
               <span className="text-xs text-muted-foreground">
                 {showCustom ? "Hide" : "Show"}
@@ -306,11 +306,14 @@ export function AgentWorkflow({
 
             {showCustom && (
               <div className="mt-4 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Plain English works best. Tell us what you want and your AI team figures out the rest.
+                </p>
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   disabled={isLoading}
-                  placeholder="e.g. Generate 15 plumbing leads in Austin, TX and write cold outreach emails"
+                  placeholder="e.g. Find me 15 plumbing customers in Austin and write the first email I should send them"
                   className="min-h-28 resize-none text-base"
                 />
                 <Button
@@ -322,17 +325,18 @@ export function AgentWorkflow({
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Agents working…
+                      Your AI team is on it…
                     </>
                   ) : (
                     <>
                       <Rocket className="mr-2 h-5 w-5" />
-                      Run Custom Workflow
+                      Get More Customers Automatically
                     </>
                   )}
                 </Button>
               </div>
             )}
+
           </div>
         </CardContent>
       </Card>
