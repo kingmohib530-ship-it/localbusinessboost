@@ -272,25 +272,25 @@ export function ResultsTracker({
 }) {
   const stats: { label: string; value: string; icon: LucideIcon; tint: string }[] = [
     {
-      label: "Leads / Prospects",
+      label: "New customers found",
       value: metrics.leadsGenerated.toLocaleString(),
       icon: Users,
       tint: "text-emerald-400",
     },
     {
-      label: "Emails / SMS Ready",
+      label: "Messages ready to send",
       value: metrics.emailsReady.toLocaleString(),
       icon: Mail,
       tint: "text-sky-400",
     },
     {
-      label: "Est. Bookings (30d)",
+      label: "Bookings (next 30 days)",
       value: metrics.estimatedBookings.toLocaleString(),
       icon: CalendarRange,
       tint: "text-amber-400",
     },
     {
-      label: "Projected Revenue",
+      label: "Extra revenue (est.)",
       value: `$${metrics.projectedRevenueUsd.toLocaleString()}`,
       icon: DollarSign,
       tint: "text-violet-400",
@@ -302,20 +302,21 @@ export function ResultsTracker({
       <CardContent className="p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold">Results Tracker</h3>
+            <h3 className="text-sm font-semibold">What this is bringing you</h3>
             <p className="text-xs text-muted-foreground">
-              Live estimate of what this campaign will deliver.
+              A real-time estimate of what your AI team is delivering.
             </p>
           </div>
           {status === "active" ? (
             <Badge className="bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/15">
               <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              Campaign Active
+              Working for you
             </Badge>
           ) : (
-            <Badge variant="outline">Idle</Badge>
+            <Badge variant="outline">Waiting</Badge>
           )}
         </div>
+
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {stats.map((s) => {
