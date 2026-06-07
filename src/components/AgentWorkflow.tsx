@@ -273,11 +273,12 @@ export function AgentWorkflow({
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl tracking-tight">Your AI Workforce, ready to work</CardTitle>
+              <CardTitle className="text-xl tracking-tight">Your AI team is ready — what should they do for you today?</CardTitle>
               <CardDescription className="text-[13px]">
-                Pick a one-click campaign and your AI team will do the heavy lifting — more clients, more bookings, more revenue.
+                Pick a campaign below and we'll handle the hard parts: finding customers, writing the messages, and setting up the follow-ups.
               </CardDescription>
             </div>
+
           </div>
         </CardHeader>
 
