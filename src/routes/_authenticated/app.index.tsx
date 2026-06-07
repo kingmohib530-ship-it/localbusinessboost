@@ -67,10 +67,10 @@ function Overview() {
 
   const s = stats.data;
   const cards = [
-    { label: "Total tasks", value: s?.tasksTotal ?? 0, icon: Cpu, color: "text-primary" },
-    { label: "Completed", value: s?.tasksCompleted ?? 0, icon: CheckCircle2, color: "text-success" },
-    { label: "Running", value: s?.tasksRunning ?? 0, icon: Activity, color: "text-accent-2" },
-    { label: "Failed", value: s?.tasksFailed ?? 0, icon: AlertTriangle, color: "text-destructive" },
+    { label: "Campaigns run", value: s?.tasksTotal ?? 0, icon: Cpu, color: "text-primary" },
+    { label: "Wins delivered", value: s?.tasksCompleted ?? 0, icon: CheckCircle2, color: "text-success" },
+    { label: "Working now", value: s?.tasksRunning ?? 0, icon: Activity, color: "text-accent-2" },
+    { label: "Needs your eye", value: s?.tasksFailed ?? 0, icon: AlertTriangle, color: "text-destructive" },
   ];
 
   return (
@@ -79,15 +79,15 @@ function Overview() {
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-medium text-violet-200">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            AI workforce online
+            Your AI team is online and ready
           </div>
           <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">
             {onboarding.data?.business_name
               ? `Welcome back, ${onboarding.data.business_name} 👋`
-              : "Welcome back"}
+              : "Welcome back 👋"}
           </h1>
           <p className="text-muted-foreground">
-            Your AI team is ready to bring in more clients, bookings, and revenue.
+            Pick a one-click campaign below and your AI team will go find customers, write the messages, and set up the follow-ups for you — no tech skills needed.
           </p>
         </div>
         <Button
@@ -98,9 +98,10 @@ function Overview() {
           className="border-border/60 hover:border-violet-500/40 hover:bg-violet-500/5"
         >
           <Sparkles className="h-4 w-4 mr-1.5 text-violet-300" />
-          Restart onboarding
+          Start setup again
         </Button>
       </div>
+
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {cards.map((c) => (
