@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 type NavLink = { to: string; label: string; anchor?: boolean };
 const NAV_LINKS: NavLink[] = [
   { to: "/", label: "Home" },
-  { to: "/#features", label: "Features", anchor: true },
-  { to: "/#agents", label: "Agents", anchor: true },
+  { to: "/#features", label: "What you get", anchor: true },
+  { to: "/#how-it-works", label: "How it works", anchor: true },
   { to: "/pricing", label: "Pricing" },
-  { to: "/#blog", label: "Blog", anchor: true },
 ];
 
 export function SiteNav() {
@@ -44,7 +43,7 @@ export function SiteNav() {
           </Link>
           <Link to="/auth">
             <Button size="sm" className="glow-primary">
-              Start Free Trial <ArrowRight className="h-3.5 w-3.5" />
+              Free Audit <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
         </div>
