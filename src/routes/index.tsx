@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowRight, PhoneMissed, Star, Inbox, Bot, CheckCircle2, Clock,
+  ArrowRight, PhoneMissed, Star, Inbox, Target, CheckCircle2, Clock,
   TrendingUp, ShieldCheck, PlayCircle, Sparkles, Plug, Zap, Trophy,
+  MessageSquare, DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,10 +16,10 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Local Business Boost — More Calls, Reviews & Customers, Automatically" },
-      { name: "description", content: "Local Business Boost helps cleaning, HVAC, roofing, plumbing and landscaping companies capture leads, recover missed calls, generate 5-star reviews and book more jobs — without extra work." },
-      { property: "og:title", content: "Local Business Boost — Get More Calls, Reviews & Customers" },
-      { property: "og:description", content: "Recover missed calls, send review requests, capture every lead, and let an AI receptionist book jobs while you work." },
+      { title: "Local Business Boost — Get More Calls, Bookings & Revenue on Autopilot" },
+      { name: "description", content: "The simplest way for cleaning, HVAC, plumbing, roofing and landscaping businesses to generate leads, recover missed calls, and get more 5-star reviews — automatically." },
+      { property: "og:title", content: "Local Business Boost — More Calls, Bookings & Revenue, Automatically" },
+      { property: "og:description", content: "Generate qualified leads, recover every missed call, and grow your Google reviews — without lifting a finger." },
       { property: "og:url", content: "/" },
       { rel: "canonical", href: "/" } as never,
     ],
@@ -27,10 +28,12 @@ export const Route = createFileRoute("/")({
 });
 
 const PILLARS = [
-  { icon: PhoneMissed, title: "Missed Call Recovery", desc: "Every missed call gets an instant text back. Turn voicemails into booked jobs." },
-  { icon: Star,        title: "Review Growth",        desc: "After every job, we automatically ask happy customers for a 5-star Google review." },
-  { icon: Inbox,       title: "One Lead Inbox",       desc: "Website forms, Google, Facebook and missed calls — all in one simple list." },
-  { icon: Bot,         title: "AI Receptionist",      desc: "Answers FAQs, qualifies leads and books appointments 24/7 — no setup required." },
+  { icon: Target,       title: "Smart Lead Generation",   desc: "We find real local customers who need your service — delivered ready to contact with phone, email and context." },
+  { icon: PhoneMissed,  title: "Missed Call Recovery",    desc: "Every missed call gets an automatic text within 60 seconds. Turn voicemails into booked jobs." },
+  { icon: Star,         title: "Automated Reviews",       desc: "After every job, we send a polite SMS + email asking for a Google review. Your ranking climbs on autopilot." },
+  { icon: MessageSquare,title: "Follow-Up on Autopilot",  desc: "Instant replies and follow-up sequences turn inquiries into bookings — and cut no-shows." },
+  { icon: Inbox,        title: "One Simple Lead Inbox",   desc: "Website, missed calls, Google, Facebook — all leads in one place. New → Contacted → Booked → Paid." },
+  { icon: DollarSign,   title: "Free Business Audit",     desc: "See your Visibility, Reputation, Lead and Conversion scores — and exactly how much money you're leaving on the table." },
 ];
 
 const INDUSTRIES = ["Cleaning", "HVAC", "Roofing", "Plumbing", "Landscaping"];
@@ -151,11 +154,11 @@ function Hero() {
           Built for cleaning, HVAC, roofing, plumbing & landscaping
         </Badge>
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-balance max-w-5xl mx-auto animate-fade-up">
-          Get More Calls, More Reviews, and More Customers — <span className="gradient-text">Automatically</span>
+          Get More Calls, More Bookings, and More Revenue — <span className="gradient-text">On Autopilot</span>
         </h1>
         <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-          Local Business Boost captures every lead, recovers missed calls, generates 5-star reviews
-          and books more jobs — without extra work from you.
+          The simplest way for local service businesses to generate leads, recover missed calls,
+          and get more 5-star reviews. No software to learn.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link to="/auth">
@@ -199,13 +202,13 @@ function Pillars() {
         <div className="text-center max-w-2xl mx-auto">
           <Badge variant="secondary" className="mb-4">What you get</Badge>
           <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-            Four simple tools that fill your calendar
+            Six tools. One job: make you more money.
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            No dashboards to learn. No prompts to write. Just more customers.
+            Every feature has one purpose — more booked jobs and more revenue. Nothing else.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
           {PILLARS.map((p) => (
             <Card key={p.title} className="p-6 hover:border-primary/30 transition">
               <div className="h-11 w-11 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
