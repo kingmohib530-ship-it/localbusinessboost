@@ -1,3 +1,5 @@
+import { createServerFn } from "@tanstack/react-start";
+
 export type Industry =
   | "HVAC"
   | "Plumbing"
@@ -24,10 +26,10 @@ export interface AuditFix {
 }
 
 export interface AuditCategory {
-  score: number; // 0–100
+  score: number;
   grade: "Excellent" | "Good" | "Fair" | "Needs work" | "Critical";
-  headline: string; // one sentence summary
-  fixes: [AuditFix, AuditFix, AuditFix]; // always exactly 3
+  headline: string;
+  fixes: [AuditFix, AuditFix, AuditFix];
 }
 
 export interface AuditResult {
@@ -37,7 +39,7 @@ export interface AuditResult {
   overallScore: number;
   overallGrade: string;
   executiveSummary: string;
-  revenueOpportunity: string; // e.g. "$2,000–$6,000/mo"
+  revenueOpportunity: string;
   revenueOpportunityDetail: string;
   categories: {
     visibility: AuditCategory;
@@ -45,7 +47,7 @@ export interface AuditResult {
     leadCapture: AuditCategory;
     conversion: AuditCategory;
   };
-  topWin: string; // the single highest-leverage action
+  topWin: string;
   agentsUsed: string[];
 }
 
@@ -75,42 +77,10 @@ RETURN THIS EXACT JSON SHAPE:
   "revenueOpportunityDetail": "<1 sentence explaining how>",
   "topWin": "<single most impactful action, 1 sentence>",
   "categories": {
-    "visibility": {
-      "score": <number>,
-      "headline": "<1 sentence>",
-      "fixes": [
-        { "text": "<fix 1>", "effort": "quick", "impact": "high" },
-        { "text": "<fix 2>", "effort": "medium", "impact": "high" },
-        { "text": "<fix 3>", "effort": "strategic", "impact": "medium" }
-      ]
-    },
-    "reputation": {
-      "score": <number>,
-      "headline": "<1 sentence>",
-      "fixes": [
-        { "text": "<fix 1>", "effort": "quick", "impact": "high" },
-        { "text": "<fix 2>", "effort": "medium", "impact": "high" },
-        { "text": "<fix 3>", "effort": "strategic", "impact": "medium" }
-      ]
-    },
-    "leadCapture": {
-      "score": <number>,
-      "headline": "<1 sentence>",
-      "fixes": [
-        { "text": "<fix 1>", "effort": "quick", "impact": "high" },
-        { "text": "<fix 2>", "effort": "medium", "impact": "high" },
-        { "text": "<fix 3>", "effort": "strategic", "impact": "medium" }
-      ]
-    },
-    "conversion": {
-      "score": <number>,
-      "headline": "<1 sentence>",
-      "fixes": [
-        { "text": "<fix 1>", "effort": "quick", "impact": "high" },
-        { "text": "<fix 2>", "effort": "medium", "impact": "high" },
-        { "text": "<fix 3>", "effort": "strategic", "impact": "medium" }
-      ]
-    }
+    "visibility":  { "score": <number>, "headline": "<1 sentence>", "fixes": [ { "text": "<fix>", "effort": "quick", "impact": "high" }, { "text": "<fix>", "effort": "medium", "impact": "high" }, { "text": "<fix>", "effort": "strategic", "impact": "medium" } ] },
+    "reputation":  { "score": <number>, "headline": "<1 sentence>", "fixes": [ { "text": "<fix>", "effort": "quick", "impact": "high" }, { "text": "<fix>", "effort": "medium", "impact": "high" }, { "text": "<fix>", "effort": "strategic", "impact": "medium" } ] },
+    "leadCapture": { "score": <number>, "headline": "<1 sentence>", "fixes": [ { "text": "<fix>", "effort": "quick", "impact": "high" }, { "text": "<fix>", "effort": "medium", "impact": "high" }, { "text": "<fix>", "effort": "strategic", "impact": "medium" } ] },
+    "conversion":  { "score": <number>, "headline": "<1 sentence>", "fixes": [ { "text": "<fix>", "effort": "quick", "impact": "high" }, { "text": "<fix>", "effort": "medium", "impact": "high" }, { "text": "<fix>", "effort": "strategic", "impact": "medium" } ] }
   }
 }`;
 
@@ -121,66 +91,97 @@ function buildUserPrompt(input: AuditInput): string {
     input.websiteUrl ? `Website: ${input.websiteUrl}` : "Website: none provided",
     input.city ? `City: ${input.city}` : "",
   ].filter(Boolean);
-
   return `Audit this local service business and return the JSON report:\n\n${parts.join("\n")}`;
 }
 
-function addGrades(raw: Omit<AuditResult, "businessName" | "industry" | "generatedAt" | "overallGrade" | "agentsUsed"> & { categories: Record<string, Omit<AuditCategory, "grade">> }, input: AuditInput): AuditResult {
-  const cats = raw.categories as Record<string, AuditCategory>;
-  (Object.keys(cats) as Array<keyof typeof cats>).forEach((k) => {
-    cats[k].grade = GRADE(cats[k].score);
-  });
+type RawCategory = Omit<AuditCategory, "grade">;
+interface RawAudit {
+  overallScore: number;
+  executiveSummary: string;
+  revenueOpportunity: string;
+  revenueOpportunityDetail: string;
+  topWin: string;
+  categories: {
+    visibility: RawCategory;
+    reputation: RawCategory;
+    leadCapture: RawCategory;
+    conversion: RawCategory;
+  };
+}
 
+function addGrades(raw: RawAudit, input: AuditInput): AuditResult {
+  const withGrade = (c: RawCategory): AuditCategory => ({ ...c, grade: GRADE(c.score) });
   return {
-    ...raw,
-    categories: cats as AuditResult["categories"],
     businessName: input.businessName,
     industry: input.industry,
     generatedAt: new Date().toISOString(),
+    overallScore: raw.overallScore,
     overallGrade: GRADE(raw.overallScore),
+    executiveSummary: raw.executiveSummary,
+    revenueOpportunity: raw.revenueOpportunity,
+    revenueOpportunityDetail: raw.revenueOpportunityDetail,
+    topWin: raw.topWin,
+    categories: {
+      visibility: withGrade(raw.categories.visibility),
+      reputation: withGrade(raw.categories.reputation),
+      leadCapture: withGrade(raw.categories.leadCapture),
+      conversion: withGrade(raw.categories.conversion),
+    },
     agentsUsed: ["Atlas", "Nexus", "Pulse", "Shield", "Aether"],
   };
 }
 
-export async function runBusinessAudit(input: AuditInput): Promise<AuditResult> {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: buildUserPrompt(input),
-        },
-      ],
-    }),
+const auditServerFn = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown): AuditInput => {
+    const d = (data ?? {}) as Partial<AuditInput>;
+    if (!d.businessName || typeof d.businessName !== "string") throw new Error("businessName required");
+    if (!d.industry || typeof d.industry !== "string") throw new Error("industry required");
+    return {
+      businessName: d.businessName,
+      industry: d.industry,
+      websiteUrl: typeof d.websiteUrl === "string" ? d.websiteUrl : undefined,
+      city: typeof d.city === "string" ? d.city : undefined,
+    };
+  })
+  .handler(async ({ data }) => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: buildUserPrompt(data) },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Audit API error ${res.status}: ${txt}`);
+    }
+
+    const payload = await res.json();
+    const content: string = payload?.choices?.[0]?.message?.content ?? "";
+    const clean = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+    let parsed: RawAudit;
+    try {
+      parsed = JSON.parse(clean) as RawAudit;
+    } catch {
+      throw new Error("Audit returned invalid JSON. Please try again.");
+    }
+
+    return addGrades(parsed, data);
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Audit API error ${response.status}: ${err}`);
-  }
-
-  const data = await response.json();
-  const rawText: string = data.content
-    .map((b: { type: string; text?: string }) => (b.type === "text" ? b.text : ""))
-    .join("")
-    .trim();
-
-  // Strip any accidental markdown fences
-  const clean = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-
-  let parsed: ReturnType<typeof JSON.parse>;
-  try {
-    parsed = JSON.parse(clean);
-  } catch {
-    throw new Error("Audit returned invalid JSON. Please try again.");
-  }
-
-  return addGrades(parsed, input);
+export async function runBusinessAudit(input: AuditInput): Promise<AuditResult> {
+  return auditServerFn({ data: input });
 }
