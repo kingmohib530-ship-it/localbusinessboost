@@ -1,8 +1,19 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { AuditForm } from "@/components/AuditForm";
 import { AuditReport } from "@/components/AuditReport";
 import { runBusinessAudit } from "@/lib/auditApi";
 import type { AuditInput, AuditResult } from "@/lib/auditApi";
+
+export const Route = createFileRoute("/audit")({
+  component: AuditPage,
+  head: () => ({
+    meta: [
+      { title: "Free Business Audit — Lunavex" },
+      { name: "description", content: "Get a free AI-powered audit of your local business: visibility, reputation, lead capture, and conversion." },
+    ],
+  }),
+});
 
 /* ─────────────────────────────────────────────
    All styles scoped under .audit-page
@@ -495,7 +506,7 @@ type PageState = "form" | "loading" | "report" | "error";
 
 const AGENT_STEP_DURATION_MS = 1800;
 
-export default function AuditPage() {
+function AuditPage() {
   const [pageState, setPageState] = useState<PageState>("form");
   const [loadingStep, setLoadingStep] = useState(0); // 0–4
   const [result, setResult] = useState<AuditResult | null>(null);
