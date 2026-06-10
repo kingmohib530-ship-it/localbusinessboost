@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { runLeadBlast } from "@/lib/leadblast.functions";
 
 export const Route = createFileRoute("/_authenticated/app/agents")({
   component: AgentsHub,
@@ -18,7 +16,6 @@ interface Lead {
 
 interface LeadResult {
   leads: Lead[];
-  totalFound: number;
   revenueEstimate: string;
   topTip: string;
 }
@@ -81,7 +78,7 @@ const STEPS = [
 ];
 
 function AgentsHub() {
-  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [industry, setIndustry] = useState("");
   const [city, setCity] = useState("");
   const [running, setRunning] = useState(false);
@@ -89,21 +86,19 @@ function AgentsHub() {
   const [result, setResult] = useState<LeadResult | null>(null);
   const [error, setError] = useState("");
 
-  const leadBlastFn = useServerFn(runLeadBlast);
-
   useEffect(() => {
-    async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
+    supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      const { data } = await supabase
+      supabase
         .from("profiles")
         .select("industry, city")
         .eq("id", user.id)
-        .single();
-      if (data?.industry) setIndustry(data.industry);
-      if (data?.city) setCity(data.city);
-    }
-    loadProfile();
+        .single()
+        .then(({ data }) => {
+          if (data?.industry) setIndustry(data.industry);
+          if (data?.city) setCity(data.city);
+        });
+    });
   }, []);
 
   async function runCampaign() {
@@ -116,25 +111,28 @@ function AgentsHub() {
     setResult(null);
     setStep(0);
 
-    // Animate steps while API call runs
-    const stepTimer = setInterval(() => {
-      setStep(s => Math.min(s + 1, STEPS.length - 1));
-    }, 1500);
+    const timer = setInterval(() => setStep(s => Math.min(s + 1, STEPS.length - 1)), 1400);
 
     try {
-      const data = await leadBlastFn({ data: { industry: industry.trim(), city: city.trim() } });
-      clearInterval(stepTimer);
-      setStep(STEPS.length);
-      setResult({
-        leads: data.leads,
-        totalFound: data.leads.length,
-        revenueEstimate: data.revenueEstimate,
-        topTip: data.topTip,
+      const res = await fetch("/api/lead-blast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ industry: industry.trim(), city: city.trim() }),
       });
+
+      const data = await res.json();
+      clearInterval(timer);
+      setStep(STEPS.length);
+
+      if (!res.ok || data.error) {
+        setError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+
+      setResult(data);
     } catch (err) {
-      clearInterval(stepTimer);
-      console.error(err);
-      setError("Something went wrong. Please try again.");
+      clearInterval(timer);
+      setError("Network error. Please try again.");
     } finally {
       setRunning(false);
     }
@@ -142,37 +140,27 @@ function AgentsHub() {
 
   function copyLeads() {
     if (!result) return;
-    const text = result.leads.map((l, i) =>
-      `${i + 1}. ${l.businessName}\n   Contact: ${l.contactName} | ${l.phone}\n   Need: ${l.need}\n   Opening: "${l.openingLine}"\n`
-    ).join("\n");
+    const text = result.leads
+      .map((l, i) => `${i + 1}. ${l.businessName}\n   ${l.contactName} | ${l.phone}\n   Need: ${l.need}\n   Opening: "${l.openingLine}"\n`)
+      .join("\n");
     navigator.clipboard.writeText(text);
-    alert("✅ Leads copied to clipboard!");
+    alert("✅ Copied to clipboard!");
   }
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter, -apple-system, sans-serif" }}>
-
+    <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "#0f172a", margin: "0 0 6px" }}>
-          🤖 Agents Hub
-        </h1>
-        <p style={{ fontSize: 15, color: "#475569", margin: 0 }}>
-          Pick a campaign and your 8-agent AI team will run it end-to-end.
-        </p>
+        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "#0f172a", margin: "0 0 6px" }}>🤖 Agents Hub</h1>
+        <p style={{ fontSize: 15, color: "#475569", margin: 0 }}>Pick a campaign and your 8-agent AI team will run it end-to-end.</p>
       </div>
 
-      {/* Campaign grid */}
-      {!selectedCampaign && !running && !result && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-          {CAMPAIGNS.map((c) => (
-            <div
-              key={c.id}
-              onClick={() => c.active && setSelectedCampaign(c.id)}
-              style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: 22, cursor: c.active ? "pointer" : "default", opacity: c.active ? 1 : 0.55, position: "relative" }}
-            >
-              {!c.active && (
-                <div style={{ position: "absolute", top: 12, right: 12, fontSize: 11, fontWeight: 600, background: "#f1f5f9", color: "#94a3b8", padding: "2px 8px", borderRadius: 4 }}>Coming soon</div>
-              )}
+      {/* Grid */}
+      {!selected && !running && !result && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
+          {CAMPAIGNS.map(c => (
+            <div key={c.id} onClick={() => c.active && setSelected(c.id)}
+              style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: 22, cursor: c.active ? "pointer" : "default", opacity: c.active ? 1 : 0.55, position: "relative" }}>
+              {!c.active && <div style={{ position: "absolute", top: 12, right: 12, fontSize: 11, fontWeight: 600, background: "#f1f5f9", color: "#94a3b8", padding: "2px 8px", borderRadius: 4 }}>Coming soon</div>}
               <div style={{ width: 48, height: 48, borderRadius: 12, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 14 }}>{c.icon}</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>{c.name}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: c.color, marginBottom: 8 }}>Powered by {c.agent}</div>
@@ -185,11 +173,9 @@ function AgentsHub() {
       )}
 
       {/* Form */}
-      {selectedCampaign === "lead-blast" && !running && !result && (
+      {selected === "lead-blast" && !running && !result && (
         <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <button onClick={() => setSelectedCampaign(null)} style={{ fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>
-            ← Back
-          </button>
+          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <div style={{ width: 48, height: 48, borderRadius: 12, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🎯</div>
             <div>
@@ -197,32 +183,21 @@ function AgentsHub() {
               <div style={{ fontSize: 12, color: "#6366f1", fontWeight: 600 }}>Atlas · Pulse · Aether · Vanguard</div>
             </div>
           </div>
-
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Your trade / service *</label>
-            <input
-              value={industry}
-              onChange={e => setIndustry(e.target.value)}
+            <input value={industry} onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "#0f172a", background: "white", outline: "none", boxSizing: "border-box" }}
-            />
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "#0f172a", background: "white", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div style={{ marginBottom: 22 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Your city / area *</label>
-            <input
-              value={city}
-              onChange={e => setCity(e.target.value)}
+            <input value={city} onChange={e => setCity(e.target.value)}
               placeholder="e.g. Atlanta GA, Dallas TX..."
-              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "#0f172a", background: "white", outline: "none", boxSizing: "border-box" }}
-            />
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "#0f172a", background: "white", outline: "none", boxSizing: "border-box" }} />
           </div>
-
           {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-
-          <button
-            onClick={runCampaign}
-            style={{ width: "100%", padding: 13, background: "#6366f1", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
-          >
+          <button onClick={runCampaign}
+            style={{ width: "100%", padding: 13, background: "#6366f1", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
             Run Local Lead Blast →
           </button>
           <p style={{ textAlign: "center", fontSize: 12, color: "#94a3b8", marginTop: 10 }}>~30 seconds · All 7 agents run</p>
@@ -236,8 +211,11 @@ function AgentsHub() {
           <div style={{ fontSize: 19, fontWeight: 700, color: "white", marginBottom: 24 }}>Finding {industry} leads in {city}...</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {STEPS.map((s, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, background: i < step ? "rgba(16,185,129,0.1)" : i === step ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${i < step ? "rgba(16,185,129,0.2)" : i === step ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.06)"}` }}>
-                <div style={{ width: 20, height: 20, borderRadius: "50%", background: i < step ? "#10b981" : i === step ? "#6366f1" : "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "white", flexShrink: 0 }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10,
+                background: i < step ? "rgba(16,185,129,0.1)" : i === step ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${i < step ? "rgba(16,185,129,0.2)" : i === step ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.06)"}` }}>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", background: i < step ? "#10b981" : i === step ? "#6366f1" : "rgba(255,255,255,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "white", flexShrink: 0 }}>
                   {i < step ? "✓" : ""}
                 </div>
                 <span style={{ fontSize: 13, color: i < step ? "#34d399" : i === step ? "#a5b4fc" : "rgba(255,255,255,0.3)" }}>{s}</span>
@@ -252,29 +230,26 @@ function AgentsHub() {
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>✅ {result.totalFound} leads found in {city}</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>✅ {result.leads.length} leads found in {city}</h2>
               <p style={{ fontSize: 14, color: "#10b981", fontWeight: 600, margin: 0 }}>💰 Revenue opportunity: {result.revenueEstimate}/mo</p>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={copyLeads} style={{ padding: "9px 18px", background: "#6366f1", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy all leads</button>
-              <button onClick={() => { setResult(null); setSelectedCampaign(null); }} style={{ padding: "9px 18px", background: "white", color: "#0f172a", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
+              <button onClick={() => { setResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "white", color: "#0f172a", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
             </div>
           </div>
-
           {result.topTip && (
             <div style={{ background: "#FFFBEB", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "11px 16px", marginBottom: 18 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}>⚡ Top tip: </span>
               <span style={{ fontSize: 13, color: "#92400e" }}>{result.topTip}</span>
             </div>
           )}
-
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {result.leads.map((lead, i) => (
               <div key={i} style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "16px 20px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                   <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#EEF2FF", color: "#6366f1", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
                   <span style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{lead.businessName}</span>
-                  <span style={{ fontSize: 13, color: "#94a3b8" }}>·</span>
                   <span style={{ fontSize: 13, color: "#475569" }}>{lead.contactName}</span>
                   <span style={{ fontSize: 13, color: "#6366f1", fontWeight: 500 }}>{lead.phone}</span>
                 </div>
