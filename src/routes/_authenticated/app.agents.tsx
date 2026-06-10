@@ -143,14 +143,15 @@ Make businesses realistic for ${city}. Phone numbers should look real (area code
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          max_tokens: 3000,
           messages: [{ role: "user", content: prompt }],
         }),
       });
 
       const data = await response.json();
       const text = data.content?.map((b: any) => b.text || "").join("").trim();
-      const clean = text.replace(/```json|```/g, "").trim();
+     const jsonMatch = text.match(/\{[\s\S]*\}/);
+const clean = jsonMatch ? jsonMatch[0] : text.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
 
       setResult({
