@@ -1,39 +1,32 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-
-const InputSchema = z.object({
-  industry: z.string().min(1),
-  city: z.string().min(1),
-});
 
 export const runLeadBlast = createServerFn({ method: "POST" })
-  .validator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
-    const { industry, city } = data;
+  .handler(async (ctx) => {
+    const { industry, city } = ctx.data as { industry: string; city: string };
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set in environment");
 
-    const prompt = `You are Atlas, a local business lead generation AI. Generate exactly 15 realistic local businesses in ${city} that likely need ${industry} services.
+    const prompt = `You are Atlas, a lead generation AI. Generate exactly 15 realistic local businesses in ${city} that need ${industry} services.
 
-Return ONLY valid JSON, no markdown, no explanation:
+Return ONLY valid JSON, no markdown:
 {
   "leads": [
     {
-      "businessName": "Example Business",
-      "contactName": "John Smith",
-      "phone": "404-555-0100",
-      "need": "One sentence explaining why they need ${industry} services",
-      "openingLine": "Personalized 1-sentence outreach opener mentioning their business name"
+      "businessName": "string",
+      "contactName": "string",
+      "phone": "string",
+      "need": "one sentence why they need ${industry}",
+      "openingLine": "personalized 1-sentence outreach mentioning their business name"
     }
   ],
-  "revenueEstimate": "$3,000-$8,000/mo",
-  "topTip": "One sentence on the highest-leverage outreach action to take today"
+  "revenueEstimate": "$X,000-$X,000/mo",
+  "topTip": "one sentence on the best outreach action"
 }
 
-Use realistic business names for ${city}. Use realistic phone area codes for ${city}. Opening lines must feel personal and mention the specific business.`;
+Use realistic business names and phone numbers for ${city}.`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -47,19 +40,12 @@ Use realistic business names for ${city}. Use realistic phone area codes for ${c
       }),
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Anthropic API error: ${err}`);
-    }
+    if (!res.ok) throw new Error(`API error: ${res.status} ${await res.text()}`);
 
-    const result = await response.json();
-    const text = result.content
-      ?.map((b: { type: string; text?: string }) => b.text || "")
-      .join("")
-      .trim();
+    const result = await res.json();
+    const text = result.content?.map((b: { text?: string }) => b.text || "").join("").trim();
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON in response");
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON found in response");
-
-    return JSON.parse(jsonMatch[0]);
+    return JSON.parse(match[0]);
   });
