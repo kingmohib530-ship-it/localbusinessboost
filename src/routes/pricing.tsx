@@ -1,28 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Check, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { SiteNav } from "@/components/SiteNav";
-import { SiteFooter } from "@/components/SiteFooter";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Lunavx AI Workforce OS" },
-      { name: "description", content: "Simple, transparent pricing for Lunavx. Starter $49, Pro $99, Enterprise $199. Start with a free 14-day trial." },
+      { name: "description", content: "Simple, transparent pricing for Lunavx. Start with a 14-day free trial." },
       { property: "og:title", content: "Pricing — Lunavx" },
-      { property: "og:description", content: "Simple, transparent pricing. Start with a free 14-day trial." },
     ],
   }),
   component: PricingPage,
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  PASTE YOUR 6 STRIPE PAYMENT LINK URLs HERE
-//  Each one looks like: https://buy.stripe.com/test_xxxxxxxx
-//  I will tell you exactly where to find these in Stripe Dashboard.
-// ═══════════════════════════════════════════════════════════════════
 const PAYMENT_LINKS = {
   starter_monthly:    "https://buy.stripe.com/test_3cIbJ291c0Gr3ezaWVa7C00",
   starter_annual:     "https://buy.stripe.com/test_aFa6oIa5g3SD3ez8ONa7C01",
@@ -31,308 +20,149 @@ const PAYMENT_LINKS = {
   enterprise_monthly: "https://buy.stripe.com/test_3cI7sMb9k0Gr8yTd53a7C04",
   enterprise_annual:  "https://buy.stripe.com/test_3cIbJ2fpAcp902n7KJa7C05",
 };
-// ═══════════════════════════════════════════════════════════════════
 
-interface Plan {
-  id: string;
-  name: string;
-  tagline: string;
-  monthlyPrice: number;
-  annualPrice: number;
-  monthlyKey: keyof typeof PAYMENT_LINKS;
-  annualKey: keyof typeof PAYMENT_LINKS;
-  features: string[];
-  featured: boolean;
-  badge?: string;
-  cta: string;
-}
-
-const PLANS: Plan[] = [
+const PLANS = [
   {
     id: "starter",
     name: "Starter",
     tagline: "Solo operators getting started",
-    monthlyPrice: 49,
-    annualPrice: 39,
-    monthlyKey: "starter_monthly",
-    annualKey: "starter_annual",
-    cta: "Start free trial",
+    monthly: 49, annual: 39,
+    monthlyKey: "starter_monthly" as const,
+    annualKey: "starter_annual" as const,
     featured: false,
-    features: [
-      "Full 8-agent AI workforce",
-      "50 campaigns per month",
-      "500 lead lookups / month",
-      "Email outreach generator",
-      "Basic revenue projections",
-      "Free Business Audit",
-      "Email support",
-    ],
+    features: ["Full 8-agent AI workforce","50 campaigns per month","500 lead lookups / month","Email outreach generator","Basic revenue projections","Free Business Audit","Email support"],
   },
   {
     id: "pro",
     name: "Pro",
     tagline: "Local businesses ready to grow on autopilot",
-    monthlyPrice: 99,
-    annualPrice: 79,
-    monthlyKey: "pro_monthly",
-    annualKey: "pro_annual",
-    cta: "Start free trial",
+    monthly: 99, annual: 79,
+    monthlyKey: "pro_monthly" as const,
+    annualKey: "pro_annual" as const,
     featured: true,
-    badge: "Most popular",
-    features: [
-      "Everything in Starter",
-      "Unlimited campaigns",
-      "1,000 lead lookups / month",
-      "All one-click playbooks",
-      "Automated follow-up sequences",
-      "Competitor intelligence",
-      "Advanced revenue forecasts",
-      "Review request SMS templates",
-      "Priority support",
-    ],
+    features: ["Everything in Starter","Unlimited campaigns","1,000 lead lookups / month","All one-click playbooks","Automated follow-up sequences","Competitor intelligence","Advanced revenue forecasts","Review request SMS templates","Priority support"],
   },
   {
     id: "enterprise",
     name: "Enterprise",
     tagline: "Multi-location operators and agencies",
-    monthlyPrice: 199,
-    annualPrice: 159,
-    monthlyKey: "enterprise_monthly",
-    annualKey: "enterprise_annual",
-    cta: "Start free trial",
+    monthly: 199, annual: 159,
+    monthlyKey: "enterprise_monthly" as const,
+    annualKey: "enterprise_annual" as const,
     featured: false,
-    features: [
-      "Everything in Pro",
-      "Unlimited everything",
-      "Multi-location + team seats",
-      "Custom AI agent training",
-      "Dedicated success manager",
-      "SLA + SSO",
-      "API access",
-    ],
+    features: ["Everything in Pro","Unlimited everything","Multi-location + team seats","Custom AI agent training","Dedicated success manager","SLA + SSO","API access"],
   },
 ];
 
 function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
 
-  function handleCheckout(plan: Plan) {
-    const key = isAnnual ? plan.annualKey : plan.monthlyKey;
-    const url = PAYMENT_LINKS[key];
-    if (!url || url === "PASTE_STRIPE_LINK_HERE") {
-      alert("Payment link not set up yet. Check back soon!");
-      return;
-    }
-    window.location.href = url;
-  }
-
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <SiteNav />
+    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "Inter, -apple-system, sans-serif" }}>
 
-      {/* ── Hero ── */}
-      <section className="py-16 px-4 text-center border-b bg-muted/30">
-        <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
+      {/* Nav */}
+      <nav style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px", height: 60, display: "flex", alignItems: "center", gap: 8 }}>
+          <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, fontSize: 18, color: "#0f172a", textDecoration: "none" }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                <path d="M9 2L15.5 5.5V12.5L9 16L2.5 12.5V5.5L9 2Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
+                <circle cx="9" cy="9" r="2.5" fill="white"/>
+              </svg>
+            </div>
+            Lunavx
+          </a>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            <a href="/auth" style={{ fontSize: 14, fontWeight: 500, color: "#475569", padding: "7px 14px", textDecoration: "none" }}>Sign in</a>
+            <a href="/audit" style={{ fontSize: 14, fontWeight: 600, padding: "8px 18px", background: "#6366f1", color: "white", borderRadius: 10, textDecoration: "none" }}>Get Free Audit</a>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <div style={{ textAlign: "center", padding: "60px 24px 40px", background: "linear-gradient(180deg, #fafbff 0%, #f8fafc 100%)", borderBottom: "1px solid #e2e8f0" }}>
+        <div style={{ display: "inline-block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#6366f1", background: "#eef2ff", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(99,102,241,0.2)", marginBottom: 16 }}>
           Pricing
-        </p>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+        </div>
+        <h1 style={{ fontSize: "clamp(26px, 5vw, 42px)", fontWeight: 800, letterSpacing: "-0.025em", margin: "0 0 12px", color: "#0f172a" }}>
           Simple pricing. Pays for itself in week one.
         </h1>
-        <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
-          All plans include every AI agent and a 14-day free trial.
-          No setup fees. Cancel any time.
+        <p style={{ fontSize: 17, color: "#475569", maxWidth: 480, margin: "0 auto 24px" }}>
+          All plans include every AI agent and a 14-day free trial. No setup fees. Cancel any time.
         </p>
-
-        {/* ── Billing toggle ── */}
-        <div className="inline-flex items-center bg-background border rounded-xl p-1 gap-1">
-          <button
-            onClick={() => setIsAnnual(false)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-              !isAnnual
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setIsAnnual(true)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              isAnnual
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
+        <div style={{ display: "inline-flex", background: "white", border: "1.5px solid #e2e8f0", borderRadius: 10, padding: 3 }}>
+          <button onClick={() => setIsAnnual(false)} style={{ padding: "7px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 500, fontSize: 14, background: isAnnual ? "none" : "#6366f1", color: isAnnual ? "#475569" : "white", transition: "all .15s" }}>Monthly</button>
+          <button onClick={() => setIsAnnual(true)} style={{ padding: "7px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 500, fontSize: 14, background: isAnnual ? "#6366f1" : "none", color: isAnnual ? "white" : "#475569", display: "flex", alignItems: "center", gap: 8 }}>
             Annual
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              isAnnual ? "bg-white/20 text-white" : "bg-green-100 text-green-700"
-            }`}>
-              Save 20%
-            </span>
+            <span style={{ fontSize: 11, fontWeight: 700, background: isAnnual ? "rgba(255,255,255,0.2)" : "#ecfdf5", color: isAnnual ? "white" : "#065f46", padding: "2px 7px", borderRadius: 4 }}>Save 20%</span>
           </button>
         </div>
-      </section>
+      </div>
 
-      {/* ── Plan cards ── */}
-      <section className="py-16 px-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative rounded-2xl p-8 flex flex-col border bg-background transition-shadow hover:shadow-lg ${
-                plan.featured
-                  ? "border-primary ring-2 ring-primary/20 shadow-md"
-                  : "border-border"
-              }`}
-            >
-              {plan.badge && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground px-4 py-1 text-xs font-bold rounded-full shadow">
-                    {plan.badge}
-                  </Badge>
-                </div>
-              )}
-
-              <div className="mb-6">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                  {plan.name}
-                </p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-2xl font-bold">$</span>
-                  <span className="text-5xl font-extrabold tracking-tight">
-                    {isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                  </span>
-                  <span className="text-muted-foreground text-sm">/mo</span>
-                </div>
-                {isAnnual && (
-                  <p className="text-xs text-green-600 font-semibold">
-                    Save ${(plan.monthlyPrice - plan.annualPrice) * 12}/yr
-                  </p>
+      {/* Plans */}
+      <div style={{ maxWidth: 1040, margin: "0 auto", padding: "48px 24px 24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 16 }}>
+          {PLANS.map((plan) => {
+            const price = isAnnual ? plan.annual : plan.monthly;
+            const key = isAnnual ? plan.annualKey : plan.monthlyKey;
+            const saving = (plan.monthly - plan.annual) * 12;
+            return (
+              <div key={plan.id} style={{ background: "white", border: plan.featured ? "2px solid #6366f1" : "1.5px solid #e2e8f0", borderRadius: 24, padding: 28, position: "relative", display: "flex", flexDirection: "column", boxShadow: plan.featured ? "0 0 0 4px rgba(99,102,241,0.08)" : "none" }}>
+                {plan.featured && (
+                  <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "#6366f1", color: "white", fontSize: 12, fontWeight: 700, padding: "4px 16px", borderRadius: 20, whiteSpace: "nowrap" }}>
+                    Most popular
+                  </div>
                 )}
-                <p className="text-sm text-muted-foreground mt-2 leading-snug">
-                  {plan.tagline}
-                </p>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>{plan.name}</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 2, marginBottom: 4 }}>
+                  <span style={{ fontSize: 22, fontWeight: 700 }}>$</span>
+                  <span style={{ fontSize: 50, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>{price}</span>
+                  <span style={{ fontSize: 15, color: "#475569", marginLeft: 2 }}>/mo</span>
+                </div>
+                {isAnnual && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600, marginBottom: 4 }}>Save ${saving}/yr</div>}
+                <div style={{ fontSize: 14, color: "#475569", marginBottom: 20, lineHeight: 1.5 }}>{plan.tagline}</div>
+                <div style={{ height: 1, background: "#e2e8f0", marginBottom: 20 }} />
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+                  {plan.features.map((f, i) => (
+                    <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#475569" }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#ecfdf5", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => { window.location.href = PAYMENT_LINKS[key]; }}
+                  style={{ width: "100%", padding: 13, borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", border: plan.featured ? "none" : "1.5px solid #e2e8f0", background: plan.featured ? "#6366f1" : "white", color: plan.featured ? "white" : "#0f172a", boxShadow: plan.featured ? "0 4px 14px rgba(99,102,241,0.3)" : "none" }}
+                >
+                  Start 14-day free trial →
+                </button>
               </div>
-
-              <div className="h-px bg-border mb-6" />
-
-              <ul className="flex flex-col gap-3 mb-8 flex-1">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm">
-                    <div className="mt-0.5 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-2.5 h-2.5 text-green-600" />
-                    </div>
-                    <span className="text-muted-foreground">{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                onClick={() => handleCheckout(plan)}
-                className={`w-full font-semibold rounded-xl h-11 ${
-                  plan.featured
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-background border border-border text-foreground hover:bg-muted"
-                }`}
-                variant={plan.featured ? "default" : "outline"}
-              >
-                {plan.cta}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
+        <p style={{ textAlign: "center", fontSize: 13, color: "#94a3b8" }}>All plans include the full 8-agent workforce. No hidden charges.</p>
+      </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          All plans include the full 8-agent workforce. No hidden charges. No setup fees.
-        </p>
-      </section>
-
-      {/* ── Feature table ── */}
-      <section className="py-12 px-4 bg-muted/30 border-t border-b">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Everything you get</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 pr-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Feature</th>
-                  <th className="text-center py-3 px-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Starter</th>
-                  <th className="text-center py-3 px-4 font-semibold text-primary uppercase text-xs tracking-wider bg-primary/5 rounded-t-lg">Pro</th>
-                  <th className="text-center py-3 pl-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Enterprise</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ["All 8 AI agents",        "✓",     "✓",          "✓"],
-                  ["Campaigns / month",       "50",    "Unlimited",  "Unlimited"],
-                  ["Lead lookups / month",    "500",   "1,000",      "Unlimited"],
-                  ["Automated follow-ups",    "—",     "✓",          "✓"],
-                  ["Competitor intelligence", "—",     "✓",          "✓"],
-                  ["Revenue projections",     "Basic", "Advanced",   "Advanced"],
-                  ["Review SMS templates",    "—",     "✓",          "✓"],
-                  ["Multi-location seats",    "—",     "—",          "✓"],
-                  ["API access",              "—",     "—",          "✓"],
-                  ["Support",                 "Email", "Priority",   "Dedicated"],
-                ].map(([label, s, p, e], i) => (
-                  <tr key={i} className={`border-b ${i % 2 === 0 ? "" : "bg-muted/20"}`}>
-                    <td className="py-3 pr-4 font-medium">{label}</td>
-                    <td className="py-3 px-4 text-center text-muted-foreground">{s}</td>
-                    <td className="py-3 px-4 text-center font-semibold text-primary bg-primary/5">{p}</td>
-                    <td className="py-3 pl-4 text-center text-muted-foreground">{e}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ── */}
-      <section className="py-16 px-4">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Common questions</h2>
-          <div className="flex flex-col gap-1">
-            {[
-              ["Is there really a free trial?", "Yes — 14 days free on every paid plan. No credit card required to start. Cancel before day 15 and you pay nothing."],
-              ["Can I switch plans?", "Yes, any time. Upgrades are immediate and prorated. Downgrades take effect at the end of your billing period."],
-              ["What counts as a campaign?", "One AI workflow run — like Local Lead Blast, Review Recovery, or Cold Email Sprint. Browsing doesn't count."],
-              ["Can I pause instead of cancel?", "Yes. Pause your subscription for 30 days from billing settings. Your data stays safe."],
-              ["Is my data safe?", "All data is encrypted at rest and in transit. We never sell your data. Your information belongs to you."],
-            ].map(([q, a], i) => (
-              <details key={i} className="border rounded-xl overflow-hidden group">
-                <summary className="flex justify-between items-center px-5 py-4 cursor-pointer font-semibold text-sm hover:bg-muted/40 list-none">
-                  {q}
-                  <span className="text-muted-foreground group-open:rotate-180 transition-transform">▾</span>
-                </summary>
-                <p className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">{a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Bottom CTA ── */}
-      <section className="py-16 px-4 bg-primary text-primary-foreground text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight mb-3">
-          Not sure which plan? Start with the audit.
-        </h2>
-        <p className="text-primary-foreground/70 max-w-md mx-auto mb-8">
-          Get your free Lunavx Business Audit — scored across 4 categories in 60 seconds.
-        </p>
-        <a
-          href="/audit"
-          className="inline-flex items-center gap-2 bg-white text-primary font-bold px-8 py-3.5 rounded-xl text-base hover:bg-white/90 transition-colors shadow-lg"
-        >
-          Get My Free Business Audit
-          <ArrowRight className="w-4 h-4" />
+      {/* Bottom CTA */}
+      <div style={{ background: "#0f172a", textAlign: "center", padding: "72px 24px" }}>
+        <h2 style={{ fontSize: "clamp(22px, 4vw, 32px)", fontWeight: 800, color: "white", marginBottom: 12 }}>Not sure which plan? Start with the audit.</h2>
+        <p style={{ fontSize: 16, color: "rgba(255,255,255,0.6)", maxWidth: 460, margin: "0 auto 24px" }}>Get your free Lunavx Business Audit in 60 seconds.</p>
+        <a href="/audit" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "15px 32px", background: "#6366f1", color: "white", borderRadius: 12, fontSize: 16, fontWeight: 600, textDecoration: "none" }}>
+          Get My Free Business Audit →
         </a>
-        <p className="mt-4 text-sm text-primary-foreground/50">
-          Free forever · No credit card · 60 seconds
-        </p>
-      </section>
+        <p style={{ marginTop: 14, fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Free forever · No credit card · 60 seconds</p>
+      </div>
 
-      <SiteFooter />
+      {/* Footer */}
+      <div style={{ background: "#0f172a", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "20px 24px" }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", display: "flex", justifyContent: "space-between", fontSize: 13, color: "rgba(255,255,255,0.3)", flexWrap: "wrap", gap: 8 }}>
+          <span>© 2026 Lunavx. All rights reserved.</span>
+          <span style={{ display: "flex", gap: 16 }}>
+            <a href="/privacy" style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Privacy</a>
+            <a href="/terms" style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Terms</a>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
