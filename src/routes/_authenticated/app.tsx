@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Bot, MessageSquare, Terminal, Workflow, ScrollText, Settings, LogOut, Sparkles,
+  LayoutDashboard, Bot, MessageSquare, Terminal, Workflow, ScrollText, Settings, LogOut, Sparkles, Phone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/app")({
 const nav = [
   { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/app/agents", label: "Agents Hub", icon: Bot },
+  { to: "/app/receptionist", label: "Receptionist", icon: Phone },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
 
