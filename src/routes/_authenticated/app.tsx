@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Bot, MessageSquare, Terminal, Workflow, ScrollText, Settings, LogOut, Sparkles, Phone,
+  LayoutDashboard, Bot, MessageSquare, Terminal, Workflow, ScrollText, Settings, LogOut, Sparkles, Phone, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,9 @@ const nav = [
   { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/app/agents", label: "Agents Hub", icon: Bot },
   { to: "/app/receptionist", label: "Receptionist", icon: Phone },
+  { to: "/app/reputation", label: "Reputation", icon: Star },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
-
 function AppShell() {
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
