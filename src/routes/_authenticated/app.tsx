@@ -12,10 +12,6 @@ export const Route = createFileRoute("/_authenticated/app")({
 const nav = [
   { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/app/agents", label: "Agents Hub", icon: Bot },
-  { to: "/app/chat", label: "Business Assistant", icon: MessageSquare },
-  { to: "/app/control", label: "Control Center", icon: Terminal },
-  { to: "/app/workflows", label: "Workflows", icon: Workflow },
-  { to: "/app/logs", label: "Execution Logs", icon: ScrollText },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
 
