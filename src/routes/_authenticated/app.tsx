@@ -32,7 +32,7 @@ function AppShell() {
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
-            <div className="font-display font-bold tracking-tight">LUNAVX</div>
+            <div className="font-display font-bold tracking-tight">Lanavix</div>
             <div className="text-[10px] text-muted-foreground -mt-0.5">AI Workforce OS</div>
           </div>
         </div>
