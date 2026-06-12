@@ -91,11 +91,11 @@ function HomePage() {
     },
     {
       q: 'Does this work for my trade?',
-      a: 'Yes. Lunavx is built for HVAC, plumbing, roofing, electrical, cleaning, landscaping, and pest control. The AI is trained on contractor conversations — not generic business language.',
+      a: 'Yes. Lanavix is built for HVAC, plumbing, roofing, electrical, cleaning, landscaping, and pest control. The AI is trained on contractor conversations — not generic business language.',
     },
     {
       q: 'Will it replace my current software?',
-      a: 'No. Lunavx runs alongside whatever you already use. It handles the specific jobs that fall through the cracks: missed calls, review follow-ups, and finding new leads nearby.',
+      a: 'No. Lanavix runs alongside whatever you already use. It handles the specific jobs that fall through the cracks: missed calls, review follow-ups, and finding new leads nearby.',
     },
     {
       q: "What if I don't like it?",
@@ -123,7 +123,7 @@ function HomePage() {
             <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ color: '#fff', fontSize: '16px' }}>⚡</span>
             </div>
-            <span style={{ fontWeight: 700, fontSize: '18px', color: '#0f0f1a' }}>Lunavx</span>
+            <span style={{ fontWeight: 700, fontSize: '18px', color: '#0f0f1a' }}>Lanavix</span>
           </Link>
           <div style={{ display: 'flex', gap: '24px' }}>
             {['Features', 'How It Works', 'Results', 'Pricing'].map(item => (
@@ -147,7 +147,7 @@ function HomePage() {
           Stop Losing <span style={{ color: '#818cf8' }}>$2,000/Week</span><br />to Missed Calls
         </h1>
         <p style={{ fontSize: '18px', color: '#94a3b8', maxWidth: '560px', margin: '0 auto 40px', lineHeight: 1.7 }}>
-          Lunavx texts back every missed call in <strong style={{ color: '#fff' }}>60 seconds</strong>, gets you 5-star reviews after every job, and finds 30 new leads in your area — all without you lifting a finger.
+          Lanavix texts back every missed call in <strong style={{ color: '#fff' }}>60 seconds</strong>, gets you 5-star reviews after every job, and finds 30 new leads in your area — all without you lifting a finger.
         </p>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link to="/audit" style={{ background: '#6366f1', color: '#fff', padding: '16px 32px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '16px' }}>
@@ -224,7 +224,7 @@ function HomePage() {
             <p style={{ color: '#6366f1', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Never lose a job to voicemail again</p>
             <h3 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px' }}>Missed Call Text-Back</h3>
             <p style={{ color: '#6b7280', lineHeight: 1.7, marginBottom: '20px' }}>
-              When you're on a roof, under a sink, or driving between jobs — Lunavx texts back every missed call within 60 seconds. AI handles the conversation and books the appointment.
+              When you're on a roof, under a sink, or driving between jobs — Lanavix texts back every missed call within 60 seconds. AI handles the conversation and books the appointment.
             </p>
             <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px 16px', fontSize: '14px', color: '#92400e' }}>
               💡 62% of calls to small businesses go unanswered. Each one is a $200–$2,000 job walking out the door.
@@ -235,7 +235,7 @@ function HomePage() {
             <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#fca5a5' }}>
               🔴 Missed call from (571) 555-0182
             </div>
-            <p style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', marginBottom: '8px' }}>Lunavx responds in 47 seconds</p>
+            <p style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', marginBottom: '8px' }}>Lanavix responds in 47 seconds</p>
             <div style={{ background: '#6366f1', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#fff' }}>
               💬 "Hi! This is Peak HVAC. Sorry we missed you — we're on a call right now. What do you need help with? Reply and we'll get you booked today!"
             </div>
@@ -253,7 +253,7 @@ function HomePage() {
             <div style={{ background: 'rgba(99,102,241,0.15)', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#a5b4fc' }}>
               ✅ Job completed for Sarah M.
             </div>
-            <p style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', marginBottom: '8px' }}>Lunavx sends review request 2 hours later</p>
+            <p style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', marginBottom: '8px' }}>Lanavix sends review request 2 hours later</p>
             <div style={{ background: '#f59e0b', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#fff' }}>
               ⭐ "Hi Sarah! Thanks for choosing us for your AC tune-up. If we did a great job, a quick Google review means the world: [link] 🙏"
             </div>
@@ -285,7 +285,7 @@ function HomePage() {
               Tell us your trade and city. Our AI finds 30 real local businesses that need your service, with the owner's name, phone number, and a personalized opening line ready to send.
             </p>
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 16px', fontSize: '14px', color: '#166534' }}>
-              💡 The average Lunavx user closes 2–4 jobs from their first Lead Blast. Average job value: $350–$1,800.
+              💡 The average Lanavix user closes 2–4 jobs from their first Lead Blast. Average job value: $350–$1,800.
             </div>
           </div>
           <div style={{ background: '#1e1b4b', borderRadius: '16px', padding: '24px', textAlign: 'left' }}>
@@ -342,10 +342,10 @@ function HomePage() {
 
       {/* COMPARISON */}
       <section id="results" style={{ padding: '100px 32px', background: '#f8fafc', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, maxWidth: '600px', margin: '0 auto 56px' }}>What changes when you use Lunavx</h2>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, maxWidth: '600px', margin: '0 auto 56px' }}>What changes when you use Lanavix</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', maxWidth: '860px', margin: '0 auto' }}>
           <div style={{ background: '#fff', border: '2px solid #fecaca', borderRadius: '16px', padding: '32px' }}>
-            <p style={{ color: '#ef4444', fontWeight: 700, fontSize: '16px', marginBottom: '24px' }}>✗ Without Lunavx</p>
+            <p style={{ color: '#ef4444', fontWeight: 700, fontSize: '16px', marginBottom: '24px' }}>✗ Without Lanavix</p>
             {['Missed call = lost $400 job', 'Customers forget to leave reviews', 'Leads scattered across 5 places', 'Evenings spent chasing follow-ups', 'Competitors outrank you on Google', "Paying for ads that don't convert"].map(item => (
               <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', textAlign: 'left' }}>
                 <span style={{ color: '#ef4444', fontWeight: 700, flexShrink: 0 }}>✗</span>
@@ -354,7 +354,7 @@ function HomePage() {
             ))}
           </div>
           <div style={{ background: '#fff', border: '2px solid #bbf7d0', borderRadius: '16px', padding: '32px' }}>
-            <p style={{ color: '#10b981', fontWeight: 700, fontSize: '16px', marginBottom: '24px' }}>✓ With Lunavx</p>
+            <p style={{ color: '#10b981', fontWeight: 700, fontSize: '16px', marginBottom: '24px' }}>✓ With Lanavix</p>
             {['Every missed call texted back in 60s', 'Reviews arrive after every job, automatically', 'All leads in one simple inbox', 'AI books jobs while you sleep', 'More reviews = higher Google rank = more calls', 'Organic leads from the AI, no ad spend'].map(item => (
               <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', textAlign: 'left' }}>
                 <span style={{ color: '#10b981', fontWeight: 700, flexShrink: 0 }}>✓</span>
@@ -372,7 +372,7 @@ function HomePage() {
           Built for contractors in the DMV — launching now
         </h2>
         <p style={{ color: '#6b7280', fontSize: '16px', maxWidth: '560px', margin: '0 auto 56px', lineHeight: 1.7 }}>
-          Lunavx is in early access with a small group of local contractors. Founding members lock in current pricing forever and get direct input on what we build next.
+          Lanavix is in early access with a small group of local contractors. Founding members lock in current pricing forever and get direct input on what we build next.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px', maxWidth: '860px', margin: '0 auto' }}>
           {[
@@ -475,7 +475,7 @@ function HomePage() {
               <div style={{ width: '28px', height: '28px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ color: '#fff', fontSize: '14px' }}>⚡</span>
               </div>
-              <span style={{ fontWeight: 700, fontSize: '16px', color: '#fff' }}>Lunavx</span>
+              <span style={{ fontWeight: 700, fontSize: '16px', color: '#fff' }}>Lanavix</span>
             </div>
             <p style={{ fontSize: '14px', lineHeight: 1.7, maxWidth: '240px' }}>Your 24/7 AI business team. Built for local service businesses who want more customers without more hours.</p>
           </div>
@@ -499,7 +499,7 @@ function HomePage() {
           </div>
         </div>
         <div style={{ borderTop: '1px solid #1e293b', paddingTop: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '960px', margin: '0 auto', flexWrap: 'wrap', gap: '16px' }}>
-          <p style={{ fontSize: '13px' }}>© 2026 Lunavx. All rights reserved.</p>
+          <p style={{ fontSize: '13px' }}>© 2026 Lanavix. All rights reserved.</p>
           <p style={{ fontSize: '13px' }}>Built for the trades. Powered by AI.</p>
         </div>
       </footer>
