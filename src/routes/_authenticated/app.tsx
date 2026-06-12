@@ -33,7 +33,7 @@ function AppShell() {
           </div>
           <div>
             <div className="font-display font-bold tracking-tight">Lanavix</div>
-            <div className="text-[10px] text-muted-foreground -mt-0.5">AI Workforce OS</div>
+            <div className="text-[10px] text-muted-foreground -mt-0.5">AI Workforce for Contractors</div>
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">
