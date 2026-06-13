@@ -10,7 +10,7 @@ import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Sign in — LUNAVX" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Lanavix" }] }),
   component: AuthPage,
 });
 
@@ -25,25 +25,30 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Welcome back");
+    toast.success("Welcome back!");
     navigate({ to: "/app" });
   };
 
   const signUp = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/app` },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Account created. Signing you in...");
+    if (data.user) {
+      toast.success("Account created! Taking you to the dashboard...");
+      navigate({ to: "/app" });
+    }
   };
 
   const google = async () => {
-    const { lovable } = await import("@/integrations/lovable");
-    await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/app` });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/app` },
+    });
+    if (error) toast.error(error.message);
   };
 
   return (
@@ -65,13 +70,29 @@ function AuthPage() {
               <TabsContent key={mode} value={mode} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    onKeyDown={(e) => e.key === "Enter" && (mode === "signin" ? signIn() : signUp())}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Password</Label>
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    onKeyDown={(e) => e.key === "Enter" && (mode === "signin" ? signIn() : signUp())}
+                  />
                 </div>
-                <Button className="w-full" disabled={loading} onClick={mode === "signin" ? signIn : signUp}>
+                <Button
+                  className="w-full"
+                  disabled={loading}
+                  onClick={mode === "signin" ? signIn : signUp}
+                >
                   {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
                 </Button>
                 <div className="flex items-center gap-3">
@@ -79,13 +100,15 @@ function AuthPage() {
                   <span className="text-xs text-muted-foreground">OR</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
-                <Button variant="outline" className="w-full" onClick={google}>Continue with Google</Button>
+                <Button variant="outline" className="w-full" onClick={google}>
+                  Continue with Google
+                </Button>
               </TabsContent>
             ))}
           </Tabs>
         </div>
         <p className="text-center text-xs text-muted-foreground mt-6">
-          By continuing, you agree to LUNAVX's terms of service.
+          By continuing, you agree to Lanavix's terms of service.
         </p>
       </div>
     </div>
