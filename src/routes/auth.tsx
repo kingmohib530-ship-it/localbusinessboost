@@ -38,7 +38,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Account created. Check your email to verify, or sign in if confirmation is disabled.");
+    toast.success("Account created. Signing you in...");
   };
 
   const google = async () => {
@@ -53,7 +53,7 @@ function AuthPage() {
           <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-display font-bold tracking-tight">LUNAVX</span>
+          <span className="text-xl font-display font-bold tracking-tight">Lanavix</span>
         </Link>
         <div className="glass rounded-2xl p-8 shadow-2xl">
           <Tabs defaultValue="signin">
