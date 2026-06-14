@@ -193,7 +193,7 @@ function EmailGate({ onUnlock }: { onUnlock: (email: string) => void }) {
         </form>
         {error && <p id="gate-err" className="ar-gate-error" role="alert">{error}</p>}
         <p className="ar-gate-fine">
-          By entering your email, you create a free Lunavex account.
+          By entering your email, you create a free Lanavix account.
           Unsubscribe anytime.
         </p>
       </div>
@@ -223,7 +223,7 @@ export function AuditReport({ result, onStartOver }: Props) {
       <header className="ar-header">
         <div className="ar-header-top">
           <div className="ar-header-meta">
-            <span className="ar-header-tag">Lunavex Business Audit</span>
+            <span className="ar-header-tag">Lanavix Business Audit</span>
             <span className="ar-header-dot" aria-hidden="true">·</span>
             <span className="ar-header-tag">{result.industry}</span>
             <span className="ar-header-dot" aria-hidden="true">·</span>
@@ -324,7 +324,7 @@ export function AuditReport({ result, onStartOver }: Props) {
               Your audit is complete. Ready to fix this?
             </h2>
             <p className="ar-cta-sub">
-              Lunavex's 8 AI agents can run your first growth campaign in 60 seconds —
+              Lanavix's 8 AI agents can run your first growth campaign in 60 seconds —
               finding leads, writing outreach, and recovering reviews automatically.
             </p>
             <div className="ar-cta-actions">
