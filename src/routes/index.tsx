@@ -127,7 +127,7 @@ function HomePage() {
           </Link>
           <div style={{ display: 'flex', gap: '24px' }}>
             {['Features', 'How It Works', 'Results', 'Pricing'].map(item => (
-              <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} style={{ color: '#4b5563', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>{item}</a>
+              <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} style={{ color: '#4b5563', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>{item}</a>
             ))}
           </div>
         </div>
@@ -231,7 +231,7 @@ function HomePage() {
             </div>
           </div>
           <div style={{ background: '#1e1b4b', borderRadius: '16px', padding: '24px', textAlign: 'left' }}>
-            <p style={{ color: '#818cf8', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Live Example</p>
+            <p style={{ color: '#818cf8', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Example</p>
             <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#fca5a5' }}>
               🔴 Missed call from (571) 555-0182
             </div>
@@ -249,7 +249,7 @@ function HomePage() {
         {/* Feature 2 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', maxWidth: '960px', margin: '0 auto 80px', alignItems: 'center' }}>
           <div style={{ background: '#1e1b4b', borderRadius: '16px', padding: '24px', textAlign: 'left' }}>
-            <p style={{ color: '#f59e0b', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Live Example</p>
+            <p style={{ color: '#f59e0b', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Example</p>
             <div style={{ background: 'rgba(99,102,241,0.15)', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#a5b4fc' }}>
               ✅ Job completed for Sarah M.
             </div>
@@ -289,7 +289,7 @@ function HomePage() {
             </div>
           </div>
           <div style={{ background: '#1e1b4b', borderRadius: '16px', padding: '24px', textAlign: 'left' }}>
-            <p style={{ color: '#10b981', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>Live Example</p>
+            <p style={{ color: '#10b981', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>Example</p>
             <p style={{ color: '#64748b', fontSize: '12px', marginBottom: '16px' }}>Lead Blast results — Roofing · Atlanta GA</p>
             {[
               { name: 'Piedmont Coffee Roasters', phone: '404-555-0110' },
@@ -459,7 +459,7 @@ function HomePage() {
         <Link to="/audit" style={{ display: 'inline-block', background: '#6366f1', color: '#fff', padding: '18px 40px', borderRadius: '12px', textDecoration: 'none', fontWeight: 700, fontSize: '18px' }}>
           Get My Free Business Audit →
         </Link>
-        <p style={{ color: '#475569', fontSize: '13px', marginTop: '16px' }}>Free forever · No credit card · 60 seconds · Keep the report</p>
+        <p style={{ color: '#475569', fontSize: '13px', marginTop: '16px' }}>No signup required · No credit card · 60 seconds · Keep the report</p>
         <div style={{ display: 'flex', gap: '32px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '48px' }}>
           {['🔒 Bank-grade security', '⚡ Setup in 5 minutes', '📋 Results in week 1', '💳 No credit card to start'].map(item => (
             <span key={item} style={{ color: '#64748b', fontSize: '13px' }}>{item}</span>
