@@ -178,7 +178,7 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
       ) : (
         /* ── Loading state ── */
         <div className="af-loading" aria-live="polite" aria-label="Audit in progress">
-          <div className="af-loading-eyebrow">Your Lunavex agents are on it</div>
+          <div className="af-loading-eyebrow">Your Lanavix agents are on it</div>
           <p className="af-loading-name">
             Auditing <strong>{businessName}</strong>
           </p>
