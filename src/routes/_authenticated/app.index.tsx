@@ -20,8 +20,8 @@ const QUICK_WINS = [
     desc: "Find 30 qualified local leads in your area with personalized outreach — in 60 seconds.",
     action: "Run now →",
     href: "/app/agents",
-    color: "#6366f1",
-    bg: "#EEF2FF",
+    color: "#818cf8",
+    bg: "rgba(99,102,241,0.15)",
   },
   {
     icon: "⭐",
@@ -29,8 +29,8 @@ const QUICK_WINS = [
     desc: "Send review request messages to your last 5 customers and boost your Google rating.",
     action: "Generate →",
     href: "/app/agents",
-    color: "#10b981",
-    bg: "#ECFDF5",
+    color: "#34d399",
+    bg: "rgba(16,185,129,0.15)",
   },
   {
     icon: "📊",
@@ -38,8 +38,8 @@ const QUICK_WINS = [
     desc: "See exactly what's costing you customers and get 12 plain-English fixes.",
     action: "View audit →",
     href: "/audit",
-    color: "#f59e0b",
-    bg: "#FFFBEB",
+    color: "#fbbf24",
+    bg: "rgba(245,158,11,0.15)",
   },
 ];
 
@@ -82,21 +82,21 @@ function TodayDashboard() {
 
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#6366f1", background: "#EEF2FF", padding: "4px 12px", borderRadius: 20, marginBottom: 12 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6366f1", display: "inline-block", animation: "pulse 2s infinite" }} />
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#a5b4fc", background: "rgba(99,102,241,0.15)", padding: "4px 12px", borderRadius: 20, marginBottom: 12, border: "1px solid rgba(99,102,241,0.25)" }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#818cf8", display: "inline-block", animation: "pulse 2s infinite" }} />
           Your AI team is online
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em", color: "#0f172a", margin: "0 0 6px" }}>
-          {loading ? "Loading..." : name ? `Welcome back, ${name} 👋` : "Welcome to Lunavx 👋"}
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>
+          {loading ? "Loading..." : name ? `Welcome back, ${name} 👋` : "Welcome to Lanavix 👋"}
         </h1>
-        <p style={{ fontSize: 15, color: "#475569", margin: 0 }}>
+        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
           Pick a quick win below and your AI team will handle the rest.
         </p>
       </div>
 
       {/* Upgrade banner for free users */}
       {isFree && !loading && (
-        <div style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid rgba(99,102,241,0.3)" }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 2 }}>🚀 You're on the Free plan</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>Upgrade to run unlimited campaigns and unlock all 8 AI agents.</div>
@@ -110,26 +110,26 @@ function TodayDashboard() {
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 32 }}>
         {STATS.map((s) => (
-          <div key={s.label} style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "16px 18px" }}>
+          <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
             <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
-            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "#0f172a", lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Quick wins */}
-      <h2 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>⚡ Quick wins — pick one to start</h2>
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>⚡ Quick wins — pick one to start</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
         {QUICK_WINS.map((w) => (
-          <div key={w.title} style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: 22, display: "flex", flexDirection: "column", gap: 10, transition: "border-color 0.2s, box-shadow 0.2s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = w.color; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 20px rgba(0,0,0,0.08)`; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "#e2e8f0"; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
+          <div key={w.title} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, display: "flex", flexDirection: "column", gap: 10, transition: "border-color 0.2s, box-shadow 0.2s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = w.color; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 20px rgba(0,0,0,0.25)`; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
           >
             <div style={{ width: 44, height: 44, borderRadius: 12, background: w.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{w.icon}</div>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 5 }}>{w.title}</div>
-              <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.5 }}>{w.desc}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 5 }}>{w.title}</div>
+              <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5 }}>{w.desc}</div>
             </div>
             <Link to={w.href} style={{ fontSize: 14, fontWeight: 600, color: w.color, textDecoration: "none", marginTop: "auto" }}>
               {w.action}
@@ -139,14 +139,14 @@ function TodayDashboard() {
       </div>
 
       {/* This week */}
-      <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>📅 This week</h2>
-        <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
+      <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>📅 This week</h2>
+        <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link to="/app/agents" style={{ padding: "10px 20px", background: "#6366f1", color: "white", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
             Start a campaign →
           </Link>
-          <Link to="/audit" style={{ padding: "10px 20px", background: "white", color: "#0f172a", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", border: "1.5px solid #e2e8f0" }}>
+          <Link to="/audit" style={{ padding: "10px 20px", background: "var(--card)", color: "var(--foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", border: "1.5px solid var(--border)" }}>
             Run free audit
           </Link>
         </div>
