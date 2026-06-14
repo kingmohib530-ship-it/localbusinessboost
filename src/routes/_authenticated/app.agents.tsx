@@ -28,8 +28,8 @@ const CAMPAIGNS = [
     agent: "Atlas + Pulse",
     desc: "Find 15 qualified local leads in your area with personalized outreach copy.",
     time: "~30 seconds",
-    color: "#6366f1",
-    bg: "#EEF2FF",
+    color: "#818cf8",
+    bg: "rgba(99,102,241,0.15)",
     active: true,
   },
   {
@@ -39,8 +39,8 @@ const CAMPAIGNS = [
     agent: "Pulse + Shield",
     desc: "Write professional responses to reviews and generate SMS review requests.",
     time: "~20 seconds",
-    color: "#10b981",
-    bg: "#ECFDF5",
+    color: "#34d399",
+    bg: "rgba(16,185,129,0.15)",
     active: false,
   },
   {
@@ -50,8 +50,8 @@ const CAMPAIGNS = [
     agent: "Forge + Pulse",
     desc: "Create automated follow-up sequences to win back no-shows and fill your calendar.",
     time: "~45 seconds",
-    color: "#f59e0b",
-    bg: "#FFFBEB",
+    color: "#fbbf24",
+    bg: "rgba(245,158,11,0.15)",
     active: false,
   },
   {
@@ -61,8 +61,8 @@ const CAMPAIGNS = [
     agent: "Nexus",
     desc: "Analyse your top 3 local competitors and find the gaps you can win.",
     time: "~40 seconds",
-    color: "#8b5cf6",
-    bg: "#F5F3FF",
+    color: "#a78bfa",
+    bg: "rgba(139,92,246,0.15)",
     active: false,
   },
 ];
@@ -150,8 +150,8 @@ function AgentsHub() {
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "#0f172a", margin: "0 0 6px" }}>🤖 Agents Hub</h1>
-        <p style={{ fontSize: 15, color: "#475569", margin: 0 }}>Pick a campaign and your 8-agent AI team will run it end-to-end.</p>
+        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>🤖 Agents Hub</h1>
+        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Pick a campaign and your 8-agent AI team will run it end-to-end.</p>
       </div>
 
       {/* Grid */}
@@ -159,13 +159,13 @@ function AgentsHub() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
           {CAMPAIGNS.map(c => (
             <div key={c.id} onClick={() => c.active && setSelected(c.id)}
-              style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: 22, cursor: c.active ? "pointer" : "default", opacity: c.active ? 1 : 0.55, position: "relative" }}>
-              {!c.active && <div style={{ position: "absolute", top: 12, right: 12, fontSize: 11, fontWeight: 600, background: "#f1f5f9", color: "#94a3b8", padding: "2px 8px", borderRadius: 4 }}>Coming soon</div>}
+              style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, cursor: c.active ? "pointer" : "default", opacity: c.active ? 1 : 0.55, position: "relative" }}>
+              {!c.active && <div style={{ position: "absolute", top: 12, right: 12, fontSize: 11, fontWeight: 600, background: "var(--secondary)", color: "var(--muted-foreground)", padding: "2px 8px", borderRadius: 4 }}>Coming soon</div>}
               <div style={{ width: 48, height: 48, borderRadius: 12, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 14 }}>{c.icon}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>{c.name}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>{c.name}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: c.color, marginBottom: 8 }}>Powered by {c.agent}</div>
-              <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.5, marginBottom: 12 }}>{c.desc}</div>
-              <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: c.active ? 12 : 0 }}>⏱ {c.time}</div>
+              <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5, marginBottom: 12 }}>{c.desc}</div>
+              <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: c.active ? 12 : 0 }}>⏱ {c.time}</div>
               {c.active && <div style={{ fontSize: 14, fontWeight: 600, color: c.color }}>Run this campaign →</div>}
             </div>
           ))}
@@ -174,41 +174,41 @@ function AgentsHub() {
 
       {/* Form */}
       {selected === "lead-blast" && !running && !result && (
-        <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🎯</div>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(99,102,241,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🎯</div>
             <div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Local Lead Blast</div>
-              <div style={{ fontSize: 12, color: "#6366f1", fontWeight: 600 }}>Atlas · Pulse · Aether · Vanguard</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Local Lead Blast</div>
+              <div style={{ fontSize: 12, color: "#818cf8", fontWeight: 600 }}>Atlas · Pulse · Aether · Vanguard</div>
             </div>
           </div>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Your trade / service *</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
             <input value={industry} onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "#0f172a", background: "white", outline: "none", boxSizing: "border-box" }} />
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div style={{ marginBottom: 22 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Your city / area *</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
             <input value={city} onChange={e => setCity(e.target.value)}
               placeholder="e.g. Atlanta GA, Dallas TX..."
-              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "#0f172a", background: "white", outline: "none", boxSizing: "border-box" }} />
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box" }} />
           </div>
-          {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 14 }}>{error}</p>}
+          {error && <p style={{ color: "#f87171", fontSize: 13, marginBottom: 14 }}>{error}</p>}
           <button onClick={runCampaign}
             style={{ width: "100%", padding: 13, background: "#6366f1", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
             Run Local Lead Blast →
           </button>
-          <p style={{ textAlign: "center", fontSize: 12, color: "#94a3b8", marginTop: 10 }}>~30 seconds · All 7 agents run</p>
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~30 seconds · All 7 agents run</p>
         </div>
       )}
 
       {/* Loading */}
       {running && (
-        <div style={{ background: "#0f172a", borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#6366f1", marginBottom: 8 }}>Running campaign</div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: "white", marginBottom: 24 }}>Finding {industry} leads in {city}...</div>
+        <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#818cf8", marginBottom: 8 }}>Running campaign</div>
+          <div style={{ fontSize: 19, fontWeight: 700, color: "var(--foreground)", marginBottom: 24 }}>Finding {industry} leads in {city}...</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {STEPS.map((s, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10,
@@ -230,31 +230,31 @@ function AgentsHub() {
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>✅ {result.leads.length} leads found in {city}</h2>
-              <p style={{ fontSize: 14, color: "#10b981", fontWeight: 600, margin: 0 }}>💰 Revenue opportunity: {result.revenueEstimate}/mo</p>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>✅ {result.leads.length} leads found in {city}</h2>
+              <p style={{ fontSize: 14, color: "#34d399", fontWeight: 600, margin: 0 }}>💰 Revenue opportunity: {result.revenueEstimate}/mo</p>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={copyLeads} style={{ padding: "9px 18px", background: "#6366f1", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy all leads</button>
-              <button onClick={() => { setResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "white", color: "#0f172a", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
+              <button onClick={() => { setResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
             </div>
           </div>
           {result.topTip && (
-            <div style={{ background: "#FFFBEB", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "11px 16px", marginBottom: 18 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}>⚡ Top tip: </span>
-              <span style={{ fontSize: 13, color: "#92400e" }}>{result.topTip}</span>
+            <div style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "11px 16px", marginBottom: 18 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#fbbf24" }}>⚡ Top tip: </span>
+              <span style={{ fontSize: 13, color: "#fde68a" }}>{result.topTip}</span>
             </div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {result.leads.map((lead, i) => (
-              <div key={i} style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "16px 20px" }}>
+              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 20px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                  <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#EEF2FF", color: "#6366f1", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{lead.businessName}</span>
-                  <span style={{ fontSize: 13, color: "#475569" }}>{lead.contactName}</span>
-                  <span style={{ fontSize: 13, color: "#6366f1", fontWeight: 500 }}>{lead.phone}</span>
+                  <span style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(99,102,241,0.15)", color: "#818cf8", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{lead.businessName}</span>
+                  <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{lead.contactName}</span>
+                  <span style={{ fontSize: 13, color: "#818cf8", fontWeight: 500 }}>{lead.phone}</span>
                 </div>
-                <p style={{ fontSize: 13, color: "#475569", margin: "0 0 5px", paddingLeft: 30 }}>{lead.need}</p>
-                <p style={{ fontSize: 13, color: "#0f172a", fontStyle: "italic", margin: 0, paddingLeft: 30 }}>"{lead.openingLine}"</p>
+                <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 5px", paddingLeft: 30 }}>{lead.need}</p>
+                <p style={{ fontSize: 13, color: "var(--foreground)", fontStyle: "italic", margin: 0, paddingLeft: 30 }}>"{lead.openingLine}"</p>
               </div>
             ))}
           </div>
