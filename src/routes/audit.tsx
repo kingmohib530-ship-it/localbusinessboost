@@ -9,7 +9,7 @@ export const Route = createFileRoute("/audit")({
   component: AuditPage,
   head: () => ({
     meta: [
-      { title: "Free Business Audit — Lunavex" },
+      { title: "Free Business Audit — Lanavix" },
       { name: "description", content: "Get a free AI-powered audit of your local business: visibility, reputation, lead capture, and conversion." },
     ],
   }),
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/audit")({
 
 /* ─────────────────────────────────────────────
    All styles scoped under .audit-page
-   Designed with Lunavex brand tokens:
+   Designed with Lanavix brand tokens:
      --indigo:  #6366F1  (primary)
      --navy:    #0F172A
      --emerald: #10B981
@@ -561,14 +561,14 @@ function AuditPage() {
         {/* ── Nav ── */}
         <nav className="audit-nav" aria-label="Audit page navigation">
           <div className="audit-nav-inner">
-            <a href="/" className="audit-nav-logo" aria-label="Lunavex home">
+            <a href="/" className="audit-nav-logo" aria-label="Lanavix home">
               <div className="audit-nav-logo-mark" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
                   <path d="M9 2L15.5 5.5V12.5L9 16L2.5 12.5V5.5L9 2Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
                   <circle cx="9" cy="9" r="2.5" fill="white" />
                 </svg>
               </div>
-              Lunavex
+              Lanavix
             </a>
             <a href="/" className="audit-nav-back" aria-label="Back to homepage">
               ← Back to home
@@ -602,7 +602,7 @@ function AuditPage() {
               </span>
               <span className="audit-hero-proof-item">
                 <span className="audit-hero-proof-check" aria-hidden="true">✓</span>
-                500+ businesses audited
+                Free for founding members
               </span>
             </div>
           </div>
@@ -610,20 +610,6 @@ function AuditPage() {
 
         {/* ── Main ── */}
         <main className="audit-main" id="main-content">
-
-          {/* Social proof bar */}
-          <div className="audit-proof-bar" aria-hidden="true">
-            <div className="audit-proof-inner">
-              <span className="audit-proof-item">
-                <span className="audit-proof-star">★★★★★</span>
-                "Booked 6 jobs in week one" — Marcus T., HVAC
-              </span>
-              <span className="audit-proof-item">
-                <span className="audit-proof-star">★★★★★</span>
-                "Doubled reviews in 30 days" — Daniel R., Roofing
-              </span>
-            </div>
-          </div>
 
           {/* Form state (also shown during loading and error) */}
           {showForm && (
