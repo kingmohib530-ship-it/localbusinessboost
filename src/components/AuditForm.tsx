@@ -167,13 +167,13 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
             </svg>
           </button>
 
-          <p className="af-trust">
-            <span>Free forever</span>
-            <span className="af-trust-dot" aria-hidden="true">·</span>
-            <span>No credit card</span>
-            <span className="af-trust-dot" aria-hidden="true">·</span>
-            <span>Results in ~15 seconds</span>
-          </p>
+         <p className="af-trust">
+  <span>No signup required</span>
+  <span className="af-trust-dot" aria-hidden="true">·</span>
+  <span>No credit card</span>
+  <span className="af-trust-dot" aria-hidden="true">·</span>
+  <span>Results in ~15 seconds</span>
+</p>
         </form>
       ) : (
         /* ── Loading state ── */
