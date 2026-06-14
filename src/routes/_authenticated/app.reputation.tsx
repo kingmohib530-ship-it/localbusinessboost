@@ -31,7 +31,7 @@ function StarRating({ rating, onClick }: { rating: number; onClick?: (n: number)
     <div style={{ display: "flex", gap: 4 }}>
       {STARS.map(s => (
         <span key={s} onClick={() => onClick?.(s)}
-          style={{ fontSize: 20, cursor: onClick ? "pointer" : "default", color: s <= rating ? "#f59e0b" : "#e2e8f0" }}>
+          style={{ fontSize: 20, cursor: onClick ? "pointer" : "default", color: s <= rating ? "#fbbf24" : "var(--border)" }}>
           ★
         </span>
       ))}
@@ -147,19 +147,19 @@ function ReputationPage() {
 
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "#0f172a", margin: 0 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
             ⭐ Reputation Autopilot
           </h1>
           <div style={{ display: "flex", gap: 8 }}>
             {(["dashboard", "request", "respond"] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
-                style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid #e2e8f0", background: tab === t ? "#0f172a" : "white", color: tab === t ? "white" : "#0f172a", fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
+                style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === t ? "#6366f1" : "var(--card)", color: tab === t ? "white" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
                 {t === "request" ? "Send Request" : t === "respond" ? "Write Response" : "Dashboard"}
               </button>
             ))}
           </div>
         </div>
-        <p style={{ fontSize: 15, color: "#475569", margin: 0 }}>
+        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
           Send review requests after every job. Generate professional responses in seconds.
         </p>
       </div>
@@ -174,19 +174,19 @@ function ReputationPage() {
               { label: "Responses written", value: stats.responses, icon: "✍️" },
               { label: "Avg star rating", value: stats.avgRating, icon: "🌟" },
             ].map(s => (
-              <div key={s.label} style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "16px 18px" }}>
+              <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
                 <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
           </div>
 
           {requests.length === 0 && responses.length === 0 ? (
-            <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
+            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>⭐</div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>Start building your reputation</h3>
-              <p style={{ fontSize: 14, color: "#475569", maxWidth: 400, margin: "0 auto 24px", lineHeight: 1.6 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Start building your reputation</h3>
+              <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 400, margin: "0 auto 24px", lineHeight: 1.6 }}>
                 Send your first review request to a recent customer — it takes 30 seconds and can get you a 5-star review today.
               </p>
               <button onClick={() => setTab("request")}
@@ -197,39 +197,39 @@ function ReputationPage() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {/* Recent requests */}
-              <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>Recent requests</div>
+              <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Recent requests</div>
                 {requests.slice(0, 6).map(r => (
-                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
+                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{r.customer_name || r.customer_phone}</div>
-                      <div style={{ fontSize: 12, color: "#94a3b8" }}>{new Date(r.sent_at).toLocaleDateString()}{r.job_description ? ` · ${r.job_description}` : ""}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--foreground)" }}>{r.customer_name || r.customer_phone}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{new Date(r.sent_at).toLocaleDateString()}{r.job_description ? ` · ${r.job_description}` : ""}</div>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                      background: r.status === "reviewed" ? "#ECFDF5" : "#EEF2FF",
-                      color: r.status === "reviewed" ? "#10b981" : "#6366f1" }}>
+                      background: r.status === "reviewed" ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
+                      color: r.status === "reviewed" ? "#34d399" : "#818cf8" }}>
                       {r.status === "reviewed" ? "Reviewed ✓" : "Sent"}
                     </span>
                   </div>
                 ))}
-                {requests.length === 0 && <p style={{ fontSize: 13, color: "#94a3b8" }}>No requests yet</p>}
+                {requests.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No requests yet</p>}
               </div>
 
               {/* Recent AI responses */}
-              <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>AI responses written</div>
+              <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>AI responses written</div>
                 {responses.slice(0, 4).map(r => (
-                  <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
+                  <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       {r.star_rating && <StarRating rating={r.star_rating} />}
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{r.reviewer_name || "Anonymous"}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{r.reviewer_name || "Anonymous"}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    <div style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                       {r.review_text}
                     </div>
                   </div>
                 ))}
-                {responses.length === 0 && <p style={{ fontSize: 13, color: "#94a3b8" }}>No responses yet</p>}
+                {responses.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No responses yet</p>}
               </div>
             </div>
           )}
@@ -239,46 +239,46 @@ function ReputationPage() {
       {/* Send Request tab */}
       {tab === "request" && (
         <div style={{ maxWidth: 520 }}>
-          <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>📤 Send a review request</div>
-            <div style={{ fontSize: 13, color: "#475569", marginBottom: 24, lineHeight: 1.5 }}>
+          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>📤 Send a review request</div>
+            <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
               We'll text your customer a friendly message with a direct link to leave you a Google review.
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Customer name</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Customer name</label>
               <input value={custName} onChange={e => setCustName(e.target.value)} placeholder="e.g. John Smith"
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, color: "#0f172a", background: "white", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Customer phone *</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Customer phone *</label>
               <input value={custPhone} onChange={e => setCustPhone(e.target.value)} placeholder="e.g. 404-555-0100"
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, color: "#0f172a", background: "white", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Job completed</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Job completed</label>
               <input value={jobDesc} onChange={e => setJobDesc(e.target.value)} placeholder="e.g. AC repair, roof inspection..."
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, color: "#0f172a", background: "white", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
             </div>
 
             <div style={{ marginBottom: 22 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Your Google review link</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your Google review link</label>
               <input value={googleUrl} onChange={e => setGoogleUrl(e.target.value)} placeholder="https://g.page/r/your-business/review"
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, color: "#0f172a", background: "white", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>Find this in Google Business Profile → Get more reviews</div>
+                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+              <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 4 }}>Find this in Google Business Profile → Get more reviews</div>
             </div>
 
             {sendMsg && (
-              <div style={{ fontSize: 13, color: sendMsg.startsWith("✅") ? "#10b981" : "#dc2626", marginBottom: 14 }}>{sendMsg}</div>
+              <div style={{ fontSize: 13, color: sendMsg.startsWith("✅") ? "#34d399" : "#f87171", marginBottom: 14 }}>{sendMsg}</div>
             )}
 
             <button onClick={sendRequest} disabled={sending}
               style={{ width: "100%", padding: 13, background: "#6366f1", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: sending ? "not-allowed" : "pointer", opacity: sending ? 0.7 : 1, fontFamily: "inherit" }}>
               {sending ? "Sending..." : "Send review request →"}
             </button>
-            <p style={{ textAlign: "center", fontSize: 12, color: "#94a3b8", marginTop: 10 }}>Requires Twilio to be connected</p>
+            <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>Requires Twilio to be connected</p>
           </div>
         </div>
       )}
@@ -286,32 +286,32 @@ function ReputationPage() {
       {/* Write Response tab */}
       {tab === "respond" && (
         <div style={{ maxWidth: 680 }}>
-          <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>✍️ Write a review response</div>
-            <div style={{ fontSize: 13, color: "#475569", marginBottom: 24, lineHeight: 1.5 }}>
+          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>✍️ Write a review response</div>
+            <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
               Paste any review and Claude will write a professional, personalized response in seconds.
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Star rating</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Star rating</label>
               <StarRating rating={starRating} onClick={setStarRating} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Reviewer name</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Reviewer name</label>
               <input value={reviewerName} onChange={e => setReviewerName(e.target.value)} placeholder="e.g. Sarah M."
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, color: "#0f172a", background: "white", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
             </div>
 
             <div style={{ marginBottom: 22 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", display: "block", marginBottom: 6 }}>Review text *</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Review text *</label>
               <textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
                 placeholder="Paste the review here..."
                 rows={4}
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, color: "#0f172a", background: "white", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
             </div>
 
-            {genError && <p style={{ fontSize: 13, color: "#dc2626", marginBottom: 14 }}>{genError}</p>}
+            {genError && <p style={{ fontSize: 13, color: "#f87171", marginBottom: 14 }}>{genError}</p>}
 
             <button onClick={generateResponse} disabled={generating}
               style={{ width: "100%", padding: 13, background: "#6366f1", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: generating ? "not-allowed" : "pointer", opacity: generating ? 0.7 : 1, fontFamily: "inherit", marginBottom: aiResponse ? 16 : 0 }}>
@@ -319,15 +319,15 @@ function ReputationPage() {
             </button>
 
             {aiResponse && (
-              <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: 16 }}>
+              <div style={{ background: "var(--elevated)", border: "1.5px solid var(--border)", borderRadius: 12, padding: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>✅ AI Response</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>✅ AI Response</div>
                   <button onClick={copyResponse}
-                    style={{ fontSize: 13, fontWeight: 600, color: "#6366f1", background: "none", border: "none", cursor: "pointer" }}>
+                    style={{ fontSize: 13, fontWeight: 600, color: "#818cf8", background: "none", border: "none", cursor: "pointer" }}>
                     Copy →
                   </button>
                 </div>
-                <p style={{ fontSize: 14, color: "#0f172a", lineHeight: 1.6, margin: 0 }}>{aiResponse}</p>
+                <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.6, margin: 0 }}>{aiResponse}</p>
               </div>
             )}
           </div>
