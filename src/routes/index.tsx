@@ -481,20 +481,20 @@ function HomePage() {
           </div>
           <div>
             <p style={{ color: '#9ca3af', fontWeight: 600, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Product</p>
-            {['Features', 'Pricing', 'Free Audit', 'Sign In'].map(item => (
-              <a key={item} href="#" style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item}</a>
+            {[{ label: 'Features', href: '/#features' }, { label: 'Pricing', href: '/#pricing' }, { label: 'Free Audit', href: '/audit' }, { label: 'Sign In', href: '/auth' }].map(item => (
+              <a key={item.label} href={item.href} style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item.label}</a>
             ))}
           </div>
           <div>
             <p style={{ color: '#9ca3af', fontWeight: 600, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Company</p>
-            {['About', 'Contact'].map(item => (
-              <a key={item} href="#" style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item}</a>
+            {[{ label: 'Contact', href: 'mailto:moh@lanavix.com' }].map(item => (
+              <a key={item.label} href={item.href} style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item.label}</a>
             ))}
           </div>
           <div>
             <p style={{ color: '#9ca3af', fontWeight: 600, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Legal</p>
-            {['Privacy', 'Terms'].map(item => (
-              <a key={item} href="#" style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item}</a>
+            {[{ label: 'Privacy Policy', href: '/privacy' }, { label: 'Terms of Service', href: '/terms' }].map(item => (
+              <a key={item.label} href={item.href} style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item.label}</a>
             ))}
           </div>
         </div>
