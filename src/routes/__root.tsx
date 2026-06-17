@@ -39,7 +39,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: "Lanavix" },
       { property: "og:title", content: "Lanavix — AI Workforce for Local Contractors" },
       { property: "og:description", content: "Stop losing $2,000/week to missed calls. Texts back in 60s, automates reviews, finds local leads — all on autopilot." },
-      { property: "og:image", content: "https://lanavix.com/og-image.png" },
+      { property: "og:image", content: "https://lanavix.com/og-image.png.svg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:locale", content: "en_US" },
@@ -48,7 +48,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:url", content: "https://lanavix.com" },
       { name: "twitter:title", content: "Lanavix — AI Workforce for Local Contractors" },
       { name: "twitter:description", content: "Stop losing $2,000/week to missed calls. Texts back in 60s, automates reviews, finds local leads — all on autopilot." },
-      { name: "twitter:image", content: "https://lanavix.com/og-image.png" },
+      { name: "twitter:image", content: "https://lanavix.com/og-image.png.svg" },
       { name: "theme-color", content: "#0B1020" },
     ],
     links: [
