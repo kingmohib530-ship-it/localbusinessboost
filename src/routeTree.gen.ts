@@ -31,6 +31,7 @@ import { Route as AuthenticatedAppLogsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAppControlRouteImport } from './routes/_authenticated/app.control'
 import { Route as AuthenticatedAppChatRouteImport } from './routes/_authenticated/app.chat'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
+import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicChatbotBusiness_idRouteImport } from './routes/api/public/chatbot/$business_id'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
@@ -146,6 +147,11 @@ const AuthenticatedAppAgentsRoute = AuthenticatedAppAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
   '/_authenticated/app/control': typeof AuthenticatedAppControlRoute
   '/_authenticated/app/logs': typeof AuthenticatedAppLogsRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
+    | '/app/admin'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
+    | '/app/admin'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/checkout/return'
     | '/_authenticated/app/agents'
+    | '/_authenticated/app/admin'
     | '/_authenticated/app/chat'
     | '/_authenticated/app/control'
     | '/_authenticated/app/logs'
@@ -500,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAgentsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -526,6 +545,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppChatRoute: typeof AuthenticatedAppChatRoute
   AuthenticatedAppControlRoute: typeof AuthenticatedAppControlRoute
   AuthenticatedAppLogsRoute: typeof AuthenticatedAppLogsRoute
@@ -536,6 +556,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppChatRoute: AuthenticatedAppChatRoute,
   AuthenticatedAppControlRoute: AuthenticatedAppControlRoute,
   AuthenticatedAppLogsRoute: AuthenticatedAppLogsRoute,
