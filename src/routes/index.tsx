@@ -292,13 +292,13 @@ function HomePage() {
             <p style={{ color: '#10b981', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>Example</p>
             <p style={{ color: '#64748b', fontSize: '12px', marginBottom: '16px' }}>Lead Blast results — Roofing · Atlanta GA</p>
             {[
-              { name: 'Piedmont Coffee Roasters', phone: '404-555-0110' },
-              { name: 'Midtown Gym & Fitness', phone: '404-555-0234' },
-              { name: 'Buckhead Medical Spa', phone: '404-555-0891' },
+              { name: 'Piedmont Coffee Roasters', phone: '404-291-0110', opening: "Hi, we do commercial roofing in Midtown — coffee shops take a beating with foot traffic and HVAC units on the roof. Happy to do a free inspection." },
+              { name: 'Midtown Gym & Fitness', phone: '404-554-0234', opening: "Hey, gyms with flat roofs need resealing every few years — especially with all the rooftop equipment. We're local and could take a look for free." },
+              { name: 'Buckhead Medical Spa', phone: '404-887-0891', opening: "Hi, medical offices can't afford a leak during business hours. We specialize in commercial roofing in Buckhead and offer same-week inspections." },
             ].map(lead => (
               <div key={lead.name} style={{ background: 'rgba(99,102,241,0.15)', borderRadius: '8px', padding: '12px', marginBottom: '8px' }}>
                 <p style={{ color: '#818cf8', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>{lead.name} · {lead.phone}</p>
-                <p style={{ color: '#64748b', fontSize: '12px' }}>Opening: "Hi, noticed your building's roof is getting some age — we specialize in commercial flat roofs in this area..."</p>
+                <p style={{ color: '#64748b', fontSize: '12px' }}>"{lead.opening}"</p>
               </div>
             ))}
             <p style={{ color: '#10b981', fontSize: '13px', fontWeight: 600, textAlign: 'center', marginTop: '12px' }}>+27 more leads. Generated in 34 seconds.</p>
