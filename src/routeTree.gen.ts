@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
@@ -36,6 +38,16 @@ import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -158,6 +170,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
@@ -182,6 +196,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -207,6 +223,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
@@ -233,6 +251,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
@@ -257,6 +277,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/api/save-automation'
@@ -281,6 +303,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/_authenticated/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
@@ -307,6 +331,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
@@ -325,6 +351,20 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -525,6 +565,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChatRoute: ChatRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
