@@ -10,6 +10,7 @@ function HomePage() {
   const [currentIndustry, setCurrentIndustry] = useState(0)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -108,7 +109,7 @@ function HomePage() {
   ]
 
   return (
-    <div style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", color: '#0f0f1a' }}>
+    <div style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", color: '#0f0f1a', overflowX: 'hidden', maxWidth: '100vw' }}>
 
       {/* ANNOUNCEMENT BAR */}
       <div style={{ background: '#1a1a3e', color: '#fff', textAlign: 'center', padding: '10px 16px', fontSize: '13px' }}>
@@ -117,25 +118,69 @@ function HomePage() {
       </div>
 
       {/* NAVBAR */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', position: 'sticky', top: 0, zIndex: 100 }}>
+      <style>{`
+        @media (max-width: 860px) {
+          .lnvx-nav-links, .lnvx-nav-right { display: none !important; }
+          .lnvx-hamburger { display: flex !important; }
+          .lnvx-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+        }
+      `}</style>
+      <nav style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <span style={{ color: '#fff', fontSize: '16px' }}>⚡</span>
             </div>
             <span style={{ fontWeight: 700, fontSize: '18px', color: '#0f0f1a' }}>Lanavix</span>
           </Link>
-          <div style={{ display: 'flex', gap: '24px' }}>
+          <div className="lnvx-nav-links" style={{ display: 'flex', gap: '24px' }}>
             {['Features', 'How It Works', 'Results', 'Pricing'].map(item => (
               <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} style={{ color: '#4b5563', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>{item}</a>
             ))}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="lnvx-nav-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <Link to="/auth" style={{ color: '#4b5563', textDecoration: 'none', fontSize: '14px' }}>Sign in</Link>
           <Link to="/audit" style={{ background: '#6366f1', color: '#fff', padding: '8px 20px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>Get Free Audit →</Link>
         </div>
+        <button
+          className="lnvx-hamburger"
+          onClick={() => setMobileMenuOpen(o => !o)}
+          aria-label="Toggle menu"
+          style={{ display: 'none', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+        >
+          {mobileMenuOpen ? (
+            <span style={{ fontSize: '22px', color: '#0f0f1a' }}>✕</span>
+          ) : (
+            <span style={{ fontSize: '22px', color: '#0f0f1a' }}>☰</span>
+          )}
+        </button>
       </nav>
+
+      {mobileMenuOpen && (
+        <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '4px', position: 'sticky', top: '64px', zIndex: 99 }}>
+          {['Features', 'How It Works', 'Results', 'Pricing'].map(item => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase().replace(/ /g, '-')}`}
+              onClick={() => setMobileMenuOpen(false)}
+              style={{ color: '#374151', textDecoration: 'none', fontSize: '15px', fontWeight: 500, padding: '10px 4px' }}
+            >
+              {item}
+            </a>
+          ))}
+          <Link to="/auth" onClick={() => setMobileMenuOpen(false)} style={{ color: '#374151', textDecoration: 'none', fontSize: '15px', padding: '10px 4px' }}>
+            Sign in
+          </Link>
+          <Link
+            to="/audit"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ background: '#6366f1', color: '#fff', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, textAlign: 'center', marginTop: '8px' }}
+          >
+            Get Free Audit →
+          </Link>
+        </div>
+      )}
 
       {/* HERO */}
       <section style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1e1b4b 50%, #0f172a 100%)', color: '#fff', padding: '100px 32px 80px', textAlign: 'center' }}>
@@ -469,7 +514,7 @@ function HomePage() {
 
       {/* FOOTER */}
       <footer style={{ background: '#0f0f1a', color: '#64748b', padding: '64px 32px 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '48px', maxWidth: '960px', margin: '0 auto 48px' }}>
+        <div className="lnvx-footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '48px', maxWidth: '960px', margin: '0 auto 48px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <div style={{ width: '28px', height: '28px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
