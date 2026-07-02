@@ -1,10 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const AUTH_ERROR = "Authentication required. Please sign in.";
 
 export const Route = createFileRoute("/api/lead-blast")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
+          // ===== Auth: verify Supabase JWT (same pattern as /api/workflow) =====
+          const authHeader = request.headers.get("authorization") || "";
+          if (!authHeader.toLowerCase().startsWith("bearer ")) {
+            return Response.json({ error: AUTH_ERROR }, { status: 401 });
+          }
+          const token = authHeader.slice(7).trim();
+          const { data: userData, error: userErr } =
+            await supabaseAdmin.auth.getUser(token);
+          if (userErr || !userData?.user) {
+            return Response.json({ error: AUTH_ERROR }, { status: 401 });
+          }
+
           const { industry, city } = await request.json();
 
           if (!industry || !city) {
@@ -47,7 +62,7 @@ export const Route = createFileRoute("/api/lead-blast")({
 
           // Step 2: Get details (phone numbers) for each business
           const businesses = placesData.results.slice(0, 15);
-          
+
           const detailedBusinesses = await Promise.all(
             businesses.map(async (place: any) => {
               try {
@@ -55,7 +70,7 @@ export const Route = createFileRoute("/api/lead-blast")({
                 const detailRes = await fetch(detailUrl);
                 const detailData = await detailRes.json();
                 const detail = detailData.result;
-                
+
                 return {
                   businessName: detail.name || place.name,
                   phone: detail.formatted_phone_number || "Phone not listed",
@@ -159,9 +174,9 @@ Return ONLY valid JSON, no markdown:
           });
 
         } catch (err) {
-          console.error("[api/lead-blast]", err);
+          console.error("[api/lead-blast] error");
           return Response.json(
-            { error: String(err) },
+            { error: "Internal server error" },
             { status: 500 }
           );
         }
