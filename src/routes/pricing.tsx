@@ -3,9 +3,8 @@ import { useState } from "react";
 import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import SiteNav from "@/components/SiteNav";
-import SiteFooter from "@/components/SiteFooter";
-
+import { SiteNav } from "@/components/SiteNav";
+import { SiteFooter } from "@/components/SiteFooter";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
