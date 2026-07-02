@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
+const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
 
 export const Route = createFileRoute("/api/review-response")({
   server: {
@@ -23,6 +23,25 @@ export const Route = createFileRoute("/api/review-response")({
           const user = userData?.user;
           if (userErr || !user) {
             return Response.json({ error: AUTH_ERROR }, { status: 401 });
+          }
+
+          // ===== Rate limit: 20 requests per hour per user =====
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_rate_limit",
+            {
+              p_user_id: user.id,
+              p_route: "review-response",
+              p_max_requests: 20,
+              p_window_seconds: 3600,
+            }
+          );
+          if (rlErr) {
+            console.error("[review-response] rate limit check failed");
+            // fail closed: if we can't verify the limit, don't allow the spend
+            return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
+          }
+          if (!allowed) {
+            return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
           }
 
           const { reviewText, reviewerName, starRating } = await request.json();
