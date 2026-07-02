@@ -1,450 +1,553 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight, PhoneMissed, Star, Inbox, Target, CheckCircle2, Clock,
-  TrendingUp, ShieldCheck, PlayCircle, Sparkles, Plug, Zap, Trophy,
-  MessageSquare, DollarSign,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { SiteNav } from "@/components/SiteNav";
-import { SiteFooter } from "@/components/SiteFooter";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Local Business Boost — Get More Calls, Bookings & Revenue on Autopilot" },
-      { name: "description", content: "The simplest way for cleaning, HVAC, plumbing, roofing and landscaping businesses to generate leads, recover missed calls, and get more 5-star reviews — automatically." },
-      { property: "og:title", content: "Local Business Boost — More Calls, Bookings & Revenue, Automatically" },
-      { property: "og:description", content: "Generate qualified leads, recover every missed call, and grow your Google reviews — without lifting a finger." },
-      { property: "og:url", content: "/" },
-      { rel: "canonical", href: "/" } as never,
+export const Route = createFileRoute('/')({
+  component: HomePage,
+})
+
+function HomePage() {
+  const industries = ['HVAC', 'Plumbing', 'Roofing', 'Cleaning', 'Landscaping', 'Electrical', 'Pest Control']
+  const [currentIndustry, setCurrentIndustry] = useState(0)
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndustry(i => (i + 1) % industries.length)
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const pricing = {
+    monthly: [
+      {
+        name: 'Solo',
+        price: 49,
+        desc: 'One-person operation getting started with automation',
+        features: [
+          'Missed Call Text-Back',
+          'Review request texts (50/mo)',
+          'Local Lead Blast (3 runs/mo)',
+          'Email support',
+        ],
+        cta: 'Start Free Trial',
+        highlight: false,
+      },
+      {
+        name: 'Crew',
+        price: 99,
+        desc: 'Growing business that needs consistent leads and reviews',
+        features: [
+          'Everything in Solo',
+          'Unlimited review requests',
+          'Unlimited Lead Blast runs',
+          'AI review response writer',
+          'Competitor ranking tracker',
+          'Priority support',
+        ],
+        cta: 'Start Free Trial',
+        highlight: true,
+      },
+      {
+        name: 'Agency',
+        price: 199,
+        desc: 'Multi-location operators or contractors managing crews',
+        features: [
+          'Everything in Crew',
+          'Up to 5 locations',
+          'Team seat access',
+          'Custom AI training on your brand voice',
+          'Dedicated success manager',
+          'API access + SLA',
+        ],
+        cta: 'Start Free Trial',
+        highlight: false,
+      },
     ],
-  }),
-  component: Landing,
-});
-
-const PILLARS = [
-  { icon: Target,       title: "Smart Lead Generation",   desc: "We find real local customers who need your service — delivered ready to contact with phone, email and context." },
-  { icon: PhoneMissed,  title: "Missed Call Recovery",    desc: "Every missed call gets an automatic text within 60 seconds. Turn voicemails into booked jobs." },
-  { icon: Star,         title: "Automated Reviews",       desc: "After every job, we send a polite SMS + email asking for a Google review. Your ranking climbs on autopilot." },
-  { icon: MessageSquare,title: "Follow-Up on Autopilot",  desc: "Instant replies and follow-up sequences turn inquiries into bookings — and cut no-shows." },
-  { icon: Inbox,        title: "One Simple Lead Inbox",   desc: "Website, missed calls, Google, Facebook — all leads in one place. New → Contacted → Booked → Paid." },
-  { icon: DollarSign,   title: "Free Business Audit",     desc: "See your Visibility, Reputation, Lead and Conversion scores — and exactly how much money you're leaving on the table." },
-];
-
-const INDUSTRIES = ["Cleaning", "HVAC", "Roofing", "Plumbing", "Landscaping"];
-
-const HOW_IT_WORKS = [
-  { n: "01", icon: Plug,      title: "Connect in 5 minutes",  desc: "Hook up your phone number and Google profile. No tech skills needed." },
-  { n: "02", icon: Zap,       title: "We work in the background", desc: "Missed calls get texted back, reviews get requested, every lead gets captured." },
-  { n: "03", icon: Trophy,    title: "You get more booked jobs",  desc: "Open your inbox to new customers, reviews and appointments — every day." },
-];
-
-const RESULTS = [
-  { metric: "+38%",  label: "more booked jobs in 60 days" },
-  { metric: "4.9★",  label: "average Google rating after 90 days" },
-  { metric: "<60s",  label: "to text back every missed call" },
-  { metric: "$2k–$8k", label: "in recovered revenue per month" },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Marcus T.",
-    role: "Owner, Crystal Clean Co.",
-    quote: "We used to miss 4–5 calls a day. Now every one of them turns into a text conversation. We booked 11 extra cleans in the first month.",
-  },
-  {
-    name: "Dana R.",
-    role: "Operations, Apex HVAC",
-    quote: "Our Google reviews jumped from 47 to 184 in three months. We do nothing — the system asks for them after every job.",
-  },
-  {
-    name: "Luis P.",
-    role: "Owner, Peak Roofing",
-    quote: "I stopped checking five different inboxes. Every lead — website, Facebook, missed call — shows up in one place. It's a no-brainer.",
-  },
-];
-
-const PLANS = [
-  {
-    name: "Free Audit",
-    price: "$0",
-    cadence: "one-time",
-    desc: "See exactly where you're losing customers right now.",
-    cta: "Get My Free Audit",
-    features: [
-      "Visibility, Reputation, Lead & Conversion scores",
-      "Plain-English fix list",
-      "Competitor comparison",
-      "No credit card",
+    annual: [
+      { name: 'Solo', price: 39, desc: 'One-person operation getting started with automation', features: ['Missed Call Text-Back', 'Review request texts (50/mo)', 'Local Lead Blast (3 runs/mo)', 'Email support'], cta: 'Start Free Trial', highlight: false },
+      { name: 'Crew', price: 79, desc: 'Growing business that needs consistent leads and reviews', features: ['Everything in Solo', 'Unlimited review requests', 'Unlimited Lead Blast runs', 'AI review response writer', 'Competitor ranking tracker', 'Priority support'], cta: 'Start Free Trial', highlight: true },
+      { name: 'Agency', price: 159, desc: 'Multi-location operators or contractors managing crews', features: ['Everything in Crew', 'Up to 5 locations', 'Team seat access', 'Custom AI training on your brand voice', 'Dedicated success manager', 'API access + SLA'], cta: 'Start Free Trial', highlight: false },
     ],
-    highlighted: false,
-  },
-  {
-    name: "Pro",
-    price: "$79",
-    cadence: "per month",
-    desc: "Everything you need to capture every lead and book more jobs.",
-    cta: "Start 14-Day Free Trial",
-    features: [
-      "Missed Call Recovery (auto SMS)",
-      "Review Growth automation",
-      "Unified Lead Inbox",
-      "AI Receptionist (24/7)",
-      "Competitor Intelligence",
-      "Priority support",
-    ],
-    highlighted: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    cadence: "tailored",
-    desc: "Multi-location operators and franchises.",
-    cta: "Talk to Sales",
-    features: [
-      "Multi-location + team seats",
-      "Custom integrations (CRM, dispatch)",
-      "Dedicated success manager",
-      "SLA + SSO",
-    ],
-    highlighted: false,
-  },
-];
+  }
 
-const FAQS = [
-  { q: "Do I need to be technical?", a: "No. If you can use a phone, you can use Local Business Boost. We set everything up in about 5 minutes and it runs in the background." },
-  { q: "How fast will I see results?", a: "Most owners recover their first missed-call lead within 24 hours and see new Google reviews in the first week." },
-  { q: "Does this work for my trade?", a: "Yes — we're built specifically for cleaning, HVAC, roofing, plumbing and landscaping businesses. Industry templates included." },
-  { q: "Will it replace my CRM?", a: "It can. Most owners use our Lead Inbox as their CRM. If you have one already (Jobber, Housecall, ServiceTitan), we play nicely with it." },
-  { q: "What if I cancel?", a: "No contracts. Cancel anytime in one click. Your data is yours." },
-];
+  const stripeLinks: Record<string, string> = {
+    'Solo-monthly': 'https://buy.stripe.com/test_3cIbJ291c0Gr3ezaWVa7C00',
+    'Solo-annual': 'https://buy.stripe.com/test_aFa6oIa5g3SD3ez8ONa7C01',
+    'Crew-monthly': 'https://buy.stripe.com/test_fZu6oI6T488T2av2qpa7C02',
+    'Crew-annual': 'https://buy.stripe.com/test_8x24gAdhs2OzdTdfdba7C03',
+    'Agency-monthly': 'https://buy.stripe.com/test_3cI7sMb9k0Gr8yTd53a7C04',
+    'Agency-annual': 'https://buy.stripe.com/test_3cIbJ2fpAcp902n7KJa7C05',
+  }
 
-function Landing() {
+  const faqs = [
+    {
+      q: 'Do I need to be tech-savvy to use this?',
+      a: 'Not at all. Setup takes 5 minutes. You give us your phone number and Google Business Profile link — we handle everything else. No apps to install, no code, no training required.',
+    },
+    {
+      q: 'How fast will I see results?',
+      a: 'Missed Call Text-Back starts working the moment you connect your number. Most contractors see their first recovered job within the first week. Reviews typically start coming in within 2–3 days of sending your first batch of requests.',
+    },
+    {
+      q: 'Does this work for my trade?',
+      a: 'Yes. Lanavix is built for HVAC, plumbing, roofing, electrical, cleaning, landscaping, and pest control. The AI is trained on contractor conversations — not generic business language.',
+    },
+    {
+      q: 'Will it replace my current software?',
+      a: 'No. Lanavix runs alongside whatever you already use. It handles the specific jobs that fall through the cracks: missed calls, review follow-ups, and finding new leads nearby.',
+    },
+    {
+      q: "What if I don't like it?",
+      a: "You're covered by our 30-day money-back guarantee. If you don't recover at least one job worth more than your monthly fee in the first 30 days, we refund every penny. No questions asked.",
+    },
+    {
+      q: 'How does the free audit work?',
+      a: 'Enter your business name and location. Our AI scans your Google profile, review count, response rate, and online presence in about 60 seconds. You get a report showing exactly what\'s costing you customers — no signup required.',
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <SiteNav />
-      <Hero />
-      <Industries />
-      <Pillars />
-      <HowItWorks />
-      <Results />
-      <BeforeAfter />
-      <Testimonials />
-      <Pricing />
-      <FAQ />
-      <FinalCTA />
-      <SiteFooter />
-    </div>
-  );
-}
+    <div style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", color: '#0f0f1a', overflowX: 'hidden', maxWidth: '100vw' }}>
 
-function Hero() {
-  return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-grid opacity-30 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
-      <div className="absolute inset-0 bg-radial-glow" />
-      <div className="relative max-w-6xl mx-auto px-6 pt-20 pb-20 text-center">
-        <Badge variant="secondary" className="mb-6 backdrop-blur">
-          <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-glow mr-2" />
-          Built for cleaning, HVAC, roofing, plumbing & landscaping
-        </Badge>
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-balance max-w-5xl mx-auto animate-fade-up">
-          Get More Calls, More Bookings, and More Revenue — <span className="gradient-text">On Autopilot</span>
-        </h1>
-        <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-          The simplest way for local service businesses to generate leads, recover missed calls,
-          and get more 5-star reviews. No software to learn.
-        </p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link to="/auth">
-            <Button size="lg" className="glow-primary w-full sm:w-auto">
-              Get My Free Business Audit <ArrowRight className="h-4 w-4" />
-            </Button>
+      {/* ANNOUNCEMENT BAR */}
+      <div style={{ background: '#1a1a3e', color: '#fff', textAlign: 'center', padding: '10px 16px', fontSize: '13px' }}>
+        🚀 <strong>Now in early access</strong> — founding member pricing locked in for life.{' '}
+        <Link to="/audit" style={{ color: '#818cf8', textDecoration: 'underline' }}>Claim your spot →</Link>
+      </div>
+
+      {/* NAVBAR */}
+      <style>{`
+        @media (max-width: 860px) {
+          .lnvx-nav-links, .lnvx-nav-right { display: none !important; }
+          .lnvx-hamburger { display: flex !important; }
+          .lnvx-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+        }
+      `}</style>
+      <nav style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ color: '#fff', fontSize: '16px' }}>⚡</span>
+            </div>
+            <span style={{ fontWeight: 700, fontSize: '18px', color: '#0f0f1a' }}>Lanavix</span>
           </Link>
-          <a href="#how-it-works">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">
-              <PlayCircle className="h-4 w-4" /> See How It Works
-            </Button>
+          <div className="lnvx-nav-links" style={{ display: 'flex', gap: '24px' }}>
+            {['Features', 'How It Works', 'Results', 'Pricing'].map(item => (
+              <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} style={{ color: '#4b5563', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>{item}</a>
+            ))}
+          </div>
+        </div>
+        <div className="lnvx-nav-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Link to="/auth" style={{ color: '#4b5563', textDecoration: 'none', fontSize: '14px' }}>Sign in</Link>
+          <Link to="/audit" style={{ background: '#6366f1', color: '#fff', padding: '8px 20px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>Get Free Audit →</Link>
+        </div>
+        <button
+          className="lnvx-hamburger"
+          onClick={() => setMobileMenuOpen(o => !o)}
+          aria-label="Toggle menu"
+          style={{ display: 'none', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+        >
+          {mobileMenuOpen ? (
+            <span style={{ fontSize: '22px', color: '#0f0f1a' }}>✕</span>
+          ) : (
+            <span style={{ fontSize: '22px', color: '#0f0f1a' }}>☰</span>
+          )}
+        </button>
+      </nav>
+
+      {mobileMenuOpen && (
+        <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '4px', position: 'sticky', top: '64px', zIndex: 99 }}>
+          {['Features', 'How It Works', 'Results', 'Pricing'].map(item => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase().replace(/ /g, '-')}`}
+              onClick={() => setMobileMenuOpen(false)}
+              style={{ color: '#374151', textDecoration: 'none', fontSize: '15px', fontWeight: 500, padding: '10px 4px' }}
+            >
+              {item}
+            </a>
+          ))}
+          <Link to="/auth" onClick={() => setMobileMenuOpen(false)} style={{ color: '#374151', textDecoration: 'none', fontSize: '15px', padding: '10px 4px' }}>
+            Sign in
+          </Link>
+          <Link
+            to="/audit"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ background: '#6366f1', color: '#fff', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, textAlign: 'center', marginTop: '8px' }}
+          >
+            Get Free Audit →
+          </Link>
+        </div>
+      )}
+
+      {/* HERO */}
+      <section style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1e1b4b 50%, #0f172a 100%)', color: '#fff', padding: '100px 32px 80px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.4)', borderRadius: '100px', padding: '6px 16px', marginBottom: '24px' }}>
+          <span style={{ width: '8px', height: '8px', background: '#6366f1', borderRadius: '50%', display: 'inline-block' }}></span>
+          <span style={{ fontSize: '12px', color: '#a5b4fc', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Built for {industries[currentIndustry]}</span>
+        </div>
+        <h1 style={{ fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.05, margin: '0 0 24px', maxWidth: '860px', marginLeft: 'auto', marginRight: 'auto' }}>
+          Stop Losing <span style={{ color: '#818cf8' }}>$2,000/Week</span><br />to Missed Calls
+        </h1>
+        <p style={{ fontSize: '18px', color: '#94a3b8', maxWidth: '560px', margin: '0 auto 40px', lineHeight: 1.7 }}>
+          Lanavix texts back every missed call in <strong style={{ color: '#fff' }}>60 seconds</strong>, gets you 5-star reviews after every job, and finds 30 new leads in your area — all without you lifting a finger.
+        </p>
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link to="/audit" style={{ background: '#6366f1', color: '#fff', padding: '16px 32px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '16px' }}>
+            Get My Free Business Audit →
+          </Link>
+          <a href="#how-it-works" style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', padding: '16px 32px', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '16px', border: '1px solid rgba(255,255,255,0.15)' }}>
+            ▶ See How It Works
           </a>
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">
-          No credit card · Results in your first week · Cancel anytime
-        </p>
-      </div>
-    </section>
-  );
-}
+        <p style={{ color: '#64748b', fontSize: '13px', marginTop: '16px' }}>Free audit · No credit card · Takes 60 seconds</p>
 
-function Industries() {
-  return (
-    <section className="border-y border-border/60 bg-card/20">
-      <div className="max-w-6xl mx-auto px-6 py-8 text-center">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">
-          Made for local service businesses
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-muted-foreground/80 font-display text-lg">
-          {INDUSTRIES.map((n) => <span key={n}>{n}</span>)}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Pillars() {
-  return (
-    <section id="features" className="py-24">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto">
-          <Badge variant="secondary" className="mb-4">What you get</Badge>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-            Six tools. One job: make you more money.
-          </h2>
-          <p className="mt-4 text-muted-foreground text-lg">
-            Every feature has one purpose — more booked jobs and more revenue. Nothing else.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
-          {PILLARS.map((p) => (
-            <Card key={p.title} className="p-6 hover:border-primary/30 transition">
-              <div className="h-11 w-11 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
-                <p.icon className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h3 className="font-display font-bold text-lg mt-4">{p.title}</h3>
-              <p className="text-sm text-muted-foreground mt-2">{p.desc}</p>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HowItWorks() {
-  return (
-    <section id="how-it-works" className="py-24 bg-card/20 border-y border-border/60">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto">
-          <Badge variant="secondary" className="mb-4">How it works</Badge>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-            Set it up once. It works forever.
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-12">
-          {HOW_IT_WORKS.map((s) => (
-            <Card key={s.n} className="p-6 relative">
-              <div className="text-xs font-mono text-primary">{s.n}</div>
-              <div className="mt-3 h-11 w-11 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
-                <s.icon className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h3 className="font-display font-bold text-lg mt-4">{s.title}</h3>
-              <p className="text-sm text-muted-foreground mt-2">{s.desc}</p>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Results() {
-  return (
-    <section className="py-16">
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-        {RESULTS.map((s) => (
-          <div key={s.label} className="text-center">
-            <div className="text-3xl md:text-4xl font-display font-bold gradient-text tabular-nums">
-              {s.metric}
+        {/* EARLY TRACTION BAR */}
+        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '64px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '28px 40px', maxWidth: '700px', marginLeft: 'auto', marginRight: 'auto' }}>
+          {[
+            { val: '<60s', label: 'To text back missed calls' },
+            { val: '3 tools', label: 'That pay for themselves fast' },
+            { val: '$0', label: 'Setup fee, ever' },
+            { val: '30-day', label: 'Money-back guarantee' },
+          ].map(s => (
+            <div key={s.val} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: '#818cf8' }}>{s.val}</div>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{s.label}</div>
             </div>
-            <div className="text-xs md:text-sm text-muted-foreground mt-2">
-              {s.label}
+          ))}
+        </div>
+      </section>
+
+      {/* TRUSTED BY */}
+      <section style={{ background: '#f8fafc', borderBottom: '1px solid #e5e7eb', padding: '20px 32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Built for</span>
+          {[['❄️', 'HVAC'], ['🔧', 'Plumbing'], ['🏠', 'Roofing'], ['✨', 'Cleaning'], ['🌿', 'Landscaping'], ['⚡', 'Electrical'], ['🐛', 'Pest Control']].map(([icon, label]) => (
+            <span key={label} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '100px', padding: '6px 14px', fontSize: '13px', fontWeight: 500, color: '#374151' }}>{icon} {label}</span>
+          ))}
+        </div>
+      </section>
+
+      {/* PAIN SECTION */}
+      <section id="features" style={{ padding: '100px 32px', background: '#fff', textAlign: 'center' }}>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, maxWidth: '700px', margin: '0 auto 16px' }}>
+          You're working 12-hour days and still losing customers you've already earned
+        </h2>
+        <p style={{ color: '#6b7280', fontSize: '16px', marginBottom: '56px' }}>Every one of these is costing you hundreds of dollars. Every single week.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', maxWidth: '960px', margin: '0 auto' }}>
+          {[
+            { icon: '🚫', title: "Phone rings while you're on a job", stat: 'Avg. missed job: $450' },
+            { icon: '😶', title: "Customers don't leave reviews even when they love you", stat: 'Losing 30% of potential jobs' },
+            { icon: '📋', title: 'Leads scattered across phone, Facebook, and voicemail', stat: '40% of leads go cold in 24 hrs' },
+            { icon: '⏰', title: 'Following up with leads eats your whole evening', stat: '3–5 hrs/week of your time' },
+            { icon: '🔍', title: 'Competitors with more reviews rank above you on Google', stat: 'Invisible to new customers' },
+            { icon: '💸', title: "Paying for ads that go to a website that doesn't convert", stat: 'Avg. wasted: $800/month' },
+          ].map(item => (
+            <div key={item.title} style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', textAlign: 'left' }}>
+              <div style={{ fontSize: '28px', marginBottom: '12px' }}>{item.icon}</div>
+              <p style={{ fontWeight: 600, color: '#111827', marginBottom: '8px', fontSize: '15px' }}>{item.title}</p>
+              <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: 600 }}>{item.stat}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SOLUTION */}
+      <section id="how-it-works" style={{ padding: '100px 32px', background: '#f8fafc', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', background: '#ede9fe', color: '#6366f1', borderRadius: '100px', padding: '6px 16px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '24px' }}>The Solution</div>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, maxWidth: '700px', margin: '0 auto 16px' }}>
+          Three tools that pay for themselves in the first week
+        </h2>
+        <p style={{ color: '#6b7280', fontSize: '16px', marginBottom: '72px' }}>No setup fees. No tech skills. No training. Just more booked jobs.</p>
+
+        {/* Feature 1 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', maxWidth: '960px', margin: '0 auto 80px', alignItems: 'center' }}>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '36px', marginBottom: '16px' }}>📞</div>
+            <p style={{ color: '#6366f1', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Never lose a job to voicemail again</p>
+            <h3 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px' }}>Missed Call Text-Back</h3>
+            <p style={{ color: '#6b7280', lineHeight: 1.7, marginBottom: '20px' }}>
+              When you're on a roof, under a sink, or driving between jobs — Lanavix texts back every missed call within 60 seconds. AI handles the conversation and books the appointment.
+            </p>
+            <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px 16px', fontSize: '14px', color: '#92400e' }}>
+              💡 62% of calls to small businesses go unanswered. Each one is a $200–$2,000 job walking out the door.
             </div>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+          <div style={{ background: '#1e1b4b', borderRadius: '16px', padding: '24px', textAlign: 'left' }}>
+            <p style={{ color: '#818cf8', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Example</p>
+            <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#fca5a5' }}>
+              🔴 Missed call from (571) 555-0182
+            </div>
+            <p style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', marginBottom: '8px' }}>Lanavix responds in 47 seconds</p>
+            <div style={{ background: '#6366f1', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#fff' }}>
+              💬 "Hi! This is Peak HVAC. Sorry we missed you — we're on a call right now. What do you need help with? Reply and we'll get you booked today!"
+            </div>
+            <div style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '8px', padding: '12px', marginBottom: '12px', fontSize: '14px', color: '#86efac' }}>
+              ✅ Reply: "AC unit not cooling. Can come tomorrow?"
+            </div>
+            <p style={{ color: '#4ade80', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>Job booked. $380 revenue saved.</p>
+          </div>
+        </div>
 
-function BeforeAfter() {
-  const before = [
-    "Missed calls = lost customers",
-    "Asking for reviews feels awkward",
-    "Leads scattered across 5 inboxes",
-    "Phone rings while you're on a job",
-  ];
-  const after = [
-    "Every missed call gets a text back in 60 seconds",
-    "Reviews arrive on autopilot after every job",
-    "Every lead lands in one simple inbox",
-    "AI receptionist books jobs 24/7",
-  ];
-  return (
-    <section className="py-24 bg-card/20 border-y border-border/60">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <Badge variant="secondary" className="mb-4">Before & after</Badge>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-            Stop losing customers you've already earned
-          </h2>
+        {/* Feature 2 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', maxWidth: '960px', margin: '0 auto 80px', alignItems: 'center' }}>
+          <div style={{ background: '#1e1b4b', borderRadius: '16px', padding: '24px', textAlign: 'left' }}>
+            <p style={{ color: '#f59e0b', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Example</p>
+            <div style={{ background: 'rgba(99,102,241,0.15)', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#a5b4fc' }}>
+              ✅ Job completed for Sarah M.
+            </div>
+            <p style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', marginBottom: '8px' }}>Lanavix sends review request 2 hours later</p>
+            <div style={{ background: '#f59e0b', borderRadius: '8px', padding: '12px', marginBottom: '8px', fontSize: '14px', color: '#fff' }}>
+              ⭐ "Hi Sarah! Thanks for choosing us for your AC tune-up. If we did a great job, a quick Google review means the world: [link] 🙏"
+            </div>
+            <div style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '8px', padding: '12px', marginBottom: '12px', fontSize: '14px', color: '#86efac' }}>
+              ★★★★★ New 5-star review received
+            </div>
+            <p style={{ color: '#4ade80', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>Review #89. Google ranking improved.</p>
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '36px', marginBottom: '16px' }}>⭐</div>
+            <p style={{ color: '#f59e0b', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Double your Google reviews in 90 days</p>
+            <h3 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px' }}>Reputation Autopilot</h3>
+            <p style={{ color: '#6b7280', lineHeight: 1.7, marginBottom: '20px' }}>
+              After every job, we automatically text your customer a direct Google review link. When a bad review hits, we alert you instantly and write a professional response in 30 seconds.
+            </p>
+            <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px 16px', fontSize: '14px', color: '#92400e' }}>
+              💡 Going from 3.8 → 4.5 stars increases calls by 30%. That's the difference between 10 and 13 jobs a week.
+            </div>
+          </div>
         </div>
-        <div className="grid md:grid-cols-2 gap-5">
-          <Card className="p-6 border-destructive/30">
-            <h3 className="font-display font-bold text-lg mb-4 text-destructive">Before</h3>
-            <ul className="space-y-3">
-              {before.map((b) => (
-                <li key={b} className="flex gap-2 text-sm text-muted-foreground">
-                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-destructive/60 shrink-0" />
-                  {b}
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <Card className="p-6 border-success/30">
-            <h3 className="font-display font-bold text-lg mb-4 text-success">After</h3>
-            <ul className="space-y-3">
-              {after.map((a) => (
-                <li key={a} className="flex gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
-                  {a}
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      </div>
-    </section>
-  );
-}
 
-function Testimonials() {
-  return (
-    <section className="py-24">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <Badge variant="secondary" className="mb-4">Real operators</Badge>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-            Built for owners, loved by owners
-          </h2>
+        {/* Feature 3 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', maxWidth: '960px', margin: '0 auto', alignItems: 'center' }}>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '36px', marginBottom: '16px' }}>🎯</div>
+            <p style={{ color: '#10b981', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>30 new leads in your area — in 60 seconds</p>
+            <h3 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px' }}>Local Lead Blast</h3>
+            <p style={{ color: '#6b7280', lineHeight: 1.7, marginBottom: '20px' }}>
+              Tell us your trade and city. Our AI finds 30 real local businesses that need your service, with the owner's name, phone number, and a personalized opening line ready to send.
+            </p>
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 16px', fontSize: '14px', color: '#166534' }}>
+              💡 The average Lanavix user closes 2–4 jobs from their first Lead Blast. Average job value: $350–$1,800.
+            </div>
+          </div>
+          <div style={{ background: '#1e1b4b', borderRadius: '16px', padding: '24px', textAlign: 'left' }}>
+            <p style={{ color: '#10b981', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>Example</p>
+            <p style={{ color: '#64748b', fontSize: '12px', marginBottom: '16px' }}>Lead Blast results — Roofing · Atlanta GA</p>
+            {[
+              { name: 'Piedmont Coffee Roasters', phone: '404-291-0110', opening: "Hi, we do commercial roofing in Midtown — coffee shops take a beating with foot traffic and HVAC units on the roof. Happy to do a free inspection." },
+              { name: 'Midtown Gym & Fitness', phone: '404-554-0234', opening: "Hey, gyms with flat roofs need resealing every few years — especially with all the rooftop equipment. We're local and could take a look for free." },
+              { name: 'Buckhead Medical Spa', phone: '404-887-0891', opening: "Hi, medical offices can't afford a leak during business hours. We specialize in commercial roofing in Buckhead and offer same-week inspections." },
+            ].map(lead => (
+              <div key={lead.name} style={{ background: 'rgba(99,102,241,0.15)', borderRadius: '8px', padding: '12px', marginBottom: '8px' }}>
+                <p style={{ color: '#818cf8', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>{lead.name} · {lead.phone}</p>
+                <p style={{ color: '#64748b', fontSize: '12px' }}>"{lead.opening}"</p>
+              </div>
+            ))}
+            <p style={{ color: '#10b981', fontSize: '13px', fontWeight: 600, textAlign: 'center', marginTop: '12px' }}>+27 more leads. Generated in 34 seconds.</p>
+          </div>
         </div>
-        <div className="grid md:grid-cols-3 gap-5">
-          {TESTIMONIALS.map((t) => (
-            <Card key={t.name} className="p-6">
-              <div className="flex gap-1 mb-3">
-                {[0,1,2,3,4].map((i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-              </div>
-              <p className="text-sm leading-relaxed">"{t.quote}"</p>
-              <div className="mt-4 pt-4 border-t border-border/60">
-                <div className="font-medium text-sm">{t.name}</div>
-                <div className="text-xs text-muted-foreground">{t.role}</div>
-              </div>
-            </Card>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ padding: '100px 32px', background: '#fff', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', background: '#ede9fe', color: '#6366f1', borderRadius: '100px', padding: '6px 16px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '24px' }}>Setup takes 5 minutes</div>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, maxWidth: '600px', margin: '0 auto 16px' }}>Set it up once. It works forever.</h2>
+        <p style={{ color: '#6b7280', marginBottom: '64px' }}>No IT team. No training. No ongoing work from you.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '32px', maxWidth: '860px', margin: '0 auto 64px' }}>
+          {[
+            { num: '01', icon: '🔗', title: 'Connect in 5 minutes', body: 'Add your phone number and Google Business Profile link. That\'s it. No installs, no code, no tech skills.' },
+            { num: '02', icon: '🤖', title: 'AI works 24/7 for you', body: 'Missed calls get texted back. Reviews get requested. Leads get found. All automatically, day and night.' },
+            { num: '03', icon: '💰', title: 'Open inbox to booked jobs', body: 'Wake up to new conversations, confirmed appointments, and fresh 5-star reviews you didn\'t have to ask for.' },
+          ].map(step => (
+            <div key={step.num} style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '32px 24px', textAlign: 'center' }}>
+              <div style={{ width: '36px', height: '36px', background: '#6366f1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#fff', fontWeight: 800, fontSize: '13px' }}>{step.num}</div>
+              <div style={{ fontSize: '32px', marginBottom: '16px' }}>{step.icon}</div>
+              <h3 style={{ fontWeight: 700, fontSize: '18px', marginBottom: '12px' }}>{step.title}</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: 1.7 }}>{step.body}</p>
+            </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function Pricing() {
-  return (
-    <section id="pricing" className="py-24 bg-card/20 border-y border-border/60">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <Badge variant="secondary" className="mb-4">Simple pricing</Badge>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-            One price. Everything included.
-          </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', maxWidth: '700px', margin: '0 auto' }}>
+          {[
+            { val: '<60s', label: 'To reply to missed calls' },
+            { val: '$2k–$8k', label: 'Recovered revenue/month' },
+            { val: '2–4 jobs', label: 'From first Lead Blast' },
+            { val: '30 days', label: 'Money-back guarantee' },
+          ].map(s => (
+            <div key={s.val} style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '22px', fontWeight: 800, color: '#6366f1' }}>{s.val}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>{s.label}</div>
+            </div>
+          ))}
         </div>
-        <div className="grid md:grid-cols-3 gap-5">
-          {PLANS.map((p) => (
-            <Card key={p.name} className={`p-6 relative ${p.highlighted ? "border-primary/60 shadow-lg ring-1 ring-primary/30" : ""}`}>
-              {p.highlighted && (
-                <Badge className="absolute -top-2 right-4">Most popular</Badge>
-              )}
-              <h3 className="font-display font-bold text-xl">{p.name}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{p.desc}</p>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-display font-bold">{p.price}</span>
-                <span className="text-sm text-muted-foreground">/ {p.cadence}</span>
+      </section>
+
+      {/* COMPARISON */}
+      <section id="results" style={{ padding: '100px 32px', background: '#f8fafc', textAlign: 'center' }}>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, maxWidth: '600px', margin: '0 auto 56px' }}>What changes when you use Lanavix</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', maxWidth: '860px', margin: '0 auto' }}>
+          <div style={{ background: '#fff', border: '2px solid #fecaca', borderRadius: '16px', padding: '32px' }}>
+            <p style={{ color: '#ef4444', fontWeight: 700, fontSize: '16px', marginBottom: '24px' }}>✗ Without Lanavix</p>
+            {['Missed call = lost $400 job', 'Customers forget to leave reviews', 'Leads scattered across 5 places', 'Evenings spent chasing follow-ups', 'Competitors outrank you on Google', "Paying for ads that don't convert"].map(item => (
+              <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', textAlign: 'left' }}>
+                <span style={{ color: '#ef4444', fontWeight: 700, flexShrink: 0 }}>✗</span>
+                <span style={{ color: '#374151', fontSize: '14px' }}>{item}</span>
               </div>
-              <Link to="/auth" className="block mt-5">
-                <Button className="w-full" variant={p.highlighted ? "default" : "outline"}>
-                  {p.cta} <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <ul className="mt-6 space-y-2.5">
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ))}
+            ))}
+          </div>
+          <div style={{ background: '#fff', border: '2px solid #bbf7d0', borderRadius: '16px', padding: '32px' }}>
+            <p style={{ color: '#10b981', fontWeight: 700, fontSize: '16px', marginBottom: '24px' }}>✓ With Lanavix</p>
+            {['Every missed call texted back in 60s', 'Reviews arrive after every job, automatically', 'All leads in one simple inbox', 'AI books jobs while you sleep', 'More reviews = higher Google rank = more calls', 'Organic leads from the AI, no ad spend'].map(item => (
+              <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', textAlign: 'left' }}>
+                <span style={{ color: '#10b981', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                <span style={{ color: '#374151', fontSize: '14px' }}>{item}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-function FAQ() {
-  return (
-    <section className="py-24">
-      <div className="max-w-3xl mx-auto px-6">
-        <div className="text-center mb-12">
-          <Badge variant="secondary" className="mb-4">FAQ</Badge>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-            Questions, answered
-          </h2>
-        </div>
-        <Accordion type="single" collapsible className="space-y-2">
-          {FAQS.map((f, i) => (
-            <AccordionItem key={f.q} value={`item-${i}`} className="border border-border/60 rounded-lg px-4">
-              <AccordionTrigger className="text-left font-medium">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">{f.a}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-    </section>
-  );
-}
-
-function FinalCTA() {
-  return (
-    <section className="py-24 bg-card/20 border-t border-border/60">
-      <div className="max-w-4xl mx-auto px-6 text-center">
-        <Sparkles className="h-10 w-10 text-primary mx-auto mb-4" />
-        <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-          Find out how many customers you're missing — free
+      {/* EARLY ACCESS / SOCIAL PROOF — honest version */}
+      <section style={{ padding: '100px 32px', background: '#fff', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', background: '#ede9fe', color: '#6366f1', borderRadius: '100px', padding: '6px 16px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '24px' }}>Early Access</div>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, maxWidth: '700px', margin: '0 auto 16px' }}>
+          Built for contractors in the DMV — launching now
         </h2>
-        <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
-          Run a free 60-second audit of your website and Google profile. See your scores and what to fix.
+        <p style={{ color: '#6b7280', fontSize: '16px', maxWidth: '560px', margin: '0 auto 56px', lineHeight: 1.7 }}>
+          Lanavix is in early access with a small group of local contractors. Founding members lock in current pricing forever and get direct input on what we build next.
         </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/auth">
-            <Button size="lg" className="glow-primary w-full sm:w-auto">
-              Get My Free Business Audit <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/pricing">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">
-              See Pricing
-            </Button>
-          </Link>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px', maxWidth: '860px', margin: '0 auto' }}>
+          {[
+            { icon: '🔒', title: 'Founding member pricing', body: 'Lock in your rate today and never pay more — even as we raise prices for new customers.' },
+            { icon: '🎯', title: 'Built for your trade', body: 'Every prompt, every message, every lead search is trained specifically on contractor businesses — not generic small businesses.' },
+            { icon: '💬', title: 'Direct line to the team', body: 'Early members get direct access to the founders. Your feedback shapes the product.' },
+          ].map(card => (
+            <div key={card.title} style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '32px 24px', textAlign: 'left' }}>
+              <div style={{ fontSize: '32px', marginBottom: '16px' }}>{card.icon}</div>
+              <h3 style={{ fontWeight: 700, fontSize: '17px', marginBottom: '10px' }}>{card.title}</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: 1.7 }}>{card.body}</p>
+            </div>
+          ))}
         </div>
-        <div className="mt-8 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Bank-grade security</span>
-          <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Setup in 5 minutes</span>
-          <span className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Results in week 1</span>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" style={{ padding: '100px 32px', background: '#f8fafc', textAlign: 'center' }}>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, margin: '0 0 16px' }}>Simple pricing. Serious results.</h2>
+        <p style={{ color: '#6b7280', marginBottom: '40px' }}>Every plan includes a 14-day free trial. Cancel any time.</p>
+        <div style={{ display: 'flex', gap: '4px', background: '#e5e7eb', borderRadius: '10px', padding: '4px', width: 'fit-content', margin: '0 auto 56px' }}>
+          {(['monthly', 'annual'] as const).map(p => (
+            <button key={p} onClick={() => setBillingPeriod(p)} style={{ padding: '8px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', background: billingPeriod === p ? '#6366f1' : 'transparent', color: billingPeriod === p ? '#fff' : '#6b7280', transition: 'all 0.2s' }}>
+              {p === 'monthly' ? 'Monthly' : 'Annual'}{p === 'annual' ? <span style={{ marginLeft: '8px', background: '#10b981', color: '#fff', borderRadius: '100px', padding: '2px 8px', fontSize: '11px' }}>Save 20%</span> : ''}
+            </button>
+          ))}
         </div>
-      </div>
-    </section>
-  );
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', maxWidth: '960px', margin: '0 auto 48px' }}>
+          {pricing[billingPeriod].map(plan => (
+            <div key={plan.name} style={{ background: '#fff', border: plan.highlight ? '2px solid #6366f1' : '1px solid #e5e7eb', borderRadius: '16px', padding: '32px', position: 'relative' }}>
+              {plan.highlight && <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: '#6366f1', color: '#fff', borderRadius: '100px', padding: '4px 16px', fontSize: '12px', fontWeight: 700 }}>Most popular</div>}
+              <p style={{ fontWeight: 700, fontSize: '13px', color: '#6b7280', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>{plan.name}</p>
+              <div style={{ fontSize: '48px', fontWeight: 900, color: '#0f0f1a', marginBottom: '4px' }}><sup style={{ fontSize: '24px' }}>$</sup>{plan.price}<sub style={{ fontSize: '16px', fontWeight: 500, color: '#6b7280' }}>/mo</sub></div>
+              <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px' }}>{plan.desc}</p>
+              <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', marginBottom: '24px' }} />
+              {plan.features.map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', textAlign: 'left' }}>
+                  <span style={{ color: '#10b981', flexShrink: 0 }}>✓</span>
+                  <span style={{ color: '#374151', fontSize: '14px' }}>{f}</span>
+                </div>
+              ))}
+              <a href={stripeLinks[`${plan.name}-${billingPeriod}`] || '#'} style={{ display: 'block', marginTop: '24px', background: plan.highlight ? '#6366f1' : 'transparent', color: plan.highlight ? '#fff' : '#6366f1', border: '2px solid #6366f1', borderRadius: '10px', padding: '14px', fontWeight: 700, fontSize: '15px', textDecoration: 'none', textAlign: 'center' }}>
+                Start Free Trial →
+              </a>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '32px', maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ fontSize: '40px', flexShrink: 0 }}>🛡️</div>
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ fontWeight: 700, fontSize: '16px', marginBottom: '8px' }}>30-Day Money-Back Guarantee</p>
+            <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: 1.6 }}>If you don't recover at least one job worth more than your monthly fee in the first 30 days, we'll refund every penny. No questions asked.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section style={{ padding: '100px 32px', background: '#fff' }}>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 900, textAlign: 'center', marginBottom: '56px' }}>Common questions</h2>
+        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+          {faqs.map((faq, i) => (
+            <div key={i} style={{ borderBottom: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', textAlign: 'left', gap: '16px' }}>
+                <span style={{ fontWeight: 600, fontSize: '16px', color: '#111827' }}>{faq.q}</span>
+                <span style={{ color: '#6366f1', fontSize: '20px', flexShrink: 0, transition: 'transform 0.2s', transform: openFaq === i ? 'rotate(180deg)' : 'none' }}>▾</span>
+              </button>
+              {openFaq === i && (
+                <div style={{ paddingBottom: '20px', color: '#6b7280', lineHeight: 1.7, fontSize: '15px' }}>{faq.a}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1e1b4b 100%)', color: '#fff', padding: '100px 32px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '24px' }}>🚀</div>
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 52px)', fontWeight: 900, maxWidth: '700px', margin: '0 auto 24px', lineHeight: 1.1 }}>
+          Find out how many customers you're losing right now — free
+        </h2>
+        <p style={{ color: '#94a3b8', fontSize: '18px', maxWidth: '480px', margin: '0 auto 40px', lineHeight: 1.7 }}>
+          Run a free 60-second audit of your website and Google profile. Get your scores and 12 specific fixes — no credit card, no signup required.
+        </p>
+        <Link to="/audit" style={{ display: 'inline-block', background: '#6366f1', color: '#fff', padding: '18px 40px', borderRadius: '12px', textDecoration: 'none', fontWeight: 700, fontSize: '18px' }}>
+          Get My Free Business Audit →
+        </Link>
+        <p style={{ color: '#475569', fontSize: '13px', marginTop: '16px' }}>No signup required · No credit card · 60 seconds · Keep the report</p>
+        <div style={{ display: 'flex', gap: '32px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '48px' }}>
+          {['🔒 Bank-grade security', '⚡ Setup in 5 minutes', '📋 Results in week 1', '💳 No credit card to start'].map(item => (
+            <span key={item} style={{ color: '#64748b', fontSize: '13px' }}>{item}</span>
+          ))}
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ background: '#0f0f1a', color: '#64748b', padding: '64px 32px 32px' }}>
+        <div className="lnvx-footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '48px', maxWidth: '960px', margin: '0 auto 48px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ width: '28px', height: '28px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#fff', fontSize: '14px' }}>⚡</span>
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '16px', color: '#fff' }}>Lanavix</span>
+            </div>
+            <p style={{ fontSize: '14px', lineHeight: 1.7, maxWidth: '240px' }}>Your 24/7 AI business team. Built for local service businesses who want more customers without more hours.</p>
+          </div>
+          <div>
+            <p style={{ color: '#9ca3af', fontWeight: 600, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Product</p>
+            {[{ label: 'Features', href: '/#features' }, { label: 'Pricing', href: '/#pricing' }, { label: 'Free Audit', href: '/audit' }, { label: 'Sign In', href: '/auth' }].map(item => (
+              <a key={item.label} href={item.href} style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item.label}</a>
+            ))}
+          </div>
+          <div>
+            <p style={{ color: '#9ca3af', fontWeight: 600, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Company</p>
+            {[{ label: 'Contact', href: 'mailto:moh@lanavix.com' }].map(item => (
+              <a key={item.label} href={item.href} style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item.label}</a>
+            ))}
+          </div>
+          <div>
+            <p style={{ color: '#9ca3af', fontWeight: 600, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Legal</p>
+            {[{ label: 'Privacy Policy', href: '/privacy' }, { label: 'Terms of Service', href: '/terms' }].map(item => (
+              <a key={item.label} href={item.href} style={{ display: 'block', color: '#64748b', textDecoration: 'none', fontSize: '14px', marginBottom: '10px' }}>{item.label}</a>
+            ))}
+          </div>
+        </div>
+        <div style={{ borderTop: '1px solid #1e293b', paddingTop: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '960px', margin: '0 auto', flexWrap: 'wrap', gap: '16px' }}>
+          <p style={{ fontSize: '13px' }}>© 2026 Lanavix. All rights reserved.</p>
+          <p style={{ fontSize: '13px' }}>Built for the trades. Powered by AI.</p>
+        </div>
+      </footer>
+    </div>
+  )
 }

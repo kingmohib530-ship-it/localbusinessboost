@@ -30,6 +30,7 @@ interface Props {
 
 export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
   const [businessName, setBusinessName] = useState("");
+  const [city, setCity] = useState("");
   const [industry, setIndustry] = useState<Industry | "">("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [noWebsite, setNoWebsite] = useState(false);
@@ -38,6 +39,7 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
   function validate() {
     const e: Record<string, string> = {};
     if (!businessName.trim()) e.businessName = "Enter your business name";
+    if (!city.trim()) e.city = "Enter your city or area";
     if (!industry) e.industry = "Select your industry";
     if (!noWebsite && websiteUrl && !/^https?:\/\/.+/.test(websiteUrl.trim())) {
       e.websiteUrl = "Enter a valid URL starting with https://";
@@ -51,6 +53,7 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
     if (!validate()) return;
     onSubmit({
       businessName: businessName.trim(),
+      city: city.trim(),
       industry: industry as Industry,
       websiteUrl: noWebsite ? undefined : websiteUrl.trim() || undefined,
     });
@@ -64,6 +67,7 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
     <div className="audit-form-wrap">
       {!loading ? (
         <form onSubmit={handleSubmit} noValidate>
+
           {/* ── Business name ── */}
           <div className="af-field">
             <label htmlFor="biz-name" className="af-label">
@@ -85,6 +89,31 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
             {errors.businessName && (
               <p id="biz-name-err" className="af-error" role="alert">
                 {errors.businessName}
+              </p>
+            )}
+          </div>
+
+          {/* ── City / Area ── */}
+          <div className="af-field">
+            <label htmlFor="biz-city" className="af-label">
+              City / Area <span className="af-required">*</span>
+            </label>
+            <input
+              id="biz-city"
+              type="text"
+              className={`af-input${errors.city ? " af-input--error" : ""}`}
+              placeholder="e.g. Manassas VA, Atlanta GA..."
+              value={city}
+              onChange={(e) => {
+                setCity(e.target.value);
+                if (errors.city) setErrors((p) => ({ ...p, city: "" }));
+              }}
+              autoComplete="address-level2"
+              aria-describedby={errors.city ? "biz-city-err" : undefined}
+            />
+            {errors.city && (
+              <p id="biz-city-err" className="af-error" role="alert">
+                {errors.city}
               </p>
             )}
           </div>
@@ -168,7 +197,7 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
           </button>
 
           <p className="af-trust">
-            <span>Free forever</span>
+            <span>No signup required</span>
             <span className="af-trust-dot" aria-hidden="true">·</span>
             <span>No credit card</span>
             <span className="af-trust-dot" aria-hidden="true">·</span>
@@ -178,9 +207,9 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
       ) : (
         /* ── Loading state ── */
         <div className="af-loading" aria-live="polite" aria-label="Audit in progress">
-          <div className="af-loading-eyebrow">Your Lunavex agents are on it</div>
+          <div className="af-loading-eyebrow">Your Lanavix agents are on it</div>
           <p className="af-loading-name">
-            Auditing <strong>{businessName}</strong>
+            Auditing <strong>{businessName}</strong>{city ? ` in ${city}` : ""}
           </p>
 
           {/* Progress bar */}

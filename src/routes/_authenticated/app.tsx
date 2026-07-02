@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Bot, MessageSquare, Terminal, Workflow, ScrollText, Settings, LogOut, Sparkles,
+  LayoutDashboard, Bot, MessageSquare, Terminal, Workflow, ScrollText, Settings, LogOut, Sparkles, Phone, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,10 @@ export const Route = createFileRoute("/_authenticated/app")({
 const nav = [
   { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/app/agents", label: "Agents Hub", icon: Bot },
-  { to: "/app/chat", label: "Business Assistant", icon: MessageSquare },
-  { to: "/app/control", label: "Control Center", icon: Terminal },
-  { to: "/app/workflows", label: "Workflows", icon: Workflow },
-  { to: "/app/logs", label: "Execution Logs", icon: ScrollText },
+  { to: "/app/receptionist", label: "Receptionist", icon: Phone },
+  { to: "/app/reputation", label: "Reputation", icon: Star },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
-
 function AppShell() {
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -35,8 +32,8 @@ function AppShell() {
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
-            <div className="font-display font-bold tracking-tight">LUNAVX</div>
-            <div className="text-[10px] text-muted-foreground -mt-0.5">AI Workforce OS</div>
+            <div className="font-display font-bold tracking-tight">Lanavix</div>
+            <div className="text-[10px] text-muted-foreground -mt-0.5">AI Workforce for Contractors</div>
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">

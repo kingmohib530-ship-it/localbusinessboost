@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
-type FooterLink = { to: string; label: string; anchor?: boolean };
+type FooterLink = { to: string; label: string; external?: boolean };
 type FooterCol = { title: string; links: FooterLink[] };
 
 const COLS: FooterCol[] = [
   {
     title: "Product",
     links: [
-      { to: "/#features", label: "Features", anchor: true },
-      { to: "/#agents", label: "AI Agents", anchor: true },
+      { to: "/#features", label: "Features" },
+      { to: "/#how-it-works", label: "How It Works" },
       { to: "/pricing", label: "Pricing" },
       { to: "/auth", label: "Start Free Trial" },
     ],
@@ -17,16 +17,15 @@ const COLS: FooterCol[] = [
   {
     title: "Company",
     links: [
-      { to: "/#about", label: "About", anchor: true },
-      { to: "/#blog", label: "Blog", anchor: true },
-      { to: "/chat", label: "Contact" },
+      { to: "/audit", label: "Free Audit" },
+      { to: "mailto:moh@lanavix.com", label: "Contact", external: true },
     ],
   },
   {
     title: "Legal",
     links: [
-      { to: "/#privacy", label: "Privacy", anchor: true },
-      { to: "/#terms", label: "Terms", anchor: true },
+      { to: "/privacy", label: "Privacy Policy" },
+      { to: "/terms", label: "Terms of Service" },
     ],
   },
 ];
@@ -41,10 +40,10 @@ export function SiteFooter() {
               <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold tracking-tight">LUNAVX</span>
+              <span className="font-display font-bold tracking-tight">Lanavix</span>
             </div>
             <p className="text-sm text-muted-foreground mt-4 max-w-xs">
-              Your 24/7 AI business team. Built for local service businesses and freelancers who want
+              Your 24/7 AI business team. Built for local service businesses and contractors who want
               more customers without more hours.
             </p>
           </div>
@@ -55,7 +54,7 @@ export function SiteFooter() {
               </div>
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 {c.links.map((l) =>
-                  l.anchor ? (
+                  l.external ? (
                     <li key={l.label}>
                       <a href={l.to} className="hover:text-foreground transition-colors">
                         {l.label}
@@ -75,10 +74,10 @@ export function SiteFooter() {
         </div>
         <div className="border-t border-border/60 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} LUNAVX. All rights reserved.
+            © {new Date().getFullYear()} Lanavix. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            AI Workforce OS · Built for businesses that want to grow.
+            AI Workforce for Contractors · Built for businesses that want to grow.
           </p>
         </div>
       </div>

@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
@@ -29,6 +31,7 @@ import { Route as AuthenticatedAppLogsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAppControlRouteImport } from './routes/_authenticated/app.control'
 import { Route as AuthenticatedAppChatRouteImport } from './routes/_authenticated/app.chat'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
+import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicChatbotBusiness_idRouteImport } from './routes/api/public/chatbot/$business_id'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
@@ -36,6 +39,16 @@ import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -134,6 +147,11 @@ const AuthenticatedAppAgentsRoute = AuthenticatedAppAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -158,6 +176,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
@@ -165,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
@@ -182,12 +203,15 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
@@ -207,6 +231,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/api/generate-content': typeof ApiGenerateContentRoute
   '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
@@ -214,6 +240,7 @@ export interface FileRoutesById {
   '/api/workflow': typeof ApiWorkflowRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
   '/_authenticated/app/control': typeof AuthenticatedAppControlRoute
   '/_authenticated/app/logs': typeof AuthenticatedAppLogsRoute
@@ -233,6 +260,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
@@ -240,6 +269,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
+    | '/app/admin'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
@@ -257,12 +287,15 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
     | '/api/save-automation'
     | '/api/workflow'
     | '/checkout/return'
     | '/app/agents'
+    | '/app/admin'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
@@ -281,6 +314,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/_authenticated/app'
     | '/api/generate-content'
     | '/api/generate-weekly-plan'
@@ -288,6 +323,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/checkout/return'
     | '/_authenticated/app/agents'
+    | '/_authenticated/app/admin'
     | '/_authenticated/app/chat'
     | '/_authenticated/app/control'
     | '/_authenticated/app/logs'
@@ -307,6 +343,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
   ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
@@ -325,6 +363,20 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -460,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAgentsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -486,6 +545,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppChatRoute: typeof AuthenticatedAppChatRoute
   AuthenticatedAppControlRoute: typeof AuthenticatedAppControlRoute
   AuthenticatedAppLogsRoute: typeof AuthenticatedAppLogsRoute
@@ -496,6 +556,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppChatRoute: AuthenticatedAppChatRoute,
   AuthenticatedAppControlRoute: AuthenticatedAppControlRoute,
   AuthenticatedAppLogsRoute: AuthenticatedAppLogsRoute,
@@ -525,6 +586,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChatRoute: ChatRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
   ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,

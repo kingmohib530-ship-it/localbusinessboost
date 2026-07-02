@@ -59,7 +59,7 @@ const GRADE = (score: number): AuditCategory["grade"] => {
   return "Critical";
 };
 
-const SYSTEM_PROMPT = `You are a local business growth analyst working for Lunavex AI. Your job is to audit a local service business and return a JSON report scored across 4 categories.
+const SYSTEM_PROMPT = `You are a local business growth analyst working for Lanavix AI. Your job is to audit a local service business and return a JSON report scored across 4 categories.
 
 RULES:
 - Return ONLY valid JSON. No markdown, no preamble, no explanation.
@@ -144,22 +144,23 @@ const auditServerFn = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "claude-sonnet-4-6",
+        max_tokens: 2000,
+        system: SYSTEM_PROMPT,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: buildUserPrompt(data) },
         ],
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -169,12 +170,15 @@ const auditServerFn = createServerFn({ method: "POST" })
     }
 
     const payload = await res.json();
-    const content: string = payload?.choices?.[0]?.message?.content ?? "";
+    const content: string = payload?.content?.[0]?.text ?? "";
     const clean = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+    const match = clean.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("Audit returned invalid JSON. Please try again.");
 
     let parsed: RawAudit;
     try {
-      parsed = JSON.parse(clean) as RawAudit;
+      parsed = JSON.parse(match[0]) as RawAudit;
     } catch {
       throw new Error("Audit returned invalid JSON. Please try again.");
     }

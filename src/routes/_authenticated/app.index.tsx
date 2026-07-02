@@ -1,202 +1,156 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { dashboardStats, listTasks } from "@/lib/orchestrator.functions";
-import {
-  getOnboardingProfile,
-  resetOnboarding,
-} from "@/lib/onboarding.functions";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Activity,
-  CheckCircle2,
-  Cpu,
-  AlertTriangle,
-  Sparkles,
-} from "lucide-react";
-import { AgentWorkflow } from "@/components/AgentWorkflow";
-import { OnboardingWizard } from "@/components/OnboardingWizard";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app/")({
-  component: Overview,
+  component: TodayDashboard,
 });
 
-function Overview() {
-  const statsFn = useServerFn(dashboardStats);
-  const tasksFn = useServerFn(listTasks);
-  const onboardingFn = useServerFn(getOnboardingProfile);
-  const resetFn = useServerFn(resetOnboarding);
-  const qc = useQueryClient();
+interface Profile {
+  full_name: string | null;
+  business_name: string | null;
+  industry: string | null;
+  subscription_tier: string;
+}
 
-  const stats = useQuery({ queryKey: ["stats"], queryFn: () => statsFn(), refetchInterval: 4000 });
-  const tasks = useQuery({ queryKey: ["tasks"], queryFn: () => tasksFn(), refetchInterval: 3000 });
-  const onboarding = useQuery({
-    queryKey: ["onboarding-profile"],
-    queryFn: () => onboardingFn(),
-    staleTime: 60_000,
-  });
-  const resetMut = useMutation({
-    mutationFn: () => resetFn(),
-    onSuccess: () => {
-      try {
-        localStorage.removeItem("lunavx:onboarded");
-      } catch {
-        // ignore
-      }
-      qc.invalidateQueries({ queryKey: ["onboarding-profile"] });
-      setWizardOpen(true);
-    },
-  });
+const QUICK_WINS = [
+  {
+    icon: "🎯",
+    title: "Run Local Lead Blast",
+    desc: "Find 30 qualified local leads in your area with personalized outreach — in 60 seconds.",
+    action: "Run now →",
+    href: "/app/agents",
+    color: "#818cf8",
+    bg: "rgba(99,102,241,0.15)",
+  },
+  {
+    icon: "⭐",
+    title: "Generate Review Requests",
+    desc: "Send review request messages to your last 5 customers and boost your Google rating.",
+    action: "Generate →",
+    href: "/app/agents",
+    color: "#34d399",
+    bg: "rgba(16,185,129,0.15)",
+  },
+  {
+    icon: "📊",
+    title: "Check Your Audit Score",
+    desc: "See exactly what's costing you customers and get 12 plain-English fixes.",
+    action: "View audit →",
+    href: "/audit",
+    color: "#fbbf24",
+    bg: "rgba(245,158,11,0.15)",
+  },
+];
 
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
-  const [autoRun, setAutoRun] = useState(false);
+const STATS = [
+  { label: "Campaigns run", value: "0", icon: "⚡" },
+  { label: "Leads found", value: "0", icon: "🎯" },
+  { label: "Reviews requested", value: "0", icon: "⭐" },
+  { label: "Est. revenue", value: "$0", icon: "💰" },
+];
 
-  // Auto-open the wizard on first visit when the profile has never been onboarded.
+function TodayDashboard() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    if (onboarding.isLoading || !onboarding.data) return;
-    const localFlag =
-      typeof window !== "undefined" && localStorage.getItem("lunavx:onboarded") === "1";
-    if (!onboarding.data.onboarded_at && !localFlag) {
-      setWizardOpen(true);
+    async function loadProfile() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, business_name, industry, subscription_tier")
+          .eq("id", user.id)
+          .single();
+        setProfile(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [onboarding.isLoading, onboarding.data]);
+    loadProfile();
+  }, []);
 
-  const s = stats.data;
-  const cards = [
-    { label: "Campaigns run", value: s?.tasksTotal ?? 0, icon: Cpu, color: "text-primary" },
-    { label: "Wins delivered", value: s?.tasksCompleted ?? 0, icon: CheckCircle2, color: "text-success" },
-    { label: "Working now", value: s?.tasksRunning ?? 0, icon: Activity, color: "text-accent-2" },
-    { label: "Needs your eye", value: s?.tasksFailed ?? 0, icon: AlertTriangle, color: "text-destructive" },
-  ];
+  const name = profile?.business_name || profile?.full_name || null;
+  const isFree = !profile?.subscription_tier || profile?.subscription_tier === "free";
 
   return (
-    <div className="p-6 md:p-10 space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-medium text-violet-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Your AI team is online and ready
-          </div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">
-            {onboarding.data?.business_name
-              ? `Welcome back, ${onboarding.data.business_name} 👋`
-              : "Welcome back 👋"}
-          </h1>
-          <p className="text-muted-foreground">
-            Pick a one-click campaign below and your AI team will go find customers, write the messages, and set up the follow-ups for you — no tech skills needed.
-          </p>
+    <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter, -apple-system, sans-serif" }}>
+
+      {/* Header */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#a5b4fc", background: "rgba(99,102,241,0.15)", padding: "4px 12px", borderRadius: 20, marginBottom: 12, border: "1px solid rgba(99,102,241,0.25)" }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#818cf8", display: "inline-block", animation: "pulse 2s infinite" }} />
+          Your AI team is online
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => resetMut.mutate()}
-          disabled={resetMut.isPending}
-          className="border-border/60 hover:border-violet-500/40 hover:bg-violet-500/5"
-        >
-          <Sparkles className="h-4 w-4 mr-1.5 text-violet-300" />
-          Start setup again
-        </Button>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>
+          {loading ? "Loading..." : name ? `Welcome back, ${name} 👋` : "Welcome to Lanavix 👋"}
+        </h1>
+        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
+          Pick a quick win below and your AI team will handle the rest.
+        </p>
       </div>
 
+      {/* Upgrade banner for free users */}
+      {isFree && !loading && (
+        <div style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid rgba(99,102,241,0.3)" }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 2 }}>🚀 You're on the Free plan</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>Upgrade to run unlimited campaigns and unlock all 8 AI agents.</div>
+          </div>
+          <Link to="/pricing" style={{ padding: "9px 20px", background: "#6366f1", color: "white", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+            Upgrade now →
+          </Link>
+        </div>
+      )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {cards.map((c) => (
-          <Card
-            key={c.label}
-            className="relative p-5 overflow-hidden border-border/60 bg-gradient-to-br from-card to-card/40 hover:border-border transition-colors group"
-          >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{c.label}</span>
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/60 ring-1 ring-border/60">
-                <c.icon className={`h-3.5 w-3.5 ${c.color}`} />
-              </div>
-            </div>
-            <div className="text-3xl md:text-4xl font-bold mt-3 tracking-tight tabular-nums">
-              {c.value}
-            </div>
-          </Card>
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 32 }}>
+        {STATS.map((s) => (
+          <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+            <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
+          </div>
         ))}
       </div>
 
-
-      <AgentWorkflow
-        initialPrompt={pendingPrompt}
-        autoRun={autoRun}
-        onConsumed={() => {
-          setAutoRun(false);
-          setPendingPrompt(undefined);
-        }}
-      />
-
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Where your AI team spent its time</h2>
-          <span className="text-xs text-muted-foreground">{s?.runsTotal ?? 0} tasks done</span>
-        </div>
-        <div className="space-y-2">
-          {Object.entries(s?.runsByAgent ?? {}).map(([agent, count]) => {
-            const max = Math.max(...Object.values(s?.runsByAgent ?? { x: 1 }));
-            const pct = (count / max) * 100;
-            return (
-              <div key={agent} className="flex items-center gap-3">
-                <div className="w-20 text-sm">{agent}</div>
-                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full gradient-primary" style={{ width: `${pct}%` }} />
-                </div>
-                <div className="w-10 text-right text-sm text-muted-foreground">{count}</div>
-              </div>
-            );
-          })}
-          {Object.keys(s?.runsByAgent ?? {}).length === 0 && (
-            <p className="text-sm text-muted-foreground">No campaigns yet — pick one above and your AI team will get to work in seconds.</p>
-          )}
-        </div>
-      </Card>
-
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Your recent campaigns</h2>
-        <div className="space-y-2">
-          {(tasks.data ?? []).slice(0, 10).map((t) => (
-            <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border border-border/60 hover:bg-accent/40">
-              <div className="min-w-0 flex-1 pr-4">
-                <div className="text-sm font-medium truncate">{t.input}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {new Date(t.created_at).toLocaleString()}
-                </div>
-              </div>
-              <Badge variant={t.status === "completed" ? "default" : t.status === "failed" ? "destructive" : "secondary"}>
-                {t.status === "completed" ? "Done" : t.status === "failed" ? "Needs review" : t.status === "running" ? "Working…" : t.status}
-              </Badge>
+      {/* Quick wins */}
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>⚡ Quick wins — pick one to start</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+        {QUICK_WINS.map((w) => (
+          <div key={w.title} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, display: "flex", flexDirection: "column", gap: 10, transition: "border-color 0.2s, box-shadow 0.2s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = w.color; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 20px rgba(0,0,0,0.25)`; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
+          >
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: w.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{w.icon}</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 5 }}>{w.title}</div>
+              <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5 }}>{w.desc}</div>
             </div>
-          ))}
-          {(tasks.data ?? []).length === 0 && (
-            <p className="text-sm text-muted-foreground">Nothing here yet. Your first campaign will show up the moment you launch one.</p>
-          )}
+            <Link to={w.href} style={{ fontSize: 14, fontWeight: 600, color: w.color, textDecoration: "none", marginTop: "auto" }}>
+              {w.action}
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      {/* This week */}
+      <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>📅 This week</h2>
+        <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Link to="/app/agents" style={{ padding: "10px 20px", background: "#6366f1", color: "white", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+            Start a campaign →
+          </Link>
+          <Link to="/audit" style={{ padding: "10px 20px", background: "var(--card)", color: "var(--foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", border: "1.5px solid var(--border)" }}>
+            Run free audit
+          </Link>
         </div>
-      </Card>
-
-
-      <OnboardingWizard
-        open={wizardOpen}
-        onClose={() => {
-          setWizardOpen(false);
-          qc.invalidateQueries({ queryKey: ["onboarding-profile"] });
-        }}
-        onComplete={(prompt) => {
-          setWizardOpen(false);
-          qc.invalidateQueries({ queryKey: ["onboarding-profile"] });
-          setPendingPrompt(prompt);
-          setAutoRun(true);
-          if (typeof window !== "undefined") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }
-        }}
-      />
+      </div>
     </div>
   );
 }
