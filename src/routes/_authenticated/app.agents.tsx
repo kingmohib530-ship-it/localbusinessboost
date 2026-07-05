@@ -114,9 +114,21 @@ function AgentsHub() {
     const timer = setInterval(() => setStep(s => Math.min(s + 1, STEPS.length - 1)), 1400);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        clearInterval(timer);
+        setError("Please sign in again and retry.");
+        setRunning(false);
+        return;
+      }
+
       const res = await fetch("/api/lead-blast", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ industry: industry.trim(), city: city.trim() }),
       });
 
