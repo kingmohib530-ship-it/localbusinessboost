@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestIP, getRequestHeader } from "@tanstack/react-start";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type Industry =
   | "HVAC"
@@ -144,6 +146,34 @@ const auditServerFn = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
+    // ===== Rate limit by IP: this is a public, unauthenticated marketing =====
+    // tool (the free business audit), so there's no signed-in user to key on.
+    // 5 audits per hour per IP is generous for a real visitor testing it out,
+    // but stops a script from looping and burning the Anthropic key.
+    const ip =
+      getRequestIP({ xForwardedFor: true }) ||
+      getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_anon_rate_limit",
+      {
+        p_ip_address: ip,
+        p_route: "public-audit",
+        p_max_requests: 5,
+        p_window_seconds: 3600,
+      }
+    );
+    if (rlErr) {
+      console.error("[audit] rate limit check failed");
+      throw new Error("Service temporarily unavailable. Please try again shortly.");
+    }
+    if (!allowed) {
+      throw new Error(
+        "You've reached the limit for free audits right now. Please try again in a bit."
+      );
+    }
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
