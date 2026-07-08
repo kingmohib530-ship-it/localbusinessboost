@@ -44,7 +44,7 @@ function friendlyError(message: string): string {
 }
 
 // Flip to true once Google OAuth is enabled in Supabase (Authentication > Providers)
-const GOOGLE_OAUTH_ENABLED = false;
+const GOOGLE_OAUTH_ENABLED = true;
 
 function AuthPage() {
   const navigate = useNavigate();
