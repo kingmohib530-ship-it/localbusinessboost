@@ -43,6 +43,9 @@ function friendlyError(message: string): string {
   return message;
 }
 
+// Flip to true once Google OAuth is enabled in Supabase (Authentication > Providers)
+const GOOGLE_OAUTH_ENABLED = false;
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -51,6 +54,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState<string | null>(null);
 
   const emailValid = isValidEmail(email);
   const emailError = emailTouched && email.length > 0 && !emailValid;
@@ -74,9 +78,11 @@ function AuthPage() {
     const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
     if (error) return toast.error(friendlyError(error.message));
-    if (data.user) {
+    if (data.session) {
       toast.success("Account created! Taking you to the dashboard...");
       navigate({ to: "/app" });
+    } else {
+      setSignupSuccess(email.trim());
     }
   };
 
@@ -99,6 +105,23 @@ function AuthPage() {
         </Link>
 
         <div className="glass rounded-2xl p-8 shadow-2xl">
+          {signupSuccess ? (
+            <div className="text-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-display font-bold text-lg mb-1">Check your email</h2>
+                <p className="text-sm text-muted-foreground">
+                  We sent a confirmation link to <span className="font-medium text-foreground">{signupSuccess}</span>.
+                  Click it to activate your account, then come back and sign in.
+                </p>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => setSignupSuccess(null)}>
+                Back to sign in
+              </Button>
+            </div>
+          ) : (
           <Tabs defaultValue="signin">
             <TabsList className="grid grid-cols-2 w-full mb-6">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
@@ -187,15 +210,19 @@ function AuthPage() {
                   {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
                 </Button>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">OR</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
+                {GOOGLE_OAUTH_ENABLED && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground">OR</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
 
-                <Button variant="outline" className="w-full" onClick={google}>
-                  Continue with Google
-                </Button>
+                    <Button variant="outline" className="w-full" onClick={google}>
+                      Continue with Google
+                    </Button>
+                  </>
+                )}
 
                 {/* Privacy note on signup */}
                 {mode === "signup" && (
@@ -213,6 +240,7 @@ function AuthPage() {
               </TabsContent>
             ))}
           </Tabs>
+          )}
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
