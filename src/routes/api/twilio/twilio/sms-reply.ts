@@ -76,7 +76,7 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
                 "anthropic-version": "2023-06-01",
               },
               body: JSON.stringify({
-                model: "claude-sonnet-4-20250514",
+                model: "claude-sonnet-4-5",
                 max_tokens: 200,
                 system: `You are the friendly AI receptionist for ${businessName}, a ${service} business. Your job is to:
 1. Understand what the customer needs
