@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AuditResult, AuditCategory } from "@/lib/auditApi";
+import { saveAuditLead } from "@/lib/auditApi";
 
 /* ── helpers ── */
 const CATEGORY_META: Record<
@@ -136,7 +137,7 @@ function CategorySection({
 }
 
 /* ── EmailGate ── */
-function EmailGate({ onUnlock }: { onUnlock: (email: string) => void }) {
+function EmailGate({ result, onUnlock }: { result: AuditResult; onUnlock: (email: string) => void }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -149,10 +150,14 @@ function EmailGate({ onUnlock }: { onUnlock: (email: string) => void }) {
     }
     setError("");
     setLoading(true);
-    // Small artificial delay so it feels like something is happening
-    await new Promise((r) => setTimeout(r, 700));
-    setLoading(false);
-    onUnlock(email);
+    try {
+      await saveAuditLead({ email, result });
+      onUnlock(email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -309,10 +314,7 @@ export function AuditReport({ result, onStartOver }: Props) {
 
       {/* ── Email gate (shown if not yet unlocked) ── */}
       {!unlocked && (
-        <EmailGate onUnlock={(email) => {
-          console.log("Lead captured:", email);
-          setUnlocked(true);
-        }} />
+        <EmailGate result={result} onUnlock={() => setUnlocked(true)} />
       )}
 
       {/* ── Post-unlock CTA ── */}

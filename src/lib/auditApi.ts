@@ -37,6 +37,8 @@ export interface AuditCategory {
 export interface AuditResult {
   businessName: string;
   industry: string;
+  city?: string;
+  websiteUrl?: string;
   generatedAt: string;
   overallScore: number;
   overallGrade: string;
@@ -116,6 +118,8 @@ function addGrades(raw: RawAudit, input: AuditInput): AuditResult {
   return {
     businessName: input.businessName,
     industry: input.industry,
+    city: input.city,
+    websiteUrl: input.websiteUrl,
     generatedAt: new Date().toISOString(),
     overallScore: raw.overallScore,
     overallGrade: GRADE(raw.overallScore),
@@ -218,4 +222,70 @@ const auditServerFn = createServerFn({ method: "POST" })
 
 export async function runBusinessAudit(input: AuditInput): Promise<AuditResult> {
   return auditServerFn({ data: input });
+}
+
+export interface AuditLeadInput {
+  email: string;
+  result: AuditResult;
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+}
+
+const saveAuditLeadServerFn = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown): AuditLeadInput => {
+    const d = (data ?? {}) as Partial<AuditLeadInput>;
+    if (!d.email || typeof d.email !== "string" || !isValidEmail(d.email)) {
+      throw new Error("A valid email address is required");
+    }
+    if (!d.result || typeof d.result !== "object") {
+      throw new Error("Missing audit result");
+    }
+    return { email: d.email, result: d.result as AuditResult };
+  })
+  .handler(async ({ data }) => {
+    const ip =
+      getRequestIP({ xForwardedFor: true }) ||
+      getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+
+    // Reuse the same anon rate limiter as the audit itself, under its own route key.
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_anon_rate_limit",
+      {
+        p_ip_address: ip,
+        p_route: "audit-lead-capture",
+        p_max_requests: 10,
+        p_window_seconds: 3600,
+      }
+    );
+    if (rlErr) {
+      console.error("[audit-lead] rate limit check failed");
+      throw new Error("Service temporarily unavailable. Please try again shortly.");
+    }
+    if (!allowed) {
+      throw new Error("Too many requests. Please wait a bit and try again.");
+    }
+
+    const { error: insertErr } = await supabaseAdmin.from("audit_leads").insert({
+      email: data.email.trim(),
+      business_name: data.result.businessName || null,
+      industry: data.result.industry || null,
+      city: data.result.city || null,
+      website_url: data.result.websiteUrl || null,
+      overall_score: data.result.overallScore ?? null,
+      revenue_opportunity: data.result.revenueOpportunity || null,
+    });
+
+    if (insertErr) {
+      console.error("[audit-lead] insert failed", insertErr);
+      throw new Error("Couldn't save your email. Please try again.");
+    }
+
+    return { success: true as const };
+  });
+
+export async function saveAuditLead(input: AuditLeadInput): Promise<{ success: true }> {
+  return saveAuditLeadServerFn({ data: input });
 }

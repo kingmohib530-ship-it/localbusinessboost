@@ -14,324 +14,227 @@ export type Database = {
   }
   public: {
     Tables: {
-      agent_runs: {
+      activity_log: {
         Row: {
-          agent_name: string
-          completed_at: string | null
-          duration_ms: number | null
-          error: string | null
+          created_at: string
           id: string
-          input: Json | null
-          organization_id: string
-          output: Json | null
-          started_at: string
-          status: string
-          task_id: string
+          metadata: Json | null
+          summary: string
+          type: string
           user_id: string
         }
         Insert: {
-          agent_name: string
-          completed_at?: string | null
-          duration_ms?: number | null
-          error?: string | null
+          created_at?: string
           id?: string
-          input?: Json | null
-          organization_id: string
-          output?: Json | null
-          started_at?: string
-          status?: string
-          task_id: string
+          metadata?: Json | null
+          summary: string
+          type: string
           user_id: string
         }
         Update: {
-          agent_name?: string
-          completed_at?: string | null
-          duration_ms?: number | null
-          error?: string | null
+          created_at?: string
           id?: string
-          input?: Json | null
-          organization_id?: string
-          output?: Json | null
-          started_at?: string
-          status?: string
-          task_id?: string
+          metadata?: Json | null
+          summary?: string
+          type?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "agent_runs_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agent_runs_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      audit_logs: {
+      anon_rate_limits: {
         Row: {
-          action: string
-          created_at: string
-          entity_id: string | null
-          entity_type: string | null
-          id: string
-          ip_address: unknown
-          metadata: Json | null
-          organization_id: string
-          user_agent: string | null
-          user_id: string | null
+          ip_address: string
+          request_count: number
+          route: string
+          window_start: string
         }
         Insert: {
-          action: string
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          ip_address?: unknown
-          metadata?: Json | null
-          organization_id: string
-          user_agent?: string | null
-          user_id?: string | null
+          ip_address: string
+          request_count?: number
+          route: string
+          window_start: string
         }
         Update: {
-          action?: string
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          ip_address?: unknown
-          metadata?: Json | null
-          organization_id?: string
-          user_agent?: string | null
-          user_id?: string | null
+          ip_address?: string
+          request_count?: number
+          route?: string
+          window_start?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_logs_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      audit_leads: {
+        Row: {
+          business_name: string | null
+          city: string | null
+          created_at: string
+          email: string
+          id: string
+          industry: string | null
+          overall_score: number | null
+          revenue_opportunity: string | null
+          website_url: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          city?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          industry?: string | null
+          overall_score?: number | null
+          revenue_opportunity?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          industry?: string | null
+          overall_score?: number | null
+          revenue_opportunity?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
       }
       businesses: {
         Row: {
-          created_at: string
+          created_at: string | null
+          email: string | null
           id: string
+          industry: string | null
           name: string
-          organization_id: string
-          owner_id: string
-          slug: string | null
-          updated_at: string
+          owner_id: string | null
+          phone: string | null
+          website: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
           id?: string
+          industry?: string | null
           name: string
-          organization_id: string
-          owner_id: string
-          slug?: string | null
-          updated_at?: string
+          owner_id?: string | null
+          phone?: string | null
+          website?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
           id?: string
+          industry?: string | null
           name?: string
-          organization_id?: string
-          owner_id?: string
-          slug?: string | null
-          updated_at?: string
+          owner_id?: string | null
+          phone?: string | null
+          website?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "businesses_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       chatbot_settings: {
         Row: {
-          booking_link: string
-          business_id: string
-          created_at: string
-          faq: string
+          booking_link: string | null
+          business_id: string | null
+          created_at: string | null
+          faq: string | null
           id: string
-          offers: string
-          organization_id: string
-          pricing: string
-          services: string
-          updated_at: string
-          welcome_message: string
+          offers: string | null
+          pricing: string | null
+          services: string | null
+          welcome_message: string | null
         }
         Insert: {
-          booking_link?: string
-          business_id: string
-          created_at?: string
-          faq?: string
+          booking_link?: string | null
+          business_id?: string | null
+          created_at?: string | null
+          faq?: string | null
           id?: string
-          offers?: string
-          organization_id: string
-          pricing?: string
-          services?: string
-          updated_at?: string
-          welcome_message?: string
+          offers?: string | null
+          pricing?: string | null
+          services?: string | null
+          welcome_message?: string | null
         }
         Update: {
-          booking_link?: string
-          business_id?: string
-          created_at?: string
-          faq?: string
+          booking_link?: string | null
+          business_id?: string | null
+          created_at?: string | null
+          faq?: string | null
           id?: string
-          offers?: string
-          organization_id?: string
-          pricing?: string
-          services?: string
-          updated_at?: string
-          welcome_message?: string
+          offers?: string | null
+          pricing?: string | null
+          services?: string | null
+          welcome_message?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "chatbot_settings_business_id_fkey"
             columns: ["business_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "chatbot_settings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
       }
-      execution_logs: {
+      contact_submissions: {
         Row: {
-          agent_name: string | null
-          created_at: string
-          id: string
-          level: string
-          message: string
-          metadata: Json | null
-          organization_id: string
-          task_id: string | null
-          user_id: string
-        }
-        Insert: {
-          agent_name?: string | null
-          created_at?: string
-          id?: string
-          level?: string
-          message: string
-          metadata?: Json | null
-          organization_id: string
-          task_id?: string | null
-          user_id: string
-        }
-        Update: {
-          agent_name?: string | null
-          created_at?: string
-          id?: string
-          level?: string
-          message?: string
-          metadata?: Json | null
-          organization_id?: string
-          task_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "execution_logs_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "execution_logs_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      generation_usage: {
-        Row: {
-          count: number
-          day: string
-          organization_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          count?: number
-          day?: string
-          organization_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          count?: number
-          day?: string
-          organization_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "generation_usage_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      leads: {
-        Row: {
-          business_id: string
+          business_name: string | null
           created_at: string
           email: string | null
           id: string
           message: string | null
           name: string
-          organization_id: string
           phone: string | null
-          source: string
         }
         Insert: {
-          business_id: string
+          business_name?: string | null
           created_at?: string
           email?: string | null
           id?: string
           message?: string | null
           name: string
-          organization_id: string
           phone?: string | null
-          source?: string
         }
         Update: {
-          business_id?: string
+          business_name?: string | null
           created_at?: string
           email?: string | null
           id?: string
           message?: string | null
           name?: string
-          organization_id?: string
           phone?: string | null
-          source?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          business_id: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          message: string | null
+          name: string | null
+          phone: string | null
+          source: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          source?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          source?: string | null
         }
         Relationships: [
           {
@@ -341,359 +244,213 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "leads_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
       }
-      organization_invitations: {
+      missed_calls: {
         Row: {
-          accepted_at: string | null
-          created_at: string
-          email: string
-          expires_at: string
+          called_at: string | null
+          caller_name: string | null
+          caller_phone: string
+          created_at: string | null
           id: string
-          invited_by: string
-          organization_id: string
-          role: Database["public"]["Enums"]["org_role"]
-          token: string
+          notes: string | null
+          status: string | null
+          user_id: string | null
         }
         Insert: {
-          accepted_at?: string | null
-          created_at?: string
-          email: string
-          expires_at?: string
+          called_at?: string | null
+          caller_name?: string | null
+          caller_phone: string
+          created_at?: string | null
           id?: string
-          invited_by: string
-          organization_id: string
-          role?: Database["public"]["Enums"]["org_role"]
-          token?: string
+          notes?: string | null
+          status?: string | null
+          user_id?: string | null
         }
         Update: {
-          accepted_at?: string | null
-          created_at?: string
-          email?: string
-          expires_at?: string
+          called_at?: string | null
+          caller_name?: string | null
+          caller_phone?: string
+          created_at?: string | null
           id?: string
-          invited_by?: string
-          organization_id?: string
-          role?: Database["public"]["Enums"]["org_role"]
-          token?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_invitations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      organization_members: {
-        Row: {
-          id: string
-          invited_by: string | null
-          joined_at: string
-          organization_id: string
-          role: Database["public"]["Enums"]["org_role"]
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          organization_id: string
-          role?: Database["public"]["Enums"]["org_role"]
-          user_id: string
-        }
-        Update: {
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          organization_id?: string
-          role?: Database["public"]["Enums"]["org_role"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_members_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      organizations: {
-        Row: {
-          created_at: string
-          created_by: string
-          id: string
-          name: string
-          plan: Database["public"]["Enums"]["app_plan"]
-          slug: string | null
-          stripe_customer_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          id?: string
-          name: string
-          plan?: Database["public"]["Enums"]["app_plan"]
-          slug?: string | null
-          stripe_customer_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          id?: string
-          name?: string
-          plan?: Database["public"]["Enums"]["app_plan"]
-          slug?: string | null
-          stripe_customer_id?: string | null
-          updated_at?: string
+          notes?: string | null
+          status?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
           business_name: string | null
-          business_type: string | null
-          created_at: string
-          current_organization_id: string | null
+          city: string | null
+          created_at: string | null
+          full_name: string | null
           id: string
           industry: string | null
-          onboarded_at: string | null
-          plan: Database["public"]["Enums"]["app_plan"]
-          primary_goal: string | null
-          service_area: string | null
+          is_admin: boolean
+          onboarding_completed: boolean | null
           stripe_customer_id: string | null
-          updated_at: string
-          user_id: string
+          stripe_subscription_id: string | null
+          subscription_period_end: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
+          updated_at: string | null
+          website: string | null
         }
         Insert: {
           business_name?: string | null
-          business_type?: string | null
-          created_at?: string
-          current_organization_id?: string | null
-          id?: string
+          city?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
           industry?: string | null
-          onboarded_at?: string | null
-          plan?: Database["public"]["Enums"]["app_plan"]
-          primary_goal?: string | null
-          service_area?: string | null
+          is_admin?: boolean
+          onboarding_completed?: boolean | null
           stripe_customer_id?: string | null
-          updated_at?: string
-          user_id: string
+          stripe_subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          updated_at?: string | null
+          website?: string | null
         }
         Update: {
           business_name?: string | null
-          business_type?: string | null
-          created_at?: string
-          current_organization_id?: string | null
+          city?: string | null
+          created_at?: string | null
+          full_name?: string | null
           id?: string
           industry?: string | null
-          onboarded_at?: string | null
-          plan?: Database["public"]["Enums"]["app_plan"]
-          primary_goal?: string | null
-          service_area?: string | null
+          is_admin?: boolean
+          onboarding_completed?: boolean | null
           stripe_customer_id?: string | null
-          updated_at?: string
-          user_id?: string
+          stripe_subscription_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
-      subscriptions: {
+      rate_limits: {
         Row: {
-          cancel_at_period_end: boolean | null
+          request_count: number
+          route: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          request_count?: number
+          route: string
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          request_count?: number
+          route?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      review_requests: {
+        Row: {
+          customer_name: string | null
+          customer_phone: string
+          google_review_url: string | null
+          id: string
+          job_description: string | null
+          sent_at: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          customer_name?: string | null
+          customer_phone: string
+          google_review_url?: string | null
+          id?: string
+          job_description?: string | null
+          sent_at?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          customer_name?: string | null
+          customer_phone?: string
+          google_review_url?: string | null
+          id?: string
+          job_description?: string | null
+          sent_at?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      review_responses: {
+        Row: {
+          ai_response: string | null
           created_at: string | null
-          current_period_end: string | null
-          current_period_start: string | null
-          environment: string
           id: string
-          organization_id: string | null
-          price_id: string
-          product_id: string
-          status: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
-          updated_at: string | null
-          user_id: string
+          review_text: string
+          reviewer_name: string | null
+          star_rating: number | null
+          user_id: string | null
         }
         Insert: {
-          cancel_at_period_end?: boolean | null
+          ai_response?: string | null
           created_at?: string | null
-          current_period_end?: string | null
-          current_period_start?: string | null
-          environment?: string
           id?: string
-          organization_id?: string | null
-          price_id: string
-          product_id: string
-          status?: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
-          updated_at?: string | null
-          user_id: string
+          review_text: string
+          reviewer_name?: string | null
+          star_rating?: number | null
+          user_id?: string | null
         }
         Update: {
-          cancel_at_period_end?: boolean | null
+          ai_response?: string | null
           created_at?: string | null
-          current_period_end?: string | null
-          current_period_start?: string | null
-          environment?: string
           id?: string
-          organization_id?: string | null
-          price_id?: string
-          product_id?: string
-          status?: string
-          stripe_customer_id?: string
-          stripe_subscription_id?: string
-          updated_at?: string | null
-          user_id?: string
+          review_text?: string
+          reviewer_name?: string | null
+          star_rating?: number | null
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      tasks: {
+      sms_conversations: {
         Row: {
-          assigned_agents: string[]
-          completed_at: string | null
-          created_at: string
-          error: string | null
-          final_output: Json | null
+          caller_phone: string
+          direction: string
           id: string
-          input: string
-          organization_id: string
-          plan: Json | null
-          stage: string
-          status: string
-          updated_at: string
-          user_id: string
+          message: string
+          missed_call_id: string | null
+          sent_at: string | null
+          user_id: string | null
         }
         Insert: {
-          assigned_agents?: string[]
-          completed_at?: string | null
-          created_at?: string
-          error?: string | null
-          final_output?: Json | null
+          caller_phone: string
+          direction: string
           id?: string
-          input: string
-          organization_id: string
-          plan?: Json | null
-          stage?: string
-          status?: string
-          updated_at?: string
-          user_id: string
+          message: string
+          missed_call_id?: string | null
+          sent_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          assigned_agents?: string[]
-          completed_at?: string | null
-          created_at?: string
-          error?: string | null
-          final_output?: Json | null
+          caller_phone?: string
+          direction?: string
           id?: string
-          input?: string
-          organization_id?: string
-          plan?: Json | null
-          stage?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
+          message?: string
+          missed_call_id?: string | null
+          sent_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "tasks_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "sms_conversations_missed_call_id_fkey"
+            columns: ["missed_call_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      weekly_plan_usage: {
-        Row: {
-          count: number
-          organization_id: string | null
-          updated_at: string
-          user_id: string
-          week_start: string
-        }
-        Insert: {
-          count?: number
-          organization_id?: string | null
-          updated_at?: string
-          user_id: string
-          week_start: string
-        }
-        Update: {
-          count?: number
-          organization_id?: string | null
-          updated_at?: string
-          user_id?: string
-          week_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_plan_usage_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflows: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          organization_id: string
-          steps: Json
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          organization_id: string
-          steps?: Json
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          organization_id?: string
-          steps?: Json
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflows_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "missed_calls"
             referencedColumns: ["id"]
           },
         ]
@@ -703,43 +460,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
-      has_active_subscription: {
-        Args: { check_env?: string; user_uuid: string }
-        Returns: boolean
-      }
-      has_org_role: {
+      check_anon_rate_limit: {
         Args: {
-          _min_role: Database["public"]["Enums"]["org_role"]
-          _org_id: string
-          _user_id: string
+          p_ip_address: string
+          p_max_requests: number
+          p_route: string
+          p_window_seconds: number
         }
         Returns: boolean
       }
-      is_org_member: {
-        Args: { _org_id: string; _user_id: string }
+      check_rate_limit: {
+        Args: {
+          p_max_requests: number
+          p_route: string
+          p_user_id: string
+          p_window_seconds: number
+        }
         Returns: boolean
-      }
-      try_consume_generation: {
-        Args: { daily_cap: number; user_uuid: string }
-        Returns: {
-          allowed: boolean
-          cap: number
-          used: number
-        }[]
-      }
-      try_consume_weekly_plan: {
-        Args: { user_uuid: string; weekly_cap: number }
-        Returns: {
-          allowed: boolean
-          cap: number
-          used: number
-        }[]
       }
     }
     Enums: {
-      app_plan: "free" | "pro" | "agency"
-      org_role: "owner" | "admin" | "member"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -866,9 +607,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_plan: ["free", "pro", "agency"],
-      org_role: ["owner", "admin", "member"],
-    },
+    Enums: {},
   },
 } as const

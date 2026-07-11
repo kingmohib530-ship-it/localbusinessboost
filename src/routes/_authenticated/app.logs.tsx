@@ -4,14 +4,18 @@ import { useServerFn } from "@tanstack/react-start";
 import { listLogs } from "@/lib/orchestrator.functions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useRequireAdmin } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/app/logs")({
   component: Logs,
 });
 
 function Logs() {
+  const allowed = useRequireAdmin();
   const logsFn = useServerFn(listLogs);
   const logs = useQuery({ queryKey: ["logs"], queryFn: () => logsFn(), refetchInterval: 2500 });
+
+  if (!allowed) return null;
 
   return (
     <div className="p-8 space-y-6">

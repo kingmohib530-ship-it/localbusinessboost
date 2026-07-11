@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listTasks } from "@/lib/orchestrator.functions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useRequireAdmin } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/app/workflows")({
   component: Workflows,
@@ -18,8 +19,11 @@ const COLS = [
 ] as const;
 
 function Workflows() {
+  const allowed = useRequireAdmin();
   const tasksFn = useServerFn(listTasks);
   const tasks = useQuery({ queryKey: ["tasks"], queryFn: () => tasksFn(), refetchInterval: 3000 });
+
+  if (!allowed) return null;
 
   const byStage = (stage: string) =>
     (tasks.data ?? []).filter((t) => {

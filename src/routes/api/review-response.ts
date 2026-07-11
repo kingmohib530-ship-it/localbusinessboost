@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { logActivity } from "@/lib/activityLog.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -113,6 +114,13 @@ Write only the response text, nothing else.`;
 
           const data = await res.json();
           const aiResponse = data.content?.[0]?.text?.trim() || "";
+
+          await logActivity(
+            user.id,
+            "review_response",
+            `Wrote a response to a ${rating}-star review${safeReviewerName ? ` from ${safeReviewerName}` : ""}`,
+            { rating }
+          );
 
           return Response.json({ response: aiResponse });
         } catch (err) {

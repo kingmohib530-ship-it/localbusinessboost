@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { logActivity } from "@/lib/activityLog.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -188,6 +189,13 @@ Return ONLY valid JSON, no markdown:
             need: `${b.businessName} is a local business that could benefit from ${industry} services.`,
             openingLine: parsed.openingLines?.[i] || `Hi, I noticed ${b.businessName} and wanted to reach out about our ${industry} services.`,
           }));
+
+          await logActivity(
+            user.id,
+            "lead_blast",
+            `Found ${leads.length} leads in ${city} (${industry})`,
+            { industry, city, leadCount: leads.length }
+          );
 
           return Response.json({
             leads,
