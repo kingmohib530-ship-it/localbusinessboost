@@ -20,6 +20,18 @@ interface LeadResult {
   topTip: string;
 }
 
+interface Competitor {
+  name: string;
+  strength: string;
+  weakness: string;
+}
+
+interface CompetitorResult {
+  competitors: Competitor[];
+  opportunities: string[];
+  insights: string[];
+}
+
 const CAMPAIGNS = [
   {
     id: "lead-blast",
@@ -59,23 +71,31 @@ const CAMPAIGNS = [
     icon: "🔍",
     name: "Competitor Intelligence",
     agent: "Nexus",
-    desc: "Analyse your top 3 local competitors and find the gaps you can win.",
-    time: "~40 seconds",
+    desc: "Analyse your top local competitors and find the gaps you can win.",
+    time: "~20 seconds",
     color: "#a78bfa",
     bg: "rgba(139,92,246,0.15)",
-    active: false,
+    active: true,
   },
 ];
 
-const STEPS = [
-  "Orbis planning workflow...",
-  "Atlas scanning your area...",
-  "Nexus enriching with market data...",
-  "Pulse writing personalized outreach...",
-  "Shield reviewing quality...",
-  "Aether calculating revenue projection...",
-  "Vanguard preparing your checklist...",
-];
+const STEPS_BY_CAMPAIGN: Record<string, string[]> = {
+  "lead-blast": [
+    "Orbis planning workflow...",
+    "Atlas scanning your area...",
+    "Nexus enriching with market data...",
+    "Pulse writing personalized outreach...",
+    "Shield reviewing quality...",
+    "Aether calculating revenue projection...",
+    "Vanguard preparing your checklist...",
+  ],
+  "competitor-intel": [
+    "Nexus scanning your local market...",
+    "Nexus profiling competitor archetypes...",
+    "Nexus surfacing opportunities...",
+    "Nexus synthesizing sharp insights...",
+  ],
+};
 
 function AgentsHub() {
   const [selected, setSelected] = useState<string | null>(null);
@@ -83,7 +103,8 @@ function AgentsHub() {
   const [city, setCity] = useState("");
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(0);
-  const [result, setResult] = useState<LeadResult | null>(null);
+  const [leadResult, setLeadResult] = useState<LeadResult | null>(null);
+  const [competitorResult, setCompetitorResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -101,17 +122,23 @@ function AgentsHub() {
     });
   }, []);
 
+  const campaign = CAMPAIGNS.find((c) => c.id === selected);
+  const steps = STEPS_BY_CAMPAIGN[selected ?? ""] ?? [];
+
   async function runCampaign() {
     if (!industry.trim() || !city.trim()) {
       setError("Please enter your trade type and city.");
       return;
     }
+    const endpoint = selected === "competitor-intel" ? "/api/competitor-intel" : "/api/lead-blast";
+
     setError("");
     setRunning(true);
-    setResult(null);
+    setLeadResult(null);
+    setCompetitorResult(null);
     setStep(0);
 
-    const timer = setInterval(() => setStep(s => Math.min(s + 1, STEPS.length - 1)), 1400);
+    const timer = setInterval(() => setStep(s => Math.min(s + 1, steps.length - 1)), 1400);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -123,7 +150,7 @@ function AgentsHub() {
         return;
       }
 
-      const res = await fetch("/api/lead-blast", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -134,14 +161,18 @@ function AgentsHub() {
 
       const data = await res.json();
       clearInterval(timer);
-      setStep(STEPS.length);
+      setStep(steps.length);
 
       if (!res.ok || data.error) {
         setError(data.error || "Something went wrong. Please try again.");
         return;
       }
 
-      setResult(data);
+      if (selected === "competitor-intel") {
+        setCompetitorResult(data);
+      } else {
+        setLeadResult(data);
+      }
     } catch (err) {
       clearInterval(timer);
       setError("Network error. Please try again.");
@@ -151,23 +182,40 @@ function AgentsHub() {
   }
 
   function copyLeads() {
-    if (!result) return;
-    const text = result.leads
+    if (!leadResult) return;
+    const text = leadResult.leads
       .map((l, i) => `${i + 1}. ${l.businessName}\n   ${l.contactName} | ${l.phone}\n   Need: ${l.need}\n   Opening: "${l.openingLine}"\n`)
       .join("\n");
     navigator.clipboard.writeText(text);
     alert("✅ Copied to clipboard!");
   }
 
+  function copyCompetitorIntel() {
+    if (!competitorResult) return;
+    const lines: string[] = [];
+    lines.push("COMPETITORS");
+    competitorResult.competitors.forEach((c, i) => {
+      lines.push(`${i + 1}. ${c.name}\n   Strength: ${c.strength}\n   Weakness: ${c.weakness}`);
+    });
+    lines.push("", "OPPORTUNITIES");
+    competitorResult.opportunities.forEach((o, i) => lines.push(`${i + 1}. ${o}`));
+    lines.push("", "INSIGHTS");
+    competitorResult.insights.forEach((n, i) => lines.push(`${i + 1}. ${n}`));
+    navigator.clipboard.writeText(lines.join("\n"));
+    alert("✅ Copied to clipboard!");
+  }
+
+  const hasResult = !!leadResult || !!competitorResult;
+
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>🤖 Agents Hub</h1>
-        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Pick a campaign and your 8-agent AI team will run it end-to-end.</p>
+        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Pick a campaign and your AI team will run it end-to-end.</p>
       </div>
 
       {/* Grid */}
-      {!selected && !running && !result && (
+      {!selected && !running && !hasResult && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
           {CAMPAIGNS.map(c => (
             <div key={c.id} onClick={() => c.active && setSelected(c.id)}
@@ -184,8 +232,8 @@ function AgentsHub() {
         </div>
       )}
 
-      {/* Form */}
-      {selected === "lead-blast" && !running && !result && (
+      {/* Form: Local Lead Blast */}
+      {selected === "lead-blast" && !running && !hasResult && (
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
@@ -216,13 +264,47 @@ function AgentsHub() {
         </div>
       )}
 
+      {/* Form: Competitor Intelligence */}
+      {selected === "competitor-intel" && !running && !hasResult && (
+        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(139,92,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🔍</div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Competitor Intelligence</div>
+              <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600 }}>Nexus</div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
+            <input value={industry} onChange={e => setIndustry(e.target.value)}
+              placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: 22 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
+            <input value={city} onChange={e => setCity(e.target.value)}
+              placeholder="e.g. Atlanta GA, Dallas TX..."
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          {error && <p style={{ color: "#f87171", fontSize: 13, marginBottom: 14 }}>{error}</p>}
+          <button onClick={runCampaign}
+            style={{ width: "100%", padding: 13, background: "#a78bfa", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            Run Competitor Intelligence →
+          </button>
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~20 seconds · Nexus market analysis</p>
+        </div>
+      )}
+
       {/* Loading */}
       {running && (
         <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#818cf8", marginBottom: 8 }}>Running campaign</div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: "var(--foreground)", marginBottom: 24 }}>Finding {industry} leads in {city}...</div>
+          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: campaign?.color ?? "#818cf8", marginBottom: 8 }}>Running campaign</div>
+          <div style={{ fontSize: 19, fontWeight: 700, color: "var(--foreground)", marginBottom: 24 }}>
+            {selected === "competitor-intel" ? `Analyzing ${industry} competitors in ${city}...` : `Finding ${industry} leads in ${city}...`}
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10,
                 background: i < step ? "rgba(16,185,129,0.1)" : i === step ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
                 border: `1px solid ${i < step ? "rgba(16,185,129,0.2)" : i === step ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.06)"}` }}>
@@ -237,27 +319,27 @@ function AgentsHub() {
         </div>
       )}
 
-      {/* Results */}
-      {result && !running && (
+      {/* Results: Local Lead Blast */}
+      {leadResult && !running && (
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>✅ {result.leads.length} leads found in {city}</h2>
-              <p style={{ fontSize: 14, color: "#34d399", fontWeight: 600, margin: 0 }}>💰 Revenue opportunity: {result.revenueEstimate}/mo</p>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>✅ {leadResult.leads.length} leads found in {city}</h2>
+              <p style={{ fontSize: 14, color: "#34d399", fontWeight: 600, margin: 0 }}>💰 Revenue opportunity: {leadResult.revenueEstimate}/mo</p>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={copyLeads} style={{ padding: "9px 18px", background: "#6366f1", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy all leads</button>
-              <button onClick={() => { setResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
+              <button onClick={() => { setLeadResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
             </div>
           </div>
-          {result.topTip && (
+          {leadResult.topTip && (
             <div style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "11px 16px", marginBottom: 18 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#fbbf24" }}>⚡ Top tip: </span>
-              <span style={{ fontSize: 13, color: "#fde68a" }}>{result.topTip}</span>
+              <span style={{ fontSize: 13, color: "#fde68a" }}>{leadResult.topTip}</span>
             </div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {result.leads.map((lead, i) => (
+            {leadResult.leads.map((lead, i) => (
               <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 20px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                   <span style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(99,102,241,0.15)", color: "#818cf8", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
@@ -268,6 +350,49 @@ function AgentsHub() {
                 <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 5px", paddingLeft: 30 }}>{lead.need}</p>
                 <p style={{ fontSize: 13, color: "var(--foreground)", fontStyle: "italic", margin: 0, paddingLeft: 30 }}>"{lead.openingLine}"</p>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Results: Competitor Intelligence */}
+      {competitorResult && !running && (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>🔍 Market analysis for {industry} in {city}</h2>
+              <p style={{ fontSize: 14, color: "#a78bfa", fontWeight: 600, margin: 0 }}>{competitorResult.competitors.length} competitor archetypes · {competitorResult.opportunities.length} opportunities</p>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={copyCompetitorIntel} style={{ padding: "9px 18px", background: "#a78bfa", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy full report</button>
+              <button onClick={() => { setCompetitorResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
+            </div>
+          </div>
+
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)", marginBottom: 8, marginTop: 4 }}>These are plausible competitor archetypes for your market, not named real businesses.</div>
+
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Competitor archetypes</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+            {competitorResult.competitors.map((c, i) => (
+              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 20px" }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>{c.name}</div>
+                <p style={{ fontSize: 13, color: "#34d399", margin: "0 0 4px" }}><strong>Strength:</strong> {c.strength}</p>
+                <p style={{ fontSize: 13, color: "#f87171", margin: 0 }}><strong>Weakness:</strong> {c.weakness}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Opportunities</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+            {competitorResult.opportunities.map((o, i) => (
+              <div key={i} style={{ background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.25)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--foreground)" }}>{o}</div>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Sharp insights</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {competitorResult.insights.map((n, i) => (
+              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--muted-foreground)" }}>{n}</div>
             ))}
           </div>
         </div>
