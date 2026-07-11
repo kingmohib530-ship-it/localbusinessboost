@@ -1,12 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRequireAdmin } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   component: AdminDashboard,
 });
-
-const ADMIN_EMAILS = ["kingmohib530@gmail.com", "mohibanwari111@gmail.com"];
 
 interface UserRow {
   id: string;
@@ -32,8 +31,7 @@ function timeAgo(dateStr: string) {
 }
 
 function AdminDashboard() {
-  const navigate = useNavigate();
-  const [allowed, setAllowed] = useState(false);
+  const allowed = useRequireAdmin();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [totalAudits, setTotalAudits] = useState(0);
@@ -41,14 +39,8 @@ function AdminDashboard() {
   const [totalReviews, setTotalReviews] = useState(0);
 
   useEffect(() => {
+    if (!allowed) return;
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
-        navigate({ to: "/app", replace: true });
-        return;
-      }
-      setAllowed(true);
-
       // Load profiles
       const { data: profiles } = await supabase
         .from("profiles")
@@ -79,7 +71,7 @@ function AdminDashboard() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [allowed]);
 
   if (!allowed) return null;
 
