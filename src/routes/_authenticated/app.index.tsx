@@ -10,7 +10,26 @@ interface Profile {
   full_name: string | null;
   business_name: string | null;
   industry: string | null;
-  subscription_tier: string;
+  subscription_tier: string | null;
+}
+
+interface ActivityRow {
+  id: string;
+  type: string;
+  summary: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 const QUICK_WINS = [
@@ -43,15 +62,9 @@ const QUICK_WINS = [
   },
 ];
 
-const STATS = [
-  { label: "Campaigns run", value: "0", icon: "⚡" },
-  { label: "Leads found", value: "0", icon: "🎯" },
-  { label: "Reviews requested", value: "0", icon: "⭐" },
-  { label: "Est. revenue", value: "$0", icon: "💰" },
-];
-
 function TodayDashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,12 +72,21 @@ function TodayDashboard() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const { data } = await supabase
-          .from("profiles")
-          .select("full_name, business_name, industry, subscription_tier")
-          .eq("id", user.id)
-          .single();
-        setProfile(data);
+        const [{ data: profileData }, { data: activityData }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name, business_name, industry, subscription_tier")
+            .eq("id", user.id)
+            .single(),
+          supabase
+            .from("activity_log")
+            .select("id, type, summary, metadata, created_at")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(50),
+        ]);
+        setProfile(profileData);
+        setActivity((activityData as ActivityRow[]) ?? []);
       } catch (e) {
         console.error(e);
       } finally {
@@ -76,6 +98,17 @@ function TodayDashboard() {
 
   const name = profile?.business_name || profile?.full_name || null;
   const isFree = !profile?.subscription_tier || profile?.subscription_tier === "free";
+
+  const leadsFound = activity
+    .filter((a) => a.type === "lead_blast")
+    .reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0);
+  const reviewsResponded = activity.filter((a) => a.type === "review_response").length;
+  const stats = [
+    { label: "Campaigns run", value: String(activity.length), icon: "⚡" },
+    { label: "Leads found", value: String(leadsFound), icon: "🎯" },
+    { label: "Reviews responded to", value: String(reviewsResponded), icon: "⭐" },
+    { label: "Competitor reports", value: String(activity.filter((a) => a.type === "competitor_intel").length), icon: "📊" },
+  ];
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter, -apple-system, sans-serif" }}>
@@ -109,7 +142,7 @@ function TodayDashboard() {
 
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 32 }}>
-        {STATS.map((s) => (
+        {stats.map((s) => (
           <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
             <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
@@ -138,10 +171,22 @@ function TodayDashboard() {
         ))}
       </div>
 
-      {/* This week */}
+      {/* Recent activity */}
       <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>📅 This week</h2>
-        <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>📅 Recent activity</h2>
+        {!loading && activity.length === 0 && (
+          <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
+        )}
+        {activity.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            {activity.slice(0, 8).map((a) => (
+              <div key={a.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
+                <span style={{ color: "var(--foreground)" }}>{a.summary}</span>
+                <span style={{ color: "var(--muted-foreground)", whiteSpace: "nowrap" }}>{timeAgo(a.created_at)}</span>
+              </div>
+            ))}
+          </div>
+        )}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link to="/app/agents" style={{ padding: "10px 20px", background: "#6366f1", color: "white", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
             Start a campaign →

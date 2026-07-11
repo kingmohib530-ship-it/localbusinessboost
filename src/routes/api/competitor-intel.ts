@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runAgent, type NexusResult } from "@/lib/agents.server";
+import { logActivity } from "@/lib/activityLog.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -53,6 +54,13 @@ export const Route = createFileRoute("/api/competitor-intel")({
           const instruction = `Analyze the local market for a ${industry} business in ${city}. Identify plausible competitor archetypes, concrete opportunities, and sharp, actionable insights this business owner could use this week.`;
 
           const result = (await runAgent("Nexus", instruction)) as NexusResult;
+
+          await logActivity(
+            user.id,
+            "competitor_intel",
+            `Ran competitor analysis for ${industry} in ${city}`,
+            { industry, city }
+          );
 
           return Response.json(result);
         } catch (err) {

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runAgent, type ForgeResult } from "@/lib/agents.server";
+import { logActivity } from "@/lib/activityLog.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -53,6 +54,13 @@ export const Route = createFileRoute("/api/booking-plan")({
           const instruction = `Build a set-and-forget follow-up and booking system for a ${industry} business in ${city}, focused on winning back no-shows and filling their calendar. Give ready-to-use email/SMS templates, a booking setup, KPIs, and a realistic ROI projection.`;
 
           const result = (await runAgent("Forge", instruction)) as ForgeResult;
+
+          await logActivity(
+            user.id,
+            "booking_plan",
+            `Built a booking/follow-up plan for ${industry} in ${city}`,
+            { industry, city }
+          );
 
           return Response.json(result);
         } catch (err) {
