@@ -32,6 +32,34 @@ interface CompetitorResult {
   insights: string[];
 }
 
+interface ForgeEmailTemplate {
+  name: string;
+  subject: string;
+  body: string;
+}
+
+interface ForgeSmsTemplate {
+  name: string;
+  body: string;
+}
+
+interface ForgeNextAction {
+  title: string;
+  owner?: string;
+  eta?: string;
+  why?: string;
+}
+
+interface BookingPlanResult {
+  trigger: string;
+  steps: { action: string; details: string }[];
+  kpis?: string[];
+  estimatedRoi?: string;
+  emailTemplates?: ForgeEmailTemplate[];
+  smsTemplates?: ForgeSmsTemplate[];
+  nextActions?: ForgeNextAction[];
+}
+
 const CAMPAIGNS = [
   {
     id: "lead-blast",
@@ -59,12 +87,12 @@ const CAMPAIGNS = [
     id: "booking-booster",
     icon: "📅",
     name: "Booking Booster",
-    agent: "Forge + Pulse",
-    desc: "Create automated follow-up sequences to win back no-shows and fill your calendar.",
-    time: "~45 seconds",
+    agent: "Forge",
+    desc: "Get a ready-to-use follow-up and booking plan to win back no-shows and fill your calendar.",
+    time: "~30 seconds",
     color: "#fbbf24",
     bg: "rgba(245,158,11,0.15)",
-    active: false,
+    active: true,
   },
   {
     id: "competitor-intel",
@@ -100,6 +128,12 @@ const STEPS_BY_CAMPAIGN: Record<string, string[]> = {
     "Pulse drafting a personalized response...",
     "Pulse polishing tone and phrasing...",
   ],
+  "booking-booster": [
+    "Forge designing the follow-up flow...",
+    "Forge writing email + SMS templates...",
+    "Forge setting up booking + reminders...",
+    "Forge projecting revenue impact...",
+  ],
 };
 
 function AgentsHub() {
@@ -116,6 +150,8 @@ function AgentsHub() {
   const [reviewerName, setReviewerName] = useState("");
   const [starRating, setStarRating] = useState(5);
   const [reviewResponse, setReviewResponse] = useState<string | null>(null);
+
+  const [bookingPlan, setBookingPlan] = useState<BookingPlanResult | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -140,13 +176,17 @@ function AgentsHub() {
       setError("Please enter your trade type and city.");
       return;
     }
-    const endpoint = selected === "competitor-intel" ? "/api/competitor-intel" : "/api/lead-blast";
+    const endpoint =
+      selected === "competitor-intel" ? "/api/competitor-intel" :
+      selected === "booking-booster" ? "/api/booking-plan" :
+      "/api/lead-blast";
 
     setError("");
     setRunning(true);
     setLeadResult(null);
     setCompetitorResult(null);
     setReviewResponse(null);
+    setBookingPlan(null);
     setStep(0);
 
     const timer = setInterval(() => setStep(s => Math.min(s + 1, steps.length - 1)), 1400);
@@ -181,6 +221,8 @@ function AgentsHub() {
 
       if (selected === "competitor-intel") {
         setCompetitorResult(data);
+      } else if (selected === "booking-booster") {
+        setBookingPlan(data);
       } else {
         setLeadResult(data);
       }
@@ -203,6 +245,7 @@ function AgentsHub() {
     setLeadResult(null);
     setCompetitorResult(null);
     setReviewResponse(null);
+    setBookingPlan(null);
     setStep(0);
 
     const timer = setInterval(() => setStep(s => Math.min(s + 1, steps.length - 1)), 1400);
@@ -278,7 +321,34 @@ function AgentsHub() {
     alert("✅ Response copied to clipboard!");
   }
 
-  const hasResult = !!leadResult || !!competitorResult || !!reviewResponse;
+  function copyBookingPlan() {
+    if (!bookingPlan) return;
+    const lines: string[] = [];
+    lines.push(`TRIGGER\n${bookingPlan.trigger}`);
+    if (bookingPlan.estimatedRoi) lines.push("", `ESTIMATED ROI\n${bookingPlan.estimatedRoi}`);
+    lines.push("", "FOLLOW-UP FLOW");
+    bookingPlan.steps.forEach((s, i) => lines.push(`${i + 1}. ${s.action} — ${s.details}`));
+    if (bookingPlan.emailTemplates?.length) {
+      lines.push("", "EMAIL TEMPLATES");
+      bookingPlan.emailTemplates.forEach(t => lines.push(`- ${t.name}\n  Subject: ${t.subject}\n  ${t.body}`));
+    }
+    if (bookingPlan.smsTemplates?.length) {
+      lines.push("", "SMS TEMPLATES");
+      bookingPlan.smsTemplates.forEach(t => lines.push(`- ${t.name}: ${t.body}`));
+    }
+    if (bookingPlan.kpis?.length) {
+      lines.push("", "KPIS");
+      bookingPlan.kpis.forEach(k => lines.push(`- ${k}`));
+    }
+    if (bookingPlan.nextActions?.length) {
+      lines.push("", "NEXT ACTIONS");
+      bookingPlan.nextActions.forEach((a, i) => lines.push(`${i + 1}. ${a.title}${a.eta ? ` (${a.eta})` : ""}`));
+    }
+    navigator.clipboard.writeText(lines.join("\n"));
+    alert("✅ Plan copied to clipboard!");
+  }
+
+  const hasResult = !!leadResult || !!competitorResult || !!reviewResponse || !!bookingPlan;
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
@@ -369,6 +439,38 @@ function AgentsHub() {
         </div>
       )}
 
+      {/* Form: Booking Booster */}
+      {selected === "booking-booster" && !running && !hasResult && (
+        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📅</div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Booking Booster</div>
+              <div style={{ fontSize: 12, color: "#fbbf24", fontWeight: 600 }}>Forge</div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
+            <input value={industry} onChange={e => setIndustry(e.target.value)}
+              placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: 22 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
+            <input value={city} onChange={e => setCity(e.target.value)}
+              placeholder="e.g. Atlanta GA, Dallas TX..."
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          {error && <p style={{ color: "#f87171", fontSize: 13, marginBottom: 14 }}>{error}</p>}
+          <button onClick={runCampaign}
+            style={{ width: "100%", padding: 13, background: "#fbbf24", color: "#1a1200", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            Run Booking Booster →
+          </button>
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~30 seconds · Forge builds the plan</p>
+        </div>
+      )}
+
       {/* Form: Review Recovery */}
       {selected === "review-recovery" && !running && !hasResult && (
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
@@ -420,6 +522,8 @@ function AgentsHub() {
               ? "Writing your response..."
               : selected === "competitor-intel"
               ? `Analyzing ${industry} competitors in ${city}...`
+              : selected === "booking-booster"
+              ? `Building a booking system for ${industry} in ${city}...`
               : `Finding ${industry} leads in ${city}...`}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -532,6 +636,101 @@ function AgentsHub() {
           </div>
           <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "18px 20px" }}>
             <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.6, margin: 0 }}>{reviewResponse}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Results: Booking Booster */}
+      {bookingPlan && !running && (
+        <div style={{ maxWidth: 760 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>📅 Booking plan for {industry} in {city}</h2>
+              {bookingPlan.estimatedRoi && <p style={{ fontSize: 14, color: "#fbbf24", fontWeight: 600, margin: 0 }}>{bookingPlan.estimatedRoi}</p>}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={copyBookingPlan} style={{ padding: "9px 18px", background: "#fbbf24", color: "#1a1200", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy full plan</button>
+              <button onClick={() => { setBookingPlan(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
+            </div>
+          </div>
+
+          {bookingPlan.trigger && (
+            <div style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "11px 16px", marginBottom: 20, fontSize: 13, color: "var(--foreground)" }}>
+              <strong>Trigger:</strong> {bookingPlan.trigger}
+            </div>
+          )}
+
+          {bookingPlan.kpis && bookingPlan.kpis.length > 0 && (
+            <>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Target KPIs</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+                {bookingPlan.kpis.map((k, i) => (
+                  <span key={i} style={{ fontSize: 12, fontWeight: 600, color: "#fbbf24", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 100, padding: "5px 12px" }}>{k}</span>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Follow-up flow</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+            {bookingPlan.steps.map((s, i) => (
+              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "14px 18px", display: "flex", gap: 12 }}>
+                <span style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(245,158,11,0.15)", color: "#fbbf24", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 3 }}>{s.action}</div>
+                  <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>{s.details}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {bookingPlan.emailTemplates && bookingPlan.emailTemplates.length > 0 && (
+            <>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Email templates</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                {bookingPlan.emailTemplates.map((t, i) => (
+                  <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "14px 18px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>{t.name}</div>
+                    <div style={{ fontSize: 13, color: "#fbbf24", marginBottom: 6 }}>Subject: {t.subject}</div>
+                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, whiteSpace: "pre-wrap" }}>{t.body}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {bookingPlan.smsTemplates && bookingPlan.smsTemplates.length > 0 && (
+            <>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>SMS templates</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+                {bookingPlan.smsTemplates.map((t, i) => (
+                  <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>
+                    <strong style={{ color: "var(--foreground)" }}>{t.name}:</strong> <span style={{ color: "var(--muted-foreground)" }}>{t.body}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {bookingPlan.nextActions && bookingPlan.nextActions.length > 0 && (
+            <>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Week 1 action plan</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
+                {bookingPlan.nextActions.map((a, i) => (
+                  <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>
+                      {a.title}
+                      {a.eta && <span style={{ fontWeight: 500, color: "var(--muted-foreground)" }}> · {a.eta}</span>}
+                    </div>
+                    {a.why && <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: "3px 0 0" }}>{a.why}</p>}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 12 }}>
+            This plan gives you ready-to-use copy and setup steps. Automatically sending texts and emails on a schedule isn't wired up yet — for now, copy these templates and use them manually.
           </div>
         </div>
       )}
