@@ -1,5 +1,6 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,9 @@ import { Sparkles, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: z.object({
+    mode: z.enum(["signin", "signup"]).optional(),
+  }),
   head: () => ({ meta: [{ title: "Sign in — Lanavix" }] }),
   component: AuthPage,
 });
@@ -48,6 +52,7 @@ const GOOGLE_OAUTH_ENABLED = true;
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { mode } = useSearch({ from: "/auth" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -122,7 +127,7 @@ function AuthPage() {
               </Button>
             </div>
           ) : (
-          <Tabs defaultValue="signin">
+          <Tabs defaultValue={mode === "signup" ? "signup" : "signin"}>
             <TabsList className="grid grid-cols-2 w-full mb-6">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
               <TabsTrigger value="signup">Create account</TabsTrigger>

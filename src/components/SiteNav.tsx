@@ -37,13 +37,13 @@ export function SiteNav() {
           )}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
-          <Link to="/auth">
-            <Button variant="ghost" size="sm">Login</Button>
+        <div className="hidden md:flex items-center gap-6">
+          <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Sign In
           </Link>
-          <Link to="/auth">
+          <Link to="/auth" search={{ mode: "signup" }}>
             <Button size="sm" className="glow-primary">
-              Free Audit <ArrowRight className="h-3.5 w-3.5" />
+              Sign Up <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
         </div>
@@ -73,11 +73,11 @@ export function SiteNav() {
             )}
             <div className="flex flex-col gap-2 pt-2 border-t border-border/60">
               <Link to="/auth" onClick={() => setOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full">Login</Button>
+                <Button variant="outline" size="sm" className="w-full">Sign In</Button>
               </Link>
-              <Link to="/auth" onClick={() => setOpen(false)}>
+              <Link to="/auth" search={{ mode: "signup" }} onClick={() => setOpen(false)}>
                 <Button size="sm" className="w-full">
-                  Start Free Trial <ArrowRight className="h-3.5 w-3.5" />
+                  Sign Up <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>
