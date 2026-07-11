@@ -29,8 +29,8 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   if (score <= 1) return { score, label: "Too weak", color: "#ef4444" };
   if (score === 2) return { score, label: "Weak", color: "#f97316" };
   if (score === 3) return { score, label: "Fair", color: "#eab308" };
-  if (score === 4) return { score, label: "Strong", color: "#22c55e" };
-  return { score, label: "Very strong", color: "#10b981" };
+  if (score === 4) return { score, label: "Strong", color: "#1F6F54" };
+  return { score, label: "Very strong", color: "#2F8A6A" };
 }
 
 function friendlyError(message: string): string {
@@ -104,7 +104,7 @@ function AuthPage() {
           <span className="text-xl font-display font-bold tracking-tight">Lanavix</span>
         </Link>
 
-        <div className="glass rounded-2xl p-8 shadow-2xl">
+        <div className="glass rounded-2xl p-8 shadow-sm">
           {signupSuccess ? (
             <div className="text-center space-y-4">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
@@ -218,7 +218,13 @@ function AuthPage() {
                       <div className="flex-1 h-px bg-border" />
                     </div>
 
-                    <Button variant="outline" className="w-full" onClick={google}>
+                    <Button variant="outline" className="w-full gap-2.5" onClick={google}>
+                      <svg className="h-4 w-4" viewBox="0 0 48 48" aria-hidden="true">
+                        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.5 6 29.6 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.2-.1-2.4-.4-3.5z"/>
+                        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.5 6 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+                        <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/>
+                        <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.7l6.6 5.4C41.5 35.8 44 30.3 44 24c0-1.2-.1-2.4-.4-3.5z"/>
+                      </svg>
                       Continue with Google
                     </Button>
                   </>

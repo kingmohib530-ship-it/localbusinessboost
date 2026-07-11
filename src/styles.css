@@ -127,6 +127,12 @@
   background-size: 56px 56px;
 }
 
+/* Faint depth behind auth/onboarding cards — restrained, not a neon glow */
+.bg-radial-glow {
+  background:
+    radial-gradient(50% 40% at 50% 0%, color-mix(in oklab, var(--primary) 8%, transparent) 0%, transparent 70%);
+}
+
 @keyframes zy-fade-up {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

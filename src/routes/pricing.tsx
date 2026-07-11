@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SiteNav } from "@/components/SiteNav";
@@ -8,9 +8,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing — Lunavx AI Workforce OS" },
-      { name: "description", content: "Simple, transparent pricing for Lunavx. Starter $49, Pro $99, Enterprise $199. Start with a free 14-day trial." },
-      { property: "og:title", content: "Pricing — Lunavx" },
+      { title: "Pricing — Lanavix AI Workforce OS" },
+      { name: "description", content: "Simple, transparent pricing for Lanavix. Starter $49, Pro $99, Enterprise $199. Start with a free 14-day trial." },
+      { property: "og:title", content: "Pricing — Lanavix" },
       { property: "og:description", content: "Simple, transparent pricing. Start with a free 14-day trial." },
     ],
   }),
@@ -130,11 +130,11 @@ function PricingPage() {
       <SiteNav />
 
       {/* ── Hero ── */}
-      <section className="py-16 px-4 text-center border-b bg-muted/30">
-        <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
+      <section className="py-24 px-4 text-center border-b border-border bg-secondary/50">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
           Pricing
         </p>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+        <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">
           Simple pricing. Pays for itself in week one.
         </h1>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
@@ -164,7 +164,7 @@ function PricingPage() {
           >
             Annual
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              isAnnual ? "bg-white/20 text-white" : "bg-green-100 text-green-700"
+              isAnnual ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
             }`}>
               Save 20%
             </span>
@@ -173,7 +173,7 @@ function PricingPage() {
       </section>
 
       {/* ── Plan cards ── */}
-      <section className="py-16 px-4">
+      <section className="py-24 px-4">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {PLANS.map((plan) => (
             <div
@@ -204,7 +204,7 @@ function PricingPage() {
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
                 {isAnnual && (
-                  <p className="text-xs text-green-600 font-semibold">
+                  <p className="text-xs text-primary font-semibold">
                     Save ${(plan.monthlyPrice - plan.annualPrice) * 12}/yr
                   </p>
                 )}
@@ -218,9 +218,7 @@ function PricingPage() {
               <ul className="flex flex-col gap-3 mb-8 flex-1">
                 {plan.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-sm">
-                    <div className="mt-0.5 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-2.5 h-2.5 text-green-600" />
-                    </div>
+                    <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                     <span className="text-muted-foreground">{f}</span>
                   </li>
                 ))}
@@ -248,9 +246,9 @@ function PricingPage() {
       </section>
 
       {/* ── Feature table ── */}
-      <section className="py-12 px-4 bg-muted/30 border-t border-b">
+      <section className="py-24 px-4 bg-secondary/50 border-t border-b border-border">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Everything you get</h2>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-center mb-10">Everything you get</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -288,10 +286,10 @@ function PricingPage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section className="py-16 px-4">
+      <section className="py-24 px-4">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Common questions</h2>
-          <div className="flex flex-col gap-1">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-center mb-10">Common questions</h2>
+          <div className="flex flex-col">
             {[
               ["Is there really a free trial?", "Yes — 14 days free on every paid plan. No credit card required to start. Cancel before day 15 and you pay nothing."],
               ["Can I switch plans?", "Yes, any time. Upgrades are immediate and prorated. Downgrades take effect at the end of your billing period."],
@@ -299,12 +297,12 @@ function PricingPage() {
               ["Can I pause instead of cancel?", "Yes. Pause your subscription for 30 days from billing settings. Your data stays safe."],
               ["Is my data safe?", "All data is encrypted at rest and in transit. We never sell your data. Your information belongs to you."],
             ].map(([q, a], i) => (
-              <details key={i} className="border rounded-xl overflow-hidden group">
-                <summary className="flex justify-between items-center px-5 py-4 cursor-pointer font-semibold text-sm hover:bg-muted/40 list-none">
+              <details key={i} className="border-b border-border group">
+                <summary className="flex justify-between items-center gap-4 py-5 cursor-pointer font-medium text-sm list-none">
                   {q}
-                  <span className="text-muted-foreground group-open:rotate-180 transition-transform">▾</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 group-open:rotate-180 transition-transform" />
                 </summary>
-                <p className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">{a}</p>
+                <p className="pb-5 text-sm text-muted-foreground leading-relaxed">{a}</p>
               </details>
             ))}
           </div>
@@ -312,21 +310,19 @@ function PricingPage() {
       </section>
 
       {/* ── Bottom CTA ── */}
-      <section className="py-16 px-4 bg-primary text-primary-foreground text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight mb-3">
+      <section className="section-ink py-24 px-4 text-center">
+        <h2 className="font-display text-3xl font-bold tracking-tight mb-3">
           Not sure which plan? Start with the audit.
         </h2>
-        <p className="text-primary-foreground/70 max-w-md mx-auto mb-8">
-          Get your free Lunavx Business Audit — scored across 4 categories in 60 seconds.
+        <p className="text-ink-muted max-w-md mx-auto mb-8">
+          Get your free Lanavix Business Audit — scored across 4 categories in 60 seconds.
         </p>
-        <a
-          href="/audit"
-          className="inline-flex items-center gap-2 bg-white text-primary font-bold px-8 py-3.5 rounded-xl text-base hover:bg-white/90 transition-colors shadow-lg"
-        >
-          Get My Free Business Audit
-          <ArrowRight className="w-4 h-4" />
-        </a>
-        <p className="mt-4 text-sm text-primary-foreground/50">
+        <Link to="/audit">
+          <Button size="lg" className="h-12 px-8 text-[15px] font-semibold">
+            Get my free business audit <ArrowRight className="w-4 h-4" />
+          </Button>
+        </Link>
+        <p className="mt-4 text-sm text-ink-muted">
           Free forever · No credit card · 60 seconds
         </p>
       </section>
