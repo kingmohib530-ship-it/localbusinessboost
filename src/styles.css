@@ -34,52 +34,57 @@
   --color-elevated: var(--elevated);
   --color-success: var(--success);
   --color-accent-2: var(--accent-2);
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-border: var(--ink-border);
+  --font-display: 'Inter', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-/* Zyvora — premium dark AI SaaS. Single canonical theme. */
+/* Lanavix — premium, restrained light theme for a trades/contractor audience. */
 :root {
-  --radius: 1rem;
-  /* #0B1020 */
-  --background: oklch(0.18 0.04 270);
-  /* #F8FAFC */
-  --foreground: oklch(0.985 0.005 247);
-  /* #121A2E */
-  --surface: oklch(0.225 0.04 268);
-  /* #161F36 — cards */
-  --card: oklch(0.255 0.04 268);
-  --card-foreground: oklch(0.985 0.005 247);
-  --elevated: oklch(0.295 0.04 268);
-  --popover: oklch(0.255 0.04 268);
-  --popover-foreground: oklch(0.985 0.005 247);
-  /* #00E7C4 */
-  --primary: oklch(0.83 0.16 178);
-  --primary-foreground: oklch(0.18 0.04 270);
-  /* #6E5BFF */
-  --accent-2: oklch(0.62 0.21 285);
-  --secondary: oklch(0.295 0.04 268);
-  --secondary-foreground: oklch(0.985 0.005 247);
-  --muted: oklch(0.295 0.04 268);
-  /* #94A3B8 */
-  --muted-foreground: oklch(0.71 0.03 250);
-  --accent: oklch(0.295 0.04 268);
-  --accent-foreground: oklch(0.985 0.005 247);
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(0.985 0.005 247);
-  /* #1E293B */
-  --border: oklch(0.31 0.035 260);
-  --input: oklch(0.31 0.035 260);
-  --ring: oklch(0.83 0.16 178);
-  /* #22C55E */
-  --success: oklch(0.72 0.18 145);
-}
+  --radius: 0.625rem;
+  /* warm paper white */
+  --background: #FBFAF8;
+  /* near-black ink */
+  --foreground: #14171C;
+  --surface: #F4F3EF;
+  /* cards sit on white */
+  --card: #FFFFFF;
+  --card-foreground: #14171C;
+  --elevated: #FFFFFF;
+  --popover: #FFFFFF;
+  --popover-foreground: #14171C;
+  /* deep forest green */
+  --primary: #1F6F54;
+  --primary-foreground: #FFFFFF;
+  /* muted secondary green, used sparingly */
+  --accent-2: #2F8A6A;
+  --secondary: #F1F0EC;
+  --secondary-foreground: #14171C;
+  --muted: #F1F0EC;
+  --muted-foreground: #62666D;
+  /* soft green tint for hover/highlight backgrounds */
+  --accent: #E8F2EC;
+  --accent-foreground: #14171C;
+  --destructive: #C4362A;
+  --destructive-foreground: #FFFFFF;
+  --border: #E4E2DC;
+  --input: #E4E2DC;
+  --ring: #1F6F54;
+  --success: #1F6F54;
 
-.dark { color-scheme: dark; }
+  /* Dark "ink" sections used for hero / high-contrast bands only */
+  --ink: #0E1116;
+  --ink-foreground: #F6F5F1;
+  --ink-muted: #9BA1A9;
+  --ink-border: rgba(255,255,255,0.12);
+}
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { scroll-behavior: smooth; color-scheme: dark; }
+  html { scroll-behavior: smooth; color-scheme: light; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -91,52 +96,39 @@
 
 @utility text-balance { text-wrap: balance; }
 
+/* Solid ink-navy mark, no rainbow gradient */
 @utility gradient-primary {
-  background-image: linear-gradient(135deg, #00E7C4 0%, #14B8A6 100%);
+  background-color: var(--ink);
 }
 @utility gradient-text {
-  background: linear-gradient(135deg, #00E7C4 0%, #6E5BFF 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-primary);
 }
 @utility glass {
-  background: color-mix(in oklab, var(--card) 70%, transparent);
+  background: color-mix(in oklab, var(--card) 90%, transparent);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+  border: 1px solid var(--color-border);
 }
 @utility glow-primary {
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent),
-              0 10px 40px -10px color-mix(in oklab, var(--primary) 45%, transparent);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 8%, transparent),
+              0 8px 24px -12px color-mix(in oklab, var(--ink) 25%, transparent);
 }
 @utility hairline { border: 1px solid var(--border); }
+@utility section-ink {
+  background-color: var(--color-ink);
+  color: var(--color-ink-foreground);
+}
 
-/* Subtle grid & radial backdrops used in hero / sections */
+/* Subtle grid backdrop, used once at most for texture */
 .bg-grid {
   background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-.bg-radial-glow {
-  background:
-    radial-gradient(60% 50% at 50% 0%, color-mix(in oklab, #00E7C4 18%, transparent) 0%, transparent 70%),
-    radial-gradient(40% 40% at 80% 20%, color-mix(in oklab, #6E5BFF 14%, transparent) 0%, transparent 70%);
+    linear-gradient(to right, var(--ink-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ink-border) 1px, transparent 1px);
+  background-size: 56px 56px;
 }
 
 @keyframes zy-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes zy-pulse-glow {
-  0%, 100% { opacity: .55; }
-  50% { opacity: 1; }
-}
-@keyframes zy-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-.animate-fade-up { animation: zy-fade-up .7s cubic-bezier(.2,.7,.2,1) both; }
-.animate-pulse-glow { animation: zy-pulse-glow 3s ease-in-out infinite; }
-.animate-float { animation: zy-float 5s ease-in-out infinite; }
+.animate-fade-up { animation: zy-fade-up .6s cubic-bezier(.2,.7,.2,1) both; }
