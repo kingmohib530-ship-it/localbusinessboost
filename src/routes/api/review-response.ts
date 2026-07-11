@@ -99,13 +99,15 @@ Write only the response text, nothing else.`;
               "anthropic-version": "2023-06-01",
             },
             body: JSON.stringify({
-              model: "claude-sonnet-4-20250514",
+              model: "claude-sonnet-4-6",
               max_tokens: 300,
               messages: [{ role: "user", content: prompt }],
             }),
           });
 
           if (!res.ok) {
+            const errBody = await res.text().catch(() => "");
+            console.error(`[review-response] Anthropic error ${res.status}: ${errBody.slice(0, 500)}`);
             return Response.json({ error: "AI generation failed" }, { status: 502 });
           }
 
