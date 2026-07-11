@@ -48,12 +48,12 @@ const CAMPAIGNS = [
     id: "review-recovery",
     icon: "⭐",
     name: "Review Recovery",
-    agent: "Pulse + Shield",
-    desc: "Write professional responses to reviews and generate SMS review requests.",
-    time: "~20 seconds",
+    agent: "Pulse",
+    desc: "Write a professional, personalized response to any customer review in seconds.",
+    time: "~10 seconds",
     color: "#34d399",
     bg: "rgba(16,185,129,0.15)",
-    active: false,
+    active: true,
   },
   {
     id: "booking-booster",
@@ -95,6 +95,11 @@ const STEPS_BY_CAMPAIGN: Record<string, string[]> = {
     "Nexus surfacing opportunities...",
     "Nexus synthesizing sharp insights...",
   ],
+  "review-recovery": [
+    "Pulse reading the review...",
+    "Pulse drafting a personalized response...",
+    "Pulse polishing tone and phrasing...",
+  ],
 };
 
 function AgentsHub() {
@@ -106,6 +111,11 @@ function AgentsHub() {
   const [leadResult, setLeadResult] = useState<LeadResult | null>(null);
   const [competitorResult, setCompetitorResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState("");
+
+  const [reviewText, setReviewText] = useState("");
+  const [reviewerName, setReviewerName] = useState("");
+  const [starRating, setStarRating] = useState(5);
+  const [reviewResponse, setReviewResponse] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -136,6 +146,7 @@ function AgentsHub() {
     setRunning(true);
     setLeadResult(null);
     setCompetitorResult(null);
+    setReviewResponse(null);
     setStep(0);
 
     const timer = setInterval(() => setStep(s => Math.min(s + 1, steps.length - 1)), 1400);
@@ -181,6 +192,62 @@ function AgentsHub() {
     }
   }
 
+  async function runReviewRecovery() {
+    if (!reviewText.trim()) {
+      setError("Please paste the review text.");
+      return;
+    }
+
+    setError("");
+    setRunning(true);
+    setLeadResult(null);
+    setCompetitorResult(null);
+    setReviewResponse(null);
+    setStep(0);
+
+    const timer = setInterval(() => setStep(s => Math.min(s + 1, steps.length - 1)), 1400);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        clearInterval(timer);
+        setError("Please sign in again and retry.");
+        setRunning(false);
+        return;
+      }
+
+      const res = await fetch("/api/review-response", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reviewText: reviewText.trim(),
+          reviewerName: reviewerName.trim(),
+          starRating,
+        }),
+      });
+
+      const data = await res.json();
+      clearInterval(timer);
+      setStep(steps.length);
+
+      if (!res.ok || data.error) {
+        setError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+
+      setReviewResponse(data.response);
+    } catch (err) {
+      clearInterval(timer);
+      setError("Network error. Please try again.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
   function copyLeads() {
     if (!leadResult) return;
     const text = leadResult.leads
@@ -205,7 +272,13 @@ function AgentsHub() {
     alert("✅ Copied to clipboard!");
   }
 
-  const hasResult = !!leadResult || !!competitorResult;
+  function copyReviewResponse() {
+    if (!reviewResponse) return;
+    navigator.clipboard.writeText(reviewResponse);
+    alert("✅ Response copied to clipboard!");
+  }
+
+  const hasResult = !!leadResult || !!competitorResult || !!reviewResponse;
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
@@ -296,12 +369,58 @@ function AgentsHub() {
         </div>
       )}
 
+      {/* Form: Review Recovery */}
+      {selected === "review-recovery" && !running && !hasResult && (
+        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>⭐</div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Review Recovery</div>
+              <div style={{ fontSize: 12, color: "#34d399", fontWeight: 600 }}>Pulse</div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Star rating</label>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[1, 2, 3, 4, 5].map(n => (
+                <span key={n} onClick={() => setStarRating(n)}
+                  style={{ fontSize: 24, cursor: "pointer", color: n <= starRating ? "#fbbf24" : "var(--border)" }}>★</span>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Reviewer name</label>
+            <input value={reviewerName} onChange={e => setReviewerName(e.target.value)}
+              placeholder="e.g. Sarah M."
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: 22 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Review text *</label>
+            <textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
+              placeholder="Paste the review here..."
+              rows={4}
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", color: "var(--foreground)", background: "var(--input)", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+          </div>
+          {error && <p style={{ color: "#f87171", fontSize: 13, marginBottom: 14 }}>{error}</p>}
+          <button onClick={runReviewRecovery}
+            style={{ width: "100%", padding: 13, background: "#34d399", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            Run Review Recovery →
+          </button>
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~10 seconds · Pulse writes the response</p>
+        </div>
+      )}
+
       {/* Loading */}
       {running && (
         <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: campaign?.color ?? "#818cf8", marginBottom: 8 }}>Running campaign</div>
           <div style={{ fontSize: 19, fontWeight: 700, color: "var(--foreground)", marginBottom: 24 }}>
-            {selected === "competitor-intel" ? `Analyzing ${industry} competitors in ${city}...` : `Finding ${industry} leads in ${city}...`}
+            {selected === "review-recovery"
+              ? "Writing your response..."
+              : selected === "competitor-intel"
+              ? `Analyzing ${industry} competitors in ${city}...`
+              : `Finding ${industry} leads in ${city}...`}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {steps.map((s, i) => (
@@ -394,6 +513,25 @@ function AgentsHub() {
             {competitorResult.insights.map((n, i) => (
               <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--muted-foreground)" }}>{n}</div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Results: Review Recovery */}
+      {reviewResponse && !running && (
+        <div style={{ maxWidth: 680 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>✅ Response ready</h2>
+              <p style={{ fontSize: 14, color: "#34d399", fontWeight: 600, margin: 0 }}>For {reviewerName || "this reviewer"} · {starRating}★ review</p>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={copyReviewResponse} style={{ padding: "9px 18px", background: "#34d399", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy response</button>
+              <button onClick={() => { setReviewResponse(null); setSelected(null); setReviewText(""); setReviewerName(""); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
+            </div>
+          </div>
+          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "18px 20px" }}>
+            <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.6, margin: 0 }}>{reviewResponse}</p>
           </div>
         </div>
       )}
