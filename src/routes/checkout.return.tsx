@@ -62,7 +62,7 @@ function CheckoutReturn() {
   };
   const subs: Record<typeof status, string> = {
     pending: "Hang tight, this usually takes a few seconds.",
-    active: "Sending you back to LocalBoost AI now.",
+    active: "Sending you back to Lanavix now.",
     timeout: "Activation is taking longer than expected. Click below to return — your plan will sync automatically.",
     "no-session": "We couldn't find a checkout session in the URL.",
   };
@@ -82,7 +82,7 @@ function CheckoutReturn() {
           textDecoration: "none",
         }}
       >
-        Back to LocalBoost AI
+        Back to Lanavix
       </Link>
     </div>
   );
