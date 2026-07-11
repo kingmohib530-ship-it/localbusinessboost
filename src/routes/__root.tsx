@@ -49,7 +49,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "Lanavix — AI Workforce for Local Contractors" },
       { name: "twitter:description", content: "Stop losing $2,000/week to missed calls. Texts back in 60s, automates reviews, finds local leads — all on autopilot." },
       { name: "twitter:image", content: "https://lanavix.com/og-image.png.svg" },
-      { name: "theme-color", content: "#0B1020" },
+      { name: "theme-color", content: "#0E1116" },
     ],
     links: [
       {
@@ -67,7 +67,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap",
       },
     ],
   }),

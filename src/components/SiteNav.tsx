@@ -20,7 +20,7 @@ export function SiteNav() {
           <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold tracking-tight">Lunavx</span>
+          <span className="font-display font-bold tracking-tight">Lanavix</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
