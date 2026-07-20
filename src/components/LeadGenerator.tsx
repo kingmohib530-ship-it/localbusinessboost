@@ -76,7 +76,7 @@ function copyText(text: string) {
 export default function LeadGenerator() {
   const [industry, setIndustry] = useState(INDUSTRIES[0]);
   const [city, setCity] = useState("");
-  const [count, setCount] = useState(15);
+  const [count, setCount] = useState(30);
   const [researching, setResearching] = useState(false);
   const [error, setError] = useState("");
 

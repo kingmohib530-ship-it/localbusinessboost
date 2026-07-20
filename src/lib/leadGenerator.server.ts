@@ -55,6 +55,41 @@ function parseAddressComponents(components: AddressComponent[] | undefined): {
  * count, website, and up to 5 real review excerpts (used later for
  * keyword-based pain-signal detection, never fabricated).
  */
+interface RawPlaceResult {
+  place_id: string;
+  name: string;
+  formatted_address?: string;
+}
+
+/**
+ * Google Places Text Search returns at most 20 results per page. Getting up
+ * to 50 requires following next_page_token across additional pages — capped
+ * at 3 pages (Google's own limit, ~60 results) or once maxResults is met.
+ * Google requires a short delay before a next_page_token becomes valid.
+ */
+async function fetchAllPlaces(
+  searchQuery: string,
+  googleKey: string,
+  maxResults: number,
+): Promise<RawPlaceResult[]> {
+  const results: RawPlaceResult[] = [];
+  let pageToken: string | undefined;
+
+  for (let page = 0; page < 3 && results.length < maxResults; page++) {
+    const url = pageToken
+      ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${pageToken}&key=${googleKey}`
+      : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${searchQuery}&key=${googleKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (Array.isArray(data.results)) results.push(...data.results);
+    pageToken = data.next_page_token;
+    if (!pageToken) break;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  return results.slice(0, maxResults);
+}
+
 export async function searchGooglePlacesLeads(
   googleKey: string,
   industry: string,
@@ -62,16 +97,11 @@ export async function searchGooglePlacesLeads(
   count: number,
 ): Promise<GooglePlaceLead[]> {
   const searchQuery = encodeURIComponent(`${industry} in ${city}`);
-  const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${searchQuery}&key=${googleKey}`;
+  const candidates = await fetchAllPlaces(searchQuery, googleKey, count);
 
-  const placesRes = await fetch(placesUrl);
-  const placesData = await placesRes.json();
-
-  if (!placesData.results || placesData.results.length === 0) {
+  if (candidates.length === 0) {
     return [];
   }
-
-  const candidates = placesData.results.slice(0, count);
 
   const detailed = await Promise.all(
     candidates.map(async (place: { place_id: string; name: string; formatted_address?: string }) => {

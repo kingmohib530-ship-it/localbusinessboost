@@ -58,8 +58,8 @@ function timeAgo(iso: string): string {
 const QUICK_WINS = [
   {
     Icon: Target,
-    title: "Run an outbound campaign",
-    desc: "Find 15 qualified local leads in your area with personalized outreach — in 30 seconds.",
+    title: "Run the Lead Generator",
+    desc: "Build a complete intelligence profile on up to 50 local prospects with personalized outreach.",
     action: "Run now →",
     href: "/app/agents",
   },

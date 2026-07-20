@@ -19,7 +19,7 @@ const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
 // billable Google Places Details lookup plus an Anthropic call, so this
 // caps real spend regardless of what the client sends.
 const MIN_COUNT = 5;
-const MAX_COUNT = 30;
+const MAX_COUNT = 50;
 
 export const Route = createFileRoute("/api/lead-generator/research")({
   server: {
@@ -37,10 +37,13 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           }
           const user = userData.user;
 
+          // Lowered from 10/hour: a 50-lead request now costs up to 50
+          // billable Google Places Details lookups + 50 Anthropic calls,
+          // well above what the original 10/hour cap was sized for.
           const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_rate_limit", {
             p_user_id: user.id,
             p_route: "lead-generator-research",
-            p_max_requests: 10,
+            p_max_requests: 5,
             p_window_seconds: 3600,
           });
           if (rlErr) {
@@ -54,7 +57,7 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           const body = await request.json();
           const industry = typeof body.industry === "string" ? body.industry.trim() : "";
           const city = typeof body.city === "string" ? body.city.trim() : "";
-          const requestedCount = typeof body.count === "number" ? body.count : 15;
+          const requestedCount = typeof body.count === "number" ? body.count : 30;
           const count = Math.max(MIN_COUNT, Math.min(MAX_COUNT, Math.round(requestedCount)));
 
           if (!industry || !city) {
