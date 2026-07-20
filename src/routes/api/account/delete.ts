@@ -23,6 +23,24 @@ export const Route = createFileRoute("/api/account/delete")({
           }
           const user = userData.user;
 
+          // ===== Rate limit: 3 requests per hour per user =====
+          const { data: rlAllowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_rate_limit",
+            {
+              p_user_id: user.id,
+              p_route: "account-delete",
+              p_max_requests: 3,
+              p_window_seconds: 3600,
+            },
+          );
+          if (rlErr) {
+            console.error("[account/delete] rate limit check failed");
+            return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
+          }
+          if (!rlAllowed) {
+            return Response.json({ error: "Too many requests. Please wait a bit and try again." }, { status: 429 });
+          }
+
           // ===== Explicit confirmation required =====
           // Prevents accidental deletion from a stray/misfired request.
           let body: any = {};

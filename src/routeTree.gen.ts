@@ -27,21 +27,28 @@ import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate
 import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
 import { Route as ApiCompetitorIntelRouteImport } from './routes/api/competitor-intel'
 import { Route as ApiBookingPlanRouteImport } from './routes/api/booking-plan'
+import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as ApiTwilioSmsReplyRouteImport } from './routes/api/twilio/sms-reply'
 import { Route as ApiTwilioMissedCallRouteImport } from './routes/api/twilio/missed-call'
+import { Route as ApiTwilioConsumerInboundRouteImport } from './routes/api/twilio/consumer-inbound'
 import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
+import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
+import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/update-scores'
+import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
 import { Route as AuthenticatedAppWorkflowsRouteImport } from './routes/_authenticated/app.workflows'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
+import { Route as AuthenticatedAppNetworkRouteImport } from './routes/_authenticated/app.network'
 import { Route as AuthenticatedAppLogsRouteImport } from './routes/_authenticated/app.logs'
 import { Route as AuthenticatedAppControlRouteImport } from './routes/_authenticated/app.control'
 import { Route as AuthenticatedAppChatRouteImport } from './routes/_authenticated/app.chat'
+import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -137,6 +144,11 @@ const ApiBookingPlanRoute = ApiBookingPlanRouteImport.update({
   path: '/api/booking-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAppointmentsRoute = ApiAppointmentsRouteImport.update({
+  id: '/api/appointments',
+  path: '/api/appointments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -157,6 +169,12 @@ const ApiTwilioMissedCallRoute = ApiTwilioMissedCallRouteImport.update({
   path: '/api/twilio/missed-call',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTwilioConsumerInboundRoute =
+  ApiTwilioConsumerInboundRouteImport.update({
+    id: '/api/twilio/consumer-inbound',
+    path: '/api/twilio/consumer-inbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
   id: '/api/public/leads',
   path: '/api/public/leads',
@@ -167,6 +185,22 @@ const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   path: '/api/public/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiAppointmentsRoute,
+} as any)
+const ApiAdminUpdateScoresRoute = ApiAdminUpdateScoresRouteImport.update({
+  id: '/api/admin/update-scores',
+  path: '/api/admin/update-scores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminUpdatePricingIndexRoute =
+  ApiAdminUpdatePricingIndexRouteImport.update({
+    id: '/api/admin/update-pricing-index',
+    path: '/api/admin/update-pricing-index',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAccountExportRoute = ApiAccountExportRouteImport.update({
   id: '/api/account/export',
   path: '/api/account/export',
@@ -201,6 +235,11 @@ const AuthenticatedAppReceptionistRoute =
     path: '/receptionist',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppNetworkRoute = AuthenticatedAppNetworkRouteImport.update({
+  id: '/network',
+  path: '/network',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppLogsRoute = AuthenticatedAppLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
@@ -216,6 +255,12 @@ const AuthenticatedAppChatRoute = AuthenticatedAppChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppCalendarRoute =
+  AuthenticatedAppCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppAgentsRoute = AuthenticatedAppAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
@@ -253,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
@@ -265,17 +311,23 @@ export interface FileRoutesByFullPath {
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
+  '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -291,6 +343,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
@@ -303,17 +356,23 @@ export interface FileRoutesByTo {
   '/checkout/return': typeof CheckoutReturnRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
+  '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -332,6 +391,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
   '/api/generate-content': typeof ApiGenerateContentRoute
@@ -344,17 +404,23 @@ export interface FileRoutesById {
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
   '/_authenticated/app/control': typeof AuthenticatedAppControlRoute
   '/_authenticated/app/logs': typeof AuthenticatedAppLogsRoute
+  '/_authenticated/app/network': typeof AuthenticatedAppNetworkRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -373,6 +439,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/app'
+    | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
     | '/api/generate-content'
@@ -385,17 +452,23 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/app/admin'
     | '/app/agents'
+    | '/app/calendar'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
+    | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
     | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
+    | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
+    | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app/'
@@ -411,6 +484,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/terms'
+    | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
     | '/api/generate-content'
@@ -423,17 +497,23 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/app/admin'
     | '/app/agents'
+    | '/app/calendar'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
+    | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
     | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
+    | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
+    | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app'
@@ -451,6 +531,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/_authenticated/app'
+    | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
     | '/api/generate-content'
@@ -463,17 +544,23 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/agents'
+    | '/_authenticated/app/calendar'
     | '/_authenticated/app/chat'
     | '/_authenticated/app/control'
     | '/_authenticated/app/logs'
+    | '/_authenticated/app/network'
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
+    | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
+    | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/_authenticated/app/'
@@ -491,6 +578,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
+  ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
   ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
   ApiGenerateContentRoute: typeof ApiGenerateContentRoute
@@ -503,8 +591,11 @@ export interface RootRouteChildren {
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ApiAccountDeleteRoute: typeof ApiAccountDeleteRoute
   ApiAccountExportRoute: typeof ApiAccountExportRoute
+  ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
+  ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
+  ApiTwilioConsumerInboundRoute: typeof ApiTwilioConsumerInboundRoute
   ApiTwilioMissedCallRoute: typeof ApiTwilioMissedCallRoute
   ApiTwilioSmsReplyRoute: typeof ApiTwilioSmsReplyRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
@@ -640,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBookingPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/appointments': {
+      id: '/api/appointments'
+      path: '/api/appointments'
+      fullPath: '/api/appointments'
+      preLoaderRoute: typeof ApiAppointmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
@@ -668,6 +766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTwilioMissedCallRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/twilio/consumer-inbound': {
+      id: '/api/twilio/consumer-inbound'
+      path: '/api/twilio/consumer-inbound'
+      fullPath: '/api/twilio/consumer-inbound'
+      preLoaderRoute: typeof ApiTwilioConsumerInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/leads': {
       id: '/api/public/leads'
       path: '/api/public/leads'
@@ -680,6 +785,27 @@ declare module '@tanstack/react-router' {
       path: '/api/public/contact'
       fullPath: '/api/public/contact'
       preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/appointments/$id': {
+      id: '/api/appointments/$id'
+      path: '/$id'
+      fullPath: '/api/appointments/$id'
+      preLoaderRoute: typeof ApiAppointmentsIdRouteImport
+      parentRoute: typeof ApiAppointmentsRoute
+    }
+    '/api/admin/update-scores': {
+      id: '/api/admin/update-scores'
+      path: '/api/admin/update-scores'
+      fullPath: '/api/admin/update-scores'
+      preLoaderRoute: typeof ApiAdminUpdateScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/update-pricing-index': {
+      id: '/api/admin/update-pricing-index'
+      path: '/api/admin/update-pricing-index'
+      fullPath: '/api/admin/update-pricing-index'
+      preLoaderRoute: typeof ApiAdminUpdatePricingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/account/export': {
@@ -724,6 +850,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppReceptionistRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/network': {
+      id: '/_authenticated/app/network'
+      path: '/network'
+      fullPath: '/app/network'
+      preLoaderRoute: typeof AuthenticatedAppNetworkRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/logs': {
       id: '/_authenticated/app/logs'
       path: '/logs'
@@ -743,6 +876,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/app/chat'
       preLoaderRoute: typeof AuthenticatedAppChatRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/calendar': {
+      id: '/_authenticated/app/calendar'
+      path: '/calendar'
+      fullPath: '/app/calendar'
+      preLoaderRoute: typeof AuthenticatedAppCalendarRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/agents': {
@@ -786,9 +926,11 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
+  AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppChatRoute: typeof AuthenticatedAppChatRoute
   AuthenticatedAppControlRoute: typeof AuthenticatedAppControlRoute
   AuthenticatedAppLogsRoute: typeof AuthenticatedAppLogsRoute
+  AuthenticatedAppNetworkRoute: typeof AuthenticatedAppNetworkRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -799,9 +941,11 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
+  AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppChatRoute: AuthenticatedAppChatRoute,
   AuthenticatedAppControlRoute: AuthenticatedAppControlRoute,
   AuthenticatedAppLogsRoute: AuthenticatedAppLogsRoute,
+  AuthenticatedAppNetworkRoute: AuthenticatedAppNetworkRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
@@ -823,6 +967,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiAppointmentsRouteChildren {
+  ApiAppointmentsIdRoute: typeof ApiAppointmentsIdRoute
+}
+
+const ApiAppointmentsRouteChildren: ApiAppointmentsRouteChildren = {
+  ApiAppointmentsIdRoute: ApiAppointmentsIdRoute,
+}
+
+const ApiAppointmentsRouteWithChildren = ApiAppointmentsRoute._addFileChildren(
+  ApiAppointmentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -832,6 +988,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
+  ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
   ApiBookingPlanRoute: ApiBookingPlanRoute,
   ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
   ApiGenerateContentRoute: ApiGenerateContentRoute,
@@ -844,8 +1001,11 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutReturnRoute: CheckoutReturnRoute,
   ApiAccountDeleteRoute: ApiAccountDeleteRoute,
   ApiAccountExportRoute: ApiAccountExportRoute,
+  ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,
+  ApiAdminUpdateScoresRoute: ApiAdminUpdateScoresRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicLeadsRoute: ApiPublicLeadsRoute,
+  ApiTwilioConsumerInboundRoute: ApiTwilioConsumerInboundRoute,
   ApiTwilioMissedCallRoute: ApiTwilioMissedCallRoute,
   ApiTwilioSmsReplyRoute: ApiTwilioSmsReplyRoute,
   ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,

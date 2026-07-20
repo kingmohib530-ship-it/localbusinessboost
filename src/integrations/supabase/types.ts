@@ -62,6 +62,54 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          estimated_value: number | null
+          id: string
+          notes: string | null
+          scheduled_at: string
+          service_type: string
+          source: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          scheduled_at: string
+          service_type: string
+          source?: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          scheduled_at?: string
+          service_type?: string
+          source?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_leads: {
         Row: {
           business_name: string | null
@@ -205,6 +253,51 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_intelligence: {
+        Row: {
+          ai_confidence_score: number | null
+          business_id: string | null
+          consumer_phone: string | null
+          created_at: string | null
+          id: string
+          location_zip: string | null
+          outcome: string | null
+          price_mentioned: number | null
+          service_type: string | null
+          source_channel: string | null
+          time_to_book_minutes: number | null
+          urgency_level: string | null
+        }
+        Insert: {
+          ai_confidence_score?: number | null
+          business_id?: string | null
+          consumer_phone?: string | null
+          created_at?: string | null
+          id?: string
+          location_zip?: string | null
+          outcome?: string | null
+          price_mentioned?: number | null
+          service_type?: string | null
+          source_channel?: string | null
+          time_to_book_minutes?: number | null
+          urgency_level?: string | null
+        }
+        Update: {
+          ai_confidence_score?: number | null
+          business_id?: string | null
+          consumer_phone?: string | null
+          created_at?: string | null
+          id?: string
+          location_zip?: string | null
+          outcome?: string | null
+          price_mentioned?: number | null
+          service_type?: string | null
+          source_channel?: string | null
+          time_to_book_minutes?: number | null
+          urgency_level?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           business_id: string | null
@@ -246,6 +339,45 @@ export type Database = {
           },
         ]
       }
+      market_pricing_index: {
+        Row: {
+          avg_price: number | null
+          demand_score: number | null
+          id: string
+          last_updated: string | null
+          price_range_high: number | null
+          price_range_low: number | null
+          seasonal_multiplier: number | null
+          service_type: string
+          supply_score: number | null
+          zip_code: string
+        }
+        Insert: {
+          avg_price?: number | null
+          demand_score?: number | null
+          id?: string
+          last_updated?: string | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          seasonal_multiplier?: number | null
+          service_type: string
+          supply_score?: number | null
+          zip_code: string
+        }
+        Update: {
+          avg_price?: number | null
+          demand_score?: number | null
+          id?: string
+          last_updated?: string | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          seasonal_multiplier?: number | null
+          service_type?: string
+          supply_score?: number | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
       missed_calls: {
         Row: {
           called_at: string | null
@@ -281,53 +413,71 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accept_consumer_leads: boolean
+          booking_completion_rate: number | null
           business_name: string | null
           city: string | null
+          consumer_rating_avg: number | null
           created_at: string | null
           full_name: string | null
           id: string
           industry: string | null
           is_admin: boolean
+          lanavix_score: number
           onboarding_completed: boolean | null
+          response_speed_avg_minutes: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_period_end: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          twilio_phone_number: string | null
           updated_at: string | null
           website: string | null
         }
         Insert: {
+          accept_consumer_leads?: boolean
+          booking_completion_rate?: number | null
           business_name?: string | null
           city?: string | null
+          consumer_rating_avg?: number | null
           created_at?: string | null
           full_name?: string | null
           id: string
           industry?: string | null
           is_admin?: boolean
+          lanavix_score?: number
           onboarding_completed?: boolean | null
+          response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          twilio_phone_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
         Update: {
+          accept_consumer_leads?: boolean
+          booking_completion_rate?: number | null
           business_name?: string | null
           city?: string | null
+          consumer_rating_avg?: number | null
           created_at?: string | null
           full_name?: string | null
           id?: string
           industry?: string | null
           is_admin?: boolean
+          lanavix_score?: number
           onboarding_completed?: boolean | null
+          response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          twilio_phone_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -419,6 +569,7 @@ export type Database = {
       }
       sms_conversations: {
         Row: {
+          appointment_id: string | null
           caller_phone: string
           direction: string
           id: string
@@ -428,6 +579,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          appointment_id?: string | null
           caller_phone: string
           direction: string
           id?: string
@@ -437,6 +589,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          appointment_id?: string | null
           caller_phone?: string
           direction?: string
           id?: string
@@ -446,6 +599,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sms_conversations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sms_conversations_missed_call_id_fkey"
             columns: ["missed_call_id"]

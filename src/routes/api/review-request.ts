@@ -1,30 +1,75 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const AUTH_ERROR = "Authentication required. Please sign in.";
+const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
+
+function businessFooter(): string {
+  const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
+  return consumerNumber
+    ? `\n\nManaged by Lanavix — Need another service? Text ${consumerNumber}`
+    : "\n\nManaged by Lanavix";
+}
+
+const RequestSchema = z.object({
+  customerName: z.string().trim().max(200).optional().or(z.literal("")),
+  customerPhone: z.string().trim().min(1).max(50),
+  jobDescription: z.string().trim().max(500).optional().or(z.literal("")),
+  googleReviewUrl: z.string().trim().url().max(500).optional().or(z.literal("")),
+});
 
 export const Route = createFileRoute("/api/review-request")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
-          const { customerName, customerPhone, jobDescription, googleReviewUrl } = await request.json();
+          // ===== Auth: verify Supabase JWT (same pattern as /api/lead-blast) =====
+          const authHeader = request.headers.get("authorization") || "";
+          if (!authHeader.toLowerCase().startsWith("bearer ")) {
+            return Response.json({ error: AUTH_ERROR }, { status: 401 });
+          }
+          const token = authHeader.slice(7).trim();
+          const { data: userData, error: userErr } =
+            await supabaseAdmin.auth.getUser(token);
+          if (userErr || !userData?.user) {
+            return Response.json({ error: AUTH_ERROR }, { status: 401 });
+          }
+          const user = userData.user;
 
-          if (!customerPhone) {
-            return Response.json({ error: "Customer phone is required" }, { status: 400 });
+          // ===== Rate limit: 20 requests per hour per user =====
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_rate_limit",
+            {
+              p_user_id: user.id,
+              p_route: "review-request",
+              p_max_requests: 20,
+              p_window_seconds: 3600,
+            },
+          );
+          if (rlErr) {
+            console.error("[api/review-request] rate limit check failed");
+            return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
+          }
+          if (!allowed) {
+            return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
           }
 
-          const supabase = createClient(
-            process.env.VITE_SUPABASE_URL || "",
-            process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ""
-          );
-
-          const authHeader = request.headers.get("cookie") || "";
-          const { data: { user } } = await supabase.auth.getUser();
+          const body = await request.json();
+          const parsed = RequestSchema.safeParse(body);
+          if (!parsed.success) {
+            return Response.json(
+              { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+              { status: 400 },
+            );
+          }
+          const { customerName, customerPhone, jobDescription, googleReviewUrl } = parsed.data;
 
           // Build the SMS message
           const reviewLink = googleReviewUrl || "https://search.google.com/local/reviews";
           const nameStr = customerName ? `, ${customerName.split(" ")[0]}` : "";
           const jobStr = jobDescription ? ` on the ${jobDescription}` : "";
-          const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏`;
+          const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏${businessFooter()}`;
 
           // Send via Twilio if configured
           const twilioSid = process.env.TWILIO_ACCOUNT_SID;
@@ -45,7 +90,7 @@ export const Route = createFileRoute("/api/review-request")({
                   To: customerPhone,
                   Body: message,
                 }).toString(),
-              }
+              },
             );
 
             if (!twilioRes.ok) {
@@ -58,25 +103,15 @@ export const Route = createFileRoute("/api/review-request")({
             }, { status: 400 });
           }
 
-          // Save to database
-          const adminSupabase = createClient(
-            process.env.VITE_SUPABASE_URL || "",
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ""
-          );
-
-          const { data: users } = await adminSupabase.auth.admin.listUsers();
-          const firstUser = users?.users?.[0];
-
-          if (firstUser) {
-            await adminSupabase.from("review_requests").insert({
-              user_id: firstUser.id,
-              customer_name: customerName || null,
-              customer_phone: customerPhone,
-              job_description: jobDescription || null,
-              google_review_url: googleReviewUrl || null,
-              status: "sent",
-            });
-          }
+          // Save to database, attributed to the actual authenticated caller
+          await supabaseAdmin.from("review_requests").insert({
+            user_id: user.id,
+            customer_name: customerName || null,
+            customer_phone: customerPhone,
+            job_description: jobDescription || null,
+            google_review_url: googleReviewUrl || null,
+            status: "sent",
+          });
 
           return Response.json({ success: true, message: "Review request sent!" });
         } catch (err) {

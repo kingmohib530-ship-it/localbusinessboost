@@ -136,6 +136,24 @@ export const Route = createFileRoute("/api/generate-content")({
             return new Response(JSON.stringify({ error: "Invalid session" }), { status: 401, headers: cors });
           }
 
+          // ===== Rate limit: 30 requests per hour per user =====
+          const { data: rlAllowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_rate_limit",
+            {
+              p_user_id: userId,
+              p_route: "generate-content",
+              p_max_requests: 30,
+              p_window_seconds: 3600,
+            },
+          );
+          if (rlErr) {
+            console.error("[generate-content] rate limit check failed");
+            return new Response(JSON.stringify({ error: "Service temporarily unavailable" }), { status: 503, headers: cors });
+          }
+          if (!rlAllowed) {
+            return new Response(JSON.stringify({ error: "Too many requests. Please wait a bit and try again." }), { status: 429, headers: cors });
+          }
+
           // Look up plan from profiles (service-role bypasses RLS)
           const { data: profile } = await supabaseAdmin
             .from("profiles")

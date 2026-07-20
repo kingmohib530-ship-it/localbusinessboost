@@ -22,6 +22,24 @@ export const Route = createFileRoute("/api/public/contact")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
         try {
+          const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_anon_rate_limit",
+            {
+              p_ip_address: ip,
+              p_route: "public-contact",
+              p_max_requests: 5,
+              p_window_seconds: 3600,
+            },
+          );
+          if (rlErr) {
+            console.error("[public/contact] rate limit check failed");
+            return Response.json({ success: false, message: "Service temporarily unavailable" }, { status: 503, headers: CORS });
+          }
+          if (!allowed) {
+            return Response.json({ success: false, message: "Too many requests. Please try again later." }, { status: 429, headers: CORS });
+          }
+
           let body: unknown;
           try {
             body = await request.json();

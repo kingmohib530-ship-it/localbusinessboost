@@ -1,17 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
-
-let _admin: ReturnType<typeof createClient> | null = null;
-function admin() {
-  if (!_admin) {
-    _admin = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return _admin;
-}
 
 export const Route = createFileRoute("/api/public/billing/portal")({
   server: {
@@ -29,28 +18,23 @@ export const Route = createFileRoute("/api/public/billing/portal")({
           const token = authHeader.replace(/^Bearer\s+/i, "");
           if (!token) return new Response("Unauthorized", { status: 401 });
 
-          const sb = admin();
-          const { data: userData, error: userErr } = await sb.auth.getUser(token);
+          const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
           if (userErr || !userData?.user) {
             return new Response("Unauthorized", { status: 401 });
           }
           const userId = userData.user.id;
 
-          const { data: sub } = await sb
-            .from("subscriptions")
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
             .select("stripe_customer_id")
-            .eq("user_id", userId)
-            .eq("environment", env)
-            .order("created_at", { ascending: false })
-            .limit(1)
+            .eq("id", userId)
             .maybeSingle();
 
-          const customerId = (sub as { stripe_customer_id?: string } | null)
-            ?.stripe_customer_id;
+          const customerId = profile?.stripe_customer_id;
           if (!customerId) {
             return Response.json(
-              { error: "No subscription found" },
-              { status: 404 }
+              { error: "No active subscription found." },
+              { status: 400 }
             );
           }
 

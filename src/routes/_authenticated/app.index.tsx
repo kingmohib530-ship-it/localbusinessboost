@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { DollarSign, Calendar, Star, Target, TrendingUp, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app/")({
@@ -21,6 +22,28 @@ interface ActivityRow {
   created_at: string;
 }
 
+interface MissedCallRow {
+  status: string | null;
+  called_at: string | null;
+}
+
+interface SmsConversationRow {
+  missed_call_id: string | null;
+  sent_at: string | null;
+}
+
+interface ReviewResponseRow {
+  star_rating: number | null;
+  created_at: string | null;
+}
+
+interface AppointmentRevenueRow {
+  estimated_value: number | null;
+  created_at: string | null;
+  source: string;
+  status: string;
+}
+
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
@@ -34,45 +57,50 @@ function timeAgo(iso: string): string {
 
 const QUICK_WINS = [
   {
-    icon: "🎯",
-    title: "Run Local Lead Blast",
-    desc: "Find 30 qualified local leads in your area with personalized outreach — in 60 seconds.",
+    Icon: Target,
+    title: "Run an outbound campaign",
+    desc: "Find 15 qualified local leads in your area with personalized outreach — in 30 seconds.",
     action: "Run now →",
     href: "/app/agents",
-    color: "#818cf8",
-    bg: "rgba(99,102,241,0.15)",
   },
   {
-    icon: "⭐",
-    title: "Generate Review Requests",
-    desc: "Send review request messages to your last 5 customers and boost your Google rating.",
-    action: "Generate →",
-    href: "/app/agents",
-    color: "#34d399",
-    bg: "rgba(16,185,129,0.15)",
+    Icon: Star,
+    title: "Send review requests",
+    desc: "Text your last few customers a review request and boost your Google rating.",
+    action: "Send requests →",
+    href: "/app/reputation",
   },
   {
-    icon: "📊",
-    title: "Check Your Audit Score",
+    Icon: TrendingUp,
+    title: "Check your audit score",
     desc: "See exactly what's costing you customers and get 12 plain-English fixes.",
     action: "View audit →",
     href: "/audit",
-    color: "#fbbf24",
-    bg: "rgba(245,158,11,0.15)",
   },
 ];
 
 function TodayDashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [missedCalls, setMissedCalls] = useState<MissedCallRow[]>([]);
+  const [conversations, setConversations] = useState<SmsConversationRow[]>([]);
+  const [reviewResponses, setReviewResponses] = useState<ReviewResponseRow[]>([]);
+  const [revenueAppointments, setRevenueAppointments] = useState<AppointmentRevenueRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadProfile() {
+    async function loadDashboard() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const [{ data: profileData }, { data: activityData }] = await Promise.all([
+        const [
+          { data: profileData },
+          { data: activityData },
+          { data: missedCallData },
+          { data: conversationData },
+          { data: reviewResponseData },
+          { data: appointmentRevenueData },
+        ] = await Promise.all([
           supabase
             .from("profiles")
             .select("full_name, business_name, industry, subscription_tier")
@@ -84,30 +112,105 @@ function TodayDashboard() {
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(50),
+          supabase
+            .from("missed_calls")
+            .select("status, called_at")
+            .eq("user_id", user.id),
+          supabase
+            .from("sms_conversations")
+            .select("missed_call_id, sent_at")
+            .eq("user_id", user.id),
+          supabase
+            .from("review_responses")
+            .select("star_rating, created_at")
+            .eq("user_id", user.id),
+          supabase
+            .from("appointments")
+            .select("estimated_value, created_at, source, status")
+            .eq("user_id", user.id)
+            .eq("source", "inbound_sms")
+            .neq("status", "cancelled"),
         ]);
         setProfile(profileData);
         setActivity((activityData as ActivityRow[]) ?? []);
+        setMissedCalls((missedCallData as MissedCallRow[]) ?? []);
+        setConversations((conversationData as SmsConversationRow[]) ?? []);
+        setReviewResponses((reviewResponseData as ReviewResponseRow[]) ?? []);
+        setRevenueAppointments((appointmentRevenueData as AppointmentRevenueRow[]) ?? []);
       } catch (e) {
         console.error(e);
       } finally {
         setLoading(false);
       }
     }
-    loadProfile();
+    loadDashboard();
   }, []);
 
   const name = profile?.business_name || profile?.full_name || null;
   const isFree = !profile?.subscription_tier || profile?.subscription_tier === "free";
 
-  const leadsFound = activity
-    .filter((a) => a.type === "lead_blast")
-    .reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0);
-  const reviewsResponded = activity.filter((a) => a.type === "review_response").length;
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const inThisMonth = (iso: string | null) => !!iso && new Date(iso) >= monthStart;
+
+  const missedCallsThisMonth = missedCalls.filter((c) => inThisMonth(c.called_at));
+  const appointmentsBooked = missedCallsThisMonth.filter((c) => c.status === "booked").length;
+  const respondedCount = missedCallsThisMonth.filter((c) => c.status === "replied" || c.status === "booked").length;
+  const responseRate = missedCallsThisMonth.length > 0
+    ? Math.round((respondedCount / missedCallsThisMonth.length) * 100)
+    : null;
+
+  const reviewsThisMonth = reviewResponses.filter((r) => inThisMonth(r.created_at));
+  const newReviewsGained = reviewsThisMonth.length;
+  const ratedReviews = reviewsThisMonth.filter((r) => typeof r.star_rating === "number");
+  const avgStars = ratedReviews.length > 0
+    ? (ratedReviews.reduce((sum, r) => sum + (r.star_rating ?? 0), 0) / ratedReviews.length).toFixed(1)
+    : null;
+
+  const leadBlastThisMonth = activity.filter((a) => a.type === "lead_blast" && inThisMonth(a.created_at));
+  const outboundLeadsSent = leadBlastThisMonth.reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0);
+
+  const conversationsThisMonth = conversations.filter((c) => inThisMonth(c.sent_at));
+  const conversationsHandled = new Set(
+    conversationsThisMonth.map((c) => c.missed_call_id).filter((id): id is string => !!id)
+  ).size;
+
+  const revenueThisMonth = revenueAppointments
+    .filter((a) => inThisMonth(a.created_at))
+    .reduce((sum, a) => sum + (a.estimated_value || 0), 0);
+
   const stats = [
-    { label: "Campaigns run", value: String(activity.length), icon: "⚡" },
-    { label: "Leads found", value: String(leadsFound), icon: "🎯" },
-    { label: "Reviews responded to", value: String(reviewsResponded), icon: "⭐" },
-    { label: "Competitor reports", value: String(activity.filter((a) => a.type === "competitor_intel").length), icon: "📊" },
+    {
+      label: "Revenue recovered this month",
+      value: `$${revenueThisMonth.toLocaleString()}`,
+      note: revenueThisMonth === 0 ? "Book your first appointment to see revenue here." : undefined,
+      Icon: DollarSign,
+    },
+    {
+      label: "Appointments booked",
+      value: String(appointmentsBooked),
+      Icon: Calendar,
+    },
+    {
+      label: "New reviews gained",
+      value: String(newReviewsGained),
+      note: avgStars ? `${avgStars}★ average` : undefined,
+      Icon: Star,
+    },
+    {
+      label: "Outbound leads sent",
+      value: String(outboundLeadsSent),
+      Icon: Target,
+    },
+    {
+      label: "Response rate",
+      value: responseRate === null ? "—" : `${responseRate}%`,
+      Icon: TrendingUp,
+    },
+    {
+      label: "Conversations handled",
+      value: String(conversationsHandled),
+      Icon: MessageSquare,
+    },
   ];
 
   return (
@@ -115,56 +218,54 @@ function TodayDashboard() {
 
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#a5b4fc", background: "rgba(99,102,241,0.15)", padding: "4px 12px", borderRadius: 20, marginBottom: 12, border: "1px solid rgba(99,102,241,0.25)" }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#818cf8", display: "inline-block", animation: "pulse 2s infinite" }} />
-          Your AI team is online
-        </div>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>
-          {loading ? "Loading..." : name ? `Welcome back, ${name} 👋` : "Welcome to Lanavix 👋"}
+          {loading ? "Loading..." : name ? `Welcome back, ${name}` : "Welcome to Lanavix"}
         </h1>
         <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
-          Pick a quick win below and your AI team will handle the rest.
+          Here's how your business is performing this month.
         </p>
       </div>
 
       {/* Upgrade banner for free users */}
       {isFree && !loading && (
-        <div style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid rgba(99,102,241,0.3)" }}>
+        <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 2 }}>🚀 You're on the Free plan</div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>Upgrade to run unlimited campaigns and unlock all 8 AI agents.</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>You're on the Free plan</div>
+            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to run unlimited campaigns and unlock every feature.</div>
           </div>
-          <Link to="/pricing" style={{ padding: "9px 20px", background: "#6366f1", color: "white", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+          <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
             Upgrade now →
           </Link>
         </div>
       )}
 
       {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 32 }}>
         {stats.map((s) => (
           <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
-            <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
-            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+              <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{loading ? "—" : s.value}</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
+            {s.note && <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 2 }}>{s.note}</div>}
           </div>
         ))}
       </div>
 
       {/* Quick wins */}
-      <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>⚡ Quick wins — pick one to start</h2>
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Quick wins — pick one to start</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
         {QUICK_WINS.map((w) => (
-          <div key={w.title} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, display: "flex", flexDirection: "column", gap: 10, transition: "border-color 0.2s, box-shadow 0.2s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = w.color; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 20px rgba(0,0,0,0.25)`; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
-          >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: w.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{w.icon}</div>
+          <div key={w.title} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <w.Icon size={18} color="var(--primary)" strokeWidth={1.75} />
+            </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 5 }}>{w.title}</div>
               <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5 }}>{w.desc}</div>
             </div>
-            <Link to={w.href} style={{ fontSize: 14, fontWeight: 600, color: w.color, textDecoration: "none", marginTop: "auto" }}>
+            <Link to={w.href} style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)", textDecoration: "none", marginTop: "auto" }}>
               {w.action}
             </Link>
           </div>
@@ -172,8 +273,8 @@ function TodayDashboard() {
       </div>
 
       {/* Recent activity */}
-      <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>📅 Recent activity</h2>
+      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Recent activity</h2>
         {!loading && activity.length === 0 && (
           <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
         )}
@@ -188,7 +289,7 @@ function TodayDashboard() {
           </div>
         )}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link to="/app/agents" style={{ padding: "10px 20px", background: "#6366f1", color: "white", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+          <Link to="/app/agents" style={{ padding: "10px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
             Start a campaign →
           </Link>
           <Link to="/audit" style={{ padding: "10px 20px", background: "var(--card)", color: "var(--foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", border: "1.5px solid var(--border)" }}>
