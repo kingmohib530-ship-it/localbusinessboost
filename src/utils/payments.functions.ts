@@ -50,19 +50,18 @@ export const createPortalSession = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: sub, error: subError } = await supabase
-      .from("subscriptions")
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
       .select("stripe_customer_id")
-      .eq("user_id", userId)
-      .eq("environment", data.environment)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("id", userId)
       .maybeSingle();
-    if (subError || !sub?.stripe_customer_id) throw new Error("No subscription found");
+    if (profileError || !profile?.stripe_customer_id) {
+      throw new Response("No active subscription found.", { status: 400 });
+    }
 
     const stripe = createStripeClient(data.environment);
     const portal = await stripe.billingPortal.sessions.create({
-      customer: sub.stripe_customer_id as string,
+      customer: profile.stripe_customer_id,
       ...(data.returnUrl && { return_url: data.returnUrl }),
     });
     return portal.url;
