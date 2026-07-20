@@ -2,24 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, type CSSProperties } from "react";
 import { Target, Star, Calendar, Search, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import LeadGenerator from "@/components/LeadGenerator";
 
 export const Route = createFileRoute("/_authenticated/app/agents")({
   component: AgentsHub,
 });
-
-interface Lead {
-  businessName: string;
-  contactName: string;
-  phone: string;
-  need: string;
-  openingLine: string;
-}
-
-interface LeadResult {
-  leads: Lead[];
-  revenueEstimate: string;
-  topTip: string;
-}
 
 interface Competitor {
   name: string;
@@ -63,10 +50,10 @@ interface BookingPlanResult {
 
 const CAMPAIGNS = [
   {
-    id: "lead-blast",
+    id: "lead-generator",
     Icon: Target,
-    name: "Outbound Campaign",
-    desc: "Find 15 qualified local leads in your area with personalized outreach copy.",
+    name: "Lead Generator",
+    desc: "Build a complete intelligence profile on every prospect and run hyper-personalized multi-touch outreach.",
     time: "~30 seconds",
     active: true,
   },
@@ -97,15 +84,6 @@ const CAMPAIGNS = [
 ];
 
 const STEPS_BY_CAMPAIGN: Record<string, string[]> = {
-  "lead-blast": [
-    "Planning outreach strategy...",
-    "Scanning your area...",
-    "Enriching with market data...",
-    "Writing personalized outreach...",
-    "Reviewing quality...",
-    "Calculating revenue projection...",
-    "Preparing your checklist...",
-  ],
   "competitor-intel": [
     "Scanning your local market...",
     "Profiling competitor archetypes...",
@@ -144,7 +122,6 @@ function AgentsHub() {
   const [city, setCity] = useState("");
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(0);
-  const [leadResult, setLeadResult] = useState<LeadResult | null>(null);
   const [competitorResult, setCompetitorResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState("");
 
@@ -180,12 +157,10 @@ function AgentsHub() {
     }
     const endpoint =
       selected === "competitor-intel" ? "/api/competitor-intel" :
-      selected === "booking-booster" ? "/api/booking-plan" :
-      "/api/lead-blast";
+      "/api/booking-plan";
 
     setError("");
     setRunning(true);
-    setLeadResult(null);
     setCompetitorResult(null);
     setReviewResponse(null);
     setBookingPlan(null);
@@ -223,10 +198,8 @@ function AgentsHub() {
 
       if (selected === "competitor-intel") {
         setCompetitorResult(data);
-      } else if (selected === "booking-booster") {
-        setBookingPlan(data);
       } else {
-        setLeadResult(data);
+        setBookingPlan(data);
       }
     } catch (err) {
       clearInterval(timer);
@@ -244,7 +217,6 @@ function AgentsHub() {
 
     setError("");
     setRunning(true);
-    setLeadResult(null);
     setCompetitorResult(null);
     setReviewResponse(null);
     setBookingPlan(null);
@@ -291,15 +263,6 @@ function AgentsHub() {
     } finally {
       setRunning(false);
     }
-  }
-
-  function copyLeads() {
-    if (!leadResult) return;
-    const text = leadResult.leads
-      .map((l, i) => `${i + 1}. ${l.businessName}\n   ${l.contactName} | ${l.phone}\n   Need: ${l.need}\n   Opening: "${l.openingLine}"\n`)
-      .join("\n");
-    navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
   }
 
   function copyCompetitorIntel() {
@@ -350,7 +313,7 @@ function AgentsHub() {
     alert("Plan copied to clipboard!");
   }
 
-  const hasResult = !!leadResult || !!competitorResult || !!reviewResponse || !!bookingPlan;
+  const hasResult = !!competitorResult || !!reviewResponse || !!bookingPlan;
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
@@ -378,34 +341,11 @@ function AgentsHub() {
         </div>
       )}
 
-      {/* Form: Outbound Campaign */}
-      {selected === "lead-blast" && !running && !hasResult && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+      {/* Lead Generator: self-contained panel, bypasses the generic run/result flow */}
+      {selected === "lead-generator" && (
+        <div>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Target size={20} color="var(--primary)" strokeWidth={1.75} />
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Outbound Campaign</div>
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
-            <input value={industry} onChange={e => setIndustry(e.target.value)}
-              placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              style={inputStyle} />
-          </div>
-          <div style={{ marginBottom: 22 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
-            <input value={city} onChange={e => setCity(e.target.value)}
-              placeholder="e.g. Atlanta GA, Dallas TX..."
-              style={inputStyle} />
-          </div>
-          {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runCampaign}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-            Run Outbound Campaign →
-          </button>
-          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~30 seconds</p>
+          <LeadGenerator />
         </div>
       )}
 
@@ -521,9 +461,7 @@ function AgentsHub() {
               ? "Writing your response..."
               : selected === "competitor-intel"
               ? `Analyzing ${industry} competitors in ${city}...`
-              : selected === "booking-booster"
-              ? `Building a booking system for ${industry} in ${city}...`
-              : `Finding ${industry} leads in ${city}...`}
+              : `Building a booking system for ${industry} in ${city}...`}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {steps.map((s, i) => (
@@ -541,41 +479,6 @@ function AgentsHub() {
         </div>
       )}
 
-      {/* Results: Outbound Campaign */}
-      {leadResult && !running && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>{leadResult.leads.length} leads found in {city}</h2>
-              <p style={{ fontSize: 14, color: "var(--accent-2)", fontWeight: 600, margin: 0 }}>Revenue opportunity: {leadResult.revenueEstimate}/mo</p>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={copyLeads} style={{ padding: "9px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy all leads</button>
-              <button onClick={() => { setLeadResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
-            </div>
-          </div>
-          {leadResult.topTip && (
-            <div style={{ background: "var(--accent)", border: "1px solid var(--border)", borderRadius: 12, padding: "11px 16px", marginBottom: 18 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)" }}>Top tip: </span>
-              <span style={{ fontSize: 13, color: "var(--foreground)" }}>{leadResult.topTip}</span>
-            </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {leadResult.leads.map((lead, i) => (
-              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 20px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                  <span style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--accent)", color: "var(--primary)", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{lead.businessName}</span>
-                  <span style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{lead.contactName}</span>
-                  <span style={{ fontSize: 13, color: "var(--primary)", fontWeight: 500 }}>{lead.phone}</span>
-                </div>
-                <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: "0 0 5px", paddingLeft: 30 }}>{lead.need}</p>
-                <p style={{ fontSize: 13, color: "var(--foreground)", fontStyle: "italic", margin: 0, paddingLeft: 30 }}>"{lead.openingLine}"</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Results: Competitor Intelligence */}
       {competitorResult && !running && (

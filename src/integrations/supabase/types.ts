@@ -298,6 +298,155 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_profiles: {
+        Row: {
+          address: string | null
+          ai_research_summary: string | null
+          annual_revenue_estimate: string | null
+          business_name: string
+          city: string | null
+          company_size: string | null
+          created_at: string | null
+          data_source: string | null
+          email: string | null
+          google_rating: number | null
+          google_review_count: number | null
+          has_google_business: boolean | null
+          has_website: boolean | null
+          id: string
+          industry: string | null
+          last_google_post: string | null
+          lead_score: number | null
+          monday_item_id: string | null
+          notes: string | null
+          outreach_history: Json | null
+          owner_name: string | null
+          pain_signals: Json | null
+          personalized_opening_line: string | null
+          phone: string | null
+          priority: string | null
+          social_media: Json | null
+          state: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          website: string | null
+          website_quality: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          ai_research_summary?: string | null
+          annual_revenue_estimate?: string | null
+          business_name: string
+          city?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          data_source?: string | null
+          email?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          has_google_business?: boolean | null
+          has_website?: boolean | null
+          id?: string
+          industry?: string | null
+          last_google_post?: string | null
+          lead_score?: number | null
+          monday_item_id?: string | null
+          notes?: string | null
+          outreach_history?: Json | null
+          owner_name?: string | null
+          pain_signals?: Json | null
+          personalized_opening_line?: string | null
+          phone?: string | null
+          priority?: string | null
+          social_media?: Json | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          website?: string | null
+          website_quality?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          ai_research_summary?: string | null
+          annual_revenue_estimate?: string | null
+          business_name?: string
+          city?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          data_source?: string | null
+          email?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          has_google_business?: boolean | null
+          has_website?: boolean | null
+          id?: string
+          industry?: string | null
+          last_google_post?: string | null
+          lead_score?: number | null
+          monday_item_id?: string | null
+          notes?: string | null
+          outreach_history?: Json | null
+          owner_name?: string | null
+          pain_signals?: Json | null
+          personalized_opening_line?: string | null
+          phone?: string | null
+          priority?: string | null
+          social_media?: Json | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          website?: string | null
+          website_quality?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      lead_sequences: {
+        Row: {
+          channel: string
+          delay_hours: number
+          id: string
+          lead_id: string | null
+          message_template: string
+          sent_at: string | null
+          status: string | null
+          step_number: number
+        }
+        Insert: {
+          channel: string
+          delay_hours: number
+          id?: string
+          lead_id?: string | null
+          message_template: string
+          sent_at?: string | null
+          status?: string | null
+          step_number: number
+        }
+        Update: {
+          channel?: string
+          delay_hours?: number
+          id?: string
+          lead_id?: string | null
+          message_template?: string
+          sent_at?: string | null
+          status?: string | null
+          step_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_sequences_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           business_id: string | null

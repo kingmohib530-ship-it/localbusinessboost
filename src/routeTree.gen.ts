@@ -35,6 +35,9 @@ import { Route as ApiTwilioMissedCallRouteImport } from './routes/api/twilio/mis
 import { Route as ApiTwilioConsumerInboundRouteImport } from './routes/api/twilio/consumer-inbound'
 import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
+import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
+import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
+import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
 import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
 import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/update-scores'
 import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
@@ -185,6 +188,24 @@ const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   path: '/api/public/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLeadGeneratorResearchRoute =
+  ApiLeadGeneratorResearchRouteImport.update({
+    id: '/api/lead-generator/research',
+    path: '/api/lead-generator/research',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiLeadGeneratorHandleResponseRoute =
+  ApiLeadGeneratorHandleResponseRouteImport.update({
+    id: '/api/lead-generator/handle-response',
+    path: '/api/lead-generator/handle-response',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiLeadGeneratorExecuteStepRoute =
+  ApiLeadGeneratorExecuteStepRouteImport.update({
+    id: '/api/lead-generator/execute-step',
+    path: '/api/lead-generator/execute-step',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -325,6 +346,9 @@ export interface FileRoutesByFullPath {
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
+  '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
+  '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
@@ -370,6 +394,9 @@ export interface FileRoutesByTo {
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
+  '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
+  '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
@@ -418,6 +445,9 @@ export interface FileRoutesById {
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
+  '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
+  '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
@@ -466,6 +496,9 @@ export interface FileRouteTypes {
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
     | '/api/appointments/$id'
+    | '/api/lead-generator/execute-step'
+    | '/api/lead-generator/handle-response'
+    | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/public/leads'
     | '/api/twilio/consumer-inbound'
@@ -511,6 +544,9 @@ export interface FileRouteTypes {
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
     | '/api/appointments/$id'
+    | '/api/lead-generator/execute-step'
+    | '/api/lead-generator/handle-response'
+    | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/public/leads'
     | '/api/twilio/consumer-inbound'
@@ -558,6 +594,9 @@ export interface FileRouteTypes {
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
     | '/api/appointments/$id'
+    | '/api/lead-generator/execute-step'
+    | '/api/lead-generator/handle-response'
+    | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/public/leads'
     | '/api/twilio/consumer-inbound'
@@ -593,6 +632,9 @@ export interface RootRouteChildren {
   ApiAccountExportRoute: typeof ApiAccountExportRoute
   ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
   ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
+  ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
+  ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
+  ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
   ApiTwilioConsumerInboundRoute: typeof ApiTwilioConsumerInboundRoute
@@ -785,6 +827,27 @@ declare module '@tanstack/react-router' {
       path: '/api/public/contact'
       fullPath: '/api/public/contact'
       preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lead-generator/research': {
+      id: '/api/lead-generator/research'
+      path: '/api/lead-generator/research'
+      fullPath: '/api/lead-generator/research'
+      preLoaderRoute: typeof ApiLeadGeneratorResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lead-generator/handle-response': {
+      id: '/api/lead-generator/handle-response'
+      path: '/api/lead-generator/handle-response'
+      fullPath: '/api/lead-generator/handle-response'
+      preLoaderRoute: typeof ApiLeadGeneratorHandleResponseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lead-generator/execute-step': {
+      id: '/api/lead-generator/execute-step'
+      path: '/api/lead-generator/execute-step'
+      fullPath: '/api/lead-generator/execute-step'
+      preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/appointments/$id': {
@@ -1003,6 +1066,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAccountExportRoute: ApiAccountExportRoute,
   ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,
   ApiAdminUpdateScoresRoute: ApiAdminUpdateScoresRoute,
+  ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
+  ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
+  ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicLeadsRoute: ApiPublicLeadsRoute,
   ApiTwilioConsumerInboundRoute: ApiTwilioConsumerInboundRoute,
