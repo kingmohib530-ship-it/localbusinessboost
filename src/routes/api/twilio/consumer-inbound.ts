@@ -59,6 +59,19 @@ const SERVICE_TYPE_TO_INDUSTRY: Record<ServiceTypeKey, string> = {
   pest_control: "Pest Control",
 };
 
+function deriveUrgency(scheduledMs: number): "emergency" | "same_day" | "this_week" | "scheduled" {
+  const hoursOut = (scheduledMs - Date.now()) / (1000 * 60 * 60);
+  if (hoursOut < 6) return "emergency";
+  if (hoursOut < 24) return "same_day";
+  if (hoursOut < 24 * 7) return "this_week";
+  return "scheduled";
+}
+
+// A business needs a genuinely strong, measured score before the consumer
+// confirmation claims a "top rating" — the neutral default (50) or an
+// unremarkable score should never be advertised as top-tier.
+const TOP_RATING_THRESHOLD = 80;
+
 interface ConsumerExtraction {
   reply: string;
   qualified: boolean;
@@ -175,7 +188,7 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
           // to also be a customer of some business elsewhere in the system.
           const { data: history } = await supabaseAdmin
             .from("sms_conversations")
-            .select("direction, message")
+            .select("direction, message, sent_at")
             .eq("caller_phone", from)
             .is("missed_call_id", null)
             .order("sent_at", { ascending: true });
@@ -220,12 +233,12 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
             } else {
               const { data: matches } = await supabaseAdmin
                 .from("profiles")
-                .select("id, business_name, twilio_phone_number")
+                .select("id, business_name, twilio_phone_number, lanavix_score")
                 .ilike("city", `%${extraction.city}%`)
                 .ilike("industry", `%${industry}%`)
                 .eq("subscription_status", "active")
                 .eq("accept_consumer_leads", true)
-                .order("created_at", { ascending: true })
+                .order("lanavix_score", { ascending: false })
                 .limit(1);
 
               const match = matches?.[0];
@@ -264,13 +277,31 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
                   const timeStr = new Date(scheduledMs).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
                   const businessName = match.business_name || "Your local pro";
                   const callClause = match.twilio_phone_number ? ` or call ${match.twilio_phone_number}` : "";
-                  finalMessage = `Booked! ${businessName} will see you on ${dateStr} at ${timeStr}. Reply CANCEL to reschedule${callClause}.`;
+                  const ratingClause = match.lanavix_score >= TOP_RATING_THRESHOLD ? " This business has a top Lanavix rating." : "";
+                  finalMessage = `Booked! ${businessName} will see you on ${dateStr} at ${timeStr}. Reply CANCEL to reschedule${callClause}.${ratingClause}`;
 
                   await supabaseAdmin.from("activity_log").insert({
                     user_id: match.id,
                     type: "consumer_marketplace_booking",
                     summary: `New Lanavix Network booking: ${industry} for ${extraction.customerName} on ${dateStr}`,
                     metadata: { appointmentId: appointment.id, serviceType: serviceKey, customerName: extraction.customerName, scheduledAt: new Date(scheduledMs).toISOString() },
+                  });
+
+                  // Moat data: log this booking for pricing/scoring aggregation.
+                  // location_zip stays null — nothing in this app captures a
+                  // ZIP code anywhere (only free-text city).
+                  const firstContactMs = history?.[0]?.sent_at ? new Date(history[0].sent_at).getTime() : Date.now();
+                  await supabaseAdmin.from("conversation_intelligence").insert({
+                    business_id: match.id,
+                    consumer_phone: from,
+                    service_type: serviceKey && serviceKey !== "other" ? serviceKey : "other",
+                    location_zip: null,
+                    price_mentioned: estimatedValue,
+                    urgency_level: deriveUrgency(scheduledMs),
+                    outcome: "booked",
+                    time_to_book_minutes: Math.max(0, Math.round((Date.now() - firstContactMs) / 60000)),
+                    source_channel: "consumer_marketplace",
+                    ai_confidence_score: 0.85,
                   });
                 }
               }

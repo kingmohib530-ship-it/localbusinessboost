@@ -253,6 +253,51 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_intelligence: {
+        Row: {
+          ai_confidence_score: number | null
+          business_id: string | null
+          consumer_phone: string | null
+          created_at: string | null
+          id: string
+          location_zip: string | null
+          outcome: string | null
+          price_mentioned: number | null
+          service_type: string | null
+          source_channel: string | null
+          time_to_book_minutes: number | null
+          urgency_level: string | null
+        }
+        Insert: {
+          ai_confidence_score?: number | null
+          business_id?: string | null
+          consumer_phone?: string | null
+          created_at?: string | null
+          id?: string
+          location_zip?: string | null
+          outcome?: string | null
+          price_mentioned?: number | null
+          service_type?: string | null
+          source_channel?: string | null
+          time_to_book_minutes?: number | null
+          urgency_level?: string | null
+        }
+        Update: {
+          ai_confidence_score?: number | null
+          business_id?: string | null
+          consumer_phone?: string | null
+          created_at?: string | null
+          id?: string
+          location_zip?: string | null
+          outcome?: string | null
+          price_mentioned?: number | null
+          service_type?: string | null
+          source_channel?: string | null
+          time_to_book_minutes?: number | null
+          urgency_level?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           business_id: string | null
@@ -294,6 +339,45 @@ export type Database = {
           },
         ]
       }
+      market_pricing_index: {
+        Row: {
+          avg_price: number | null
+          demand_score: number | null
+          id: string
+          last_updated: string | null
+          price_range_high: number | null
+          price_range_low: number | null
+          seasonal_multiplier: number | null
+          service_type: string
+          supply_score: number | null
+          zip_code: string
+        }
+        Insert: {
+          avg_price?: number | null
+          demand_score?: number | null
+          id?: string
+          last_updated?: string | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          seasonal_multiplier?: number | null
+          service_type: string
+          supply_score?: number | null
+          zip_code: string
+        }
+        Update: {
+          avg_price?: number | null
+          demand_score?: number | null
+          id?: string
+          last_updated?: string | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          seasonal_multiplier?: number | null
+          service_type?: string
+          supply_score?: number | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
       missed_calls: {
         Row: {
           called_at: string | null
@@ -330,14 +414,18 @@ export type Database = {
       profiles: {
         Row: {
           accept_consumer_leads: boolean
+          booking_completion_rate: number | null
           business_name: string | null
           city: string | null
+          consumer_rating_avg: number | null
           created_at: string | null
           full_name: string | null
           id: string
           industry: string | null
           is_admin: boolean
+          lanavix_score: number
           onboarding_completed: boolean | null
+          response_speed_avg_minutes: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_period_end: string | null
@@ -349,14 +437,18 @@ export type Database = {
         }
         Insert: {
           accept_consumer_leads?: boolean
+          booking_completion_rate?: number | null
           business_name?: string | null
           city?: string | null
+          consumer_rating_avg?: number | null
           created_at?: string | null
           full_name?: string | null
           id: string
           industry?: string | null
           is_admin?: boolean
+          lanavix_score?: number
           onboarding_completed?: boolean | null
+          response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null
@@ -368,14 +460,18 @@ export type Database = {
         }
         Update: {
           accept_consumer_leads?: boolean
+          booking_completion_rate?: number | null
           business_name?: string | null
           city?: string | null
+          consumer_rating_avg?: number | null
           created_at?: string | null
           full_name?: string | null
           id?: string
           industry?: string | null
           is_admin?: boolean
+          lanavix_score?: number
           onboarding_completed?: boolean | null
+          response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null

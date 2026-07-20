@@ -36,6 +36,8 @@ import { Route as ApiTwilioConsumerInboundRouteImport } from './routes/api/twili
 import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
+import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/update-scores'
+import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
 import { Route as AuthenticatedAppWorkflowsRouteImport } from './routes/_authenticated/app.workflows'
@@ -188,6 +190,17 @@ const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ApiAppointmentsRoute,
 } as any)
+const ApiAdminUpdateScoresRoute = ApiAdminUpdateScoresRouteImport.update({
+  id: '/api/admin/update-scores',
+  path: '/api/admin/update-scores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminUpdatePricingIndexRoute =
+  ApiAdminUpdatePricingIndexRouteImport.update({
+    id: '/api/admin/update-pricing-index',
+    path: '/api/admin/update-pricing-index',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAccountExportRoute = ApiAccountExportRouteImport.update({
   id: '/api/account/export',
   path: '/api/account/export',
@@ -309,6 +322,8 @@ export interface FileRoutesByFullPath {
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
@@ -352,6 +367,8 @@ export interface FileRoutesByTo {
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
@@ -398,6 +415,8 @@ export interface FileRoutesById {
   '/_authenticated/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
@@ -444,6 +463,8 @@ export interface FileRouteTypes {
     | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
     | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
@@ -487,6 +508,8 @@ export interface FileRouteTypes {
     | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
     | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
@@ -532,6 +555,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
     | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
@@ -566,6 +591,8 @@ export interface RootRouteChildren {
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ApiAccountDeleteRoute: typeof ApiAccountDeleteRoute
   ApiAccountExportRoute: typeof ApiAccountExportRoute
+  ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
+  ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
   ApiTwilioConsumerInboundRoute: typeof ApiTwilioConsumerInboundRoute
@@ -767,6 +794,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAppointmentsIdRouteImport
       parentRoute: typeof ApiAppointmentsRoute
     }
+    '/api/admin/update-scores': {
+      id: '/api/admin/update-scores'
+      path: '/api/admin/update-scores'
+      fullPath: '/api/admin/update-scores'
+      preLoaderRoute: typeof ApiAdminUpdateScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/update-pricing-index': {
+      id: '/api/admin/update-pricing-index'
+      path: '/api/admin/update-pricing-index'
+      fullPath: '/api/admin/update-pricing-index'
+      preLoaderRoute: typeof ApiAdminUpdatePricingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/account/export': {
       id: '/api/account/export'
       path: '/api/account/export'
@@ -960,6 +1001,8 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutReturnRoute: CheckoutReturnRoute,
   ApiAccountDeleteRoute: ApiAccountDeleteRoute,
   ApiAccountExportRoute: ApiAccountExportRoute,
+  ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,
+  ApiAdminUpdateScoresRoute: ApiAdminUpdateScoresRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicLeadsRoute: ApiPublicLeadsRoute,
   ApiTwilioConsumerInboundRoute: ApiTwilioConsumerInboundRoute,

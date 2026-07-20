@@ -43,6 +43,14 @@ const ESTIMATED_VALUE_MAP: Record<ServiceTypeKey | "default", number> = {
   default: 400,
 };
 
+function deriveUrgency(scheduledMs: number): "emergency" | "same_day" | "this_week" | "scheduled" {
+  const hoursOut = (scheduledMs - Date.now()) / (1000 * 60 * 60);
+  if (hoursOut < 6) return "emergency";
+  if (hoursOut < 24) return "same_day";
+  if (hoursOut < 24 * 7) return "this_week";
+  return "scheduled";
+}
+
 interface BookingExtraction {
   bookingConfirmed: boolean;
   customerName: string | null;
@@ -283,6 +291,24 @@ Never make up prices. Never promise specific times. Keep it simple.`,
                     .from("sms_conversations")
                     .update({ appointment_id: appointment.id })
                     .eq("id", savedReply.id);
+
+                  // Moat data: log this booking for pricing/scoring aggregation.
+                  // location_zip stays null — nothing in this app captures a
+                  // ZIP code anywhere (profiles.city and the consumer flow
+                  // both only ever collect free-text city).
+                  const firstContactMs = missedCall.called_at ? new Date(missedCall.called_at).getTime() : Date.now();
+                  await supabaseAdmin.from("conversation_intelligence").insert({
+                    business_id: missedCall.user_id,
+                    consumer_phone: from,
+                    service_type: serviceKey,
+                    location_zip: null,
+                    price_mentioned: estimatedValue,
+                    urgency_level: deriveUrgency(scheduledMs),
+                    outcome: "booked",
+                    time_to_book_minutes: Math.max(0, Math.round((Date.now() - firstContactMs) / 60000)),
+                    source_channel: "inbound_sms",
+                    ai_confidence_score: 0.85,
+                  });
                 }
               }
             } catch (err) {
