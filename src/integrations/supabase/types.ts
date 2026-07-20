@@ -415,11 +415,14 @@ export type Database = {
         Row: {
           accept_consumer_leads: boolean
           booking_completion_rate: number | null
+          business_hours: string | null
           business_name: string | null
           city: string | null
           consumer_rating_avg: number | null
           created_at: string | null
+          escalation_rules: string | null
           full_name: string | null
+          greeting_message: string | null
           id: string
           industry: string | null
           is_admin: boolean
@@ -438,11 +441,14 @@ export type Database = {
         Insert: {
           accept_consumer_leads?: boolean
           booking_completion_rate?: number | null
+          business_hours?: string | null
           business_name?: string | null
           city?: string | null
           consumer_rating_avg?: number | null
           created_at?: string | null
+          escalation_rules?: string | null
           full_name?: string | null
+          greeting_message?: string | null
           id: string
           industry?: string | null
           is_admin?: boolean
@@ -461,11 +467,14 @@ export type Database = {
         Update: {
           accept_consumer_leads?: boolean
           booking_completion_rate?: number | null
+          business_hours?: string | null
           business_name?: string | null
           city?: string | null
           consumer_rating_avg?: number | null
           created_at?: string | null
+          escalation_rules?: string | null
           full_name?: string | null
+          greeting_message?: string | null
           id?: string
           industry?: string | null
           is_admin?: boolean

@@ -53,7 +53,7 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
           // not just whichever profile happens to be first in the table.
           const { data: profile } = await supabaseAdmin
             .from("profiles")
-            .select("id, business_name, industry")
+            .select("id, business_name, industry, greeting_message")
             .eq("twilio_phone_number", calledNumber)
             .maybeSingle();
 
@@ -81,7 +81,9 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
             const businessName = profile.business_name || "the team";
             const service = profile.industry || "our services";
 
-            const autoMessage = `Hi! This is ${businessName}. Sorry we missed your call — we're on a job right now. We'd love to help you with ${service}. What do you need? Reply here and we'll get back to you ASAP 👇`;
+            const autoMessage =
+              profile.greeting_message ||
+              `Hi! This is ${businessName}. Sorry we missed your call — we're on a job right now. We'd love to help you with ${service}. What do you need? Reply here and we'll get back to you ASAP 👇`;
 
             await fetch(
               `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
