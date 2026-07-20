@@ -37,6 +37,13 @@ interface ReviewResponseRow {
   created_at: string | null;
 }
 
+interface AppointmentRevenueRow {
+  estimated_value: number | null;
+  created_at: string | null;
+  source: string;
+  status: string;
+}
+
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
@@ -78,6 +85,7 @@ function TodayDashboard() {
   const [missedCalls, setMissedCalls] = useState<MissedCallRow[]>([]);
   const [conversations, setConversations] = useState<SmsConversationRow[]>([]);
   const [reviewResponses, setReviewResponses] = useState<ReviewResponseRow[]>([]);
+  const [revenueAppointments, setRevenueAppointments] = useState<AppointmentRevenueRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,6 +99,7 @@ function TodayDashboard() {
           { data: missedCallData },
           { data: conversationData },
           { data: reviewResponseData },
+          { data: appointmentRevenueData },
         ] = await Promise.all([
           supabase
             .from("profiles")
@@ -115,12 +124,19 @@ function TodayDashboard() {
             .from("review_responses")
             .select("star_rating, created_at")
             .eq("user_id", user.id),
+          supabase
+            .from("appointments")
+            .select("estimated_value, created_at, source, status")
+            .eq("user_id", user.id)
+            .eq("source", "inbound_sms")
+            .neq("status", "cancelled"),
         ]);
         setProfile(profileData);
         setActivity((activityData as ActivityRow[]) ?? []);
         setMissedCalls((missedCallData as MissedCallRow[]) ?? []);
         setConversations((conversationData as SmsConversationRow[]) ?? []);
         setReviewResponses((reviewResponseData as ReviewResponseRow[]) ?? []);
+        setRevenueAppointments((appointmentRevenueData as AppointmentRevenueRow[]) ?? []);
       } catch (e) {
         console.error(e);
       } finally {
@@ -158,11 +174,15 @@ function TodayDashboard() {
     conversationsThisMonth.map((c) => c.missed_call_id).filter((id): id is string => !!id)
   ).size;
 
+  const revenueThisMonth = revenueAppointments
+    .filter((a) => inThisMonth(a.created_at))
+    .reduce((sum, a) => sum + (a.estimated_value || 0), 0);
+
   const stats = [
     {
       label: "Revenue recovered this month",
-      value: "$0",
-      note: "Tracks once job values are logged",
+      value: `$${revenueThisMonth.toLocaleString()}`,
+      note: revenueThisMonth === 0 ? "Book your first appointment to see revenue here." : undefined,
       Icon: DollarSign,
     },
     {

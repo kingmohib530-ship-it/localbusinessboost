@@ -62,6 +62,54 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          estimated_value: number | null
+          id: string
+          notes: string | null
+          scheduled_at: string
+          service_type: string
+          source: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          scheduled_at: string
+          service_type: string
+          source?: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          scheduled_at?: string
+          service_type?: string
+          source?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_leads: {
         Row: {
           business_name: string | null
@@ -422,6 +470,7 @@ export type Database = {
       }
       sms_conversations: {
         Row: {
+          appointment_id: string | null
           caller_phone: string
           direction: string
           id: string
@@ -431,6 +480,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          appointment_id?: string | null
           caller_phone: string
           direction: string
           id?: string
@@ -440,6 +490,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          appointment_id?: string | null
           caller_phone?: string
           direction?: string
           id?: string
@@ -449,6 +500,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sms_conversations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sms_conversations_missed_call_id_fkey"
             columns: ["missed_call_id"]

@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/app")({
 });
 
 const nav: {
-  to: "/app" | "/app/receptionist" | "/app/agents" | "/app/reputation" | "/app/settings" | null;
+  to: "/app" | "/app/receptionist" | "/app/agents" | "/app/calendar" | "/app/reputation" | "/app/settings" | null;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
@@ -18,7 +18,7 @@ const nav: {
   { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/app/receptionist", label: "Inbox", icon: MessageSquare },
   { to: "/app/agents", label: "Campaigns", icon: Target },
-  { to: null, label: "Calendar", icon: Calendar },
+  { to: "/app/calendar", label: "Calendar", icon: Calendar },
   { to: "/app/reputation", label: "Reputation", icon: Star },
   { to: null, label: "Network", icon: Users },
   { to: "/app/settings", label: "Settings", icon: Settings },

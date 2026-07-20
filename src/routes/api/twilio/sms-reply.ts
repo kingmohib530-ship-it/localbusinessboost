@@ -8,6 +8,101 @@ const FALLBACK_TWIML = (message: string) =>
     { headers: { "Content-Type": "text/xml" } },
   );
 
+const SERVICE_TYPE_KEYS = [
+  "hvac_tuneup",
+  "hvac_repair",
+  "hvac_install",
+  "plumbing",
+  "plumbing_emergency",
+  "roofing",
+  "electrical",
+  "cleaning",
+  "landscaping",
+  "pest_control",
+] as const;
+type ServiceTypeKey = (typeof SERVICE_TYPE_KEYS)[number];
+
+const ESTIMATED_VALUE_MAP: Record<ServiceTypeKey | "default", number> = {
+  hvac_tuneup: 150,
+  hvac_repair: 450,
+  hvac_install: 3500,
+  plumbing: 400,
+  plumbing_emergency: 650,
+  roofing: 1200,
+  electrical: 350,
+  cleaning: 200,
+  landscaping: 300,
+  pest_control: 250,
+  default: 400,
+};
+
+interface BookingExtraction {
+  bookingConfirmed: boolean;
+  customerName: string | null;
+  serviceType: ServiceTypeKey | "other" | null;
+  scheduledAt: string | null;
+  confidence: "high" | "low";
+}
+
+/**
+ * Best-effort structured extraction over the conversation so far: did the
+ * customer and AI just agree on a specific time? This is a second,
+ * conservative AI call (only acts on high-confidence, valid-future results)
+ * — never allowed to throw, since a failed extraction must not break the
+ * customer-facing SMS reply that already went out.
+ */
+async function detectBooking(
+  apiKey: string,
+  conversationHistory: { role: string; content: string }[],
+): Promise<BookingExtraction | null> {
+  try {
+    const now = new Date();
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-5",
+        max_tokens: 300,
+        system: `You analyze an SMS conversation between a home-services business and a customer to detect whether a specific appointment was just confirmed.
+
+Current date/time (UTC): ${now.toISOString()} (${now.toLocaleDateString("en-US", { weekday: "long" })}).
+
+Return ONLY valid JSON, no markdown, no commentary, matching exactly this shape:
+{
+  "bookingConfirmed": boolean,
+  "customerName": string or null,
+  "serviceType": one of "hvac_tuneup", "hvac_repair", "hvac_install", "plumbing", "plumbing_emergency", "roofing", "electrical", "cleaning", "landscaping", "pest_control", "other", or null,
+  "scheduledAt": ISO 8601 UTC datetime string or null,
+  "confidence": "high" or "low"
+}
+
+Rules:
+- bookingConfirmed is true ONLY if both a specific day/time AND the type of work are clearly agreed in the conversation — not just requested or discussed.
+- Resolve relative dates ("tomorrow", "next Tuesday", "Friday morning") against the current date/time above. If no specific time of day was given, use a reasonable business hour (e.g. 9:00 or 14:00 local-agnostic UTC).
+- serviceType must be your best match from the fixed list above, or "other" if it doesn't fit any category, or null if unclear.
+- customerName is the customer's name ONLY if it was actually stated somewhere in the conversation; otherwise null. Never invent one.
+- confidence is "high" only when the day/time and service are unambiguous. Use "low" for anything uncertain, partial, or tentative ("maybe Tuesday?").
+- If nothing was confirmed, return bookingConfirmed: false and null for the other fields (except confidence: "low").`,
+        messages: conversationHistory,
+      }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text: string = data.content?.[0]?.text ?? "";
+    const parsed = JSON.parse(text);
+    if (typeof parsed?.bookingConfirmed !== "boolean") return null;
+    return parsed as BookingExtraction;
+  } catch (err) {
+    console.error("[sms-reply] booking detection failed", err);
+    return null;
+  }
+}
+
 export const Route = createFileRoute("/api/twilio/sms-reply")({
   server: {
     handlers: {
@@ -83,14 +178,14 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
           const apiKey = process.env.ANTHROPIC_API_KEY;
           let aiReply = "Thanks for your message! We'll have someone reach out to you shortly.";
 
+          const conversationHistory = (history || []).map((m: { direction: string; message: string }) => ({
+            role: m.direction === "outbound" ? "assistant" : "user",
+            content: m.message,
+          }));
+
           if (apiKey) {
             const businessName = (missedCall as any).profiles?.business_name || "our business";
             const service = (missedCall as any).profiles?.industry || "our services";
-
-            const conversationHistory = (history || []).map((m: { direction: string; message: string }) => ({
-              role: m.direction === "outbound" ? "assistant" : "user",
-              content: m.message,
-            }));
 
             const res = await fetch("https://api.anthropic.com/v1/messages", {
               method: "POST",
@@ -122,13 +217,71 @@ Never make up prices. Never promise specific times. Keep it simple.`,
           }
 
           // Save AI reply
-          await supabaseAdmin.from("sms_conversations").insert({
-            missed_call_id: missedCall.id,
-            user_id: missedCall.user_id,
-            caller_phone: from,
-            direction: "outbound",
-            message: aiReply,
-          });
+          const { data: savedReply } = await supabaseAdmin
+            .from("sms_conversations")
+            .insert({
+              missed_call_id: missedCall.id,
+              user_id: missedCall.user_id,
+              caller_phone: from,
+              direction: "outbound",
+              message: aiReply,
+            })
+            .select()
+            .single();
+
+          // Best-effort: did this exchange just confirm a booking? Never lets
+          // a failure here affect the SMS reply already built above.
+          if (apiKey) {
+            try {
+              const fullHistory = [...conversationHistory, { role: "assistant", content: aiReply }];
+              const extraction = await detectBooking(apiKey, fullHistory);
+
+              const scheduledMs = extraction?.scheduledAt ? Date.parse(extraction.scheduledAt) : NaN;
+              const isFuture = !isNaN(scheduledMs) && scheduledMs > Date.now();
+
+              if (
+                extraction?.bookingConfirmed &&
+                extraction.confidence === "high" &&
+                isFuture &&
+                missedCall.user_id
+              ) {
+                const serviceKey: ServiceTypeKey | "other" =
+                  extraction.serviceType && extraction.serviceType !== null
+                    ? extraction.serviceType
+                    : "other";
+                const estimatedValue =
+                  serviceKey !== "other" && serviceKey in ESTIMATED_VALUE_MAP
+                    ? ESTIMATED_VALUE_MAP[serviceKey as ServiceTypeKey]
+                    : ESTIMATED_VALUE_MAP.default;
+
+                const { data: appointment, error: apptErr } = await supabaseAdmin
+                  .from("appointments")
+                  .insert({
+                    user_id: missedCall.user_id,
+                    customer_name: extraction.customerName || from,
+                    customer_phone: from,
+                    service_type: serviceKey,
+                    scheduled_at: new Date(scheduledMs).toISOString(),
+                    status: "confirmed",
+                    source: "inbound_sms",
+                    estimated_value: estimatedValue,
+                  })
+                  .select()
+                  .single();
+
+                if (apptErr) {
+                  console.error("[sms-reply] failed to create appointment", apptErr);
+                } else if (appointment && savedReply) {
+                  await supabaseAdmin
+                    .from("sms_conversations")
+                    .update({ appointment_id: appointment.id })
+                    .eq("id", savedReply.id);
+                }
+              }
+            } catch (err) {
+              console.error("[sms-reply] booking detection/creation error", err);
+            }
+          }
 
           return FALLBACK_TWIML(
             aiReply.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
