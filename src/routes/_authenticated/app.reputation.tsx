@@ -81,9 +81,20 @@ function ReputationPage() {
     setSending(true);
     setSendMsg("");
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        setSendMsg("Please sign in again and retry.");
+        setSending(false);
+        return;
+      }
+
       const res = await fetch("/api/review-request", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           customerName: custName.trim(),
           customerPhone: custPhone.trim(),

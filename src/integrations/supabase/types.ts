@@ -294,6 +294,7 @@ export type Database = {
           subscription_period_end: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          twilio_phone_number: string | null
           updated_at: string | null
           website: string | null
         }
@@ -311,6 +312,7 @@ export type Database = {
           subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          twilio_phone_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -328,6 +330,7 @@ export type Database = {
           subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          twilio_phone_number?: string | null
           updated_at?: string | null
           website?: string | null
         }

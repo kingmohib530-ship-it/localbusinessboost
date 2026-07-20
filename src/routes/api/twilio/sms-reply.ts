@@ -1,24 +1,51 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { verifyTwilioRequest } from "@/lib/twilio.server";
+
+const FALLBACK_TWIML = (message: string) =>
+  new Response(
+    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}</Message></Response>`,
+    { headers: { "Content-Type": "text/xml" } },
+  );
 
 export const Route = createFileRoute("/api/twilio/sms-reply")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
-          const body = await request.text();
-          const params = new URLSearchParams(body);
+          const rawBody = await request.text();
 
+          const isValid = await verifyTwilioRequest(request, rawBody);
+          if (!isValid) {
+            console.warn("[sms-reply] invalid Twilio signature");
+            return new Response("Forbidden", { status: 403 });
+          }
+
+          const params = new URLSearchParams(rawBody);
           const from = params.get("From") || "";
           const messageBody = params.get("Body") || "";
 
-          const supabase = createClient(
-            process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "",
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ""
+          // Cap by caller phone — each inbound message triggers a billed
+          // Anthropic call, so this is the cost-abuse backstop.
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_anon_rate_limit",
+            {
+              p_ip_address: from,
+              p_route: "twilio-sms-reply",
+              p_max_requests: 20,
+              p_window_seconds: 3600,
+            },
           );
+          if (rlErr) {
+            console.error("[sms-reply] rate limit check failed");
+            return FALLBACK_TWIML("Thanks! We'll be in touch shortly.");
+          }
+          if (!allowed) {
+            return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.");
+          }
 
           // Find the most recent missed call from this number
-          const { data: missedCall } = await supabase
+          const { data: missedCall } = await supabaseAdmin
             .from("missed_calls")
             .select("*, profiles(business_name, industry)")
             .eq("caller_phone", from)
@@ -27,14 +54,11 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             .single();
 
           if (!missedCall) {
-            return new Response(
-              `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Thanks for reaching out! We'll be in touch shortly.</Message></Response>`,
-              { headers: { "Content-Type": "text/xml" } }
-            );
+            return FALLBACK_TWIML("Thanks for reaching out! We'll be in touch shortly.");
           }
 
           // Save inbound message
-          await supabase.from("sms_conversations").insert({
+          await supabaseAdmin.from("sms_conversations").insert({
             missed_call_id: missedCall.id,
             user_id: missedCall.user_id,
             caller_phone: from,
@@ -43,13 +67,13 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
           });
 
           // Update status to replied
-          await supabase
+          await supabaseAdmin
             .from("missed_calls")
             .update({ status: "replied" })
             .eq("id", missedCall.id);
 
           // Get conversation history
-          const { data: history } = await supabase
+          const { data: history } = await supabaseAdmin
             .from("sms_conversations")
             .select("direction, message")
             .eq("missed_call_id", missedCall.id)
@@ -98,7 +122,7 @@ Never make up prices. Never promise specific times. Keep it simple.`,
           }
 
           // Save AI reply
-          await supabase.from("sms_conversations").insert({
+          await supabaseAdmin.from("sms_conversations").insert({
             missed_call_id: missedCall.id,
             user_id: missedCall.user_id,
             caller_phone: from,
@@ -106,17 +130,12 @@ Never make up prices. Never promise specific times. Keep it simple.`,
             message: aiReply,
           });
 
-          // Send via Twilio
-          return new Response(
-            `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${aiReply.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</Message></Response>`,
-            { headers: { "Content-Type": "text/xml" } }
+          return FALLBACK_TWIML(
+            aiReply.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
           );
         } catch (err) {
           console.error("[sms-reply]", err);
-          return new Response(
-            `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Thanks! We'll be in touch shortly.</Message></Response>`,
-            { headers: { "Content-Type": "text/xml" } }
-          );
+          return FALLBACK_TWIML("Thanks! We'll be in touch shortly.");
         }
       },
     },

@@ -36,11 +36,39 @@ function ReceptionistPage() {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [tab, setTab] = useState<"calls" | "setup">("calls");
+  const [twilioNumber, setTwilioNumber] = useState("");
+  const [savingNumber, setSavingNumber] = useState(false);
+  const [numberMsg, setNumberMsg] = useState("");
 
   useEffect(() => {
     loadCalls();
     checkConnected();
+    loadTwilioNumber();
   }, []);
+
+  async function loadTwilioNumber() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("twilio_phone_number")
+      .eq("id", user.id)
+      .single();
+    setTwilioNumber(data?.twilio_phone_number || "");
+  }
+
+  async function saveTwilioNumber() {
+    setSavingNumber(true);
+    setNumberMsg("");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSavingNumber(false); return; }
+    const { error } = await supabase
+      .from("profiles")
+      .update({ twilio_phone_number: twilioNumber.trim() || null })
+      .eq("id", user.id);
+    setNumberMsg(error ? "Could not save — that number may already be linked to another account." : "✅ Saved!");
+    setSavingNumber(false);
+  }
 
   async function loadCalls() {
     setLoading(true);
@@ -130,6 +158,22 @@ function ReceptionistPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Your Twilio number</div>
+            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
+              Enter the Twilio number Lanavix sends and receives texts on for your business. This is how missed calls get matched to your account.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={twilioNumber} onChange={e => setTwilioNumber(e.target.value)} placeholder="+15555550100"
+                style={{ flex: 1, padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none" }} />
+              <button onClick={saveTwilioNumber} disabled={savingNumber}
+                style={{ padding: "10px 20px", background: "#6366f1", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: savingNumber ? "not-allowed" : "pointer", opacity: savingNumber ? 0.7 : 1 }}>
+                {savingNumber ? "Saving..." : "Save"}
+              </button>
+            </div>
+            {numberMsg && <div style={{ fontSize: 12, color: numberMsg.startsWith("✅") ? "#34d399" : "#f87171", marginTop: 8 }}>{numberMsg}</div>}
           </div>
 
           <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
