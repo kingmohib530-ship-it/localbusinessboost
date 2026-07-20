@@ -329,6 +329,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accept_consumer_leads: boolean
           business_name: string | null
           city: string | null
           created_at: string | null
@@ -347,6 +348,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          accept_consumer_leads?: boolean
           business_name?: string | null
           city?: string | null
           created_at?: string | null
@@ -365,6 +367,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          accept_consumer_leads?: boolean
           business_name?: string | null
           city?: string | null
           created_at?: string | null

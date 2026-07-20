@@ -32,6 +32,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as ApiTwilioSmsReplyRouteImport } from './routes/api/twilio/sms-reply'
 import { Route as ApiTwilioMissedCallRouteImport } from './routes/api/twilio/missed-call'
+import { Route as ApiTwilioConsumerInboundRouteImport } from './routes/api/twilio/consumer-inbound'
 import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
@@ -41,6 +42,7 @@ import { Route as AuthenticatedAppWorkflowsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
+import { Route as AuthenticatedAppNetworkRouteImport } from './routes/_authenticated/app.network'
 import { Route as AuthenticatedAppLogsRouteImport } from './routes/_authenticated/app.logs'
 import { Route as AuthenticatedAppControlRouteImport } from './routes/_authenticated/app.control'
 import { Route as AuthenticatedAppChatRouteImport } from './routes/_authenticated/app.chat'
@@ -165,6 +167,12 @@ const ApiTwilioMissedCallRoute = ApiTwilioMissedCallRouteImport.update({
   path: '/api/twilio/missed-call',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTwilioConsumerInboundRoute =
+  ApiTwilioConsumerInboundRouteImport.update({
+    id: '/api/twilio/consumer-inbound',
+    path: '/api/twilio/consumer-inbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
   id: '/api/public/leads',
   path: '/api/public/leads',
@@ -214,6 +222,11 @@ const AuthenticatedAppReceptionistRoute =
     path: '/receptionist',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppNetworkRoute = AuthenticatedAppNetworkRouteImport.update({
+  id: '/network',
+  path: '/network',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppLogsRoute = AuthenticatedAppLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
@@ -289,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
+  '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -298,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -330,6 +345,7 @@ export interface FileRoutesByTo {
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
+  '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -339,6 +355,7 @@ export interface FileRoutesByTo {
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -374,6 +391,7 @@ export interface FileRoutesById {
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
   '/_authenticated/app/control': typeof AuthenticatedAppControlRoute
   '/_authenticated/app/logs': typeof AuthenticatedAppLogsRoute
+  '/_authenticated/app/network': typeof AuthenticatedAppNetworkRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -383,6 +401,7 @@ export interface FileRoutesById {
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -418,6 +437,7 @@ export interface FileRouteTypes {
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
+    | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
@@ -427,6 +447,7 @@ export interface FileRouteTypes {
     | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
+    | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app/'
@@ -459,6 +480,7 @@ export interface FileRouteTypes {
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
+    | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
@@ -468,6 +490,7 @@ export interface FileRouteTypes {
     | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
+    | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app'
@@ -502,6 +525,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/chat'
     | '/_authenticated/app/control'
     | '/_authenticated/app/logs'
+    | '/_authenticated/app/network'
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
@@ -511,6 +535,7 @@ export interface FileRouteTypes {
     | '/api/appointments/$id'
     | '/api/public/contact'
     | '/api/public/leads'
+    | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/_authenticated/app/'
@@ -543,6 +568,7 @@ export interface RootRouteChildren {
   ApiAccountExportRoute: typeof ApiAccountExportRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
+  ApiTwilioConsumerInboundRoute: typeof ApiTwilioConsumerInboundRoute
   ApiTwilioMissedCallRoute: typeof ApiTwilioMissedCallRoute
   ApiTwilioSmsReplyRoute: typeof ApiTwilioSmsReplyRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
@@ -713,6 +739,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTwilioMissedCallRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/twilio/consumer-inbound': {
+      id: '/api/twilio/consumer-inbound'
+      path: '/api/twilio/consumer-inbound'
+      fullPath: '/api/twilio/consumer-inbound'
+      preLoaderRoute: typeof ApiTwilioConsumerInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/leads': {
       id: '/api/public/leads'
       path: '/api/public/leads'
@@ -774,6 +807,13 @@ declare module '@tanstack/react-router' {
       path: '/receptionist'
       fullPath: '/app/receptionist'
       preLoaderRoute: typeof AuthenticatedAppReceptionistRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/network': {
+      id: '/_authenticated/app/network'
+      path: '/network'
+      fullPath: '/app/network'
+      preLoaderRoute: typeof AuthenticatedAppNetworkRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/logs': {
@@ -849,6 +889,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppChatRoute: typeof AuthenticatedAppChatRoute
   AuthenticatedAppControlRoute: typeof AuthenticatedAppControlRoute
   AuthenticatedAppLogsRoute: typeof AuthenticatedAppLogsRoute
+  AuthenticatedAppNetworkRoute: typeof AuthenticatedAppNetworkRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -863,6 +904,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppChatRoute: AuthenticatedAppChatRoute,
   AuthenticatedAppControlRoute: AuthenticatedAppControlRoute,
   AuthenticatedAppLogsRoute: AuthenticatedAppLogsRoute,
+  AuthenticatedAppNetworkRoute: AuthenticatedAppNetworkRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
@@ -920,6 +962,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAccountExportRoute: ApiAccountExportRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicLeadsRoute: ApiPublicLeadsRoute,
+  ApiTwilioConsumerInboundRoute: ApiTwilioConsumerInboundRoute,
   ApiTwilioMissedCallRoute: ApiTwilioMissedCallRoute,
   ApiTwilioSmsReplyRoute: ApiTwilioSmsReplyRoute,
   ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,

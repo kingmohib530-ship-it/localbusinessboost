@@ -2,9 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioRequest } from "@/lib/twilio.server";
 
+function businessFooter(): string {
+  const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
+  return consumerNumber
+    ? `\n\nManaged by Lanavix — Need another service? Text ${consumerNumber}`
+    : "\n\nManaged by Lanavix";
+}
+
 const FALLBACK_TWIML = (message: string) =>
   new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}</Message></Response>`,
+    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}${businessFooter()}</Message></Response>`,
     { headers: { "Content-Type": "text/xml" } },
   );
 

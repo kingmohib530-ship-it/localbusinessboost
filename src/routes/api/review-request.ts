@@ -5,6 +5,13 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
 
+function businessFooter(): string {
+  const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
+  return consumerNumber
+    ? `\n\nManaged by Lanavix — Need another service? Text ${consumerNumber}`
+    : "\n\nManaged by Lanavix";
+}
+
 const RequestSchema = z.object({
   customerName: z.string().trim().max(200).optional().or(z.literal("")),
   customerPhone: z.string().trim().min(1).max(50),
@@ -62,7 +69,7 @@ export const Route = createFileRoute("/api/review-request")({
           const reviewLink = googleReviewUrl || "https://search.google.com/local/reviews";
           const nameStr = customerName ? `, ${customerName.split(" ")[0]}` : "";
           const jobStr = jobDescription ? ` on the ${jobDescription}` : "";
-          const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏`;
+          const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏${businessFooter()}`;
 
           // Send via Twilio if configured
           const twilioSid = process.env.TWILIO_ACCOUNT_SID;
