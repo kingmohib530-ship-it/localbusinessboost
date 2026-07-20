@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { Send, Star, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app/reputation")({
@@ -31,7 +32,7 @@ function StarRating({ rating, onClick }: { rating: number; onClick?: (n: number)
     <div style={{ display: "flex", gap: 4 }}>
       {STARS.map(s => (
         <span key={s} onClick={() => onClick?.(s)}
-          style={{ fontSize: 20, cursor: onClick ? "pointer" : "default", color: s <= rating ? "#fbbf24" : "var(--border)" }}>
+          style={{ fontSize: 20, cursor: onClick ? "pointer" : "default", color: s <= rating ? "var(--primary)" : "var(--border)" }}>
           ★
         </span>
       ))}
@@ -52,6 +53,7 @@ function ReputationPage() {
   const [googleUrl, setGoogleUrl] = useState("");
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState("");
+  const [sendOk, setSendOk] = useState(false);
 
   // Response form
   const [reviewText, setReviewText] = useState("");
@@ -77,13 +79,14 @@ function ReputationPage() {
   }
 
   async function sendRequest() {
-    if (!custPhone.trim()) { setSendMsg("Phone number is required."); return; }
+    if (!custPhone.trim()) { setSendOk(false); setSendMsg("Phone number is required."); return; }
     setSending(true);
     setSendMsg("");
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) {
+        setSendOk(false);
         setSendMsg("Please sign in again and retry.");
         setSending(false);
         return;
@@ -103,11 +106,13 @@ function ReputationPage() {
         }),
       });
       const data = await res.json();
-      if (data.error) { setSendMsg(data.error); return; }
-      setSendMsg("✅ Review request sent!");
+      if (data.error) { setSendOk(false); setSendMsg(data.error); return; }
+      setSendOk(true);
+      setSendMsg("Review request sent!");
       setCustName(""); setCustPhone(""); setJobDesc("");
       loadData();
     } catch {
+      setSendOk(false);
       setSendMsg("Something went wrong. Please try again.");
     } finally {
       setSending(false);
@@ -152,7 +157,7 @@ function ReputationPage() {
 
   function copyResponse() {
     navigator.clipboard.writeText(aiResponse);
-    alert("✅ Response copied to clipboard!");
+    alert("Response copied to clipboard!");
   }
 
   const stats = {
@@ -170,12 +175,12 @@ function ReputationPage() {
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
-            ⭐ Reputation Autopilot
+            Reputation
           </h1>
           <div style={{ display: "flex", gap: 8 }}>
             {(["dashboard", "request", "respond"] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
-                style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === t ? "#6366f1" : "var(--card)", color: tab === t ? "white" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
+                style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === t ? "var(--primary)" : "var(--card)", color: tab === t ? "var(--primary-foreground)" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
                 {t === "request" ? "Send Request" : t === "respond" ? "Write Response" : "Dashboard"}
               </button>
             ))}
@@ -191,13 +196,15 @@ function ReputationPage() {
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
             {[
-              { label: "Requests sent", value: stats.sent, icon: "📤" },
-              { label: "Reviews received", value: stats.reviewed, icon: "⭐" },
-              { label: "Responses written", value: stats.responses, icon: "✍️" },
-              { label: "Avg star rating", value: stats.avgRating, icon: "🌟" },
+              { label: "Requests sent", value: stats.sent, Icon: Send },
+              { label: "Reviews received", value: stats.reviewed, Icon: Star },
+              { label: "Responses written", value: stats.responses, Icon: PenLine },
+              { label: "Avg star rating", value: stats.avgRating, Icon: Star },
             ].map(s => (
               <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+                  <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
+                </div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
               </div>
@@ -206,13 +213,15 @@ function ReputationPage() {
 
           {requests.length === 0 && responses.length === 0 ? (
             <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>⭐</div>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                <Star size={26} color="var(--primary)" strokeWidth={1.75} />
+              </div>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Start building your reputation</h3>
               <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 400, margin: "0 auto 24px", lineHeight: 1.6 }}>
                 Send your first review request to a recent customer — it takes 30 seconds and can get you a 5-star review today.
               </p>
               <button onClick={() => setTab("request")}
-                style={{ padding: "10px 24px", background: "#6366f1", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                style={{ padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                 Send first request →
               </button>
             </div>
@@ -228,8 +237,8 @@ function ReputationPage() {
                       <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{new Date(r.sent_at).toLocaleDateString()}{r.job_description ? ` · ${r.job_description}` : ""}</div>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                      background: r.status === "reviewed" ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
-                      color: r.status === "reviewed" ? "#34d399" : "#818cf8" }}>
+                      background: "var(--accent)",
+                      color: r.status === "reviewed" ? "var(--accent-2)" : "var(--primary)" }}>
                       {r.status === "reviewed" ? "Reviewed ✓" : "Sent"}
                     </span>
                   </div>
@@ -237,9 +246,9 @@ function ReputationPage() {
                 {requests.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No requests yet</p>}
               </div>
 
-              {/* Recent AI responses */}
+              {/* Recent responses */}
               <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>AI responses written</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Responses written</div>
                 {responses.slice(0, 4).map(r => (
                   <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -262,7 +271,7 @@ function ReputationPage() {
       {tab === "request" && (
         <div style={{ maxWidth: 520 }}>
           <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>📤 Send a review request</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Send a review request</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
               We'll text your customer a friendly message with a direct link to leave you a Google review.
             </div>
@@ -293,11 +302,11 @@ function ReputationPage() {
             </div>
 
             {sendMsg && (
-              <div style={{ fontSize: 13, color: sendMsg.startsWith("✅") ? "#34d399" : "#f87171", marginBottom: 14 }}>{sendMsg}</div>
+              <div style={{ fontSize: 13, color: sendOk ? "var(--accent-2)" : "var(--destructive)", marginBottom: 14 }}>{sendMsg}</div>
             )}
 
             <button onClick={sendRequest} disabled={sending}
-              style={{ width: "100%", padding: 13, background: "#6366f1", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: sending ? "not-allowed" : "pointer", opacity: sending ? 0.7 : 1, fontFamily: "inherit" }}>
+              style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: sending ? "not-allowed" : "pointer", opacity: sending ? 0.7 : 1, fontFamily: "inherit" }}>
               {sending ? "Sending..." : "Send review request →"}
             </button>
             <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>Requires Twilio to be connected</p>
@@ -309,9 +318,9 @@ function ReputationPage() {
       {tab === "respond" && (
         <div style={{ maxWidth: 680 }}>
           <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>✍️ Write a review response</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Write a review response</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
-              Paste any review and Claude will write a professional, personalized response in seconds.
+              Paste any review and get a professional, personalized response in seconds.
             </div>
 
             <div style={{ marginBottom: 14 }}>
@@ -333,19 +342,19 @@ function ReputationPage() {
                 style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
             </div>
 
-            {genError && <p style={{ fontSize: 13, color: "#f87171", marginBottom: 14 }}>{genError}</p>}
+            {genError && <p style={{ fontSize: 13, color: "var(--destructive)", marginBottom: 14 }}>{genError}</p>}
 
             <button onClick={generateResponse} disabled={generating}
-              style={{ width: "100%", padding: 13, background: "#6366f1", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: generating ? "not-allowed" : "pointer", opacity: generating ? 0.7 : 1, fontFamily: "inherit", marginBottom: aiResponse ? 16 : 0 }}>
+              style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: generating ? "not-allowed" : "pointer", opacity: generating ? 0.7 : 1, fontFamily: "inherit", marginBottom: aiResponse ? 16 : 0 }}>
               {generating ? "Writing response..." : "Generate response →"}
             </button>
 
             {aiResponse && (
               <div style={{ background: "var(--elevated)", border: "1.5px solid var(--border)", borderRadius: 12, padding: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>✅ AI Response</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Response</div>
                   <button onClick={copyResponse}
-                    style={{ fontSize: 13, fontWeight: 600, color: "#818cf8", background: "none", border: "none", cursor: "pointer" }}>
+                    style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", background: "none", border: "none", cursor: "pointer" }}>
                     Copy →
                   </button>
                 </div>

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app/receptionist")({
@@ -23,10 +24,10 @@ interface Message {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
-  texted:    { bg: "rgba(99,102,241,0.15)", color: "#818cf8", label: "Texted" },
-  replied:   { bg: "rgba(16,185,129,0.15)", color: "#34d399", label: "Replied" },
-  booked:    { bg: "rgba(34,197,94,0.15)", color: "#4ade80", label: "Booked ✓" },
-  no_response: { bg: "rgba(255,255,255,0.06)", color: "var(--muted-foreground)", label: "No response" },
+  texted:      { bg: "var(--accent)", color: "var(--primary)", label: "Texted" },
+  replied:     { bg: "var(--accent)", color: "var(--accent-2)", label: "Replied" },
+  booked:      { bg: "var(--accent)", color: "var(--accent-2)", label: "Booked ✓" },
+  no_response: { bg: "var(--muted)", color: "var(--muted-foreground)", label: "No response" },
 };
 
 function ReceptionistPage() {
@@ -39,6 +40,7 @@ function ReceptionistPage() {
   const [twilioNumber, setTwilioNumber] = useState("");
   const [savingNumber, setSavingNumber] = useState(false);
   const [numberMsg, setNumberMsg] = useState("");
+  const [numberSaveOk, setNumberSaveOk] = useState(false);
 
   useEffect(() => {
     loadCalls();
@@ -66,7 +68,8 @@ function ReceptionistPage() {
       .from("profiles")
       .update({ twilio_phone_number: twilioNumber.trim() || null })
       .eq("id", user.id);
-    setNumberMsg(error ? "Could not save — that number may already be linked to another account." : "✅ Saved!");
+    setNumberSaveOk(!error);
+    setNumberMsg(error ? "Could not save — that number may already be linked to another account." : "Saved!");
     setSavingNumber(false);
   }
 
@@ -120,13 +123,13 @@ function ReceptionistPage() {
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
-            📞 Missed Call Text-Back
+            Inbound Capture
           </h1>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setTab("calls")} style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === "calls" ? "#6366f1" : "var(--card)", color: tab === "calls" ? "white" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => setTab("calls")} style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === "calls" ? "var(--primary)" : "var(--card)", color: tab === "calls" ? "var(--primary-foreground)" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Calls
             </button>
-            <button onClick={() => setTab("setup")} style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === "setup" ? "#6366f1" : "var(--card)", color: tab === "setup" ? "white" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => setTab("setup")} style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === "setup" ? "var(--primary)" : "var(--card)", color: tab === "setup" ? "var(--primary-foreground)" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Setup
             </button>
           </div>
@@ -142,7 +145,7 @@ function ReceptionistPage() {
           <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28, marginBottom: 16 }}>
             <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>How it works</h2>
             <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 20, lineHeight: 1.6 }}>
-              When someone calls your business and you don't pick up, Lanavix automatically sends them a personalized text within 60 seconds. Claude then handles the conversation — qualifying the lead, answering questions, and booking appointments — so you wake up to booked jobs.
+              When someone calls your business and you don't pick up, Lanavix automatically sends them a personalized text within 60 seconds and handles the conversation — qualifying the lead, answering questions, and booking appointments — so you wake up to booked jobs.
             </p>
             {[
               { step: "1", title: "Get a Twilio number", desc: "Sign up at twilio.com (free trial). Buy a local phone number for your area — costs ~$1/month." },
@@ -151,7 +154,7 @@ function ReceptionistPage() {
               { step: "4", title: "Configure your auto-reply", desc: "Set your business name, services, and available hours. Lanavix handles the rest." },
             ].map(s => (
               <div key={s.step} style={{ display: "flex", gap: 14, marginBottom: 18 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.step}</div>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--primary)", color: "var(--primary-foreground)", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.step}</div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 3 }}>{s.title}</div>
                   <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5 }}>{s.desc}</div>
@@ -169,25 +172,25 @@ function ReceptionistPage() {
               <input value={twilioNumber} onChange={e => setTwilioNumber(e.target.value)} placeholder="+15555550100"
                 style={{ flex: 1, padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none" }} />
               <button onClick={saveTwilioNumber} disabled={savingNumber}
-                style={{ padding: "10px 20px", background: "#6366f1", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: savingNumber ? "not-allowed" : "pointer", opacity: savingNumber ? 0.7 : 1 }}>
+                style={{ padding: "10px 20px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: savingNumber ? "not-allowed" : "pointer", opacity: savingNumber ? 0.7 : 1 }}>
                 {savingNumber ? "Saving..." : "Save"}
               </button>
             </div>
-            {numberMsg && <div style={{ fontSize: 12, color: numberMsg.startsWith("✅") ? "#34d399" : "#f87171", marginTop: 8 }}>{numberMsg}</div>}
+            {numberMsg && <div style={{ fontSize: 12, color: numberSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{numberMsg}</div>}
           </div>
 
           <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Environment variables needed</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14 }}>Add these to Vercel → Environment Variables</div>
             {["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"].map(v => (
-              <div key={v} style={{ fontFamily: "monospace", fontSize: 12, color: "#a5b4fc", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 6, padding: "6px 10px", marginBottom: 8 }}>{v}</div>
+              <div key={v} style={{ fontFamily: "monospace", fontSize: 12, color: "var(--primary)", background: "var(--accent)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", marginBottom: 8 }}>{v}</div>
             ))}
             <div style={{ marginTop: 16 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Twilio webhook URLs to configure</div>
-              <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "rgba(255,255,255,0.04)", borderRadius: 6, padding: "8px 10px", marginBottom: 8 }}>
+              <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px", marginBottom: 8 }}>
                 Voice: https://lanavix.com/api/twilio/missed-call
               </div>
-              <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "rgba(255,255,255,0.04)", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px" }}>
                 SMS: https://lanavix.com/api/twilio/sms-reply
               </div>
             </div>
@@ -201,13 +204,15 @@ function ReceptionistPage() {
           {/* Stats */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
             {[
-              { label: "Total missed calls", value: stats.total, icon: "📞" },
-              { label: "Auto-texted", value: stats.texted, icon: "💬" },
-              { label: "Replied back", value: stats.replied, icon: "↩️" },
-              { label: "Jobs booked", value: stats.booked, icon: "✅" },
+              { label: "Total missed calls", value: stats.total, Icon: Phone },
+              { label: "Auto-texted", value: stats.texted, Icon: MessageSquare },
+              { label: "Replied back", value: stats.replied, Icon: Reply },
+              { label: "Jobs booked", value: stats.booked, Icon: CheckCircle2 },
             ].map(s => (
               <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+                  <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
+                </div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
               </div>
@@ -217,12 +222,14 @@ function ReceptionistPage() {
           {/* Empty state */}
           {!loading && calls.length === 0 && (
             <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>📵</div>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                <PhoneOff size={26} color="var(--primary)" strokeWidth={1.75} />
+              </div>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>No missed calls yet</h3>
               <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 380, margin: "0 auto 24px", lineHeight: 1.6 }}>
                 Once you connect Twilio, every missed call will appear here with the full conversation thread.
               </p>
-              <button onClick={() => setTab("setup")} style={{ padding: "10px 24px", background: "#6366f1", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              <button onClick={() => setTab("setup")} style={{ padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                 View setup instructions →
               </button>
             </div>
@@ -236,7 +243,7 @@ function ReceptionistPage() {
                   const s = STATUS_COLORS[call.status] || STATUS_COLORS.texted;
                   return (
                     <div key={call.id} onClick={() => loadMessages(call.id)}
-                      style={{ background: "var(--card)", border: `1.5px solid ${selected === call.id ? "#6366f1" : "var(--border)"}`, borderRadius: 14, padding: "14px 18px", cursor: "pointer" }}>
+                      style={{ background: "var(--card)", border: `1.5px solid ${selected === call.id ? "var(--primary)" : "var(--border)"}`, borderRadius: 14, padding: "14px 18px", cursor: "pointer" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                         <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{call.caller_name || call.caller_phone}</span>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: s.bg, color: s.color }}>{s.label}</span>
@@ -265,8 +272,8 @@ function ReceptionistPage() {
                     {messages.map(msg => (
                       <div key={msg.id} style={{ display: "flex", justifyContent: msg.direction === "outbound" ? "flex-end" : "flex-start" }}>
                         <div style={{ maxWidth: "80%", padding: "8px 12px", borderRadius: msg.direction === "outbound" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                          background: msg.direction === "outbound" ? "#6366f1" : "var(--secondary)",
-                          color: msg.direction === "outbound" ? "white" : "var(--foreground)", fontSize: 13 }}>
+                          background: msg.direction === "outbound" ? "var(--primary)" : "var(--secondary)",
+                          color: msg.direction === "outbound" ? "var(--primary-foreground)" : "var(--foreground)", fontSize: 13 }}>
                           {msg.message}
                         </div>
                       </div>
