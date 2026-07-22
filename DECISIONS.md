@@ -410,3 +410,51 @@ the real baseline of 11 profiles.
 
 **No deploy performed** — per your standing instruction, built and
 verified locally only.
+
+## Round 7 — Final pre-deploy round
+
+1. **`validateEnv()` wired into startup** — new `src/server.ts` overrides
+   TanStack Start's default server entry (framework picks up `src/server.ts`
+   by convention over its own generated default) and calls `validateEnv()`
+   at module scope, so it runs once per real boot/cold-start. Also tightened
+   the error message format to `Missing required env var: X [category] — description`
+   per your requested style.
+2. **Route smoke test** — `/`, `/pricing`, `/about`, `/faq`, `/terms`,
+   `/privacy`, `/refund`, `/cookies`, `/audit`, `/app/verification`, and
+   `/app/admin/verification-review` all already worked (verified against a
+   real `vite dev` server, not just build/tsc). `/contact`, `/login`,
+   `/signup`, `/forgot-password`, and `/dashboard` had no matching route at
+   all in this app (it uses `/chat`, `/auth`, and `/app` instead) — added
+   thin redirect routes for all five rather than leaving those conventional
+   URLs 404ing, and extended `/auth`'s `mode` search param with `"forgot"`
+   so `/forgot-password` lands directly on the reset view.
+3. **Found and fixed a real pre-existing bug while confirming the deploy
+   target**: this repo already has a root `vercel.json` with security
+   headers (predating this session), and its CSP had **no `frame-src`
+   directive at all** — which defaults to blocking all framing, meaning the
+   embedded Stripe Checkout iframe would have been silently broken on a
+   real deploy. Also didn't allow Stripe's domains in `script-src`/
+   `connect-src`. Fixed to match the CSP added in `nitro.config.ts` this
+   session, so both are consistent.
+4. **Confirmed the real deploy target is Vercel, not Cloudflare** — despite
+   local builds producing `wrangler.json`/Cloudflare artifacts. Traced this
+   to `@lovable.dev/vite-tanstack-config` hardcoding `defaultPreset:
+   "cloudflare-module"` as a *fallback only*; Nitro's own platform
+   auto-detection (via the `VERCEL` env var Vercel's build system sets)
+   overrides that fallback on a real Vercel build. The pre-existing
+   `vercel.json` and this session's earlier Vercel MCP-verified production
+   deploys both corroborate Vercel as the actual target.
+5. **`DEPLOY.md`** — new file with the full env var reference (required/
+   recommended/billing/optional), the Stripe product-setup command, the
+   Cloudflare-vs-Vercel reasoning above, the deploy command, and manual
+   post-deploy steps (Stripe webhook URL + events, Twilio webhook URLs,
+   custom domain, post-deploy smoke test).
+
+**Verification**: `npm run build` and `tsc --noEmit` both held clean at the
+150-error baseline. Every route in the requested smoke-test list was hit
+against a live `vite dev` server (not just statically analyzed) — the 5
+newly-added redirect routes were confirmed to 307 to the correct
+destination and resolve to a real 200 page with `-L`.
+
+**No deploy performed** — per your standing instruction, built and
+verified locally only. Ready for you to deploy per DEPLOY.md.
