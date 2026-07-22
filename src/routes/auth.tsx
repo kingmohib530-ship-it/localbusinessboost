@@ -12,7 +12,7 @@ import { Sparkles, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: z.object({
-    mode: z.enum(["signin", "signup"]).optional(),
+    mode: z.enum(["signin", "signup", "forgot"]).optional(),
     // Where to send the user after a successful sign-in/sign-up — e.g. back
     // to /checkout/start?plan=solo when they hit a paid plan while signed out.
     redirect: z.string().optional(),
@@ -63,7 +63,7 @@ function AuthPage() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState<string | null>(null);
-  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(mode === "forgot");
   const [resetEmailSent, setResetEmailSent] = useState<string | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
 

@@ -10,11 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
@@ -72,6 +77,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RefundRoute = RefundRouteImport.update({
   id: '/refund',
   path: '/refund',
@@ -87,14 +97,34 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -373,11 +403,16 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
@@ -431,11 +466,16 @@ export interface FileRoutesByTo {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
@@ -490,11 +530,16 @@ export interface FileRoutesById {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
@@ -550,11 +595,16 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/chat'
+    | '/contact'
     | '/cookies'
+    | '/dashboard'
     | '/faq'
+    | '/forgot-password'
+    | '/login'
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/signup'
     | '/terms'
     | '/app'
     | '/api/appointments'
@@ -608,11 +658,16 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/chat'
+    | '/contact'
     | '/cookies'
+    | '/dashboard'
     | '/faq'
+    | '/forgot-password'
+    | '/login'
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/signup'
     | '/terms'
     | '/api/appointments'
     | '/api/booking-plan'
@@ -666,11 +721,16 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/chat'
+    | '/contact'
     | '/cookies'
+    | '/dashboard'
     | '/faq'
+    | '/forgot-password'
+    | '/login'
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/signup'
     | '/terms'
     | '/_authenticated/app'
     | '/api/appointments'
@@ -726,11 +786,16 @@ export interface RootRouteChildren {
   AuditRoute: typeof AuditRoute
   AuthRoute: typeof AuthRouteWithChildren
   ChatRoute: typeof ChatRoute
+  ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  DashboardRoute: typeof DashboardRoute
   FaqRoute: typeof FaqRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
+  SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
@@ -771,6 +836,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/refund': {
       id: '/refund'
       path: '/refund'
@@ -792,6 +864,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/faq': {
       id: '/faq'
       path: '/faq'
@@ -799,11 +885,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cookies': {
       id: '/cookies'
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -1255,11 +1355,16 @@ const rootRouteChildren: RootRouteChildren = {
   AuditRoute: AuditRoute,
   AuthRoute: AuthRouteWithChildren,
   ChatRoute: ChatRoute,
+  ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  DashboardRoute: DashboardRoute,
   FaqRoute: FaqRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,
+  SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
   ApiBookingPlanRoute: ApiBookingPlanRoute,

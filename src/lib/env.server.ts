@@ -279,11 +279,11 @@ export function validateEnv(): void {
   for (const def of ENV_VARS) {
     const value = process.env[def.name];
     if (!value) {
-      if (def.required) problems.push(`${def.name} [${def.category}] is required but not set.`);
+      if (def.required) problems.push(`Missing required env var: ${def.name} [${def.category}] — ${def.description}`);
       continue;
     }
     const error = def.validate?.(value);
-    if (error) problems.push(`${def.name} [${def.category}] is invalid: ${error}`);
+    if (error) problems.push(`Invalid env var: ${def.name} [${def.category}] ${error}`);
   }
 
   if (problems.length === 0) return;
