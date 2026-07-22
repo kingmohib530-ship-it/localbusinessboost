@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logActivity } from "@/lib/activityLog.server";
+import { checkLeadGeneratorQuota } from "@/lib/planLimits.server";
 import {
   searchGooglePlacesLeads,
   assessWebsite,
@@ -53,6 +54,11 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           }
           if (!allowed) {
             return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
+          }
+
+          const quota = await checkLeadGeneratorQuota(user.id);
+          if (!quota.allowed) {
+            return Response.json({ error: quota.reason }, { status: 402 });
           }
 
           const body = await request.json();

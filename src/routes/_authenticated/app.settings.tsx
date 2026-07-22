@@ -1,17 +1,29 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PRICING_PLANS, type PlanId } from "@/lib/pricingPlans";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   component: Settings,
 });
 
+const VERIFICATION_LABELS: Record<string, string> = {
+  unverified: "Not verified",
+  pending: "Verification in review",
+  verified: "Verified",
+  pro: "Verified Pro",
+  elite: "Verified Elite",
+};
+
 function Settings() {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
+  const [planId, setPlanId] = useState<PlanId>("starter");
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<string>("unverified");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -20,7 +32,20 @@ function Settings() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
+    supabase.auth.getUser().then(async ({ data }) => {
+      setEmail(data.user?.email ?? "");
+      if (!data.user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("subscription_tier, subscription_status, verification_status")
+        .eq("id", data.user.id)
+        .single();
+      if (profile?.subscription_tier && profile.subscription_tier in PRICING_PLANS) {
+        setPlanId(profile.subscription_tier as PlanId);
+      }
+      setSubscriptionStatus(profile?.subscription_status ?? null);
+      setVerificationStatus(profile?.verification_status || "unverified");
+    });
   }, []);
 
   const signOut = async () => {
@@ -102,12 +127,31 @@ function Settings() {
             <div className="text-xs text-muted-foreground">Account</div>
             <div className="font-medium">{email || "—"}</div>
           </div>
-          <Badge variant="secondary">Free beta access</Badge>
+          <Badge variant="secondary">{VERIFICATION_LABELS[verificationStatus] || "Not verified"}</Badge>
         </div>
+        {verificationStatus === "unverified" && (
+          <Button asChild variant="outline" size="sm">
+            <Link to="/app/verification">Get verified →</Link>
+          </Button>
+        )}
       </Card>
-      <Card className="p-6">
-        <h2 className="font-semibold mb-2">Plan</h2>
-        <p className="text-sm text-muted-foreground">Currently in open beta. All agents and the orchestrator are unlocked.</p>
+      <Card className="p-6 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Plan</h2>
+          <Badge>{PRICING_PLANS[planId].name}</Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {planId === "starter"
+            ? "You're on the free Starter plan. Upgrade for unlimited SMS, the Lead Generator, and more."
+            : subscriptionStatus === "trialing"
+              ? `You're in your free trial of ${PRICING_PLANS[planId].name}.`
+              : subscriptionStatus === "past_due"
+                ? "Your last payment failed — update your billing details to avoid losing access."
+                : `You're subscribed to ${PRICING_PLANS[planId].name} ($${PRICING_PLANS[planId].price}/mo).`}
+        </p>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
+        </Button>
       </Card>
 
       <Card className="p-6 space-y-3">

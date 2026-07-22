@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioRequest } from "@/lib/twilio.server";
+import { checkSmsQuota } from "@/lib/planLimits.server";
 
 const EMPTY_TWIML = new Response(
   `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`,
@@ -77,7 +78,9 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
           const twilioToken = process.env.TWILIO_AUTH_TOKEN;
           const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
 
-          if (twilioSid && twilioToken && twilioFrom && missedCall) {
+          const quota = missedCall ? await checkSmsQuota(profile.id) : { allowed: false };
+
+          if (twilioSid && twilioToken && twilioFrom && missedCall && quota.allowed) {
             const businessName = profile.business_name || "the team";
             const service = profile.industry || "our services";
 
