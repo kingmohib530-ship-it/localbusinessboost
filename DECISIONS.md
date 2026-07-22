@@ -252,3 +252,67 @@ automatically. Verified with a standalone logic test (12/12 passed:
 required-missing throws in production vs. warns in development, invalid
 formats are caught even when a var is present, category-readiness checks
 behave correctly including billing's all-optional special case).
+
+## Round 5 — Business verification, feature gating, marketplace gate
+
+Resumed the "Business Verification + Pricing + Stripe Checkout" task that
+was paused earlier (Round 4 note #3 above — that gap is now closed).
+
+1. **Schema** (`20260721010000_create_business_verification.sql`):
+   `profiles` gets `verification_status` (unverified/pending/verified/
+   pro/elite — no separate "rejected" value; see admin review below),
+   license/insurance/EIN/address/team-size/pricing fields, plus a new
+   `verification_documents` table (per-user RLS + admin-read/update
+   policies) and a private `verification-docs` Storage bucket. Reused the
+   existing `accept_consumer_leads` column instead of adding a duplicate
+   `accepts_consumer_marketplace` column from the original spec.
+2. **`/app/verification`** — 4-step onboarding (business details →
+   document upload → pricing/marketplace → review & submit). Submitting
+   sets `verification_status = 'pending'`. Shows a status screen instead
+   of the form once pending/verified. Overview dashboard now shows a "Get
+   verified" banner for unverified accounts.
+3. **`/app/admin/verification-review`** — admin-only queue filterable by
+   status, with signed-URL document viewing, per-document approve/reject,
+   and profile-level approve/reject/request-info with a note the
+   applicant sees. Profile-level writes go through a new
+   `POST /api/admin/verification-review` (service-role client) because
+   `profiles` only has an admin-read RLS policy, not admin-write — reject
+   and request-info both reset `verification_status` to `unverified` with
+   an explanatory note (no "rejected" value exists in the check
+   constraint), letting the applicant resubmit.
+4. **Pricing/Stripe** — re-checked rather than rebuilt: checkout and the
+   webhook's subscription sync were already fully wired in Round 2.
+   Stripe's `customer.subscription.*` events already cover everything a
+   subscription-mode checkout produces, so there was no real gap to close
+   here.
+5. **Feature gating** (`src/lib/planLimits.server.ts`) — enforces the caps
+   already advertised in the /pricing comparison table, which weren't
+   actually enforced anywhere before now: Starter capped at 50 SMS/month
+   (missed-call auto-texts + conversation replies + review requests,
+   combined) and no Lead Generator access at all; Solo capped at 3 Lead
+   Generator runs/month (counted via the `lead_generator_research`
+   activity_log entries each run already wrote); Crew/Empire unlimited.
+   Settings page also lost its stale "Free beta access / all agents
+   unlocked" copy from before real billing existed, replaced with the
+   actual plan, subscription status, and verification status.
+6. **Marketplace verified-only filter** — `consumer-inbound.ts`'s matching
+   query now requires `verification_status IN (verified, pro, elite)`
+   in addition to `accept_consumer_leads` and subscription status
+   (broadened from just `"active"` to also include `"trialing"`, matching
+   how the rest of the app treats trial subscribers). Closes the exact gap
+   Round 4 note #3 flagged — unverified businesses can no longer be
+   matched to consumer leads.
+
+**Verification performed at every step:** `tsc --noEmit` held at the
+existing 150-error baseline throughout (zero new errors in any file this
+round touched), `npm run build` succeeded after each change, and every
+schema/data change was exercised against the live Supabase project with
+disposable test users/rows that were cleaned up and confirmed back to the
+real baseline of 11 profiles — including check-constraint rejection tests,
+the approve/reject status-transition paths, the SMS/Lead-Generator quota
+counting logic, and the verified-vs-unverified marketplace matching query
+(confirmed an unverified business is excluded even with a higher
+`lanavix_score` than a verified competitor).
+
+**No deploy performed** — per your standing instruction, built and
+verified locally only.
