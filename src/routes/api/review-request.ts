@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { checkSmsQuota } from "@/lib/planLimits.server";
+import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -59,6 +59,10 @@ export const Route = createFileRoute("/api/review-request")({
           const quota = await checkSmsQuota(user.id);
           if (!quota.allowed) {
             return Response.json({ error: quota.reason }, { status: 402 });
+          }
+          const hourlyOk = await checkSmsHourlyRateLimit(user.id);
+          if (!hourlyOk.allowed) {
+            return Response.json({ error: hourlyOk.reason }, { status: 429 });
           }
 
           const body = await request.json();

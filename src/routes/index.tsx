@@ -370,7 +370,7 @@ function HomePage() {
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">Early access</p>
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-            Built for contractors in the DMV — launching now
+            Built for contractors across America — launching now
           </h2>
           <p className="mt-4 text-muted-foreground max-w-lg mx-auto mb-14 leading-relaxed">
             Lanavix is in early access with a small group of local contractors. Founding members lock in current pricing forever and get direct input on what we build next.

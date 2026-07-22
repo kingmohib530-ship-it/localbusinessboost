@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioRequest } from "@/lib/twilio.server";
-import { checkSmsQuota } from "@/lib/planLimits.server";
+import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 function businessFooter(): string {
   const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
@@ -183,11 +183,15 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             .update({ status: "replied" })
             .eq("id", missedCall.id);
 
-          // Starter plan's SMS/month cap — skip the AI reply (and its
-          // billable Anthropic call) once the business has hit its quota.
+          // Starter plan's SMS/month cap, plus a flat per-hour abuse ceiling
+          // that applies on every plan — skip the AI reply (and its
+          // billable Anthropic call) once either limit is hit.
           if (missedCall.user_id) {
-            const quota = await checkSmsQuota(missedCall.user_id);
-            if (!quota.allowed) {
+            const [quota, hourlyOk] = await Promise.all([
+              checkSmsQuota(missedCall.user_id),
+              checkSmsHourlyRateLimit(missedCall.user_id),
+            ]);
+            if (!quota.allowed || !hourlyOk.allowed) {
               return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.");
             }
           }

@@ -9,12 +9,11 @@
  * this — RESEND_API_KEY must be set for this to actually send; until then
  * it logs what it would have sent and returns.
  */
-export async function sendNotificationEmail(subject: string, body: string): Promise<void> {
+async function sendEmail(opts: { to: string; subject: string; text: string; html?: string }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.NOTIFICATION_EMAIL || "moh@lanavix.com";
 
   if (!apiKey) {
-    console.log(`[email] RESEND_API_KEY not configured — would have sent "${subject}" to ${to}`);
+    console.log(`[email] RESEND_API_KEY not configured — would have sent "${opts.subject}" to ${opts.to}`);
     return;
   }
 
@@ -27,9 +26,10 @@ export async function sendNotificationEmail(subject: string, body: string): Prom
       },
       body: JSON.stringify({
         from: process.env.RESEND_FROM_EMAIL || "Lanavix <notifications@lanavix.com>",
-        to: [to],
-        subject,
-        text: body,
+        to: [opts.to],
+        subject: opts.subject,
+        text: opts.text,
+        ...(opts.html ? { html: opts.html } : {}),
       }),
     });
     if (!res.ok) {
@@ -38,4 +38,15 @@ export async function sendNotificationEmail(subject: string, body: string): Prom
   } catch (e) {
     console.error("[email] failed to send", e);
   }
+}
+
+/** Sends an internal notification to the team inbox (contact form, etc). */
+export async function sendNotificationEmail(subject: string, body: string): Promise<void> {
+  const to = process.env.NOTIFICATION_EMAIL || "moh@lanavix.com";
+  await sendEmail({ to, subject, text: body });
+}
+
+/** Sends an arbitrary email to an external recipient (e.g. the audit report). */
+export async function sendExternalEmail(to: string, subject: string, text: string, html?: string): Promise<void> {
+  await sendEmail({ to, subject, text, html });
 }

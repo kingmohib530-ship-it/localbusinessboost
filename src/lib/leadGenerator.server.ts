@@ -25,6 +25,7 @@ export interface GooglePlaceLead {
   googleRating: number | null;
   googleReviewCount: number | null;
   reviewSnippets: string[];
+  types: string[];
 }
 
 interface AddressComponent {
@@ -106,7 +107,7 @@ export async function searchGooglePlacesLeads(
   const detailed = await Promise.all(
     candidates.map(async (place: { place_id: string; name: string; formatted_address?: string }) => {
       try {
-        const fields = "name,formatted_phone_number,formatted_address,website,rating,user_ratings_total,address_components,reviews";
+        const fields = "name,formatted_phone_number,formatted_address,website,rating,user_ratings_total,address_components,reviews,types";
         const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=${fields}&key=${googleKey}`;
         const detailRes = await fetch(detailUrl);
         const detailData = await detailRes.json();
@@ -126,6 +127,7 @@ export async function searchGooglePlacesLeads(
           reviewSnippets: Array.isArray(detail.reviews)
             ? detail.reviews.slice(0, 5).map((r: { text?: string }) => r.text || "").filter(Boolean)
             : [],
+          types: Array.isArray(detail.types) ? detail.types : [],
         } as GooglePlaceLead;
       } catch {
         return null;
@@ -135,7 +137,37 @@ export async function searchGooglePlacesLeads(
 
   // A phone number is required for the SMS-based outreach sequence this
   // system generates — same filter /api/lead-blast already applies.
-  return detailed.filter((d): d is GooglePlaceLead => d !== null && !!d.phone);
+  return detailed
+    .filter((d): d is GooglePlaceLead => d !== null && !!d.phone)
+    .filter((d) => isPlausibleTradeMatch(d.types));
+}
+
+/**
+ * Google's Places `types` taxonomy is too coarse to reliably confirm a
+ * result IS the requested trade (small home-service businesses often just
+ * come back as "general_contractor" or "point_of_interest"), but it's
+ * reliable enough to catch results that definitely AREN'T — a restaurant or
+ * a school showing up for a "plumbers in Austin" search. Denylisting those
+ * obvious mismatches (rather than allowlisting exact trade types) avoids
+ * silently dropping legitimate contractors that Google mis-categorized,
+ * while still catching the "wrong business type" complaint.
+ */
+const NON_SERVICE_BUSINESS_TYPES = new Set([
+  "restaurant", "cafe", "bar", "bakery", "meal_delivery", "meal_takeaway",
+  "lodging", "school", "primary_school", "secondary_school", "university",
+  "church", "hindu_temple", "mosque", "synagogue", "place_of_worship",
+  "bank", "atm", "finance", "government_office", "local_government_office",
+  "courthouse", "embassy", "grocery_or_supermarket", "supermarket",
+  "convenience_store", "gas_station", "clothing_store", "shoe_store",
+  "jewelry_store", "movie_theater", "amusement_park", "casino", "night_club",
+  "hospital", "doctor", "dentist", "pharmacy", "real_estate_agency",
+  "insurance_agency", "car_dealer", "gym", "beauty_salon", "hair_care",
+  "spa", "tourist_attraction", "museum", "zoo", "stadium", "airport",
+  "train_station", "subway_station", "library", "post_office",
+]);
+
+export function isPlausibleTradeMatch(types: string[]): boolean {
+  return !types.some((t) => NON_SERVICE_BUSINESS_TYPES.has(t));
 }
 
 export interface WebsiteAssessment {
@@ -392,21 +424,34 @@ export async function synthesizeLeadCopy(
   place: GooglePlaceLead,
   painSignals: string[],
 ): Promise<LeadCopy> {
+  const category = place.types
+    .filter((t) => !["point_of_interest", "establishment"].includes(t))
+    .slice(0, 3)
+    .map((t) => t.replace(/_/g, " "))
+    .join(", ");
+
   const facts = [
     `Business name: ${place.businessName}`,
     `Industry context: ${industry}`,
+    category ? `Google's listed category: ${category}` : "",
     place.googleRating !== null ? `Google rating: ${place.googleRating} (${place.googleReviewCount ?? 0} reviews)` : "Google rating: unknown",
     painSignals.length ? `Detected pain signals: ${painSignals.join(", ")}` : "Detected pain signals: none",
     place.reviewSnippets.length ? `Real review excerpts:\n${place.reviewSnippets.map((s) => `- "${s.slice(0, 200)}"`).join("\n")}` : "",
   ].filter(Boolean).join("\n");
 
-  const prompt = `You are a sales analyst helping a Lanavix customer (a ${industry} contractor) evaluate a prospect they might reach out to. You are given ONLY the real facts below — do not invent or assume any fact not listed here (no owner name, no email, no revenue, no detail not present below).
+  const prompt = `You are texting on behalf of a real ${industry} contractor who is reaching out to another local business owner about their services. You are given ONLY the real facts below — do not invent or assume any fact not listed here (no owner name, no email, no revenue, no detail not present below).
 
 ${facts}
 
 Write:
 1. A 2-sentence research summary explaining why this business is (or isn't) a good outreach target, referencing only the facts above.
-2. A single personalized opening line (under 25 words) for a first-touch SMS, referencing a specific detected pain point if one exists, otherwise a general local-business angle. No fabricated specifics.
+2. A single personalized opening line (under 25 words) for a first-touch SMS.
+
+Rules for the opening line:
+- Write like a real contractor texting another business owner they respect — plainspoken, specific, a little informal. Not a marketer, not a chatbot.
+- Ground it in ONE concrete fact above (a detected pain point, the review count, the rating, or their actual business category) — never a generic compliment or generic "reaching out" filler.
+- Never use these banned phrases or anything like them: "I noticed", "I came across", "I wanted to reach out", "hope this finds you well", "capture more business", "take your business to the next level".
+- If there's truly nothing specific to hook on (no pain signal, no reviews, unknown rating), open with a direct, concrete offer tied to their real business category instead of a vague pleasantry.
 
 Return ONLY valid JSON, no markdown:
 { "summary": "...", "openingLine": "..." }`;
@@ -437,7 +482,7 @@ Return ONLY valid JSON, no markdown:
   const parsed = JSON.parse(match[0]);
   return {
     summary: parsed.summary || `${place.businessName} matches the target profile for ${industry} outreach.`,
-    openingLine: parsed.openingLine || `Hi! I noticed ${place.businessName} and wanted to reach out about helping you capture more business.`,
+    openingLine: parsed.openingLine || `Hey, this is a ${industry} contractor local to the area — got a few minutes to talk about your place sometime this week?`,
   };
 }
 

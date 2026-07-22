@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logActivity } from "@/lib/activityLog.server";
+import { isPlausibleTradeMatch } from "@/lib/leadGenerator.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -43,6 +44,25 @@ export const Route = createFileRoute("/api/lead-blast")({
             return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
           }
 
+          // Daily ceiling on top of the hourly one above — bounds total
+          // spend/day regardless of how the hourly window is spread.
+          const { data: dailyAllowed, error: dailyRlErr } = await supabaseAdmin.rpc(
+            "check_rate_limit",
+            {
+              p_user_id: user.id,
+              p_route: "lead-blast-daily",
+              p_max_requests: 100,
+              p_window_seconds: 86400,
+            }
+          );
+          if (dailyRlErr) {
+            console.error("[api/lead-blast] daily rate limit check failed");
+            return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
+          }
+          if (!dailyAllowed) {
+            return Response.json({ error: "Daily limit reached. Please try again tomorrow." }, { status: 429 });
+          }
+
           const { industry, city } = await request.json();
 
           if (!industry || !city) {
@@ -69,8 +89,11 @@ export const Route = createFileRoute("/api/lead-blast")({
             );
           }
 
-          // Step 1: Get real businesses from Google Places
-          const searchQuery = encodeURIComponent(`businesses in ${city}`);
+          // Step 1: Get real businesses from Google Places. The query MUST
+          // include the industry — a bare "businesses in {city}" search
+          // returns whatever's popular nearby (restaurants, retail, etc.),
+          // which was the root cause of leads showing up in the wrong trade.
+          const searchQuery = encodeURIComponent(`${industry} in ${city}`);
           const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${searchQuery}&key=${googleKey}`;
 
           const placesRes = await fetch(placesUrl);
@@ -111,10 +134,13 @@ export const Route = createFileRoute("/api/lead-blast")({
             })
           );
 
-          // Filter out businesses without phone numbers
-          const businessesWithPhones = detailedBusinesses.filter(
-            (b) => b.phone !== "Phone not listed"
-          );
+          // Filter out businesses without phone numbers, and anything Google's
+          // own category data says definitely isn't a home-service business
+          // (a restaurant or a school showing up for a trade search) — the
+          // main source of "wrong trade" complaints.
+          const businessesWithPhones = detailedBusinesses
+            .filter((b) => b.phone !== "Phone not listed")
+            .filter((b) => isPlausibleTradeMatch(b.types));
 
           if (businessesWithPhones.length === 0) {
             return Response.json(
@@ -125,15 +151,26 @@ export const Route = createFileRoute("/api/lead-blast")({
 
           // Step 3: Use Claude to write personalized opening lines only
           const businessList = businessesWithPhones
-            .map((b, i) => `${i + 1}. ${b.businessName} — ${b.address}`)
+            .map((b, i) => {
+              const category = (b.types as string[])
+                .filter((t) => !["point_of_interest", "establishment"].includes(t))
+                .slice(0, 2)
+                .map((t) => t.replace(/_/g, " "))
+                .join(", ");
+              return `${i + 1}. ${b.businessName} — ${b.address}${category ? ` (Google category: ${category})` : ""}`;
+            })
             .join("\n");
 
-          const prompt = `You are a sales expert helping a ${industry} contractor reach out to local businesses.
+          const prompt = `You are texting on behalf of a real ${industry} contractor reaching out to local businesses about their services.
 
 Here are real local businesses in ${city}:
 ${businessList}
 
-For each business, write ONE personalized opening line explaining why they might need ${industry} services. Be specific to their business type. Keep each line under 20 words.
+For each business, write ONE opening line for a first-touch SMS. Rules:
+- Write like a real contractor texting another local business owner — plainspoken, specific, a little informal. Not a marketer, not a chatbot.
+- Ground it in their actual Google category if one is listed above, or their name/address if not. Never a generic compliment.
+- Never use these banned phrases or anything like them: "I noticed", "I came across", "I wanted to reach out", "hope this finds you well", "capture more business", "take your business to the next level".
+- Keep each line under 20 words.
 
 Return ONLY valid JSON, no markdown:
 {
@@ -187,7 +224,7 @@ Return ONLY valid JSON, no markdown:
             phone: b.phone,
             address: b.address,
             need: `${b.businessName} is a local business that could benefit from ${industry} services.`,
-            openingLine: parsed.openingLines?.[i] || `Hi, I noticed ${b.businessName} and wanted to reach out about our ${industry} services.`,
+            openingLine: parsed.openingLines?.[i] || `Hey, this is a ${industry} contractor local to the area — got a few minutes to talk about your place sometime this week?`,
           }));
 
           await logActivity(

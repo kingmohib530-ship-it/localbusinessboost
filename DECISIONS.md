@@ -316,3 +316,97 @@ counting logic, and the verified-vs-unverified marketplace matching query
 
 **No deploy performed** — per your standing instruction, built and
 verified locally only.
+
+## Round 6 — Final polish before deploy
+
+1. **`/audit`** — the reported typo ("businesscustomers") wasn't actually
+   present in the current code (the hero heading already has a proper
+   space via `{" "}`), and the form was already real (`AuditForm.tsx` +
+   `runBusinessAudit`), so no fix was needed there. What genuinely was
+   missing, and is now built: `src/lib/websiteChecks.server.ts` runs real
+   checks against the submitted website — an actual fetch measuring load
+   time, whether HTTPS succeeds (falling back to plain HTTP to tell "no
+   SSL" apart from "site is down"), and regex checks for `<title>`, meta
+   description, and a mobile viewport tag. Those real facts are injected
+   into the AI prompt as ground truth the model is told never to
+   contradict, and a "Real website scan" strip now shows them directly on
+   the report. The unlocked report is also emailed to the address entered
+   at the gate (new `sendExternalEmail` in `email.server.ts`, built from
+   the same Resend REST call `sendNotificationEmail` already used).
+2. **SEO meta tags** — already fully wired via `pageMeta()` on all 9
+   marketing pages from Round 3; verified, no changes needed.
+3. **Cookie banner** — copy updated to the exact requested wording
+   ("essential cookies only (login, preferences)... no tracking or ads").
+4. **Homepage copy** — `index.tsx` still said "Built for contractors in
+   the DMV"; changed to "Built for contractors across America."
+5. **Contact form** — already real and already emailing
+   `moh@lanavix.com` via Resend (footer → `/chat` → `/api/public/contact`
+   → `sendNotificationEmail`, built in Round 3). No changes needed.
+6. **Security headers** — new root `nitro.config.ts` sets CSP,
+   X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS, and a
+   restrictive Permissions-Policy on every route via Nitro's `routeRules`
+   (auto-loaded by c12 alongside the narrower nitro options the
+   `@lovable.dev/vite-tanstack-config` wrapper forwards). Verified by
+   inspecting the generated `.output/public/_headers` build artifact,
+   which now contains exactly these headers. The CSP allows `js.stripe.com`
+   /`hooks.stripe.com`/`checkout.stripe.com` (embedded checkout) and
+   `fonts.googleapis.com`/`fonts.gstatic.com`, and permits inline
+   `<style>`/`<script>` since this app relies on both (React inline
+   styles, TanStack Start's hydration bootstrap) — a stricter nonce-based
+   CSP would need much deeper changes for uncertain benefit.
+7. **Rate limiting**:
+   - **Auth**: there is no custom auth endpoint to rate-limit — sign-in/up
+     and password reset call Supabase Auth (GoTrue) directly from the
+     browser, which enforces its own rate limits server-side. Flagging
+     this rather than inventing a redundant proxy layer.
+   - **SMS-sending**: new `checkSmsHourlyRateLimit` in `planLimits.server.ts`
+     adds a flat 50/hour-per-business ceiling (via the existing
+     `check_rate_limit` RPC, route key `sms-send-hourly`) on top of — not
+     instead of — the Starter plan's monthly quota from Round 5. Applies
+     regardless of plan tier, since it's an abuse/cost backstop, not a
+     plan feature. Wired into `missed-call.ts`, `sms-reply.ts`, and
+     `review-request.ts`.
+   - **Lead Blast**: added a 100/day cap (route key `lead-blast-daily`) on
+     `/api/lead-blast`, alongside its existing 10/hour cap.
+8. **Lead Blast quality** — the "stupid leads" complaint traced to two real
+   bugs, present in both the legacy `/api/lead-blast` (no longer wired to
+   any UI, but still live) and the active Lead Generator
+   (`leadGenerator.server.ts`):
+   - `/api/lead-blast` searched Google Places for bare `"businesses in
+     {city}"` — no industry term at all, so it could return literally any
+     business type. Fixed to `"{industry} in {city}"`, matching what
+     `leadGenerator.server.ts` already did correctly.
+   - Neither system verified the returned businesses were actually the
+     right trade. Added `isPlausibleTradeMatch()` (exported from
+     `leadGenerator.server.ts`, reused by `lead-blast.ts`) — a denylist of
+     Google Places `types` that are never home-service contractors
+     (restaurants, schools, banks, retail, etc.). A denylist rather than
+     an allowlist, since Google's category taxonomy is too coarse to
+     reliably confirm a match (small contractors often just come back as
+     "general_contractor" or "point_of_interest") but reliable enough to
+     catch an obvious mismatch.
+   - The opening-line prompts in both systems were rewritten: they now
+     name the business's real Google category as a grounding fact, and
+     explicitly ban generic filler phrases ("I noticed...", "I wanted to
+     reach out...", "capture more business...") that read as robotic form
+     letters. The static fallback strings (used only if the AI call
+     itself fails) were rewritten to match — the old fallback ("Hi! I
+     noticed X and wanted to reach out...") was itself an example of the
+     exact complaint.
+   - Model choice was checked and left alone: `claude-sonnet-4-6` is this
+     codebase's established convention (also used by
+     `leadGenerator.server.ts`, `auditApi.ts`, `agents.server.ts`), not a
+     mistake.
+
+**Verification**: `tsc --noEmit` held at the pre-existing 150-error
+baseline (zero new errors in any file this round touched), `npm run
+build` succeeded after every change, the new `websiteChecks.server.ts`
+branching logic was verified with a mocked-fetch unit test (15/15 passed
+— reachable/unreachable/no-SSL/missing-tag cases), and the new rate-limit
+route keys (`sms-send-hourly`, `lead-blast-daily`) were exercised against
+the live `check_rate_limit` RPC with a disposable test user, confirmed to
+allow-then-block at the right counts, cleaned up, and confirmed back to
+the real baseline of 11 profiles.
+
+**No deploy performed** — per your standing instruction, built and
+verified locally only.

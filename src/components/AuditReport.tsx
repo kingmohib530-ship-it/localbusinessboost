@@ -284,6 +284,27 @@ export function AuditReport({ result, onStartOver }: Props) {
         </div>
       </section>
 
+      {/* ── Technical scan ── */}
+      {result.technicalCheck.hasWebsite && (
+        <section
+          aria-label="Website technical scan"
+          style={{ background: "#fff", border: "1.5px solid var(--border, #E2E8F0)", borderTop: "none", padding: "16px 28px", display: "flex", flexWrap: "wrap", gap: "10px 20px", fontSize: 13, color: "#475569" }}
+        >
+          <span style={{ fontWeight: 700, color: "#0F172A" }}>Real website scan:</span>
+          {!result.technicalCheck.reachable ? (
+            <span>Site could not be reached — this alone is hurting every category above.</span>
+          ) : (
+            <>
+              <span>SSL: {result.technicalCheck.sslValid ? "✅ Valid" : "❌ Not valid"}</span>
+              <span>Load time: {result.technicalCheck.loadTimeMs}ms</span>
+              <span>Title tag: {result.technicalCheck.hasTitleTag ? "✅" : "❌ Missing"}</span>
+              <span>Meta description: {result.technicalCheck.hasMetaDescription ? "✅" : "❌ Missing"}</span>
+              <span>Mobile-friendly tag: {result.technicalCheck.hasViewportTag ? "✅" : "❌ Missing"}</span>
+            </>
+          )}
+        </section>
+      )}
+
       {/* ── Revenue opportunity ── */}
       <section className="ar-revenue" aria-label="Revenue opportunity">
         <div className="ar-revenue-inner">

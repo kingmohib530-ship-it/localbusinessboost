@@ -115,7 +115,7 @@ export const Route = createFileRoute("/api/lead-generator/research")({
               } catch (e) {
                 console.error("[lead-generator/research] AI copy synthesis failed", e);
                 summary = `${place.businessName} was found via Google Places search for ${industry} in ${city}.`;
-                openingLine = `Hi! I noticed ${place.businessName} and wanted to reach out about helping you capture more business.`;
+                openingLine = `Hey, this is a ${industry} contractor local to the area — got a few minutes to talk about your place sometime this week?`;
               }
 
               return {
