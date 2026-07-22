@@ -50,6 +50,7 @@ import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/adm
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
 import { Route as AuthenticatedAppWorkflowsRouteImport } from './routes/_authenticated/app.workflows'
+import { Route as AuthenticatedAppVerificationRouteImport } from './routes/_authenticated/app.verification'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
@@ -274,6 +275,12 @@ const AuthenticatedAppWorkflowsRoute =
     path: '/workflows',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppVerificationRoute =
+  AuthenticatedAppVerificationRouteImport.update({
+    id: '/verification',
+    path: '/verification',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSettingsRoute =
   AuthenticatedAppSettingsRouteImport.update({
     id: '/settings',
@@ -382,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/verification': typeof AuthenticatedAppVerificationRoute
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
@@ -436,6 +444,7 @@ export interface FileRoutesByTo {
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/verification': typeof AuthenticatedAppVerificationRoute
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
@@ -493,6 +502,7 @@ export interface FileRoutesById {
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/_authenticated/app/verification': typeof AuthenticatedAppVerificationRoute
   '/_authenticated/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
+    | '/app/verification'
     | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
@@ -604,6 +615,7 @@ export interface FileRouteTypes {
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
+    | '/app/verification'
     | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
@@ -660,6 +672,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
+    | '/_authenticated/app/verification'
     | '/_authenticated/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
@@ -1011,6 +1024,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppWorkflowsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/verification': {
+      id: '/_authenticated/app/verification'
+      path: '/verification'
+      fullPath: '/app/verification'
+      preLoaderRoute: typeof AuthenticatedAppVerificationRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/settings': {
       id: '/_authenticated/app/settings'
       path: '/settings'
@@ -1116,6 +1136,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppVerificationRoute: typeof AuthenticatedAppVerificationRoute
   AuthenticatedAppWorkflowsRoute: typeof AuthenticatedAppWorkflowsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
@@ -1131,6 +1152,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
+  AuthenticatedAppVerificationRoute: AuthenticatedAppVerificationRoute,
   AuthenticatedAppWorkflowsRoute: AuthenticatedAppWorkflowsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }

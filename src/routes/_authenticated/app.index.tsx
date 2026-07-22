@@ -12,6 +12,7 @@ interface Profile {
   business_name: string | null;
   industry: string | null;
   subscription_tier: string | null;
+  verification_status: string | null;
 }
 
 interface ActivityRow {
@@ -103,7 +104,7 @@ function TodayDashboard() {
         ] = await Promise.all([
           supabase
             .from("profiles")
-            .select("full_name, business_name, industry, subscription_tier")
+            .select("full_name, business_name, industry, subscription_tier, verification_status")
             .eq("id", user.id)
             .single(),
           supabase
@@ -236,6 +237,27 @@ function TodayDashboard() {
           <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
             Upgrade now →
           </Link>
+        </div>
+      )}
+
+      {/* Verification banner */}
+      {!loading && profile?.verification_status === "unverified" && (
+        <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Get verified</div>
+            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Earn a trust badge and unlock the consumer marketplace — takes about 5 minutes.</div>
+          </div>
+          <Link to="/app/verification" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+            Get verified →
+          </Link>
+        </div>
+      )}
+      {!loading && profile?.verification_status === "pending" && (
+        <div style={{ background: "var(--elevated)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Verification in review</div>
+            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>We're reviewing your documents — usually within 1–2 business days.</div>
+          </div>
         </div>
       )}
 
