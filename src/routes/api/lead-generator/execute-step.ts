@@ -102,8 +102,11 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
               sendError = await twilioRes.text();
             }
           } else if (step.channel === "email") {
-            // No email-sending integration exists yet — log it rather than
-            // pretend to send, per the spec's explicit "placeholder for now".
+            // sendExternalEmail (email.server.ts) now exists for transactional
+            // mail (audit reports, contact form), but cold outbound lead
+            // sequences are a different call — deliverability/compliance
+            // (CAN-SPAM, sender reputation) needs a deliberate decision
+            // before this sends real email, so it still just logs.
             console.log(`[lead-generator/execute-step] would send email to ${lead.email ?? "(no email on file)"}: ${step.message_template}`);
           }
           // voicemail_drop / linkedin: no integration exists; treated as a
