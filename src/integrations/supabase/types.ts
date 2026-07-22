@@ -567,80 +567,134 @@ export type Database = {
         Row: {
           accept_consumer_leads: boolean
           booking_completion_rate: number | null
+          business_address: string | null
           business_hours: string | null
           business_name: string | null
+          business_zip: string | null
           city: string | null
           consumer_rating_avg: number | null
           created_at: string | null
+          ein_number: string | null
+          emergency_hours: boolean
           escalation_rules: string | null
           full_name: string | null
           greeting_message: string | null
           id: string
           industry: string | null
+          insurance_carrier: string | null
+          insurance_policy_number: string | null
           is_admin: boolean
           lanavix_score: number
+          license_number: string | null
+          license_state: string | null
           onboarding_completed: boolean | null
+          price_range_high: number | null
+          price_range_low: number | null
+          price_unit: string
+          quote_required: boolean
           response_speed_avg_minutes: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_period_end: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          team_size: string | null
           twilio_phone_number: string | null
           updated_at: string | null
+          verification_notes: string | null
+          verification_reviewed_at: string | null
+          verification_status: string
+          verification_submitted_at: string | null
           website: string | null
+          years_in_business: number | null
         }
         Insert: {
           accept_consumer_leads?: boolean
           booking_completion_rate?: number | null
+          business_address?: string | null
           business_hours?: string | null
           business_name?: string | null
+          business_zip?: string | null
           city?: string | null
           consumer_rating_avg?: number | null
           created_at?: string | null
+          ein_number?: string | null
+          emergency_hours?: boolean
           escalation_rules?: string | null
           full_name?: string | null
           greeting_message?: string | null
           id: string
           industry?: string | null
+          insurance_carrier?: string | null
+          insurance_policy_number?: string | null
           is_admin?: boolean
           lanavix_score?: number
+          license_number?: string | null
+          license_state?: string | null
           onboarding_completed?: boolean | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          price_unit?: string
+          quote_required?: boolean
           response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          team_size?: string | null
           twilio_phone_number?: string | null
           updated_at?: string | null
+          verification_notes?: string | null
+          verification_reviewed_at?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
           website?: string | null
+          years_in_business?: number | null
         }
         Update: {
           accept_consumer_leads?: boolean
           booking_completion_rate?: number | null
+          business_address?: string | null
           business_hours?: string | null
           business_name?: string | null
+          business_zip?: string | null
           city?: string | null
           consumer_rating_avg?: number | null
           created_at?: string | null
+          ein_number?: string | null
+          emergency_hours?: boolean
           escalation_rules?: string | null
           full_name?: string | null
           greeting_message?: string | null
           id?: string
           industry?: string | null
+          insurance_carrier?: string | null
+          insurance_policy_number?: string | null
           is_admin?: boolean
           lanavix_score?: number
+          license_number?: string | null
+          license_state?: string | null
           onboarding_completed?: boolean | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          price_unit?: string
+          quote_required?: boolean
           response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          team_size?: string | null
           twilio_phone_number?: string | null
           updated_at?: string | null
+          verification_notes?: string | null
+          verification_reviewed_at?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
           website?: string | null
+          years_in_business?: number | null
         }
         Relationships: []
       }
@@ -775,6 +829,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      verification_documents: {
+        Row: {
+          admin_notes: string | null
+          document_type: string
+          file_name: string | null
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          status: string
+          storage_path: string
+          uploaded_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          document_type: string
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          status?: string
+          storage_path: string
+          uploaded_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          document_type?: string
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          status?: string
+          storage_path?: string
+          uploaded_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
