@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/lib/admin";
@@ -93,9 +93,12 @@ function AdminDashboard() {
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", margin: "0 0 6px" }}>
           Lanavix Admin
         </h1>
-        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
+        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: "0 0 14px" }}>
           Overview of all users and platform activity.
         </p>
+        <Link to="/app/admin/verification-review" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+          Review business verifications →
+        </Link>
       </div>
 
       {/* Stats */}

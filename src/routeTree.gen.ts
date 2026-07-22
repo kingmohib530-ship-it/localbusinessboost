@@ -45,6 +45,7 @@ import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
 import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
+import { Route as ApiAdminVerificationReviewRouteImport } from './routes/api/admin/verification-review'
 import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/update-scores'
 import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
@@ -64,6 +65,7 @@ import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticat
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicChatbotBusiness_idRouteImport } from './routes/api/public/chatbot/$business_id'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
+import { Route as AuthenticatedAppAdminVerificationReviewRouteImport } from './routes/_authenticated/app.admin.verification-review'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -248,6 +250,12 @@ const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ApiAppointmentsRoute,
 } as any)
+const ApiAdminVerificationReviewRoute =
+  ApiAdminVerificationReviewRouteImport.update({
+    id: '/api/admin/verification-review',
+    path: '/api/admin/verification-review',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAdminUpdateScoresRoute = ApiAdminUpdateScoresRouteImport.update({
   id: '/api/admin/update-scores',
   path: '/api/admin/update-scores',
@@ -352,6 +360,12 @@ const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
   path: '/api/public/billing/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppAdminVerificationReviewRoute =
+  AuthenticatedAppAdminVerificationReviewRouteImport.update({
+    id: '/verification-review',
+    path: '/verification-review',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -379,7 +393,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
-  '/app/admin': typeof AuthenticatedAppAdminRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
@@ -395,6 +409,7 @@ export interface FileRoutesByFullPath {
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -405,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -434,7 +450,7 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
-  '/app/admin': typeof AuthenticatedAppAdminRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
@@ -450,6 +466,7 @@ export interface FileRoutesByTo {
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -460,6 +477,7 @@ export interface FileRoutesByTo {
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -492,7 +510,7 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
-  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
@@ -508,6 +526,7 @@ export interface FileRoutesById {
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -518,6 +537,7 @@ export interface FileRoutesById {
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -566,6 +586,7 @@ export interface FileRouteTypes {
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
+    | '/api/admin/verification-review'
     | '/api/appointments/$id'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -576,6 +597,7 @@ export interface FileRouteTypes {
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app/'
+    | '/app/admin/verification-review'
     | '/api/public/billing/portal'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
@@ -621,6 +643,7 @@ export interface FileRouteTypes {
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
+    | '/api/admin/verification-review'
     | '/api/appointments/$id'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -631,6 +654,7 @@ export interface FileRouteTypes {
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app'
+    | '/app/admin/verification-review'
     | '/api/public/billing/portal'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
@@ -678,6 +702,7 @@ export interface FileRouteTypes {
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
+    | '/api/admin/verification-review'
     | '/api/appointments/$id'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -688,6 +713,7 @@ export interface FileRouteTypes {
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/_authenticated/app/'
+    | '/_authenticated/app/admin/verification-review'
     | '/api/public/billing/portal'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
@@ -722,6 +748,7 @@ export interface RootRouteChildren {
   ApiAccountExportRoute: typeof ApiAccountExportRoute
   ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
   ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
+  ApiAdminVerificationReviewRoute: typeof ApiAdminVerificationReviewRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
@@ -989,6 +1016,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAppointmentsIdRouteImport
       parentRoute: typeof ApiAppointmentsRoute
     }
+    '/api/admin/verification-review': {
+      id: '/api/admin/verification-review'
+      path: '/api/admin/verification-review'
+      fullPath: '/api/admin/verification-review'
+      preLoaderRoute: typeof ApiAdminVerificationReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/update-scores': {
       id: '/api/admin/update-scores'
       path: '/api/admin/update-scores'
@@ -1122,11 +1156,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBillingPortalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/admin/verification-review': {
+      id: '/_authenticated/app/admin/verification-review'
+      path: '/verification-review'
+      fullPath: '/app/admin/verification-review'
+      preLoaderRoute: typeof AuthenticatedAppAdminVerificationReviewRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminVerificationReviewRoute: typeof AuthenticatedAppAdminVerificationReviewRoute
+}
+
+const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminVerificationReviewRoute:
+    AuthenticatedAppAdminVerificationReviewRoute,
+}
+
+const AuthenticatedAppAdminRouteWithChildren =
+  AuthenticatedAppAdminRoute._addFileChildren(
+    AuthenticatedAppAdminRouteChildren,
+  )
+
 interface AuthenticatedAppRouteChildren {
-  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppChatRoute: typeof AuthenticatedAppChatRoute
@@ -1142,7 +1197,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
-  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppChatRoute: AuthenticatedAppChatRoute,
@@ -1222,6 +1277,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAccountExportRoute: ApiAccountExportRoute,
   ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,
   ApiAdminUpdateScoresRoute: ApiAdminUpdateScoresRoute,
+  ApiAdminVerificationReviewRoute: ApiAdminVerificationReviewRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
