@@ -236,7 +236,8 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
                 .select("id, business_name, twilio_phone_number, lanavix_score")
                 .ilike("city", `%${extraction.city}%`)
                 .ilike("industry", `%${industry}%`)
-                .eq("subscription_status", "active")
+                .in("subscription_status", ["active", "trialing"])
+                .in("verification_status", ["verified", "pro", "elite"])
                 .eq("accept_consumer_leads", true)
                 .order("lanavix_score", { ascending: false })
                 .limit(1);
