@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 import appCss from "../styles.css?url";
 
@@ -95,6 +96,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <CookieConsentBanner />
     </QueryClientProvider>
   );
 }

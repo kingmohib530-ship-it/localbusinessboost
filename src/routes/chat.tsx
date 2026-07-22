@@ -6,15 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Bot, CheckCircle2, Loader2, Send } from "lucide-react";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
-    meta: [
-      { title: "Talk to us — LUNAVX" },
-      { name: "description", content: "Tell us about your business and we'll be in touch." },
-      { property: "og:title", content: "Talk to us — LUNAVX" },
-      { property: "og:description", content: "Tell us about your business and we'll be in touch." },
-    ],
+    meta: pageMeta({
+      title: "Talk to us — Lanavix",
+      description: "Tell us about your business and we'll be in touch.",
+      path: "/chat",
+    }),
   }),
   component: PublicChatPage,
 });

@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
+  head: () => ({
+    meta: pageMeta({
+      title: "Privacy Policy — Lanavix",
+      description: "How Lanavix collects, uses, and protects your data.",
+      path: "/privacy",
+    }),
+  }),
   component: PrivacyPage,
 });
 

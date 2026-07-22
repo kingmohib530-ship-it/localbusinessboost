@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/refund")({
   head: () => ({
-    meta: [
-      { title: "Refund Policy — Lanavix" },
-      { name: "description", content: "Lanavix's 30-day money-back guarantee and refund policy." },
-    ],
+    meta: pageMeta({
+      title: "Refund Policy — Lanavix",
+      description: "Lanavix's 30-day money-back guarantee and refund policy.",
+      path: "/refund",
+    }),
   }),
   component: RefundPage,
 });

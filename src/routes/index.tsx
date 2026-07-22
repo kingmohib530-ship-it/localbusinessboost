@@ -28,17 +28,16 @@ import {
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/SiteFooter'
 import { Button } from '@/components/ui/button'
+import { pageMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/')({
   head: () => ({
-    meta: [
-      { title: 'Lanavix — AI Workforce for Local Contractors' },
-      {
-        name: 'description',
-        content:
-          'Lanavix texts back every missed call in 60 seconds, automates 5-star reviews, and finds new local leads — built for HVAC, plumbing, roofing and other trades.',
-      },
-    ],
+    meta: pageMeta({
+      title: 'Lanavix — AI Workforce for Local Contractors',
+      description:
+        'Lanavix texts back every missed call in 60 seconds, automates 5-star reviews, and finds new local leads — built for HVAC, plumbing, roofing and other trades.',
+      path: '/',
+    }),
   }),
   component: HomePage,
 })

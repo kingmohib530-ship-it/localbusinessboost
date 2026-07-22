@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/cookies")({
   head: () => ({
-    meta: [
-      { title: "Cookie Policy — Lanavix" },
-      { name: "description", content: "How Lanavix uses cookies and local storage." },
-    ],
+    meta: pageMeta({
+      title: "Cookie Policy — Lanavix",
+      description: "How Lanavix uses cookies and local storage.",
+      path: "/cookies",
+    }),
   }),
   component: CookiesPage,
 });

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendNotificationEmail } from "@/lib/email.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -81,6 +82,17 @@ export const Route = createFileRoute("/api/public/contact")({
             });
 
           if (insertErr) throw insertErr;
+
+          await sendNotificationEmail(
+            `New contact form submission from ${name}`,
+            [
+              `Name: ${name}`,
+              business_name ? `Business: ${business_name}` : null,
+              email ? `Email: ${email}` : null,
+              phone ? `Phone: ${phone}` : null,
+              message ? `Message:\n${message}` : null,
+            ].filter(Boolean).join("\n"),
+          );
 
           return Response.json(
             { success: true, message: "Submission received" },

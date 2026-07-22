@@ -13,6 +13,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -81,6 +82,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CookiesRoute = CookiesRouteImport.update({
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
@@ -456,6 +464,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
@@ -512,6 +521,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/cookies'
+    | '/faq'
     | '/pricing'
     | '/privacy'
     | '/refund'
@@ -566,6 +576,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/cookies'
+    | '/faq'
     | '/pricing'
     | '/privacy'
     | '/refund'
@@ -620,6 +631,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/cookies'
+    | '/faq'
     | '/pricing'
     | '/privacy'
     | '/refund'
@@ -676,6 +688,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   ChatRoute: typeof ChatRoute
   CookiesRoute: typeof CookiesRoute
+  FaqRoute: typeof FaqRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
@@ -737,6 +750,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cookies': {
@@ -1159,6 +1179,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   ChatRoute: ChatRoute,
   CookiesRoute: CookiesRoute,
+  FaqRoute: FaqRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,

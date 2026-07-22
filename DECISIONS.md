@@ -117,3 +117,101 @@ those to this codebase's actual conventions.
 - **Production deploy, live Stripe charges, live Twilio SMS sends** — not
   performed. Per your explicit instruction this round: build and test
   locally, deploy only when you say so.
+
+## Round 3 — cookie banner, SEO, contact email, deploy readiness
+
+- **Cookie consent banner** — new `CookieConsentBanner.tsx`, mounted
+  globally in `__root.tsx`. Shows once, "We use essential cookies only. No
+  tracking." + a "Got it" button, persisted in `localStorage`
+  (`lanavix:cookie_consent`) — accurate given this app has no
+  tracking/ad cookies (confirmed in the earlier `/cookies` policy).
+
+- **SEO meta tags.** Added a shared `pageMeta()` helper
+  (`src/lib/seo.ts`) that sets title/description/OG/Twitter tags
+  together, since route-level `head()` only overrides the specific keys it
+  sets — pages that only redefined `title`/`description` were leaking
+  the homepage's Open Graph/Twitter copy to social shares. Applied to
+  every marketing page: `/`, `/pricing`, `/about`, `/audit`, `/terms`,
+  `/privacy`, `/refund`, `/cookies`, `/chat`. `terms.tsx` and
+  `privacy.tsx` had **zero** meta tags at all before this (real gap, not
+  cosmetic). Also fixed `/chat`'s title still saying "LUNAVX" (old
+  pre-rebrand name) instead of "Lanavix."
+  - **New `/faq` page** — didn't exist; added since you listed it as an
+    expected page. Reuses the 4 questions already in `pricing.tsx`'s FAQ
+    section plus a few more using facts already established elsewhere in
+    this app (TCPA/SMS compliance from `terms.tsx`, refund policy,
+    5-minute setup claim already used in marketing copy) — nothing
+    invented. Linked from the footer alongside About/Audit/Contact.
+
+- **Contact form now actually emails.** There was no email-sending
+  integration anywhere in this codebase before this — `/api/public/contact`
+  only ever saved to `contact_submissions`, it never emailed
+  moh@lanavix.com despite that being the apparent intent. Added
+  `src/lib/email.server.ts` — plain `fetch` to Resend's API (no new npm
+  dependency, matching how Twilio/Anthropic are already called directly),
+  gated behind `RESEND_API_KEY`. **Without a real `RESEND_API_KEY` set,
+  it logs what it would have sent and the submission still saves** — it
+  does not silently pretend to email when it can't. Set
+  `RESEND_API_KEY` (and optionally `RESEND_FROM_EMAIL`,
+  `NOTIFICATION_EMAIL` if not moh@lanavix.com) in Vercel to make this real.
+
+- **Data cleanup:** the Solo/Crew/Empire tier rename earlier this session
+  changed the code's tier names but left the `profiles.subscription_tier`
+  column defaulting to the old `'free'` and existing rows still saying
+  `'free'`. Checked live data first — all 11 existing profiles were
+  `free`/`inactive` (nobody has a working paid subscription yet, since
+  checkout was broken until this session), so this was a safe, no-op-risk
+  cleanup: migrated existing rows to `'starter'` and updated the column
+  default to match.
+
+### Production deploy readiness
+
+**I can't see which environment variables are actually configured in your
+Vercel project** — there's no tool available to me that lists configured
+env var names or values (by design; secrets aren't readable). What
+follows is what the code requires, cross-referenced against `.env.example`
+(kept in sync with what's actually referenced in the codebase, via grep,
+not guessed) — please confirm these are set in Vercel yourself.
+
+**Required — app is materially broken without these:**
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` — nothing works without these (client can't reach Supabase at all).
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — most server API routes use the admin client.
+- `VITE_PAYMENTS_CLIENT_TOKEN` — checkout embed can't load.
+- `STRIPE_SANDBOX_API_KEY` / `STRIPE_LIVE_API_KEY`, `LOVABLE_API_KEY` — checkout and webhook processing.
+- `PAYMENTS_SANDBOX_WEBHOOK_SECRET` / `PAYMENTS_LIVE_WEBHOOK_SECRET` — Stripe webhook signature verification.
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` — the core Missed Call Text-Back receptionist.
+- `ANTHROPIC_API_KEY` — every AI feature (receptionist replies, review responses, Lead Generator copy, the orchestrator).
+- `GOOGLE_PLACES_API_KEY` — Lead Blast and the Lead Generator's real business data.
+
+**Optional — features degrade gracefully without these, already designed that way:**
+- `CONSUMER_TWILIO_PHONE_NUMBER` — only affects one line of SMS footer copy in the consumer marketplace.
+- `MONDAY_API_KEY`, `MONDAY_LEAD_BOARD_ID` — CRM sync no-ops and logs.
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NOTIFICATION_EMAIL` — contact form still saves; just doesn't email yet.
+
+**Blocking issues for a real launch (not just missing env vars):**
+1. **Stripe Solo/Crew/Empire prices don't exist yet.** Checkout will fail
+   with "Price not found" until `scripts/setup-stripe-products.mjs` is run
+   against a real Stripe key (test first, then live) — see Round 2 notes
+   above.
+2. **`RESEND_API_KEY` isn't set** (as far as I can tell) — contact form
+   submissions save but don't email until this is set.
+3. **Business verification (fake-business gating), document upload, admin
+   review, and subscription/verification-based feature gating are not
+   built** — this is the task you asked me to pause. If launch depends on
+   keeping unverified businesses off the consumer marketplace, that gate
+   doesn't exist yet (the marketplace still only checks
+   `subscription_status`/`accept_consumer_leads`, not any verification
+   status, since verification doesn't exist as a concept in the schema yet).
+4. Nothing else found this pass blocks a build — `tsc --noEmit` and
+   `npm run build` both pass clean locally (150 pre-existing errors,
+   unrelated to anything touched this session — see below).
+
+**Build check:** `npm run build` succeeds. `tsc --noEmit` reports 150
+errors, all pre-existing (in files untouched this session — mostly stale
+`tasks`/`agent_runs`/`execution_logs` table references from the internal
+orchestrator pages, flagged as broken in an earlier phase, and a couple of
+other already-known nullable-type mismatches). Zero new errors introduced
+by anything in this session.
+
+**No deploy performed** — per your instruction, everything above was
+built and verified locally only.

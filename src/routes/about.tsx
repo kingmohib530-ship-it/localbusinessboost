@@ -2,13 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { MapPin, Mail } from "lucide-react";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
-    meta: [
-      { title: "About — Lanavix" },
-      { name: "description", content: "About Lanavix — the AI receptionist and growth platform for local service businesses." },
-    ],
+    meta: pageMeta({
+      title: "About — Lanavix",
+      description: "About Lanavix — the AI receptionist and growth platform for local service businesses.",
+      path: "/about",
+    }),
   }),
   component: AboutPage,
 });

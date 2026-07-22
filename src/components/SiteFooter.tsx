@@ -17,8 +17,10 @@ const COLS: FooterCol[] = [
   {
     title: "Company",
     links: [
+      { to: "/about", label: "About" },
       { to: "/audit", label: "Free Audit" },
-      { to: "mailto:moh@lanavix.com", label: "Contact", external: true },
+      { to: "/faq", label: "FAQ" },
+      { to: "/chat", label: "Contact" },
     ],
   },
   {

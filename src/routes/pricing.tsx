@@ -7,15 +7,15 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { supabase } from "@/integrations/supabase/client";
 import { PRICING_PLANS, type PlanId } from "@/lib/pricingPlans";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
-    meta: [
-      { title: "Pricing — Lanavix AI Workforce OS" },
-      { name: "description", content: "Simple, transparent pricing for Lanavix. Starter free, Solo $299, Crew $599, Empire $999/mo. 14-day free trial on every paid plan." },
-      { property: "og:title", content: "Pricing — Lanavix" },
-      { property: "og:description", content: "Simple, transparent pricing. Start with a free 14-day trial." },
-    ],
+    meta: pageMeta({
+      title: "Pricing — Lanavix AI Workforce OS",
+      description: "Simple, transparent pricing for Lanavix. Starter free, Solo $299, Crew $599, Empire $999/mo. 14-day free trial on every paid plan.",
+      path: "/pricing",
+    }),
   }),
   component: PricingPage,
 });
