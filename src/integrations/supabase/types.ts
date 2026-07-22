@@ -324,6 +324,7 @@ export type Database = {
           pain_signals: Json | null
           personalized_opening_line: string | null
           phone: string | null
+          phone_verified: boolean | null
           priority: string | null
           social_media: Json | null
           state: string | null
@@ -359,6 +360,7 @@ export type Database = {
           pain_signals?: Json | null
           personalized_opening_line?: string | null
           phone?: string | null
+          phone_verified?: boolean | null
           priority?: string | null
           social_media?: Json | null
           state?: string | null
@@ -394,6 +396,7 @@ export type Database = {
           pain_signals?: Json | null
           personalized_opening_line?: string | null
           phone?: string | null
+          phone_verified?: boolean | null
           priority?: string | null
           social_media?: Json | null
           state?: string | null

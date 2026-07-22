@@ -183,6 +183,30 @@ export async function assessWebsite(url: string | null): Promise<WebsiteAssessme
   }
 }
 
+/**
+ * Verifies a phone number via Twilio's Lookup v2 API — a real carrier-level
+ * check that the number is a valid, assignable line, not just well-formed.
+ * Returns false (never throws) on any failure so a Twilio outage degrades
+ * to "treat as unverified" rather than crashing the whole research run.
+ */
+export async function verifyPhoneNumber(
+  twilioSid: string,
+  twilioToken: string,
+  phone: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `https://lookups.twilio.com/v2/PhoneNumbers/${encodeURIComponent(phone)}`,
+      { headers: { Authorization: `Basic ${btoa(`${twilioSid}:${twilioToken}`)}` } },
+    );
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.valid === true;
+  } catch {
+    return false;
+  }
+}
+
 const MISSED_CALL_PHRASES = [
   "never answer", "never picked up", "no response", "doesn't pick up", "does not pick up",
   "hard to reach", "never called back", "didn't call back", "did not call back", "straight to voicemail",

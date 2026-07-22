@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
+import { createFileRoute, useSearch, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,9 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: z.object({
     mode: z.enum(["signin", "signup"]).optional(),
+    // Where to send the user after a successful sign-in/sign-up — e.g. back
+    // to /checkout/start?plan=solo when they hit a paid plan while signed out.
+    redirect: z.string().optional(),
   }),
   head: () => ({ meta: [{ title: "Sign in — Lanavix" }] }),
   component: AuthPage,
@@ -51,8 +54,8 @@ function friendlyError(message: string): string {
 const GOOGLE_OAUTH_ENABLED = true;
 
 function AuthPage() {
-  const navigate = useNavigate();
-  const { mode } = useSearch({ from: "/auth" });
+  const { mode, redirect } = useSearch({ from: "/auth" });
+  const postAuthTarget = redirect && redirect.startsWith("/") ? redirect : "/app";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -76,7 +79,10 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(friendlyError(error.message));
     toast.success("Welcome back!");
-    navigate({ to: "/app" });
+    // postAuthTarget may carry a query string (e.g. /checkout/start?plan=solo)
+    // which doesn't fit navigate()'s typed {to, search} shape, so use a plain
+    // browser navigation here instead.
+    window.location.href = postAuthTarget;
   };
 
   const signUp = async () => {
@@ -88,7 +94,7 @@ function AuthPage() {
     if (error) return toast.error(friendlyError(error.message));
     if (data.session) {
       toast.success("Account created! Taking you to the dashboard...");
-      navigate({ to: "/app" });
+      window.location.href = postAuthTarget;
     } else {
       setSignupSuccess(email.trim());
     }
@@ -108,7 +114,7 @@ function AuthPage() {
   const google = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/app` },
+      options: { redirectTo: `${window.location.origin}${postAuthTarget}` },
     });
     if (error) toast.error(friendlyError(error.message));
   };

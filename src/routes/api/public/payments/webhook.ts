@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
 
-function planFromPriceId(priceId?: string): "free" | "pro" | "agency" {
-  if (priceId === "agency_monthly") return "agency";
-  if (priceId === "pro_monthly") return "pro";
-  return "free";
+function planFromPriceId(priceId?: string): "starter" | "solo" | "crew" | "empire" {
+  if (priceId === "empire_monthly") return "empire";
+  if (priceId === "crew_monthly") return "crew";
+  if (priceId === "solo_monthly") return "solo";
+  return "starter";
 }
 
 // profiles already has purpose-built subscription columns
@@ -21,7 +22,7 @@ async function syncProfileSubscription(
   periodEnd: number | undefined,
 ) {
   const isActive = status === "active" || status === "trialing" || status === "past_due";
-  const plan = isActive ? planFromPriceId(priceId) : "free";
+  const plan = isActive ? planFromPriceId(priceId) : "starter";
   const { error } = await supabaseAdmin
     .from("profiles")
     .update({

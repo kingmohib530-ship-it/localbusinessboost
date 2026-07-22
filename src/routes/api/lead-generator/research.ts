@@ -10,6 +10,7 @@ import {
   buildSequenceTemplates,
   synthesizeLeadCopy,
   syncLeadToMonday,
+  verifyPhoneNumber,
 } from "@/lib/leadGenerator.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -81,12 +82,23 @@ export const Route = createFileRoute("/api/lead-generator/research")({
             );
           }
 
-          const enriched = await Promise.all(
+          // Real carrier-level phone verification (Twilio Lookup) — a lead
+          // whose number fails verification is discarded below rather than
+          // stored. If Twilio isn't configured, verification is skipped
+          // (phone_verified stays null) rather than discarding everyone.
+          const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+          const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+
+          const enrichedWithVerification = await Promise.all(
             places.map(async (place) => {
               const website = await assessWebsite(place.website);
               const painSignals = detectPainSignals(place, website);
               const leadScore = computeLeadScore(painSignals, place.googleRating);
               const priority = priorityFromScore(leadScore);
+              const phoneVerified =
+                twilioSid && twilioToken && place.phone
+                  ? await verifyPhoneNumber(twilioSid, twilioToken, place.phone)
+                  : null;
 
               let summary = "";
               let openingLine = "";
@@ -105,6 +117,7 @@ export const Route = createFileRoute("/api/lead-generator/research")({
                 business_name: place.businessName,
                 owner_name: null,
                 phone: place.phone,
+                phone_verified: phoneVerified,
                 email: null,
                 website: place.website,
                 address: place.address,
@@ -132,6 +145,17 @@ export const Route = createFileRoute("/api/lead-generator/research")({
               };
             }),
           );
+
+          // Discard leads whose phone failed real carrier verification —
+          // phone_verified === null (Twilio not configured) is kept, since
+          // that means verification was skipped, not that it failed.
+          const enriched = enrichedWithVerification.filter((lead) => lead.phone_verified !== false);
+          if (enriched.length === 0) {
+            return Response.json(
+              { error: "No businesses with a verifiable phone number found in that area. Try a different city." },
+              { status: 404 },
+            );
+          }
 
           const { data: inserted, error: insertErr } = await supabaseAdmin
             .from("lead_profiles")

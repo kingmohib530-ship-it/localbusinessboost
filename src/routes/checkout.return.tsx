@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getStripeEnvironment } from "@/lib/stripe";
 import { absoluteUrl, topLevelNavigate } from "@/lib/url";
 
 export const Route = createFileRoute("/checkout/return")({
@@ -29,16 +28,15 @@ function CheckoutReturn() {
         if (attempts++ < 20 && !cancelled) setTimeout(poll, 1500);
         return;
       }
+      // profiles has purpose-built subscription columns already synced by the
+      // webhook — no separate subscriptions table exists live.
       const { data } = await supabase
-        .from("subscriptions")
-        .select("status,price_id")
-        .eq("user_id", userId)
-        .eq("environment", getStripeEnvironment())
-        .order("created_at", { ascending: false })
-        .limit(1)
+        .from("profiles")
+        .select("subscription_status")
+        .eq("id", userId)
         .maybeSingle();
       if (cancelled) return;
-      if (data && ["active", "trialing"].includes((data as { status: string }).status)) {
+      if (data && ["active", "trialing"].includes(data.subscription_status || "")) {
         setStatus("active");
         setTimeout(() => {
           topLevelNavigate(absoluteUrl("/"));

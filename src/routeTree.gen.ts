@@ -17,8 +17,10 @@ import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CheckoutStartRouteImport } from './routes/checkout.start'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
@@ -101,6 +103,11 @@ const AuditRoute = AuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -108,6 +115,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutStartRoute = CheckoutStartRouteImport.update({
+  id: '/checkout/start',
+  path: '/checkout/start',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
@@ -330,6 +342,7 @@ const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
@@ -351,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/checkout/start': typeof CheckoutStartRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
@@ -382,6 +396,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
@@ -402,6 +417,7 @@ export interface FileRoutesByTo {
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/checkout/start': typeof CheckoutStartRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
@@ -435,6 +451,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
@@ -456,6 +473,7 @@ export interface FileRoutesById {
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/checkout/start': typeof CheckoutStartRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
@@ -489,6 +507,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/audit'
     | '/auth'
     | '/chat'
@@ -510,6 +529,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
+    | '/checkout/start'
     | '/app/admin'
     | '/app/agents'
     | '/app/calendar'
@@ -541,6 +561,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/audit'
     | '/auth'
     | '/chat'
@@ -561,6 +582,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
+    | '/checkout/start'
     | '/app/admin'
     | '/app/agents'
     | '/app/calendar'
@@ -593,6 +615,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/audit'
     | '/auth'
     | '/chat'
@@ -614,6 +637,7 @@ export interface FileRouteTypes {
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
+    | '/checkout/start'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/agents'
     | '/_authenticated/app/calendar'
@@ -647,6 +671,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuditRoute: typeof AuditRoute
   AuthRoute: typeof AuthRouteWithChildren
   ChatRoute: typeof ChatRoute
@@ -666,6 +691,7 @@ export interface RootRouteChildren {
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
   ApiWorkflowRoute: typeof ApiWorkflowRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  CheckoutStartRoute: typeof CheckoutStartRoute
   ApiAccountDeleteRoute: typeof ApiAccountDeleteRoute
   ApiAccountExportRoute: typeof ApiAccountExportRoute
   ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
@@ -741,6 +767,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -753,6 +786,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/start': {
+      id: '/checkout/start'
+      path: '/checkout/start'
+      fullPath: '/checkout/start'
+      preLoaderRoute: typeof CheckoutStartRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/return': {
@@ -1114,6 +1154,7 @@ const ApiAppointmentsRouteWithChildren = ApiAppointmentsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuditRoute: AuditRoute,
   AuthRoute: AuthRouteWithChildren,
   ChatRoute: ChatRoute,
@@ -1133,6 +1174,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
   ApiWorkflowRoute: ApiWorkflowRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  CheckoutStartRoute: CheckoutStartRoute,
   ApiAccountDeleteRoute: ApiAccountDeleteRoute,
   ApiAccountExportRoute: ApiAccountExportRoute,
   ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,

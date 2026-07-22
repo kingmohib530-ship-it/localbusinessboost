@@ -22,6 +22,7 @@ import {
   Link2,
   Bot,
   Inbox,
+  Quote,
   type LucideIcon,
 } from 'lucide-react'
 import { SiteNav } from '@/components/SiteNav'
@@ -381,6 +382,28 @@ function HomePage() {
                 <card.icon className="h-6 w-6 text-primary mb-4" />
                 <h3 className="font-semibold text-base mb-2">{card.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{card.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS — placeholder cards only; Lanavix is in early access
+          and has no customer quotes to publish yet. Replace with real
+          testimonials as they come in, not before. */}
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+            What contractors are saying
+          </h2>
+          <p className="text-muted-foreground mb-14">We're in early access — real stories are on their way.</p>
+          <div className="grid sm:grid-cols-3 gap-5 text-left">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-7">
+                <Quote className="h-6 w-6 text-muted-foreground/40 mb-4" />
+                <p className="text-muted-foreground text-sm leading-relaxed italic">
+                  Customer testimonial coming soon.
+                </p>
               </div>
             ))}
           </div>

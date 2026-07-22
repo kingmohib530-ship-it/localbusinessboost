@@ -9,6 +9,7 @@ const NAV_LINKS: NavLink[] = [
   { to: "/#features", label: "What you get", anchor: true },
   { to: "/#how-it-works", label: "How it works", anchor: true },
   { to: "/pricing", label: "Pricing" },
+  { to: "/about", label: "About" },
 ];
 
 export function SiteNav() {

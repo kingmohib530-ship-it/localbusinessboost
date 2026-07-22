@@ -35,40 +35,85 @@ those to this codebase's actual conventions.
   localStorage for the auth session and doesn't set tracking/ad cookies.
   Both linked from the site footer's Legal section alongside the existing two.
 
-## What was found but deliberately NOT fixed this pass
+## Round 2 — pricing fix, lead verification, marketing placeholders
 
-- **Public `/pricing` page checkout is non-functional in production.** It
-  uses hardcoded Stripe **test-mode** Payment Links
-  (`buy.stripe.com/test_...`), completely bypassing the app's own
-  `createCheckoutSession` server function and the `/api/public/payments/webhook`
-  endpoint. Even in live mode, Payment Links configured this way never
-  attach `metadata.userId`, so the webhook could never attribute a real
-  payment to an account. There's also an unused, already-correctly-wired
-  `StripeEmbeddedCheckout.tsx` component sitting disconnected from any page.
-  Fixing this properly requires real Stripe price/lookup-key IDs I don't
-  have, and overlaps with the Business Verification + Pricing task you
-  already asked me to pause — so I flagged it here rather than guessing at
-  IDs that could break checkout further.
-- **Business verification flow, document upload, admin review, and the
-  new Solo/Crew/Empire pricing tiers** — this is the task you explicitly
-  paused two turns ago. Confirmed pricing for when that resumes: Starter
-  $0 / Solo $299 / Crew $599 / Empire $999.
-- **About page, FAQ page, testimonials, live chat widget, placeholder phone
-  number** — the sprint doc's marketing-page instructions call for
-  content I have no real source for (a founder photo, testimonials, a
-  phone number, a Crisp chat ID). Shipping placeholder content presented as
-  real isn't something I'll do without you providing the actual facts.
-  The public `/chat` page (already fixed in an earlier phase) already
-  serves as the real "contact us" form.
-- **Yelp as a second lead source** — no `YELP_API_KEY` convention exists in
-  this codebase, and lead-blast/lead-generator already source real data
-  from Google Places only. Not added since it wasn't a broken existing
-  feature, just a net-new one not otherwise requested.
-- **Next.js scaffolding, `middleware.ts`, security headers, CSP** — this
-  app already has HSTS, X-Frame-Options: DENY, a real CSP with
-  `frame-ancestors 'none'`, and more configured in `vercel.json` — more
-  thorough than the sprint doc's own checklist. No changes needed.
+- **Checkout is now wired to real infrastructure.** `/pricing` no longer
+  uses hardcoded Stripe Payment Links. It now checks the visitor's auth
+  session and routes to: free Starter → signup/dashboard directly (no
+  Stripe involved); paid plans (Solo/Crew/Empire) → signed out visitors go
+  to `/auth?mode=signup&redirect=/checkout/start?plan=X` first, signed-in
+  visitors go straight to the new `/checkout/start?plan=X` page, which
+  renders the already-existing (previously unused) `StripeEmbeddedCheckout`
+  component against `createCheckoutSession`. `auth.tsx` now supports a
+  `redirect` search param so sign-in/sign-up lands the user back on the
+  checkout they started.
+  - **Test price lookup_keys used (not yet real Stripe objects):**
+    `solo_monthly` ($299), `crew_monthly` ($599), `empire_monthly` ($999).
+    Starter has no Stripe price (free). Run
+    `STRIPE_SECRET_KEY=sk_test_... node scripts/setup-stripe-products.mjs`
+    against your Stripe test account to create matching products/prices
+    (monthly recurring, 14-day trial) under these exact lookup_keys — no
+    further code changes needed once they exist. Re-run with a live secret
+    key against your live Stripe account when you're ready to go live.
+  - **Also fixed:** `checkout.return.tsx` (the post-checkout landing page)
+    was polling a `public.subscriptions` table that doesn't exist — the
+    same phantom-table bug already fixed elsewhere in this app (Stripe
+    webhook, billing portal). It now polls `profiles.subscription_status`
+    like the rest of the app. Without this fix, a successful real payment
+    would never have been recognized as "active" on return from Stripe.
+  - **Webhook plan mapping updated:** `planFromPriceId` now maps
+    `solo_monthly`/`crew_monthly`/`empire_monthly` → `solo`/`crew`/`empire`,
+    defaulting to `starter` (renamed from the old `free`/`pro`/`agency`
+    naming, which matched neither the public pricing page's old tiers nor
+    the new confirmed ones).
+
+- **Lead Generator: Twilio Lookup phone verification added.** New
+  `phone_verified boolean` column on `lead_profiles` (migration). Every
+  researched lead's phone now goes through Twilio's Lookup v2 API (a real
+  carrier-level validity check); leads that fail verification are discarded
+  before insert. If `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN` aren't
+  configured, verification is skipped (`phone_verified` stays `null`) and
+  leads are kept rather than all being discarded.
+  - **On "using the existing OpenAI integration":** there is no OpenAI
+    integration anywhere in this codebase — every AI feature (opening
+    lines, review responses, the orchestrator, etc.) already uses
+    Anthropic/Claude, consistently, across every phase of this app's
+    history. The Lead Generator's opening-line/summary generation already
+    used Claude before this pass and still does; I didn't introduce a new
+    provider/dependency for this.
+  - **Reaffirming what was already true:** the Lead Generator has never
+    fabricated business names or phone numbers. Real data comes from
+    Google Places (name, address, phone, rating, reviews, website) —
+    confirmed and unit-tested in the phase that built it. This pass added
+    a second, independent real-data check (carrier verification) on top of
+    that, it didn't fix a fabrication bug because there wasn't one.
+
+- **Marketing: About page + testimonials added, both explicitly
+  placeholder-marked per your instruction.** `/about` has `[Founder name
+  and bio to be added]` and `[Photo to be added]` markers — nothing
+  presented as a real bio. The homepage now has a testimonials section
+  with 3 cards reading "Customer testimonial coming soon." — accurate,
+  since Lanavix is in early access with no customer quotes to publish yet
+  (see the homepage's existing "Early access" section, which already says
+  this). Real location (Prince William County, VA) and contact
+  (moh@lanavix.com) reused from what's already established elsewhere in
+  this app, not invented.
+
+- **Twilio Missed Call Text-Back and Review SMS were already wired** —
+  built in an earlier phase (`missed-call.ts`, `sms-reply.ts`,
+  `review-request.ts`), with real signature verification, rate limiting,
+  and Twilio sending. Confirmed intact; not rebuilt.
+
+## Still not fixed (unchanged from Round 1)
+
+- **Business verification flow, document upload, admin review** — the
+  task you explicitly paused. Not resumed this round.
+- **Yelp as a second lead source, About page's FAQ section, live chat
+  widget** — not added; no real source/credential for these, and not
+  explicitly requested this round.
+- **Next.js scaffolding, `middleware.ts`** — not applicable; this app
+  already has more thorough security headers/CSP than the sprint doc asks
+  for, configured in `vercel.json`.
 - **Production deploy, live Stripe charges, live Twilio SMS sends** — not
-  performed autonomously. These are real-money, real-message actions that
-  need your explicit go-ahead, not something a sprint doc's framing should
-  cause me to do unattended.
+  performed. Per your explicit instruction this round: build and test
+  locally, deploy only when you say so.
