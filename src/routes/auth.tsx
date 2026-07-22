@@ -60,6 +60,9 @@ function AuthPage() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState<string | null>(null);
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const emailValid = isValidEmail(email);
   const emailError = emailTouched && email.length > 0 && !emailValid;
@@ -91,6 +94,17 @@ function AuthPage() {
     }
   };
 
+  const sendPasswordReset = async () => {
+    if (!emailValid) { toast.error("Please enter a valid email address."); return; }
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    setResetLoading(false);
+    if (error) return toast.error(friendlyError(error.message));
+    setResetEmailSent(email.trim());
+  };
+
   const google = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -110,7 +124,47 @@ function AuthPage() {
         </Link>
 
         <div className="glass rounded-2xl p-8 shadow-sm">
-          {signupSuccess ? (
+          {resetEmailSent ? (
+            <div className="text-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-display font-bold text-lg mb-1">Check your email</h2>
+                <p className="text-sm text-muted-foreground">
+                  If an account exists for <span className="font-medium text-foreground">{resetEmailSent}</span>, we sent a link to reset your password.
+                </p>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => { setResetEmailSent(null); setForgotPasswordMode(false); }}>
+                Back to sign in
+              </Button>
+            </div>
+          ) : forgotPasswordMode ? (
+            <div className="space-y-4">
+              <div>
+                <h2 className="font-display font-bold text-lg mb-1">Reset your password</h2>
+                <p className="text-sm text-muted-foreground">Enter your email and we'll send you a reset link.</p>
+              </div>
+              <div className="space-y-1">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmailTouched(true)}
+                  placeholder="you@company.com"
+                  onKeyDown={(e) => e.key === "Enter" && sendPasswordReset()}
+                  autoComplete="email"
+                />
+              </div>
+              <Button className="w-full" disabled={resetLoading} onClick={sendPasswordReset}>
+                {resetLoading ? "Sending…" : "Send reset link"}
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={() => setForgotPasswordMode(false)}>
+                Back to sign in
+              </Button>
+            </div>
+          ) : signupSuccess ? (
             <div className="text-center space-y-4">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="h-6 w-6 text-primary" />
@@ -204,6 +258,15 @@ function AuthPage() {
                         <p className="text-xs text-muted-foreground">Minimum 8 characters required</p>
                       )}
                     </div>
+                  )}
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => setForgotPasswordMode(true)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                    >
+                      Forgot password?
+                    </button>
                   )}
                 </div>
 

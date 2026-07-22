@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /api
+Disallow: /auth
+Disallow: /checkout
+
+Sitemap: https://www.lanavix.com/sitemap.xml

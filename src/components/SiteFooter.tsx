@@ -26,6 +26,8 @@ const COLS: FooterCol[] = [
     links: [
       { to: "/privacy", label: "Privacy Policy" },
       { to: "/terms", label: "Terms of Service" },
+      { to: "/refund", label: "Refund Policy" },
+      { to: "/cookies", label: "Cookie Policy" },
     ],
   },
 ];
