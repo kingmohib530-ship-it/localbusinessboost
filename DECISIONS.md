@@ -215,3 +215,40 @@ by anything in this session.
 
 **No deploy performed** — per your instruction, everything above was
 built and verified locally only.
+
+## Round 4 — env validation module
+
+New `src/lib/env.server.ts` (not repo-root `lib/env.ts` — this project has
+no top-level `lib/`, and the `.server.ts` suffix matches the existing
+convention for secret-reading modules like `stripe.server.ts`). Exports
+`validateEnv()`, `isIntegrationReady(category)`, `getEnvByCategory(category)`.
+
+Adjustments from the literal spec, since it was written against a generic
+Next.js template:
+- **No `DATABASE_URL`** — this app never holds a raw Postgres connection
+  string; it only talks to Postgres through the Supabase SDK. The real
+  "core database" vars are `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`
+  (server) and `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` (client).
+- **No `NEXTAUTH_SECRET`** — this app uses Supabase Auth directly, which
+  manages its own session signing; there's no separate app-held auth
+  secret to validate.
+- **Added a 7th category, `integrations`** — `MONDAY_API_KEY`/
+  `MONDAY_LEAD_BOARD_ID` (CRM sync) don't fit core/auth/email/billing/ai/
+  monitoring; mislabeling them as "monitoring" would be inaccurate, so
+  they got their own category instead of being forced into the wrong one.
+  `monitoring` is defined but has zero variables — no error-tracking/
+  observability integration exists in this codebase yet.
+- **Twilio vars placed under `core`**, not a separate category — the
+  missed-call receptionist is the core, always-on product (every plan
+  includes it), so this seemed more accurate than inventing an "sms"
+  category or omitting it.
+- **Stripe vars marked optional with a "billing on hold" note**, per your
+  instruction — accurate today since real Stripe products/prices don't
+  exist yet regardless of these vars being set (see Round 2/3 notes).
+
+Not wired into app startup — this only creates the module and exports the
+three requested functions; nothing currently calls `validateEnv()`
+automatically. Verified with a standalone logic test (12/12 passed:
+required-missing throws in production vs. warns in development, invalid
+formats are caught even when a var is present, category-readiness checks
+behave correctly including billing's all-optional special case).
