@@ -136,8 +136,19 @@ function VerificationPage() {
     if (ok !== false) setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
+  const ALLOWED_UPLOAD_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
+  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // matches the verification-docs bucket's server-side limit
+
   async function handleUpload(documentType: string, file: File) {
     if (!userId) return;
+    if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
+      setErrorMsg("That file type isn't supported. Please upload a JPG, PNG, WEBP, HEIC, or PDF.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setErrorMsg("That file is too large — please upload something under 10MB.");
+      return;
+    }
     setUploading(documentType);
     setErrorMsg("");
     const path = `${userId}/${documentType}-${Date.now()}-${file.name}`;

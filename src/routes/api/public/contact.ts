@@ -2,9 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendNotificationEmail } from "@/lib/email.server";
+import { SITE_URL } from "@/lib/seo";
 
+// Unlike the chatbot widget (deliberately embeddable anywhere), this form is
+// only ever called from Lanavix's own /chat page — same-origin requests
+// don't need CORS headers at all, so restricting this only blocks a
+// third-party site from calling it directly cross-origin.
 const CORS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": SITE_URL,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };

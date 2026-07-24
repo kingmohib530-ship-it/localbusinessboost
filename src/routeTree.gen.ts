@@ -34,8 +34,6 @@ import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automat
 import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
 import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
 import { Route as ApiLeadBlastRouteImport } from './routes/api/lead-blast'
-import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
-import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
 import { Route as ApiCompetitorIntelRouteImport } from './routes/api/competitor-intel'
 import { Route as ApiBookingPlanRouteImport } from './routes/api/booking-plan'
 import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
@@ -44,7 +42,6 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as ApiTwilioSmsReplyRouteImport } from './routes/api/twilio/sms-reply'
 import { Route as ApiTwilioMissedCallRouteImport } from './routes/api/twilio/missed-call'
 import { Route as ApiTwilioConsumerInboundRouteImport } from './routes/api/twilio/consumer-inbound'
-import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
@@ -69,7 +66,6 @@ import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicChatbotBusiness_idRouteImport } from './routes/api/public/chatbot/$business_id'
-import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
 import { Route as AuthenticatedAppAdminVerificationReviewRouteImport } from './routes/_authenticated/app.admin.verification-review'
 
 const TermsRoute = TermsRouteImport.update({
@@ -196,16 +192,6 @@ const ApiLeadBlastRoute = ApiLeadBlastRouteImport.update({
   path: '/api/lead-blast',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGenerateWeeklyPlanRoute = ApiGenerateWeeklyPlanRouteImport.update({
-  id: '/api/generate-weekly-plan',
-  path: '/api/generate-weekly-plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiGenerateContentRoute = ApiGenerateContentRouteImport.update({
-  id: '/api/generate-content',
-  path: '/api/generate-content',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiCompetitorIntelRoute = ApiCompetitorIntelRouteImport.update({
   id: '/api/competitor-intel',
   path: '/api/competitor-intel',
@@ -247,11 +233,6 @@ const ApiTwilioConsumerInboundRoute =
     path: '/api/twilio/consumer-inbound',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
-  id: '/api/public/leads',
-  path: '/api/public/leads',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
@@ -385,11 +366,6 @@ const ApiPublicChatbotBusiness_idRoute =
     path: '/api/public/chatbot/$business_id',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
-  id: '/api/public/billing/portal',
-  path: '/api/public/billing/portal',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedAppAdminVerificationReviewRoute =
   AuthenticatedAppAdminVerificationReviewRouteImport.update({
     id: '/verification-review',
@@ -418,8 +394,6 @@ export interface FileRoutesByFullPath {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
-  '/api/generate-content': typeof ApiGenerateContentRoute
-  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/lead-blast': typeof ApiLeadBlastRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
@@ -450,13 +424,11 @@ export interface FileRoutesByFullPath {
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
-  '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
-  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -480,8 +452,6 @@ export interface FileRoutesByTo {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
-  '/api/generate-content': typeof ApiGenerateContentRoute
-  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/lead-blast': typeof ApiLeadBlastRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
@@ -512,13 +482,11 @@ export interface FileRoutesByTo {
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
-  '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
-  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -545,8 +513,6 @@ export interface FileRoutesById {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
-  '/api/generate-content': typeof ApiGenerateContentRoute
-  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
   '/api/lead-blast': typeof ApiLeadBlastRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
@@ -577,13 +543,11 @@ export interface FileRoutesById {
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
-  '/api/public/leads': typeof ApiPublicLeadsRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
-  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -610,8 +574,6 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
-    | '/api/generate-content'
-    | '/api/generate-weekly-plan'
     | '/api/lead-blast'
     | '/api/review-request'
     | '/api/review-response'
@@ -642,13 +604,11 @@ export interface FileRouteTypes {
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
     | '/api/public/contact'
-    | '/api/public/leads'
     | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app/'
     | '/app/admin/verification-review'
-    | '/api/public/billing/portal'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -672,8 +632,6 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
-    | '/api/generate-content'
-    | '/api/generate-weekly-plan'
     | '/api/lead-blast'
     | '/api/review-request'
     | '/api/review-response'
@@ -704,13 +662,11 @@ export interface FileRouteTypes {
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
     | '/api/public/contact'
-    | '/api/public/leads'
     | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/app'
     | '/app/admin/verification-review'
-    | '/api/public/billing/portal'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   id:
@@ -736,8 +692,6 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
-    | '/api/generate-content'
-    | '/api/generate-weekly-plan'
     | '/api/lead-blast'
     | '/api/review-request'
     | '/api/review-response'
@@ -768,13 +722,11 @@ export interface FileRouteTypes {
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
     | '/api/public/contact'
-    | '/api/public/leads'
     | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
     | '/_authenticated/app/'
     | '/_authenticated/app/admin/verification-review'
-    | '/api/public/billing/portal'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -800,8 +752,6 @@ export interface RootRouteChildren {
   ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
   ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
-  ApiGenerateContentRoute: typeof ApiGenerateContentRoute
-  ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
   ApiLeadBlastRoute: typeof ApiLeadBlastRoute
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
@@ -818,11 +768,9 @@ export interface RootRouteChildren {
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
-  ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
   ApiTwilioConsumerInboundRoute: typeof ApiTwilioConsumerInboundRoute
   ApiTwilioMissedCallRoute: typeof ApiTwilioMissedCallRoute
   ApiTwilioSmsReplyRoute: typeof ApiTwilioSmsReplyRoute
-  ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
   ApiPublicChatbotBusiness_idRoute: typeof ApiPublicChatbotBusiness_idRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -1004,20 +952,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLeadBlastRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/generate-weekly-plan': {
-      id: '/api/generate-weekly-plan'
-      path: '/api/generate-weekly-plan'
-      fullPath: '/api/generate-weekly-plan'
-      preLoaderRoute: typeof ApiGenerateWeeklyPlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/generate-content': {
-      id: '/api/generate-content'
-      path: '/api/generate-content'
-      fullPath: '/api/generate-content'
-      preLoaderRoute: typeof ApiGenerateContentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/competitor-intel': {
       id: '/api/competitor-intel'
       path: '/api/competitor-intel'
@@ -1072,13 +1006,6 @@ declare module '@tanstack/react-router' {
       path: '/api/twilio/consumer-inbound'
       fullPath: '/api/twilio/consumer-inbound'
       preLoaderRoute: typeof ApiTwilioConsumerInboundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/leads': {
-      id: '/api/public/leads'
-      path: '/api/public/leads'
-      fullPath: '/api/public/leads'
-      preLoaderRoute: typeof ApiPublicLeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/contact': {
@@ -1249,13 +1176,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicChatbotBusiness_idRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/billing/portal': {
-      id: '/api/public/billing/portal'
-      path: '/api/public/billing/portal'
-      fullPath: '/api/public/billing/portal'
-      preLoaderRoute: typeof ApiPublicBillingPortalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/app/admin/verification-review': {
       id: '/_authenticated/app/admin/verification-review'
       path: '/verification-review'
@@ -1369,8 +1289,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
   ApiBookingPlanRoute: ApiBookingPlanRoute,
   ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
-  ApiGenerateContentRoute: ApiGenerateContentRoute,
-  ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
   ApiLeadBlastRoute: ApiLeadBlastRoute,
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
@@ -1387,11 +1305,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
-  ApiPublicLeadsRoute: ApiPublicLeadsRoute,
   ApiTwilioConsumerInboundRoute: ApiTwilioConsumerInboundRoute,
   ApiTwilioMissedCallRoute: ApiTwilioMissedCallRoute,
   ApiTwilioSmsReplyRoute: ApiTwilioSmsReplyRoute,
-  ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
   ApiPublicChatbotBusiness_idRoute: ApiPublicChatbotBusiness_idRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }

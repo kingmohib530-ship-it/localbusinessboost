@@ -6,7 +6,7 @@
  * would show the homepage's title/description instead.
  */
 
-const SITE_URL = "https://www.lanavix.com";
+export const SITE_URL = "https://www.lanavix.com";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png.svg`;
 
 export function pageMeta({
