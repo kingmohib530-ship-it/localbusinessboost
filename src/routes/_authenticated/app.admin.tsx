@@ -79,7 +79,7 @@ function AdminDashboard() {
     { label: "Total users", value: users.length, icon: "👥", color: "#818cf8" },
     { label: "Leads generated", value: totalLeads, icon: "🎯", color: "#34d399" },
     { label: "Review requests", value: totalReviews, icon: "⭐", color: "#fbbf24" },
-    { label: "Paying customers", value: users.filter(u => u.subscription_tier && u.subscription_tier !== "free").length, icon: "💰", color: "#f472b6" },
+    { label: "Paying customers", value: users.filter(u => u.subscription_tier && u.subscription_tier !== "starter").length, icon: "💰", color: "#f472b6" },
   ];
 
   return (
@@ -147,10 +147,10 @@ function AdminDashboard() {
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{
                         fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                        background: u.subscription_tier && u.subscription_tier !== "free" ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
-                        color: u.subscription_tier && u.subscription_tier !== "free" ? "#34d399" : "#818cf8"
+                        background: u.subscription_tier && u.subscription_tier !== "starter" ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
+                        color: u.subscription_tier && u.subscription_tier !== "starter" ? "#34d399" : "#818cf8"
                       }}>
-                        {u.subscription_tier || "free"}
+                        {u.subscription_tier || "starter"}
                       </span>
                     </td>
                   </tr>

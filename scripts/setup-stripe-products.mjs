@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * One-time setup: creates the Solo/Crew/Empire Stripe products + recurring
+ * One-time setup: creates the Solo/Crew/Agency Stripe products + recurring
  * monthly prices (with a 14-day trial) and assigns them the lookup_keys
  * this app's checkout flow already expects (see src/lib/pricingPlans.ts).
  *
@@ -30,9 +30,9 @@ if (!secretKey) {
 const stripe = new Stripe(secretKey, { apiVersion: "2026-03-25.dahlia" });
 
 const PLANS = [
-  { name: "Lanavix Solo", lookupKey: "solo_monthly", amountCents: 29900 },
-  { name: "Lanavix Crew", lookupKey: "crew_monthly", amountCents: 59900 },
-  { name: "Lanavix Empire", lookupKey: "empire_monthly", amountCents: 99900 },
+  { name: "Lanavix Solo", lookupKey: "solo_monthly", amountCents: 12900 },
+  { name: "Lanavix Crew", lookupKey: "crew_monthly", amountCents: 24900 },
+  { name: "Lanavix Agency", lookupKey: "agency_monthly", amountCents: 44900 },
 ];
 
 async function upsertPlan(plan) {

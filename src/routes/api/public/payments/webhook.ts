@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
 
-function planFromPriceId(priceId?: string): "starter" | "solo" | "crew" | "empire" {
-  if (priceId === "empire_monthly") return "empire";
+function planFromPriceId(priceId?: string): "starter" | "solo" | "crew" | "agency" {
+  if (priceId === "agency_monthly") return "agency";
   if (priceId === "crew_monthly") return "crew";
   if (priceId === "solo_monthly") return "solo";
   return "starter";

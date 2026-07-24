@@ -148,7 +148,7 @@ function TodayDashboard() {
   }, []);
 
   const name = profile?.business_name || profile?.full_name || null;
-  const isFree = !profile?.subscription_tier || profile?.subscription_tier === "free";
+  const isFree = !profile?.subscription_tier || profile?.subscription_tier === "starter";
 
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const inThisMonth = (iso: string | null) => !!iso && new Date(iso) >= monthStart;
@@ -231,8 +231,8 @@ function TodayDashboard() {
       {isFree && !loading && (
         <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>You're on the Free plan</div>
-            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to run unlimited campaigns and unlock every feature.</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>You don't have an active plan yet</div>
+            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to unlock the receptionist, review automation, and Local Lead Blast.</div>
           </div>
           <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
             Upgrade now →

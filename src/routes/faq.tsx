@@ -16,7 +16,7 @@ export const Route = createFileRoute("/faq")({
 });
 
 const FAQS: [string, string][] = [
-  ["Is there really a free trial?", "Yes — 14 days free on every paid plan (Solo, Crew, Empire). Starter is free forever, no trial needed and no credit card required to start it."],
+  ["Is there really a free trial?", "Yes — 14 days free on every plan (Solo, Crew, Agency). No credit card required to start."],
   ["How long does setup take?", "Most businesses are up and running in about 5 minutes: connect your phone number and Google Business Profile, and Lanavix starts answering missed calls right away."],
   ["Can I customize how Lanavix talks to my customers?", "Yes. You can set your business hours, greeting message, and escalation rules from the Receptionist settings in your dashboard."],
   ["Is texting customers back with Lanavix TCPA-compliant?", "You're responsible for complying with the Telephone Consumer Protection Act (TCPA), CAN-SPAM, and applicable carrier guidelines when using Lanavix's SMS features — see our Terms of Service for details. Lanavix sends transactional, business-initiated replies (missed-call text-backs, review requests you trigger), not marketing blasts."],

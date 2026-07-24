@@ -29,6 +29,7 @@ import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/SiteFooter'
 import { Button } from '@/components/ui/button'
 import { pageMeta } from '@/lib/seo'
+import { PRICING_PLANS, PAID_PLAN_IDS } from '@/lib/pricingPlans'
 
 export const Route = createFileRoute('/')({
   head: () => ({
@@ -86,16 +87,14 @@ const faqs = [
 ]
 
 const pricing = {
-  monthly: [
-    { name: 'Solo', price: 49, desc: 'One-person operation getting started with automation', features: ['Missed Call Text-Back', 'Review request texts (50/mo)', 'Local Lead Blast (3 runs/mo)', 'Email support'], highlight: false },
-    { name: 'Crew', price: 99, desc: 'Growing business that needs consistent leads and reviews', features: ['Everything in Solo', 'Unlimited review requests', 'Unlimited Lead Blast runs', 'AI review response writer', 'Competitor ranking tracker', 'Priority support'], highlight: true },
-    { name: 'Agency', price: 199, desc: 'Multi-location operators or contractors managing crews', features: ['Everything in Crew', 'Up to 5 locations', 'Team seat access', 'Custom AI training on your brand voice', 'Dedicated success manager', 'API access + SLA'], highlight: false },
-  ],
-  annual: [
-    { name: 'Solo', price: 39, desc: 'One-person operation getting started with automation', features: ['Missed Call Text-Back', 'Review request texts (50/mo)', 'Local Lead Blast (3 runs/mo)', 'Email support'], highlight: false },
-    { name: 'Crew', price: 79, desc: 'Growing business that needs consistent leads and reviews', features: ['Everything in Solo', 'Unlimited review requests', 'Unlimited Lead Blast runs', 'AI review response writer', 'Competitor ranking tracker', 'Priority support'], highlight: true },
-    { name: 'Agency', price: 159, desc: 'Multi-location operators or contractors managing crews', features: ['Everything in Crew', 'Up to 5 locations', 'Team seat access', 'Custom AI training on your brand voice', 'Dedicated success manager', 'API access + SLA'], highlight: false },
-  ],
+  monthly: PAID_PLAN_IDS.map((id) => {
+    const p = PRICING_PLANS[id]
+    return { name: p.name, price: p.price, desc: p.tagline, features: p.features, highlight: p.featured }
+  }),
+  annual: PAID_PLAN_IDS.map((id) => {
+    const p = PRICING_PLANS[id]
+    return { name: p.name, price: p.annualPrice, desc: p.tagline, features: p.features, highlight: p.featured }
+  }),
 }
 
 const stripeLinks: Record<string, string> = {

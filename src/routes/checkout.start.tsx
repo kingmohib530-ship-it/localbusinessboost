@@ -8,7 +8,7 @@ import { PRICING_PLANS } from "@/lib/pricingPlans";
 export const Route = createFileRoute("/checkout/start")({
   ssr: false,
   validateSearch: z.object({
-    plan: z.enum(["solo", "crew", "empire"]),
+    plan: z.enum(["solo", "crew", "agency"]),
   }),
   head: () => ({ meta: [{ title: "Checkout — Lanavix" }] }),
   component: CheckoutStartPage,

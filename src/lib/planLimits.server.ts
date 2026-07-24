@@ -1,14 +1,16 @@
 /**
  * Plan-tier feature limits, matching the feature comparison table on the
- * public /pricing page (SMS / month, Lead Generator runs / month). Starter
- * is the free tier; Solo/Crew/Empire are unlocked by an active or trialing
- * subscription (subscription_status is set by the Stripe webhook).
+ * public /pricing page. There is no marketed free tier — "starter" is the
+ * internal subscription_tier for an account with no active subscription,
+ * and gets no product access at all (missed-call text-back, review texts,
+ * and Lead Blast all require an active Solo/Crew/Agency subscription,
+ * set by the Stripe webhook via subscription_status).
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const STARTER_SMS_MONTHLY_CAP = 50;
-export const SOLO_LEAD_GENERATOR_MONTHLY_CAP = 3;
+export const SOLO_REVIEW_REQUEST_MONTHLY_CAP = 100;
+export const SOLO_LEAD_BLAST_MONTHLY_CAP = 5;
 
 // Pure abuse/cost-control ceiling, independent of plan tier — even an
 // unlimited-SMS paid plan shouldn't be able to blow through hundreds of
@@ -40,35 +42,46 @@ function monthStartIso(): string {
 }
 
 /**
- * Starter plan caps combined outbound SMS (missed-call auto-texts,
- * conversation replies, and review requests) at STARTER_SMS_MONTHLY_CAP per
- * calendar month. Paid plans (Solo/Crew/Empire) are unlimited.
+ * Missed-call auto-texts and conversation replies are unlimited on every
+ * paid plan (Solo/Crew/Agency) — there's no marketed free tier to
+ * differentiate against anymore. An account with no active subscription
+ * ("starter") gets no product access at all.
  */
 export async function checkSmsQuota(userId: string): Promise<QuotaResult> {
   const { isPaidActive } = await getPlan(userId);
   if (isPaidActive) return { allowed: true };
+  return {
+    allowed: false,
+    reason: "Subscribe to Solo, Crew, or Agency to unlock the missed-call receptionist.",
+  };
+}
 
-  const monthStart = monthStartIso();
-  const [{ count: convoCount }, { count: reviewCount }] = await Promise.all([
-    supabaseAdmin
-      .from("sms_conversations")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("direction", "outbound")
-      .gte("sent_at", monthStart),
-    supabaseAdmin
-      .from("review_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("status", "sent")
-      .gte("created_at", monthStart),
-  ]);
-
-  const used = (convoCount ?? 0) + (reviewCount ?? 0);
-  if (used >= STARTER_SMS_MONTHLY_CAP) {
+/**
+ * Review request texts are capped at SOLO_REVIEW_REQUEST_MONTHLY_CAP/month
+ * on Solo; unlimited on Crew and Agency. An account with no active
+ * subscription gets no access at all.
+ */
+export async function checkReviewRequestQuota(userId: string): Promise<QuotaResult> {
+  const { tier, isPaidActive } = await getPlan(userId);
+  if (!isPaidActive) {
     return {
       allowed: false,
-      reason: `Starter plan is capped at ${STARTER_SMS_MONTHLY_CAP} SMS/month. Upgrade to Solo for unlimited SMS.`,
+      reason: "Subscribe to Solo, Crew, or Agency to unlock review request texts.",
+    };
+  }
+  if (tier !== "solo") return { allowed: true };
+
+  const { count } = await supabaseAdmin
+    .from("review_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "sent")
+    .gte("created_at", monthStartIso());
+
+  if ((count ?? 0) >= SOLO_REVIEW_REQUEST_MONTHLY_CAP) {
+    return {
+      allowed: false,
+      reason: `Solo plan is capped at ${SOLO_REVIEW_REQUEST_MONTHLY_CAP} review request texts/month. Upgrade to Crew for unlimited review texts.`,
     };
   }
   return { allowed: true };
@@ -98,17 +111,17 @@ export async function checkSmsHourlyRateLimit(userId: string): Promise<QuotaResu
 }
 
 /**
- * Lead Generator isn't available on Starter at all. Solo is capped at
- * SOLO_LEAD_GENERATOR_MONTHLY_CAP runs/month (counted via the
+ * Local Lead Blast isn't available without an active subscription. Solo is
+ * capped at SOLO_LEAD_BLAST_MONTHLY_CAP runs/month (counted via the
  * "lead_generator_research" activity_log entry each run writes). Crew and
- * Empire are unlimited.
+ * Agency are unlimited.
  */
 export async function checkLeadGeneratorQuota(userId: string): Promise<QuotaResult> {
   const { tier, isPaidActive } = await getPlan(userId);
   if (!isPaidActive) {
     return {
       allowed: false,
-      reason: "The Lead Generator isn't available on the Starter plan. Upgrade to Solo or higher to unlock it.",
+      reason: "Local Lead Blast isn't available without an active plan. Subscribe to Solo or higher to unlock it.",
     };
   }
   if (tier !== "solo") return { allowed: true };
@@ -120,10 +133,10 @@ export async function checkLeadGeneratorQuota(userId: string): Promise<QuotaResu
     .eq("type", "lead_generator_research")
     .gte("created_at", monthStartIso());
 
-  if ((count ?? 0) >= SOLO_LEAD_GENERATOR_MONTHLY_CAP) {
+  if ((count ?? 0) >= SOLO_LEAD_BLAST_MONTHLY_CAP) {
     return {
       allowed: false,
-      reason: `Solo plan is capped at ${SOLO_LEAD_GENERATOR_MONTHLY_CAP} Lead Generator runs/month. Upgrade to Crew for unlimited runs.`,
+      reason: `Solo plan is capped at ${SOLO_LEAD_BLAST_MONTHLY_CAP} Local Lead Blast runs/month. Upgrade to Crew for unlimited runs.`,
     };
   }
   return { allowed: true };

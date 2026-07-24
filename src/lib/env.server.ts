@@ -183,7 +183,7 @@ export const ENV_VARS: EnvVarDef[] = [
   },
 
   // billing — Stripe checkout/webhook code is live, but the real
-  // Solo/Crew/Empire Stripe products/prices haven't been created yet (see
+  // Solo/Crew/Agency Stripe products/prices haven't been created yet (see
   // scripts/setup-stripe-products.mjs) — so billing is functionally on
   // hold regardless of whether these are set. Marked optional so a
   // deploy isn't blocked on Stripe config while that's pending.

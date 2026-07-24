@@ -13,76 +13,15 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: pageMeta({
       title: "Pricing — Lanavix AI Workforce OS",
-      description: "Simple, transparent pricing for Lanavix. Starter free, Solo $299, Crew $599, Empire $999/mo. 14-day free trial on every paid plan.",
+      description: "Simple, transparent pricing for Lanavix. Solo $129, Crew $249, Agency $449/mo. 14-day free trial on every plan.",
       path: "/pricing",
     }),
   }),
   component: PricingPage,
 });
 
-interface Plan {
-  id: PlanId;
-  tagline: string;
-  features: string[];
-  featured: boolean;
-  badge?: string;
-  cta: string;
-}
-
-const PLANS: Plan[] = [
-  {
-    id: "starter",
-    tagline: "Try the receptionist for free",
-    cta: "Get started free",
-    featured: false,
-    features: [
-      "Missed Call Text-Back receptionist",
-      "50 SMS / month",
-      "Free Business Audit",
-      "No consumer marketplace",
-      "No campaigns",
-    ],
-  },
-  {
-    id: "solo",
-    tagline: "Solo operators ready to grow",
-    cta: "Start 14-day free trial",
-    featured: false,
-    features: [
-      "Full receptionist, unlimited SMS",
-      "Review automation",
-      "3 Lead Generator runs / month",
-      "Consumer marketplace — ON",
-      "Email support",
-    ],
-  },
-  {
-    id: "crew",
-    tagline: "Growing crews and small teams",
-    cta: "Start 14-day free trial",
-    featured: true,
-    badge: "Most popular",
-    features: [
-      "Everything in Solo",
-      "Unlimited Lead Generator runs",
-      "Unlimited campaigns",
-      "Priority support",
-    ],
-  },
-  {
-    id: "empire",
-    tagline: "Multi-location operators",
-    cta: "Start 14-day free trial",
-    featured: false,
-    features: [
-      "Everything in Crew",
-      "Up to 5 locations",
-      "Team seats",
-      "Custom AI agent training",
-      "Dedicated success manager",
-    ],
-  },
-];
+const PLAN_ORDER: PlanId[] = ["solo", "crew", "agency"];
+const CHECKOUT_CTA = "Start 14-day free trial";
 
 function PricingPage() {
   const navigate = useNavigate();
@@ -106,7 +45,7 @@ function PricingPage() {
         return;
       }
 
-      navigate({ to: "/checkout/start", search: { plan: planId as "solo" | "crew" | "empire" } });
+      navigate({ to: "/checkout/start", search: { plan: planId as "solo" | "crew" | "agency" } });
     } finally {
       setLoadingPlan(null);
     }
@@ -125,29 +64,29 @@ function PricingPage() {
           Simple pricing. Pays for itself in week one.
         </h1>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
-          Start free with the receptionist. Every paid plan includes a 14-day free trial.
+          Every plan includes the missed-call receptionist, review automation, and a 14-day free trial.
           No setup fees. Cancel any time.
         </p>
       </section>
 
       {/* ── Plan cards ── */}
       <section className="py-24 px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-          {PLANS.map((plan) => {
-            const info = PRICING_PLANS[plan.id];
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {PLAN_ORDER.map((id) => {
+            const info = PRICING_PLANS[id];
             return (
               <div
-                key={plan.id}
+                key={id}
                 className={`relative rounded-2xl p-8 flex flex-col border bg-background transition-shadow hover:shadow-lg ${
-                  plan.featured
+                  info.featured
                     ? "border-primary ring-2 ring-primary/20 shadow-md"
                     : "border-border"
                 }`}
               >
-                {plan.badge && (
+                {info.badge && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground px-4 py-1 text-xs font-bold rounded-full shadow">
-                      {plan.badge}
+                      {info.badge}
                     </Badge>
                   </div>
                 )}
@@ -162,14 +101,14 @@ function PricingPage() {
                     <span className="text-muted-foreground text-sm">/mo</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2 leading-snug">
-                    {plan.tagline}
+                    {info.tagline}
                   </p>
                 </div>
 
                 <div className="h-px bg-border mb-6" />
 
                 <ul className="flex flex-col gap-3 mb-8 flex-1">
-                  {plan.features.map((f, i) => (
+                  {info.features.map((f, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm">
                       <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{f}</span>
@@ -178,16 +117,16 @@ function PricingPage() {
                 </ul>
 
                 <Button
-                  onClick={() => handleCheckout(plan.id)}
-                  disabled={loadingPlan === plan.id}
+                  onClick={() => handleCheckout(id)}
+                  disabled={loadingPlan === id}
                   className={`w-full font-semibold rounded-xl h-11 ${
-                    plan.featured
+                    info.featured
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "bg-background border border-border text-foreground hover:bg-muted"
                   }`}
-                  variant={plan.featured ? "default" : "outline"}
+                  variant={info.featured ? "default" : "outline"}
                 >
-                  {loadingPlan === plan.id ? "Loading…" : plan.cta}
+                  {loadingPlan === id ? "Loading…" : CHECKOUT_CTA}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
@@ -209,28 +148,30 @@ function PricingPage() {
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-3 pr-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Feature</th>
-                  <th className="text-center py-3 px-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Starter</th>
                   <th className="text-center py-3 px-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Solo</th>
                   <th className="text-center py-3 px-4 font-semibold text-primary uppercase text-xs tracking-wider bg-primary/5 rounded-t-lg">Crew</th>
-                  <th className="text-center py-3 pl-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Empire</th>
+                  <th className="text-center py-3 pl-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Agency</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ["Missed Call Text-Back", "✓", "✓", "✓", "✓"],
-                  ["SMS / month", "50", "Unlimited", "Unlimited", "Unlimited"],
-                  ["Consumer marketplace", "—", "✓", "✓", "✓"],
-                  ["Lead Generator runs / month", "—", "3", "Unlimited", "Unlimited"],
-                  ["Campaigns", "—", "Limited", "Unlimited", "Unlimited"],
-                  ["Locations", "1", "1", "1", "Up to 5"],
-                  ["Support", "—", "Email", "Priority", "Dedicated manager"],
-                ].map(([label, s, so, c, e], i) => (
+                  ["Missed Call Text-Back", "Unlimited", "Unlimited", "Unlimited"],
+                  ["Review request texts / month", "100", "Unlimited", "Unlimited"],
+                  ["Local Lead Blast runs / month", "5", "Unlimited", "Unlimited"],
+                  ["AI review response writer", "—", "✓", "✓"],
+                  ["Competitor ranking tracker", "—", "✓", "✓"],
+                  ["Automated follow-up sequences", "—", "✓", "✓"],
+                  ["Locations", "1", "1", "Up to 5"],
+                  ["Team seats", "—", "—", "✓"],
+                  ["Custom AI training on brand voice", "—", "—", "✓"],
+                  ["API access + SLA", "—", "—", "✓"],
+                  ["Support", "Email", "Priority", "Dedicated manager"],
+                ].map(([label, so, c, a], i) => (
                   <tr key={i} className={`border-b ${i % 2 === 0 ? "" : "bg-muted/20"}`}>
                     <td className="py-3 pr-4 font-medium">{label}</td>
-                    <td className="py-3 px-4 text-center text-muted-foreground">{s}</td>
                     <td className="py-3 px-4 text-center text-muted-foreground">{so}</td>
                     <td className="py-3 px-4 text-center font-semibold text-primary bg-primary/5">{c}</td>
-                    <td className="py-3 pl-4 text-center text-muted-foreground">{e}</td>
+                    <td className="py-3 pl-4 text-center text-muted-foreground">{a}</td>
                   </tr>
                 ))}
               </tbody>
@@ -245,7 +186,7 @@ function PricingPage() {
           <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-center mb-10">Common questions</h2>
           <div className="flex flex-col">
             {[
-              ["Is there really a free trial?", "Yes — 14 days free on every paid plan (Solo, Crew, Empire). Starter is free forever, no trial needed."],
+              ["Is there really a free trial?", "Yes — 14 days free on every plan (Solo, Crew, Agency). No credit card required to start."],
               ["Can I switch plans?", "Yes, any time from your account settings. Upgrades take effect immediately; downgrades take effect at the end of your billing period."],
               ["Can I cancel?", "Yes, any time from your account settings. Cancellation takes effect at the end of your current billing period."],
               ["Is my data safe?", "All data is encrypted at rest and in transit. We never sell your data. Your information belongs to you."],

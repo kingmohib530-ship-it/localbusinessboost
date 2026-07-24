@@ -142,7 +142,7 @@ function Settings() {
         </div>
         <p className="text-sm text-muted-foreground">
           {planId === "starter"
-            ? "You're on the free Starter plan. Upgrade for unlimited SMS, the Lead Generator, and more."
+            ? "You don't have an active plan yet. Subscribe to Solo, Crew, or Agency to unlock the receptionist, review automation, and Local Lead Blast."
             : subscriptionStatus === "trialing"
               ? `You're in your free trial of ${PRICING_PLANS[planId].name}.`
               : subscriptionStatus === "past_due"
