@@ -100,8 +100,8 @@ export const ENV_VARS: EnvVarDef[] = [
   {
     name: "SUPABASE_PUBLISHABLE_KEY",
     category: "core",
-    required: true,
-    description: "Server-side Supabase publishable key (SSR auth middleware fallback).",
+    required: false,
+    description: "Server-side Supabase publishable key. Only used as a fallback in client.ts and directly by auth-middleware.ts's requireSupabaseAuth (protected server functions e.g. checkout) — VITE_SUPABASE_PUBLISHABLE_KEY covers page rendering, so this isn't load-bearing for most routes.",
     validate: minLength(20),
   },
   {

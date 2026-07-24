@@ -8,11 +8,14 @@
  *
  * `validateEnv()` runs once at module scope here — i.e. once per server
  * boot (a real process boot for a long-lived Node server, or once per
- * cold start on serverless/edge). In production, a missing or malformed
- * required env var throws immediately and stops the server from ever
- * accepting a request, instead of failing confusingly deep inside a
- * request handler later. Outside production it only warns, so local dev
- * isn't blocked on having every key configured.
+ * cold start on serverless/edge). It logs a loud, descriptive error for
+ * any missing/malformed required var so misconfiguration is never
+ * silent — but the call is wrapped rather than left to throw. On a
+ * serverless platform, a thrown top-level module error 500s *every*
+ * request the function handles, including unrelated routes and static
+ * assets (confirmed in production: one missing var took down /, /audit,
+ * and even /favicon.ico). Letting the app keep serving what it can,
+ * loudly logging what's misconfigured, fails safer than a blanket outage.
  */
 import {
   createStartHandler,
@@ -22,7 +25,11 @@ import type { Register } from "@tanstack/react-router";
 import type { RequestHandler } from "@tanstack/react-start/server";
 import { validateEnv } from "@/lib/env.server";
 
-validateEnv();
+try {
+  validateEnv();
+} catch (err) {
+  console.error(err instanceof Error ? err.message : err);
+}
 
 const fetch = createStartHandler(defaultStreamHandler);
 
