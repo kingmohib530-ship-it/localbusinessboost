@@ -2,10 +2,10 @@ import { createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "./auth-middleware";
 
 /**
- * Server-side admin gate for the internal orchestrator (/app/chat,
- * /app/control, /app/logs, /app/workflows). The client-side
- * useRequireAdmin() redirect is UI-only — this is what actually stops a
- * non-admin from reaching the data via a direct server function call.
+ * Server-side admin gate for admin-only server functions (verification
+ * review, etc.). The client-side useRequireAdmin() redirect is UI-only —
+ * this is what actually stops a non-admin from reaching the data via a
+ * direct server function call.
  */
 export const requireAdmin = createMiddleware({ type: "function" })
   .middleware([requireSupabaseAuth])

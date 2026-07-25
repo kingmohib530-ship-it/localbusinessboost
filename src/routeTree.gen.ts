@@ -52,15 +52,11 @@ import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/upd
 import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
-import { Route as AuthenticatedAppWorkflowsRouteImport } from './routes/_authenticated/app.workflows'
 import { Route as AuthenticatedAppVerificationRouteImport } from './routes/_authenticated/app.verification'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
 import { Route as AuthenticatedAppNetworkRouteImport } from './routes/_authenticated/app.network'
-import { Route as AuthenticatedAppLogsRouteImport } from './routes/_authenticated/app.logs'
-import { Route as AuthenticatedAppControlRouteImport } from './routes/_authenticated/app.control'
-import { Route as AuthenticatedAppChatRouteImport } from './routes/_authenticated/app.chat'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
@@ -288,12 +284,6 @@ const ApiAccountDeleteRoute = ApiAccountDeleteRouteImport.update({
   path: '/api/account/delete',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAppWorkflowsRoute =
-  AuthenticatedAppWorkflowsRouteImport.update({
-    id: '/workflows',
-    path: '/workflows',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
 const AuthenticatedAppVerificationRoute =
   AuthenticatedAppVerificationRouteImport.update({
     id: '/verification',
@@ -321,21 +311,6 @@ const AuthenticatedAppReceptionistRoute =
 const AuthenticatedAppNetworkRoute = AuthenticatedAppNetworkRouteImport.update({
   id: '/network',
   path: '/network',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppLogsRoute = AuthenticatedAppLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppControlRoute = AuthenticatedAppControlRouteImport.update({
-  id: '/control',
-  path: '/control',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppChatRoute = AuthenticatedAppChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAppCalendarRoute =
@@ -405,15 +380,11 @@ export interface FileRoutesByFullPath {
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
-  '/app/chat': typeof AuthenticatedAppChatRoute
-  '/app/control': typeof AuthenticatedAppControlRoute
-  '/app/logs': typeof AuthenticatedAppLogsRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
-  '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
@@ -463,15 +434,11 @@ export interface FileRoutesByTo {
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
-  '/app/chat': typeof AuthenticatedAppChatRoute
-  '/app/control': typeof AuthenticatedAppControlRoute
-  '/app/logs': typeof AuthenticatedAppLogsRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
-  '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
@@ -524,15 +491,11 @@ export interface FileRoutesById {
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
-  '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
-  '/_authenticated/app/control': typeof AuthenticatedAppControlRoute
-  '/_authenticated/app/logs': typeof AuthenticatedAppLogsRoute
   '/_authenticated/app/network': typeof AuthenticatedAppNetworkRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/verification': typeof AuthenticatedAppVerificationRoute
-  '/_authenticated/app/workflows': typeof AuthenticatedAppWorkflowsRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
@@ -585,15 +548,11 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/agents'
     | '/app/calendar'
-    | '/app/chat'
-    | '/app/control'
-    | '/app/logs'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
-    | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
@@ -643,15 +602,11 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/agents'
     | '/app/calendar'
-    | '/app/chat'
-    | '/app/control'
-    | '/app/logs'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
-    | '/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
@@ -703,15 +658,11 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin'
     | '/_authenticated/app/agents'
     | '/_authenticated/app/calendar'
-    | '/_authenticated/app/chat'
-    | '/_authenticated/app/control'
-    | '/_authenticated/app/logs'
     | '/_authenticated/app/network'
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/verification'
-    | '/_authenticated/app/workflows'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
@@ -1078,13 +1029,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAccountDeleteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/app/workflows': {
-      id: '/_authenticated/app/workflows'
-      path: '/workflows'
-      fullPath: '/app/workflows'
-      preLoaderRoute: typeof AuthenticatedAppWorkflowsRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
     '/_authenticated/app/verification': {
       id: '/_authenticated/app/verification'
       path: '/verification'
@@ -1118,27 +1062,6 @@ declare module '@tanstack/react-router' {
       path: '/network'
       fullPath: '/app/network'
       preLoaderRoute: typeof AuthenticatedAppNetworkRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/logs': {
-      id: '/_authenticated/app/logs'
-      path: '/logs'
-      fullPath: '/app/logs'
-      preLoaderRoute: typeof AuthenticatedAppLogsRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/control': {
-      id: '/_authenticated/app/control'
-      path: '/control'
-      fullPath: '/app/control'
-      preLoaderRoute: typeof AuthenticatedAppControlRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/chat': {
-      id: '/_authenticated/app/chat'
-      path: '/chat'
-      fullPath: '/app/chat'
-      preLoaderRoute: typeof AuthenticatedAppChatRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/calendar': {
@@ -1204,15 +1127,11 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
-  AuthenticatedAppChatRoute: typeof AuthenticatedAppChatRoute
-  AuthenticatedAppControlRoute: typeof AuthenticatedAppControlRoute
-  AuthenticatedAppLogsRoute: typeof AuthenticatedAppLogsRoute
   AuthenticatedAppNetworkRoute: typeof AuthenticatedAppNetworkRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppVerificationRoute: typeof AuthenticatedAppVerificationRoute
-  AuthenticatedAppWorkflowsRoute: typeof AuthenticatedAppWorkflowsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -1220,15 +1139,11 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
-  AuthenticatedAppChatRoute: AuthenticatedAppChatRoute,
-  AuthenticatedAppControlRoute: AuthenticatedAppControlRoute,
-  AuthenticatedAppLogsRoute: AuthenticatedAppLogsRoute,
   AuthenticatedAppNetworkRoute: AuthenticatedAppNetworkRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppVerificationRoute: AuthenticatedAppVerificationRoute,
-  AuthenticatedAppWorkflowsRoute: AuthenticatedAppWorkflowsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
