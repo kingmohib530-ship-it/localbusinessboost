@@ -283,19 +283,19 @@ function HomePage() {
               </div>
             </div>
             <div className="rounded-2xl bg-ink text-ink-foreground p-6">
-              <p className="text-ink-muted text-[11px] font-semibold uppercase tracking-widest mb-1">Example</p>
-              <p className="text-ink-muted text-xs mb-4">Lead Blast results — Roofing · Atlanta GA</p>
+              <p className="text-ink-muted text-[11px] font-semibold uppercase tracking-widest mb-1">Illustrative example — not real businesses</p>
+              <p className="text-ink-muted text-xs mb-4">What a Lead Blast looks like — Roofing · Atlanta GA</p>
               {[
-                { name: 'Piedmont Coffee Roasters', phone: '404-291-0110', opening: 'Hi, we do commercial roofing in Midtown — coffee shops take a beating with foot traffic and HVAC units on the roof. Happy to do a free inspection.' },
-                { name: 'Midtown Gym & Fitness', phone: '404-554-0234', opening: "Hey, gyms with flat roofs need resealing every few years — especially with all the rooftop equipment. We're local and could take a look for free." },
-                { name: 'Buckhead Medical Spa', phone: '404-887-0891', opening: "Hi, medical offices can't afford a leak during business hours. We specialize in commercial roofing in Buckhead and offer same-week inspections." },
+                { name: 'Sample: local coffee shop', phone: '404-555-0110', opening: 'Hi, we do commercial roofing in Midtown — coffee shops take a beating with foot traffic and HVAC units on the roof. Happy to do a free inspection.' },
+                { name: 'Sample: local gym', phone: '404-555-0234', opening: "Hey, gyms with flat roofs need resealing every few years — especially with all the rooftop equipment. We're local and could take a look for free." },
+                { name: 'Sample: local medical office', phone: '404-555-0891', opening: "Hi, medical offices can't afford a leak during business hours. We specialize in commercial roofing in Buckhead and offer same-week inspections." },
               ].map((lead) => (
                 <div key={lead.name} className="rounded-lg bg-white/10 px-3 py-2.5 mb-2">
                   <p className="font-medium text-sm mb-1">{lead.name} · {lead.phone}</p>
                   <p className="text-ink-muted text-xs">"{lead.opening}"</p>
                 </div>
               ))}
-              <p className="text-emerald-300 text-sm font-semibold text-center mt-3">+27 more leads. Generated in 34 seconds.</p>
+              <p className="text-emerald-300 text-sm font-semibold text-center mt-3">+27 more leads in a real run. Generated in 34 seconds.</p>
             </div>
           </div>
         </div>
