@@ -163,6 +163,24 @@ export const Route = createFileRoute("/api/save-automation")({
             );
           }
 
+          // ── Rate limit: 20 requests per hour per user ──────────────────
+          const { data: rlAllowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_rate_limit",
+            {
+              p_user_id: user.id,
+              p_route: "save-automation",
+              p_max_requests: 20,
+              p_window_seconds: 3600,
+            },
+          );
+          if (rlErr) {
+            console.error("[save-automation] rate limit check failed");
+            return Response.json({ success: false, error: "Service temporarily unavailable" }, { status: 503 });
+          }
+          if (!rlAllowed) {
+            return Response.json({ success: false, error: "Too many requests. Please wait a bit and try again." }, { status: 429 });
+          }
+
           // ── Input ───────────────────────────────────────────────────────
           const body = (await request.json().catch(() => ({}))) as {
             title?: unknown;

@@ -9,36 +9,78 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PricingRouteImport } from './routes/pricing'
-import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CheckoutStartRouteImport } from './routes/checkout.start'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
 import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
-import { Route as ApiGenerateWeeklyPlanRouteImport } from './routes/api/generate-weekly-plan'
-import { Route as ApiGenerateContentRouteImport } from './routes/api/generate-content'
+import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
+import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
+import { Route as ApiLeadBlastRouteImport } from './routes/api/lead-blast'
+import { Route as ApiCompetitorIntelRouteImport } from './routes/api/competitor-intel'
+import { Route as ApiBookingPlanRouteImport } from './routes/api/booking-plan'
+import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
-import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
+import { Route as ApiTwilioSmsReplyRouteImport } from './routes/api/twilio/sms-reply'
+import { Route as ApiTwilioMissedCallRouteImport } from './routes/api/twilio/missed-call'
+import { Route as ApiTwilioConsumerInboundRouteImport } from './routes/api/twilio/consumer-inbound'
+import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
+import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
+import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
+import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
+import { Route as ApiAdminVerificationReviewRouteImport } from './routes/api/admin/verification-review'
+import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/update-scores'
+import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
+import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
+import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
 import { Route as AuthenticatedAppWorkflowsRouteImport } from './routes/_authenticated/app.workflows'
+import { Route as AuthenticatedAppVerificationRouteImport } from './routes/_authenticated/app.verification'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
+import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
+import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
+import { Route as AuthenticatedAppNetworkRouteImport } from './routes/_authenticated/app.network'
 import { Route as AuthenticatedAppLogsRouteImport } from './routes/_authenticated/app.logs'
 import { Route as AuthenticatedAppControlRouteImport } from './routes/_authenticated/app.control'
 import { Route as AuthenticatedAppChatRouteImport } from './routes/_authenticated/app.chat'
+import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicChatbotBusiness_idRouteImport } from './routes/api/public/chatbot/$business_id'
-import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
+import { Route as AuthenticatedAppAdminVerificationReviewRouteImport } from './routes/_authenticated/app.admin.verification-review'
 
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -46,9 +88,39 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -66,6 +138,11 @@ const AuditRoute = AuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -75,10 +152,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutStartRoute = CheckoutStartRouteImport.update({
+  id: '/checkout/start',
+  path: '/checkout/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
 } as any)
 const ApiWorkflowRoute = ApiWorkflowRouteImport.update({
   id: '/api/workflow',
@@ -90,14 +177,34 @@ const ApiSaveAutomationRoute = ApiSaveAutomationRouteImport.update({
   path: '/api/save-automation',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGenerateWeeklyPlanRoute = ApiGenerateWeeklyPlanRouteImport.update({
-  id: '/api/generate-weekly-plan',
-  path: '/api/generate-weekly-plan',
+const ApiReviewResponseRoute = ApiReviewResponseRouteImport.update({
+  id: '/api/review-response',
+  path: '/api/review-response',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGenerateContentRoute = ApiGenerateContentRouteImport.update({
-  id: '/api/generate-content',
-  path: '/api/generate-content',
+const ApiReviewRequestRoute = ApiReviewRequestRouteImport.update({
+  id: '/api/review-request',
+  path: '/api/review-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLeadBlastRoute = ApiLeadBlastRouteImport.update({
+  id: '/api/lead-blast',
+  path: '/api/lead-blast',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCompetitorIntelRoute = ApiCompetitorIntelRouteImport.update({
+  id: '/api/competitor-intel',
+  path: '/api/competitor-intel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBookingPlanRoute = ApiBookingPlanRouteImport.update({
+  id: '/api/booking-plan',
+  path: '/api/booking-plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAppointmentsRoute = ApiAppointmentsRouteImport.update({
+  id: '/api/appointments',
+  path: '/api/appointments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -110,9 +217,75 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
-  id: '/api/public/leads',
-  path: '/api/public/leads',
+const ApiTwilioSmsReplyRoute = ApiTwilioSmsReplyRouteImport.update({
+  id: '/api/twilio/sms-reply',
+  path: '/api/twilio/sms-reply',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioMissedCallRoute = ApiTwilioMissedCallRouteImport.update({
+  id: '/api/twilio/missed-call',
+  path: '/api/twilio/missed-call',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioConsumerInboundRoute =
+  ApiTwilioConsumerInboundRouteImport.update({
+    id: '/api/twilio/consumer-inbound',
+    path: '/api/twilio/consumer-inbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
+  id: '/api/public/contact',
+  path: '/api/public/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLeadGeneratorResearchRoute =
+  ApiLeadGeneratorResearchRouteImport.update({
+    id: '/api/lead-generator/research',
+    path: '/api/lead-generator/research',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiLeadGeneratorHandleResponseRoute =
+  ApiLeadGeneratorHandleResponseRouteImport.update({
+    id: '/api/lead-generator/handle-response',
+    path: '/api/lead-generator/handle-response',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiLeadGeneratorExecuteStepRoute =
+  ApiLeadGeneratorExecuteStepRouteImport.update({
+    id: '/api/lead-generator/execute-step',
+    path: '/api/lead-generator/execute-step',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiAppointmentsRoute,
+} as any)
+const ApiAdminVerificationReviewRoute =
+  ApiAdminVerificationReviewRouteImport.update({
+    id: '/api/admin/verification-review',
+    path: '/api/admin/verification-review',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAdminUpdateScoresRoute = ApiAdminUpdateScoresRouteImport.update({
+  id: '/api/admin/update-scores',
+  path: '/api/admin/update-scores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminUpdatePricingIndexRoute =
+  ApiAdminUpdatePricingIndexRouteImport.update({
+    id: '/api/admin/update-pricing-index',
+    path: '/api/admin/update-pricing-index',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAccountExportRoute = ApiAccountExportRouteImport.update({
+  id: '/api/account/export',
+  path: '/api/account/export',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAccountDeleteRoute = ApiAccountDeleteRouteImport.update({
+  id: '/api/account/delete',
+  path: '/api/account/delete',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppWorkflowsRoute =
@@ -121,12 +294,35 @@ const AuthenticatedAppWorkflowsRoute =
     path: '/workflows',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppVerificationRoute =
+  AuthenticatedAppVerificationRouteImport.update({
+    id: '/verification',
+    path: '/verification',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSettingsRoute =
   AuthenticatedAppSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppReputationRoute =
+  AuthenticatedAppReputationRouteImport.update({
+    id: '/reputation',
+    path: '/reputation',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppReceptionistRoute =
+  AuthenticatedAppReceptionistRouteImport.update({
+    id: '/receptionist',
+    path: '/receptionist',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppNetworkRoute = AuthenticatedAppNetworkRouteImport.update({
+  id: '/network',
+  path: '/network',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppLogsRoute = AuthenticatedAppLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
@@ -142,6 +338,12 @@ const AuthenticatedAppChatRoute = AuthenticatedAppChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppCalendarRoute =
+  AuthenticatedAppCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppAgentsRoute = AuthenticatedAppAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
@@ -164,62 +366,127 @@ const ApiPublicChatbotBusiness_idRoute =
     path: '/api/public/chatbot/$business_id',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
-  id: '/api/public/billing/portal',
-  path: '/api/public/billing/portal',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedAppAdminVerificationReviewRoute =
+  AuthenticatedAppAdminVerificationReviewRouteImport.update({
+    id: '/verification-review',
+    path: '/verification-review',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
+  '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
-  '/api/generate-content': typeof ApiGenerateContentRoute
-  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
+  '/api/booking-plan': typeof ApiBookingPlanRoute
+  '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/lead-blast': typeof ApiLeadBlastRoute
+  '/api/review-request': typeof ApiReviewRequestRoute
+  '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
   '/api/workflow': typeof ApiWorkflowRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/checkout/start': typeof CheckoutStartRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
-  '/app/admin': typeof AuthenticatedAppAdminRoute
+  '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
+  '/app/network': typeof AuthenticatedAppNetworkRoute
+  '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
+  '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/verification': typeof AuthenticatedAppVerificationRoute
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
-  '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
+  '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
+  '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
+  '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
+  '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
-  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
+  '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
-  '/api/generate-content': typeof ApiGenerateContentRoute
-  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
+  '/api/booking-plan': typeof ApiBookingPlanRoute
+  '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/lead-blast': typeof ApiLeadBlastRoute
+  '/api/review-request': typeof ApiReviewRequestRoute
+  '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
   '/api/workflow': typeof ApiWorkflowRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/checkout/start': typeof CheckoutStartRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
-  '/app/admin': typeof AuthenticatedAppAdminRoute
+  '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/chat': typeof AuthenticatedAppChatRoute
   '/app/control': typeof AuthenticatedAppControlRoute
   '/app/logs': typeof AuthenticatedAppLogsRoute
+  '/app/network': typeof AuthenticatedAppNetworkRoute
+  '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
+  '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/verification': typeof AuthenticatedAppVerificationRoute
   '/app/workflows': typeof AuthenticatedAppWorkflowsRoute
-  '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
+  '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
+  '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
+  '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
+  '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/app': typeof AuthenticatedAppIndexRoute
-  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -227,28 +494,60 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
+  '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
-  '/api/generate-content': typeof ApiGenerateContentRoute
-  '/api/generate-weekly-plan': typeof ApiGenerateWeeklyPlanRoute
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
+  '/api/booking-plan': typeof ApiBookingPlanRoute
+  '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/lead-blast': typeof ApiLeadBlastRoute
+  '/api/review-request': typeof ApiReviewRequestRoute
+  '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
   '/api/workflow': typeof ApiWorkflowRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/checkout/start': typeof CheckoutStartRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
-  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
+  '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/chat': typeof AuthenticatedAppChatRoute
   '/_authenticated/app/control': typeof AuthenticatedAppControlRoute
   '/_authenticated/app/logs': typeof AuthenticatedAppLogsRoute
+  '/_authenticated/app/network': typeof AuthenticatedAppNetworkRoute
+  '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
+  '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/_authenticated/app/verification': typeof AuthenticatedAppVerificationRoute
   '/_authenticated/app/workflows': typeof AuthenticatedAppWorkflowsRoute
-  '/api/public/leads': typeof ApiPublicLeadsRoute
+  '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/account/export': typeof ApiAccountExportRoute
+  '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
+  '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
+  '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
+  '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
+  '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
+  '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
+  '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
-  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/chatbot/$business_id': typeof ApiPublicChatbotBusiness_idRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -256,82 +555,178 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/audit'
     | '/auth'
     | '/chat'
+    | '/contact'
+    | '/cookies'
+    | '/dashboard'
+    | '/faq'
+    | '/forgot-password'
+    | '/login'
     | '/pricing'
     | '/privacy'
+    | '/refund'
+    | '/signup'
     | '/terms'
     | '/app'
-    | '/api/generate-content'
-    | '/api/generate-weekly-plan'
+    | '/api/appointments'
+    | '/api/booking-plan'
+    | '/api/competitor-intel'
+    | '/api/lead-blast'
+    | '/api/review-request'
+    | '/api/review-response'
     | '/api/save-automation'
     | '/api/workflow'
+    | '/auth/reset-password'
     | '/checkout/return'
-    | '/app/agents'
+    | '/checkout/start'
     | '/app/admin'
+    | '/app/agents'
+    | '/app/calendar'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
+    | '/app/network'
+    | '/app/receptionist'
+    | '/app/reputation'
     | '/app/settings'
+    | '/app/verification'
     | '/app/workflows'
-    | '/api/public/leads'
+    | '/api/account/delete'
+    | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
+    | '/api/admin/verification-review'
+    | '/api/appointments/$id'
+    | '/api/lead-generator/execute-step'
+    | '/api/lead-generator/handle-response'
+    | '/api/lead-generator/research'
+    | '/api/public/contact'
+    | '/api/twilio/consumer-inbound'
+    | '/api/twilio/missed-call'
+    | '/api/twilio/sms-reply'
     | '/app/'
-    | '/api/public/billing/portal'
+    | '/app/admin/verification-review'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/audit'
     | '/auth'
     | '/chat'
+    | '/contact'
+    | '/cookies'
+    | '/dashboard'
+    | '/faq'
+    | '/forgot-password'
+    | '/login'
     | '/pricing'
     | '/privacy'
+    | '/refund'
+    | '/signup'
     | '/terms'
-    | '/api/generate-content'
-    | '/api/generate-weekly-plan'
+    | '/api/appointments'
+    | '/api/booking-plan'
+    | '/api/competitor-intel'
+    | '/api/lead-blast'
+    | '/api/review-request'
+    | '/api/review-response'
     | '/api/save-automation'
     | '/api/workflow'
+    | '/auth/reset-password'
     | '/checkout/return'
-    | '/app/agents'
+    | '/checkout/start'
     | '/app/admin'
+    | '/app/agents'
+    | '/app/calendar'
     | '/app/chat'
     | '/app/control'
     | '/app/logs'
+    | '/app/network'
+    | '/app/receptionist'
+    | '/app/reputation'
     | '/app/settings'
+    | '/app/verification'
     | '/app/workflows'
-    | '/api/public/leads'
+    | '/api/account/delete'
+    | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
+    | '/api/admin/verification-review'
+    | '/api/appointments/$id'
+    | '/api/lead-generator/execute-step'
+    | '/api/lead-generator/handle-response'
+    | '/api/lead-generator/research'
+    | '/api/public/contact'
+    | '/api/twilio/consumer-inbound'
+    | '/api/twilio/missed-call'
+    | '/api/twilio/sms-reply'
     | '/app'
-    | '/api/public/billing/portal'
+    | '/app/admin/verification-review'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/audit'
     | '/auth'
     | '/chat'
+    | '/contact'
+    | '/cookies'
+    | '/dashboard'
+    | '/faq'
+    | '/forgot-password'
+    | '/login'
     | '/pricing'
     | '/privacy'
+    | '/refund'
+    | '/signup'
     | '/terms'
     | '/_authenticated/app'
-    | '/api/generate-content'
-    | '/api/generate-weekly-plan'
+    | '/api/appointments'
+    | '/api/booking-plan'
+    | '/api/competitor-intel'
+    | '/api/lead-blast'
+    | '/api/review-request'
+    | '/api/review-response'
     | '/api/save-automation'
     | '/api/workflow'
+    | '/auth/reset-password'
     | '/checkout/return'
-    | '/_authenticated/app/agents'
+    | '/checkout/start'
     | '/_authenticated/app/admin'
+    | '/_authenticated/app/agents'
+    | '/_authenticated/app/calendar'
     | '/_authenticated/app/chat'
     | '/_authenticated/app/control'
     | '/_authenticated/app/logs'
+    | '/_authenticated/app/network'
+    | '/_authenticated/app/receptionist'
+    | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
+    | '/_authenticated/app/verification'
     | '/_authenticated/app/workflows'
-    | '/api/public/leads'
+    | '/api/account/delete'
+    | '/api/account/export'
+    | '/api/admin/update-pricing-index'
+    | '/api/admin/update-scores'
+    | '/api/admin/verification-review'
+    | '/api/appointments/$id'
+    | '/api/lead-generator/execute-step'
+    | '/api/lead-generator/handle-response'
+    | '/api/lead-generator/research'
+    | '/api/public/contact'
+    | '/api/twilio/consumer-inbound'
+    | '/api/twilio/missed-call'
+    | '/api/twilio/sms-reply'
     | '/_authenticated/app/'
-    | '/api/public/billing/portal'
+    | '/_authenticated/app/admin/verification-review'
     | '/api/public/chatbot/$business_id'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -339,30 +734,68 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuditRoute: typeof AuditRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ChatRoute: typeof ChatRoute
+  ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
+  DashboardRoute: typeof DashboardRoute
+  FaqRoute: typeof FaqRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  RefundRoute: typeof RefundRoute
+  SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
-  ApiGenerateContentRoute: typeof ApiGenerateContentRoute
-  ApiGenerateWeeklyPlanRoute: typeof ApiGenerateWeeklyPlanRoute
+  ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
+  ApiBookingPlanRoute: typeof ApiBookingPlanRoute
+  ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
+  ApiLeadBlastRoute: typeof ApiLeadBlastRoute
+  ApiReviewRequestRoute: typeof ApiReviewRequestRoute
+  ApiReviewResponseRoute: typeof ApiReviewResponseRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
   ApiWorkflowRoute: typeof ApiWorkflowRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
-  ApiPublicLeadsRoute: typeof ApiPublicLeadsRoute
-  ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
+  CheckoutStartRoute: typeof CheckoutStartRoute
+  ApiAccountDeleteRoute: typeof ApiAccountDeleteRoute
+  ApiAccountExportRoute: typeof ApiAccountExportRoute
+  ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
+  ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
+  ApiAdminVerificationReviewRoute: typeof ApiAdminVerificationReviewRoute
+  ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
+  ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
+  ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
+  ApiPublicContactRoute: typeof ApiPublicContactRoute
+  ApiTwilioConsumerInboundRoute: typeof ApiTwilioConsumerInboundRoute
+  ApiTwilioMissedCallRoute: typeof ApiTwilioMissedCallRoute
+  ApiTwilioSmsReplyRoute: typeof ApiTwilioSmsReplyRoute
   ApiPublicChatbotBusiness_idRoute: typeof ApiPublicChatbotBusiness_idRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -372,11 +805,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -400,6 +875,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -414,12 +896,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/start': {
+      id: '/checkout/start'
+      path: '/checkout/start'
+      fullPath: '/checkout/start'
+      preLoaderRoute: typeof CheckoutStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
       fullPath: '/checkout/return'
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/api/workflow': {
       id: '/api/workflow'
@@ -435,18 +931,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSaveAutomationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/generate-weekly-plan': {
-      id: '/api/generate-weekly-plan'
-      path: '/api/generate-weekly-plan'
-      fullPath: '/api/generate-weekly-plan'
-      preLoaderRoute: typeof ApiGenerateWeeklyPlanRouteImport
+    '/api/review-response': {
+      id: '/api/review-response'
+      path: '/api/review-response'
+      fullPath: '/api/review-response'
+      preLoaderRoute: typeof ApiReviewResponseRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/generate-content': {
-      id: '/api/generate-content'
-      path: '/api/generate-content'
-      fullPath: '/api/generate-content'
-      preLoaderRoute: typeof ApiGenerateContentRouteImport
+    '/api/review-request': {
+      id: '/api/review-request'
+      path: '/api/review-request'
+      fullPath: '/api/review-request'
+      preLoaderRoute: typeof ApiReviewRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lead-blast': {
+      id: '/api/lead-blast'
+      path: '/api/lead-blast'
+      fullPath: '/api/lead-blast'
+      preLoaderRoute: typeof ApiLeadBlastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/competitor-intel': {
+      id: '/api/competitor-intel'
+      path: '/api/competitor-intel'
+      fullPath: '/api/competitor-intel'
+      preLoaderRoute: typeof ApiCompetitorIntelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/booking-plan': {
+      id: '/api/booking-plan'
+      path: '/api/booking-plan'
+      fullPath: '/api/booking-plan'
+      preLoaderRoute: typeof ApiBookingPlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/appointments': {
+      id: '/api/appointments'
+      path: '/api/appointments'
+      fullPath: '/api/appointments'
+      preLoaderRoute: typeof ApiAppointmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -463,11 +987,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/api/public/leads': {
-      id: '/api/public/leads'
-      path: '/api/public/leads'
-      fullPath: '/api/public/leads'
-      preLoaderRoute: typeof ApiPublicLeadsRouteImport
+    '/api/twilio/sms-reply': {
+      id: '/api/twilio/sms-reply'
+      path: '/api/twilio/sms-reply'
+      fullPath: '/api/twilio/sms-reply'
+      preLoaderRoute: typeof ApiTwilioSmsReplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio/missed-call': {
+      id: '/api/twilio/missed-call'
+      path: '/api/twilio/missed-call'
+      fullPath: '/api/twilio/missed-call'
+      preLoaderRoute: typeof ApiTwilioMissedCallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio/consumer-inbound': {
+      id: '/api/twilio/consumer-inbound'
+      path: '/api/twilio/consumer-inbound'
+      fullPath: '/api/twilio/consumer-inbound'
+      preLoaderRoute: typeof ApiTwilioConsumerInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/contact': {
+      id: '/api/public/contact'
+      path: '/api/public/contact'
+      fullPath: '/api/public/contact'
+      preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lead-generator/research': {
+      id: '/api/lead-generator/research'
+      path: '/api/lead-generator/research'
+      fullPath: '/api/lead-generator/research'
+      preLoaderRoute: typeof ApiLeadGeneratorResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lead-generator/handle-response': {
+      id: '/api/lead-generator/handle-response'
+      path: '/api/lead-generator/handle-response'
+      fullPath: '/api/lead-generator/handle-response'
+      preLoaderRoute: typeof ApiLeadGeneratorHandleResponseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lead-generator/execute-step': {
+      id: '/api/lead-generator/execute-step'
+      path: '/api/lead-generator/execute-step'
+      fullPath: '/api/lead-generator/execute-step'
+      preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/appointments/$id': {
+      id: '/api/appointments/$id'
+      path: '/$id'
+      fullPath: '/api/appointments/$id'
+      preLoaderRoute: typeof ApiAppointmentsIdRouteImport
+      parentRoute: typeof ApiAppointmentsRoute
+    }
+    '/api/admin/verification-review': {
+      id: '/api/admin/verification-review'
+      path: '/api/admin/verification-review'
+      fullPath: '/api/admin/verification-review'
+      preLoaderRoute: typeof ApiAdminVerificationReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/update-scores': {
+      id: '/api/admin/update-scores'
+      path: '/api/admin/update-scores'
+      fullPath: '/api/admin/update-scores'
+      preLoaderRoute: typeof ApiAdminUpdateScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/update-pricing-index': {
+      id: '/api/admin/update-pricing-index'
+      path: '/api/admin/update-pricing-index'
+      fullPath: '/api/admin/update-pricing-index'
+      preLoaderRoute: typeof ApiAdminUpdatePricingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/account/export': {
+      id: '/api/account/export'
+      path: '/api/account/export'
+      fullPath: '/api/account/export'
+      preLoaderRoute: typeof ApiAccountExportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/account/delete': {
+      id: '/api/account/delete'
+      path: '/api/account/delete'
+      fullPath: '/api/account/delete'
+      preLoaderRoute: typeof ApiAccountDeleteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/workflows': {
@@ -477,11 +1085,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppWorkflowsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/verification': {
+      id: '/_authenticated/app/verification'
+      path: '/verification'
+      fullPath: '/app/verification'
+      preLoaderRoute: typeof AuthenticatedAppVerificationRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/settings': {
       id: '/_authenticated/app/settings'
       path: '/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/reputation': {
+      id: '/_authenticated/app/reputation'
+      path: '/reputation'
+      fullPath: '/app/reputation'
+      preLoaderRoute: typeof AuthenticatedAppReputationRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/receptionist': {
+      id: '/_authenticated/app/receptionist'
+      path: '/receptionist'
+      fullPath: '/app/receptionist'
+      preLoaderRoute: typeof AuthenticatedAppReceptionistRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/network': {
+      id: '/_authenticated/app/network'
+      path: '/network'
+      fullPath: '/app/network'
+      preLoaderRoute: typeof AuthenticatedAppNetworkRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/logs': {
@@ -503,6 +1139,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/app/chat'
       preLoaderRoute: typeof AuthenticatedAppChatRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/calendar': {
+      id: '/_authenticated/app/calendar'
+      path: '/calendar'
+      fullPath: '/app/calendar'
+      preLoaderRoute: typeof AuthenticatedAppCalendarRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/agents': {
@@ -533,34 +1176,58 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicChatbotBusiness_idRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/billing/portal': {
-      id: '/api/public/billing/portal'
-      path: '/api/public/billing/portal'
-      fullPath: '/api/public/billing/portal'
-      preLoaderRoute: typeof ApiPublicBillingPortalRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/app/admin/verification-review': {
+      id: '/_authenticated/app/admin/verification-review'
+      path: '/verification-review'
+      fullPath: '/app/admin/verification-review'
+      preLoaderRoute: typeof AuthenticatedAppAdminVerificationReviewRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
     }
   }
 }
 
+interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminVerificationReviewRoute: typeof AuthenticatedAppAdminVerificationReviewRoute
+}
+
+const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminVerificationReviewRoute:
+    AuthenticatedAppAdminVerificationReviewRoute,
+}
+
+const AuthenticatedAppAdminRouteWithChildren =
+  AuthenticatedAppAdminRoute._addFileChildren(
+    AuthenticatedAppAdminRouteChildren,
+  )
+
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
-  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
+  AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppChatRoute: typeof AuthenticatedAppChatRoute
   AuthenticatedAppControlRoute: typeof AuthenticatedAppControlRoute
   AuthenticatedAppLogsRoute: typeof AuthenticatedAppLogsRoute
+  AuthenticatedAppNetworkRoute: typeof AuthenticatedAppNetworkRoute
+  AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
+  AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppVerificationRoute: typeof AuthenticatedAppVerificationRoute
   AuthenticatedAppWorkflowsRoute: typeof AuthenticatedAppWorkflowsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
-  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
+  AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppChatRoute: AuthenticatedAppChatRoute,
   AuthenticatedAppControlRoute: AuthenticatedAppControlRoute,
   AuthenticatedAppLogsRoute: AuthenticatedAppLogsRoute,
+  AuthenticatedAppNetworkRoute: AuthenticatedAppNetworkRoute,
+  AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
+  AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
+  AuthenticatedAppVerificationRoute: AuthenticatedAppVerificationRoute,
   AuthenticatedAppWorkflowsRoute: AuthenticatedAppWorkflowsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
@@ -579,22 +1246,68 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
+interface ApiAppointmentsRouteChildren {
+  ApiAppointmentsIdRoute: typeof ApiAppointmentsIdRoute
+}
+
+const ApiAppointmentsRouteChildren: ApiAppointmentsRouteChildren = {
+  ApiAppointmentsIdRoute: ApiAppointmentsIdRoute,
+}
+
+const ApiAppointmentsRouteWithChildren = ApiAppointmentsRoute._addFileChildren(
+  ApiAppointmentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuditRoute: AuditRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   ChatRoute: ChatRoute,
+  ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
+  DashboardRoute: DashboardRoute,
+  FaqRoute: FaqRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  RefundRoute: RefundRoute,
+  SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
-  ApiGenerateContentRoute: ApiGenerateContentRoute,
-  ApiGenerateWeeklyPlanRoute: ApiGenerateWeeklyPlanRoute,
+  ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
+  ApiBookingPlanRoute: ApiBookingPlanRoute,
+  ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
+  ApiLeadBlastRoute: ApiLeadBlastRoute,
+  ApiReviewRequestRoute: ApiReviewRequestRoute,
+  ApiReviewResponseRoute: ApiReviewResponseRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
   ApiWorkflowRoute: ApiWorkflowRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
-  ApiPublicLeadsRoute: ApiPublicLeadsRoute,
-  ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
+  CheckoutStartRoute: CheckoutStartRoute,
+  ApiAccountDeleteRoute: ApiAccountDeleteRoute,
+  ApiAccountExportRoute: ApiAccountExportRoute,
+  ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,
+  ApiAdminUpdateScoresRoute: ApiAdminUpdateScoresRoute,
+  ApiAdminVerificationReviewRoute: ApiAdminVerificationReviewRoute,
+  ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
+  ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
+  ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
+  ApiPublicContactRoute: ApiPublicContactRoute,
+  ApiTwilioConsumerInboundRoute: ApiTwilioConsumerInboundRoute,
+  ApiTwilioMissedCallRoute: ApiTwilioMissedCallRoute,
+  ApiTwilioSmsReplyRoute: ApiTwilioSmsReplyRoute,
   ApiPublicChatbotBusiness_idRoute: ApiPublicChatbotBusiness_idRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }

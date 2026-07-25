@@ -8,6 +8,19 @@ const getEnv = (key: string): string => {
 
 export type StripeEnv = 'sandbox' | 'live';
 
+// Constant-time comparison (same approach as verifyTwilioRequest in
+// twilio.server.ts) — a naive `===`/`.includes()` check on the signature
+// short-circuits on the first mismatched byte, which is a (largely
+// theoretical, but free to close) timing side-channel.
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 const GATEWAY_STRIPE_BASE = 'https://connector-gateway.lovable.dev/stripe';
 
 export function getConnectionApiKey(env: StripeEnv): string {
@@ -67,7 +80,9 @@ export async function verifyWebhook(req: Request, env: StripeEnv): Promise<{ typ
   const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${timestamp}.${body}`));
   const expected = Buffer.from(new Uint8Array(signed)).toString('hex');
 
-  if (!v1Signatures.includes(expected)) throw new Error("Invalid webhook signature");
+  if (!v1Signatures.some((sig) => timingSafeEqualStr(sig, expected))) {
+    throw new Error("Invalid webhook signature");
+  }
 
   return JSON.parse(body);
 }

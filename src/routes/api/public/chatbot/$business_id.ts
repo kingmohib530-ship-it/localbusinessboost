@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/chatbot/$business_id")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      GET: async ({ params }) => {
+      GET: async ({ request, params }) => {
         try {
           const businessId = params.business_id;
           if (!businessId || !UUID_RE.test(businessId)) {
@@ -22,6 +22,26 @@ export const Route = createFileRoute("/api/public/chatbot/$business_id")({
               { error: "Invalid business_id" },
               { status: 400, headers: CORS },
             );
+          }
+
+          // Public, unauthenticated, embeddable anywhere — IP-based rate
+          // limiting is the only abuse backstop available here.
+          const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_anon_rate_limit",
+            {
+              p_ip_address: ip,
+              p_route: "public-chatbot-config",
+              p_max_requests: 60,
+              p_window_seconds: 3600,
+            },
+          );
+          if (rlErr) {
+            console.error("[chatbot GET] rate limit check failed");
+            return Response.json({ error: "Service temporarily unavailable" }, { status: 503, headers: CORS });
+          }
+          if (!allowed) {
+            return Response.json({ error: "Too many requests." }, { status: 429, headers: CORS });
           }
 
           const { data: business, error: bizErr } = await supabaseAdmin

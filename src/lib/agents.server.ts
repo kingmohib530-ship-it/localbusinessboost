@@ -9,8 +9,9 @@
  * Public entry point: `runLunavxWorkflow(userRequest)` — Orbis plans, then
  * the planned agents execute sequentially with context passing.
  *
- * All AI calls go through the Lovable AI gateway. Never call providers
- * directly. This file is server-only (process.env access).
+ * All AI calls go directly to the Anthropic API (same provider used by
+ * api/lead-blast.ts and api/review-response.ts). This file is server-only
+ * (process.env access).
  */
 
 import { createMondayItem } from "./monday.server";
@@ -19,8 +20,8 @@ import { createMondayItem } from "./monday.server";
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-sonnet-4-6";
 
 /** Inter-agent pause to stay polite with the AI gateway. */
 const AGENT_DELAY_MS = 900;
@@ -445,25 +446,21 @@ Return ONLY JSON in this exact shape:
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function aiJson(system: string, user: string): Promise<unknown> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  const res = await fetch(GATEWAY_URL, {
+  const res = await fetch(ANTHROPIC_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
       model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: system + "\n\nRespond with ONLY valid JSON. No markdown, no commentary, no code fences.",
-        },
-        { role: "user", content: user },
-      ],
-      response_format: { type: "json_object" },
+      max_tokens: 4096,
+      system: system + "\n\nRespond with ONLY valid JSON. No markdown, no commentary, no code fences.",
+      messages: [{ role: "user", content: user }],
     }),
   });
 
@@ -472,16 +469,16 @@ async function aiJson(system: string, user: string): Promise<unknown> {
     if (res.status === 429) {
       throw new Error("AI rate limit reached. Please try again in a moment.");
     }
-    if (res.status === 402) {
-      throw new Error("AI credits exhausted. Add credits in workspace settings.");
+    if (res.status === 529) {
+      throw new Error("AI is temporarily overloaded. Please try again in a moment.");
     }
-    throw new Error(`AI gateway error ${res.status}: ${body.slice(0, 200)}`);
+    throw new Error(`AI error ${res.status}: ${body.slice(0, 200)}`);
   }
 
   const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
+    content?: { type?: string; text?: string }[];
   };
-  const content = data.choices?.[0]?.message?.content ?? "{}";
+  const content = data.content?.map((b) => b.text ?? "").join("") || "{}";
 
   try {
     return JSON.parse(content);

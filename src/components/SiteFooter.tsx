@@ -17,8 +17,10 @@ const COLS: FooterCol[] = [
   {
     title: "Company",
     links: [
+      { to: "/about", label: "About" },
       { to: "/audit", label: "Free Audit" },
-      { to: "mailto:moh@lanavix.com", label: "Contact", external: true },
+      { to: "/faq", label: "FAQ" },
+      { to: "/chat", label: "Contact" },
     ],
   },
   {
@@ -26,6 +28,8 @@ const COLS: FooterCol[] = [
     links: [
       { to: "/privacy", label: "Privacy Policy" },
       { to: "/terms", label: "Terms of Service" },
+      { to: "/refund", label: "Refund Policy" },
+      { to: "/cookies", label: "Cookie Policy" },
     ],
   },
 ];

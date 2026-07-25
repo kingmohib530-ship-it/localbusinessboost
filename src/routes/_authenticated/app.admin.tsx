@@ -1,12 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRequireAdmin } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   component: AdminDashboard,
 });
-
-const ADMIN_EMAILS = ["kingmohib530@gmail.com", "mohibanwari111@gmail.com"];
 
 interface UserRow {
   id: string;
@@ -32,8 +31,7 @@ function timeAgo(dateStr: string) {
 }
 
 function AdminDashboard() {
-  const navigate = useNavigate();
-  const [allowed, setAllowed] = useState(false);
+  const allowed = useRequireAdmin();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [totalAudits, setTotalAudits] = useState(0);
@@ -41,14 +39,8 @@ function AdminDashboard() {
   const [totalReviews, setTotalReviews] = useState(0);
 
   useEffect(() => {
+    if (!allowed) return;
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
-        navigate({ to: "/app", replace: true });
-        return;
-      }
-      setAllowed(true);
-
       // Load profiles
       const { data: profiles } = await supabase
         .from("profiles")
@@ -79,7 +71,7 @@ function AdminDashboard() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [allowed]);
 
   if (!allowed) return null;
 
@@ -87,7 +79,7 @@ function AdminDashboard() {
     { label: "Total users", value: users.length, icon: "👥", color: "#818cf8" },
     { label: "Leads generated", value: totalLeads, icon: "🎯", color: "#34d399" },
     { label: "Review requests", value: totalReviews, icon: "⭐", color: "#fbbf24" },
-    { label: "Paying customers", value: users.filter(u => u.subscription_tier && u.subscription_tier !== "free").length, icon: "💰", color: "#f472b6" },
+    { label: "Paying customers", value: users.filter(u => u.subscription_tier && u.subscription_tier !== "starter").length, icon: "💰", color: "#f472b6" },
   ];
 
   return (
@@ -101,9 +93,12 @@ function AdminDashboard() {
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", margin: "0 0 6px" }}>
           Lanavix Admin
         </h1>
-        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
+        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: "0 0 14px" }}>
           Overview of all users and platform activity.
         </p>
+        <Link to="/app/admin/verification-review" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+          Review business verifications →
+        </Link>
       </div>
 
       {/* Stats */}
@@ -152,10 +147,10 @@ function AdminDashboard() {
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{
                         fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                        background: u.subscription_tier && u.subscription_tier !== "free" ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
-                        color: u.subscription_tier && u.subscription_tier !== "free" ? "#34d399" : "#818cf8"
+                        background: u.subscription_tier && u.subscription_tier !== "starter" ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
+                        color: u.subscription_tier && u.subscription_tier !== "starter" ? "#34d399" : "#818cf8"
                       }}>
-                        {u.subscription_tier || "free"}
+                        {u.subscription_tier || "starter"}
                       </span>
                     </td>
                   </tr>

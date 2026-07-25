@@ -6,12 +6,14 @@ import { getTask, listTasks } from "@/lib/orchestrator.functions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Terminal } from "lucide-react";
+import { useRequireAdmin } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/app/control")({
   component: ControlCenter,
 });
 
 function ControlCenter() {
+  const allowed = useRequireAdmin();
   const tasksFn = useServerFn(listTasks);
   const getFn = useServerFn(getTask);
   const tasks = useQuery({ queryKey: ["tasks"], queryFn: () => tasksFn(), refetchInterval: 4000 });
@@ -22,6 +24,8 @@ function ControlCenter() {
     enabled: !!sel,
     refetchInterval: 2000,
   });
+
+  if (!allowed) return null;
 
   return (
     <div className="flex h-screen">

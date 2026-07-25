@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
+  head: () => ({
+    meta: pageMeta({
+      title: "Terms of Service — Lanavix",
+      description: "Lanavix's terms of service: eligibility, SMS compliance, payment terms, and cancellation policy.",
+      path: "/terms",
+    }),
+  }),
   component: TermsPage,
 });
 

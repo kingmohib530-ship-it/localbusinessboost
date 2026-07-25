@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/require-admin";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -10,7 +10,7 @@ const createSchema = z.object({
 });
 
 export const createTask = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((data: unknown) => createSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -168,7 +168,7 @@ async function runTaskInBackground(
 }
 
 export const listTasks = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("tasks")
@@ -180,7 +180,7 @@ export const listTasks = createServerFn({ method: "GET" })
   });
 
 export const getTask = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const [{ data: task }, { data: runs }, { data: logs }] = await Promise.all([
@@ -200,7 +200,7 @@ export const getTask = createServerFn({ method: "POST" })
   });
 
 export const listLogs = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("execution_logs")
@@ -211,7 +211,7 @@ export const listLogs = createServerFn({ method: "GET" })
   });
 
 export const dashboardStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }) => {
     const [{ data: tasks }, { data: runs }] = await Promise.all([
       context.supabase.from("tasks").select("id,status,created_at"),

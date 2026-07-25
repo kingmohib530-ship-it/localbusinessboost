@@ -37,6 +37,26 @@ export const Route = createFileRoute("/api/workflow")({
             );
           }
 
+          // ===== Rate limit: 5 requests per hour per user =====
+          // (low cap — each call runs the full multi-agent pipeline, several
+          // sequential Anthropic calls per request)
+          const { data: rlAllowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_rate_limit",
+            {
+              p_user_id: user.id,
+              p_route: "workflow",
+              p_max_requests: 5,
+              p_window_seconds: 3600,
+            },
+          );
+          if (rlErr) {
+            console.error("[/api/workflow] rate limit check failed");
+            return Response.json({ success: false, error: "Service temporarily unavailable" }, { status: 503 });
+          }
+          if (!rlAllowed) {
+            return Response.json({ success: false, error: "Too many requests. Please wait a bit and try again." }, { status: 429 });
+          }
+
           // ===== Input validation =====
           const body = (await request.json().catch(() => ({}))) as {
             userRequest?: unknown;

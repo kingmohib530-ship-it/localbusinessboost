@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Bot, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRequireAdmin } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/app/chat")({
   component: ChatPage,
 });
 
 function ChatPage() {
+  const allowed = useRequireAdmin();
   const qc = useQueryClient();
   const tasksFn = useServerFn(listTasks);
   const getFn = useServerFn(getTask);
@@ -42,6 +44,8 @@ function ChatPage() {
 
   const t = active.data?.task;
   const runs = active.data?.runs ?? [];
+
+  if (!allowed) return null;
 
   return (
     <div className="flex h-screen">

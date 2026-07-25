@@ -110,3 +110,19 @@ export async function updateMondayItem(
   }>(query, variables);
   return data.change_multiple_column_values.id;
 }
+
+/**
+ * Post a text update (activity-feed comment) to an existing item. Used to
+ * carry free-form context — lead score, pain signals, research summary —
+ * that doesn't map to a fixed column on the board's schema.
+ */
+export async function createMondayUpdate(itemId: string, body: string): Promise<void> {
+  const query = `
+    mutation ($itemId: ID!, $body: String!) {
+      create_update(item_id: $itemId, body: $body) {
+        id
+      }
+    }
+  `;
+  await mondayRequest<{ create_update: { id: number } }>(query, { itemId, body });
+}

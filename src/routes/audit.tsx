@@ -4,14 +4,16 @@ import { AuditForm } from "@/components/AuditForm";
 import { AuditReport } from "@/components/AuditReport";
 import { runBusinessAudit } from "@/lib/auditApi";
 import type { AuditInput, AuditResult } from "@/lib/auditApi";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/audit")({
   component: AuditPage,
   head: () => ({
-    meta: [
-      { title: "Free Business Audit — Lanavix" },
-      { name: "description", content: "Get a free AI-powered audit of your local business: visibility, reputation, lead capture, and conversion." },
-    ],
+    meta: pageMeta({
+      title: "Free Business Audit — Lanavix",
+      description: "Get a free AI-powered audit of your local business: visibility, reputation, lead capture, and conversion.",
+      path: "/audit",
+    }),
   }),
 });
 

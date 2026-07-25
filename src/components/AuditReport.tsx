@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AuditResult, AuditCategory } from "@/lib/auditApi";
+import { saveAuditLead } from "@/lib/auditApi";
 
 /* ── helpers ── */
 const CATEGORY_META: Record<
@@ -136,7 +137,7 @@ function CategorySection({
 }
 
 /* ── EmailGate ── */
-function EmailGate({ onUnlock }: { onUnlock: (email: string) => void }) {
+function EmailGate({ result, onUnlock }: { result: AuditResult; onUnlock: (email: string) => void }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -149,10 +150,14 @@ function EmailGate({ onUnlock }: { onUnlock: (email: string) => void }) {
     }
     setError("");
     setLoading(true);
-    // Small artificial delay so it feels like something is happening
-    await new Promise((r) => setTimeout(r, 700));
-    setLoading(false);
-    onUnlock(email);
+    try {
+      await saveAuditLead({ email, result });
+      onUnlock(email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -279,6 +284,27 @@ export function AuditReport({ result, onStartOver }: Props) {
         </div>
       </section>
 
+      {/* ── Technical scan ── */}
+      {result.technicalCheck.hasWebsite && (
+        <section
+          aria-label="Website technical scan"
+          style={{ background: "#fff", border: "1.5px solid var(--border, #E2E8F0)", borderTop: "none", padding: "16px 28px", display: "flex", flexWrap: "wrap", gap: "10px 20px", fontSize: 13, color: "#475569" }}
+        >
+          <span style={{ fontWeight: 700, color: "#0F172A" }}>Real website scan:</span>
+          {!result.technicalCheck.reachable ? (
+            <span>Site could not be reached — this alone is hurting every category above.</span>
+          ) : (
+            <>
+              <span>SSL: {result.technicalCheck.sslValid ? "✅ Valid" : "❌ Not valid"}</span>
+              <span>Load time: {result.technicalCheck.loadTimeMs}ms</span>
+              <span>Title tag: {result.technicalCheck.hasTitleTag ? "✅" : "❌ Missing"}</span>
+              <span>Meta description: {result.technicalCheck.hasMetaDescription ? "✅" : "❌ Missing"}</span>
+              <span>Mobile-friendly tag: {result.technicalCheck.hasViewportTag ? "✅" : "❌ Missing"}</span>
+            </>
+          )}
+        </section>
+      )}
+
       {/* ── Revenue opportunity ── */}
       <section className="ar-revenue" aria-label="Revenue opportunity">
         <div className="ar-revenue-inner">
@@ -309,10 +335,7 @@ export function AuditReport({ result, onStartOver }: Props) {
 
       {/* ── Email gate (shown if not yet unlocked) ── */}
       {!unlocked && (
-        <EmailGate onUnlock={(email) => {
-          console.log("Lead captured:", email);
-          setUnlocked(true);
-        }} />
+        <EmailGate result={result} onUnlock={() => setUnlocked(true)} />
       )}
 
       {/* ── Post-unlock CTA ── */}

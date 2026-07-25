@@ -9,6 +9,7 @@ const NAV_LINKS: NavLink[] = [
   { to: "/#features", label: "What you get", anchor: true },
   { to: "/#how-it-works", label: "How it works", anchor: true },
   { to: "/pricing", label: "Pricing" },
+  { to: "/about", label: "About" },
 ];
 
 export function SiteNav() {
@@ -20,7 +21,7 @@ export function SiteNav() {
           <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold tracking-tight">Lunavx</span>
+          <span className="font-display font-bold tracking-tight">Lanavix</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
@@ -37,13 +38,13 @@ export function SiteNav() {
           )}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
-          <Link to="/auth">
-            <Button variant="ghost" size="sm">Login</Button>
+        <div className="hidden md:flex items-center gap-6">
+          <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Sign In
           </Link>
-          <Link to="/auth">
+          <Link to="/auth" search={{ mode: "signup" }}>
             <Button size="sm" className="glow-primary">
-              Free Audit <ArrowRight className="h-3.5 w-3.5" />
+              Sign Up <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
         </div>
@@ -73,11 +74,11 @@ export function SiteNav() {
             )}
             <div className="flex flex-col gap-2 pt-2 border-t border-border/60">
               <Link to="/auth" onClick={() => setOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full">Login</Button>
+                <Button variant="outline" size="sm" className="w-full">Sign In</Button>
               </Link>
-              <Link to="/auth" onClick={() => setOpen(false)}>
+              <Link to="/auth" search={{ mode: "signup" }} onClick={() => setOpen(false)}>
                 <Button size="sm" className="w-full">
-                  Start Free Trial <ArrowRight className="h-3.5 w-3.5" />
+                  Sign Up <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>
