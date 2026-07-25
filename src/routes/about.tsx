@@ -45,11 +45,16 @@ function AboutPage() {
           <div>
             <h2 className="font-display text-2xl font-bold tracking-tight mb-4">Founder</h2>
             <div className="rounded-xl border border-border bg-card p-7 flex gap-6 items-start">
-              <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground shrink-0 text-center px-2">
-                [Photo to be added]
-              </div>
-              <p className="text-muted-foreground leading-relaxed italic">
-                [Founder name and bio to be added]
+              <img
+                src="/mohib-founder-photo.jpg"
+                alt="Mohib Ahmadzai, founder of Lanavix"
+                className="h-20 w-20 rounded-full object-cover shrink-0"
+              />
+              <p className="text-muted-foreground leading-relaxed">
+                I'm Mohib Ahmadzai, founder of Lanavix. I built this because too many contractors lose real business to
+                a missed call or a review that never got a response — problems that are completely solvable with the
+                right automation. Lanavix exists to give every local service business AI tools that used to only be
+                available to big companies with big budgets.
               </p>
             </div>
           </div>
