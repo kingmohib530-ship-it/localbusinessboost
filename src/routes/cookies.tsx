@@ -29,7 +29,7 @@ const SECTIONS = [
   },
   {
     title: "4. Your Choices",
-    body: `Because Lanavix only stores what's strictly necessary to keep you signed in, there's no cookie consent banner to configure — clearing your browser's local storage will simply sign you out.`,
+    body: `Because Lanavix only stores what's strictly necessary to keep you signed in, you'll see a one-time notice on your first visit rather than a settings panel — there's nothing to configure, since we don't set optional or tracking cookies. Clearing your browser's local storage will simply sign you out.`,
   },
   {
     title: "5. Contact",
