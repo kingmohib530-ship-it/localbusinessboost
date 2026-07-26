@@ -31,10 +31,10 @@ interface Appointment {
 }
 
 const STATUS_STYLES: Record<Appointment["status"], { bg: string; color: string; label: string }> = {
-  pending: { bg: "#fef3c7", color: "#b45309", label: "Pending" },
+  pending: { bg: "var(--muted)", color: "var(--foreground)", label: "Pending" },
   confirmed: { bg: "var(--accent)", color: "var(--accent-2)", label: "Confirmed" },
-  completed: { bg: "#dbeafe", color: "#1d4ed8", label: "Completed" },
-  cancelled: { bg: "#fee2e2", color: "var(--destructive)", label: "Cancelled" },
+  completed: { bg: "var(--accent)", color: "var(--primary)", label: "Completed" },
+  cancelled: { bg: "var(--muted)", color: "var(--destructive)", label: "Cancelled" },
   no_show: { bg: "var(--muted)", color: "var(--muted-foreground)", label: "No-show" },
 };
 
