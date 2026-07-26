@@ -17,6 +17,7 @@ function NetworkPage() {
   const [accept, setAccept] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [saveOk, setSaveOk] = useState(true);
   const [appointments, setAppointments] = useState<ConsumerAppointmentRow[]>([]);
 
   useEffect(() => { loadData(); }, []);
@@ -53,8 +54,10 @@ function NetworkPage() {
       .eq("id", user.id);
     if (error) {
       setAccept(!next);
+      setSaveOk(false);
       setSaveMsg("Could not save — please try again.");
     } else {
+      setSaveOk(true);
       setSaveMsg("Saved!");
     }
     setSaving(false);
@@ -116,7 +119,7 @@ function NetworkPage() {
             }} />
           </button>
         </div>
-        {saveMsg && <div style={{ fontSize: 12, color: "var(--accent-2)", marginTop: 10 }}>{saveMsg}</div>}
+        {saveMsg && <div style={{ fontSize: 12, color: saveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 10 }}>{saveMsg}</div>}
       </div>
 
       <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>

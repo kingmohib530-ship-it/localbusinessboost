@@ -56,6 +56,7 @@ function VerificationReviewPage() {
   const [notes, setNotes] = useState("");
   const [acting, setActing] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
+  const [actionOk, setActionOk] = useState(true);
 
   useEffect(() => {
     if (!allowed) return;
@@ -100,6 +101,7 @@ function VerificationReviewPage() {
       .from("verification-docs")
       .createSignedUrl(doc.storage_path, 300);
     if (error || !data?.signedUrl) {
+      setActionOk(false);
       setActionMsg("Could not open document.");
       return;
     }
@@ -111,6 +113,7 @@ function VerificationReviewPage() {
       await authedFetch("/api/admin/verification-review", { documentId: doc.id, status });
       setDocs((d) => d.map((x) => (x.id === doc.id ? { ...x, status } : x)));
     } catch (e: any) {
+      setActionOk(false);
       setActionMsg(e.message || "Failed to update document.");
     }
   }
@@ -132,8 +135,10 @@ function VerificationReviewPage() {
             : p
         )
       );
+      setActionOk(true);
       setActionMsg("Saved.");
     } catch (e: any) {
+      setActionOk(false);
       setActionMsg(e.message || "Failed to save decision.");
     } finally {
       setActing(false);
@@ -281,7 +286,7 @@ function VerificationReviewPage() {
                 Reject
               </button>
             </div>
-            {actionMsg && <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>{actionMsg}</p>}
+            {actionMsg && <p style={{ fontSize: 12, color: actionOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 10 }}>{actionMsg}</p>}
           </div>
         )}
       </div>
