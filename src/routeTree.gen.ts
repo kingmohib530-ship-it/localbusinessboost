@@ -44,6 +44,8 @@ import { Route as ApiPublicContactRouteImport } from './routes/api/public/contac
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiBusinessFactsSyncWebsiteRouteImport } from './routes/api/business-facts/sync-website'
+import { Route as ApiBusinessFactsSyncGoogleRouteImport } from './routes/api/business-facts/sync-google'
 import { Route as ApiBusinessFactsSearchGooglePlacesRouteImport } from './routes/api/business-facts/search-google-places'
 import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
 import { Route as ApiAdminVerificationReviewRouteImport } from './routes/api/admin/verification-review'
@@ -241,6 +243,18 @@ const ApiLeadGeneratorExecuteStepRoute =
     path: '/api/lead-generator/execute-step',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiBusinessFactsSyncWebsiteRoute =
+  ApiBusinessFactsSyncWebsiteRouteImport.update({
+    id: '/api/business-facts/sync-website',
+    path: '/api/business-facts/sync-website',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBusinessFactsSyncGoogleRoute =
+  ApiBusinessFactsSyncGoogleRouteImport.update({
+    id: '/api/business-facts/sync-google',
+    path: '/api/business-facts/sync-google',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiBusinessFactsSearchGooglePlacesRoute =
   ApiBusinessFactsSearchGooglePlacesRouteImport.update({
     id: '/api/business-facts/search-google-places',
@@ -385,6 +399,8 @@ export interface FileRoutesByFullPath {
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
+  '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
+  '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -438,6 +454,8 @@ export interface FileRoutesByTo {
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
+  '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
+  '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -494,6 +512,8 @@ export interface FileRoutesById {
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
+  '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
+  '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -550,6 +570,8 @@ export interface FileRouteTypes {
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
     | '/api/business-facts/search-google-places'
+    | '/api/business-facts/sync-google'
+    | '/api/business-facts/sync-website'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -603,6 +625,8 @@ export interface FileRouteTypes {
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
     | '/api/business-facts/search-google-places'
+    | '/api/business-facts/sync-google'
+    | '/api/business-facts/sync-website'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -658,6 +682,8 @@ export interface FileRouteTypes {
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
     | '/api/business-facts/search-google-places'
+    | '/api/business-facts/sync-google'
+    | '/api/business-facts/sync-website'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -703,6 +729,8 @@ export interface RootRouteChildren {
   ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
   ApiAdminVerificationReviewRoute: typeof ApiAdminVerificationReviewRoute
   ApiBusinessFactsSearchGooglePlacesRoute: typeof ApiBusinessFactsSearchGooglePlacesRoute
+  ApiBusinessFactsSyncGoogleRoute: typeof ApiBusinessFactsSyncGoogleRoute
+  ApiBusinessFactsSyncWebsiteRoute: typeof ApiBusinessFactsSyncWebsiteRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
@@ -961,6 +989,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/business-facts/sync-website': {
+      id: '/api/business-facts/sync-website'
+      path: '/api/business-facts/sync-website'
+      fullPath: '/api/business-facts/sync-website'
+      preLoaderRoute: typeof ApiBusinessFactsSyncWebsiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/business-facts/sync-google': {
+      id: '/api/business-facts/sync-google'
+      path: '/api/business-facts/sync-google'
+      fullPath: '/api/business-facts/sync-google'
+      preLoaderRoute: typeof ApiBusinessFactsSyncGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/business-facts/search-google-places': {
       id: '/api/business-facts/search-google-places'
       path: '/api/business-facts/search-google-places'
@@ -1197,6 +1239,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminVerificationReviewRoute: ApiAdminVerificationReviewRoute,
   ApiBusinessFactsSearchGooglePlacesRoute:
     ApiBusinessFactsSearchGooglePlacesRoute,
+  ApiBusinessFactsSyncGoogleRoute: ApiBusinessFactsSyncGoogleRoute,
+  ApiBusinessFactsSyncWebsiteRoute: ApiBusinessFactsSyncWebsiteRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
