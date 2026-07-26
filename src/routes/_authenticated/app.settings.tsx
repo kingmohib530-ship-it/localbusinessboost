@@ -30,11 +30,12 @@ function Settings() {
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       setEmail(data.user?.email ?? "");
-      if (!data.user) return;
+      if (!data.user) { setLoading(false); return; }
       const { data: profile } = await supabase
         .from("profiles")
         .select("subscription_tier, subscription_status, verification_status")
@@ -45,6 +46,7 @@ function Settings() {
       }
       setSubscriptionStatus(profile?.subscription_status ?? null);
       setVerificationStatus(profile?.verification_status || "unverified");
+      setLoading(false);
     });
   }, []);
 
@@ -121,38 +123,44 @@ function Settings() {
         <h1 className="text-3xl font-display font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1">Your workspace and account.</p>
       </div>
-      <Card className="p-6 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-muted-foreground">Account</div>
-            <div className="font-medium">{email || "—"}</div>
-          </div>
-          <Badge variant="secondary">{VERIFICATION_LABELS[verificationStatus] || "Not verified"}</Badge>
-        </div>
-        {verificationStatus === "unverified" && (
-          <Button asChild variant="outline" size="sm">
-            <Link to="/app/verification">Get verified →</Link>
-          </Button>
-        )}
-      </Card>
-      <Card className="p-6 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Plan</h2>
-          <Badge>{PRICING_PLANS[planId].name}</Badge>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {planId === "starter"
-            ? "You don't have an active plan yet. Subscribe to Solo, Crew, or Agency to unlock the receptionist, review automation, and Local Lead Blast."
-            : subscriptionStatus === "trialing"
-              ? `You're in your free trial of ${PRICING_PLANS[planId].name}.`
-              : subscriptionStatus === "past_due"
-                ? "Your last payment failed — update your billing details to avoid losing access."
-                : `You're subscribed to ${PRICING_PLANS[planId].name} ($${PRICING_PLANS[planId].price}/mo).`}
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
-        </Button>
-      </Card>
+      {loading ? (
+        <Card className="p-6 text-center text-sm text-muted-foreground">Loading...</Card>
+      ) : (
+        <>
+          <Card className="p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground">Account</div>
+                <div className="font-medium">{email || "—"}</div>
+              </div>
+              <Badge variant="secondary">{VERIFICATION_LABELS[verificationStatus] || "Not verified"}</Badge>
+            </div>
+            {verificationStatus === "unverified" && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/app/verification">Get verified →</Link>
+              </Button>
+            )}
+          </Card>
+          <Card className="p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Plan</h2>
+              <Badge>{PRICING_PLANS[planId].name}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {planId === "starter"
+                ? "You don't have an active plan yet. Subscribe to Solo, Crew, or Agency to unlock the receptionist, review automation, and Local Lead Blast."
+                : subscriptionStatus === "trialing"
+                  ? `You're in your free trial of ${PRICING_PLANS[planId].name}.`
+                  : subscriptionStatus === "past_due"
+                    ? "Your last payment failed — update your billing details to avoid losing access."
+                    : `You're subscribed to ${PRICING_PLANS[planId].name} ($${PRICING_PLANS[planId].price}/mo).`}
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
+            </Button>
+          </Card>
+        </>
+      )}
 
       <Card className="p-6 space-y-3">
         <h2 className="font-semibold">Your data</h2>
