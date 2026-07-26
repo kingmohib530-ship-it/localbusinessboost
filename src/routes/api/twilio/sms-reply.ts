@@ -10,9 +10,11 @@ function businessFooter(): string {
     : "\n\nManaged by Lanavix";
 }
 
-const FALLBACK_TWIML = (message: string) =>
+// Only worth showing on the first reply in a conversation - repeating it on
+// every message in an ongoing back-and-forth just adds noise.
+const FALLBACK_TWIML = (message: string, includeFooter = true) =>
   new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}${businessFooter()}</Message></Response>`,
+    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}${includeFooter ? businessFooter() : ""}</Message></Response>`,
     { headers: { "Content-Type": "text/xml" } },
   );
 
@@ -183,6 +185,15 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             .update({ status: "replied" })
             .eq("id", missedCall.id);
 
+          // Get conversation history
+          const { data: history } = await supabaseAdmin
+            .from("sms_conversations")
+            .select("direction, message")
+            .eq("missed_call_id", missedCall.id)
+            .order("sent_at", { ascending: true });
+
+          const isFirstReply = !(history || []).some((m) => m.direction === "outbound");
+
           // Starter plan's SMS/month cap, plus a flat per-hour abuse ceiling
           // that applies on every plan — skip the AI reply (and its
           // billable Anthropic call) once either limit is hit.
@@ -192,16 +203,9 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
               checkSmsHourlyRateLimit(missedCall.user_id),
             ]);
             if (!quota.allowed || !hourlyOk.allowed) {
-              return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.");
+              return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.", isFirstReply);
             }
           }
-
-          // Get conversation history
-          const { data: history } = await supabaseAdmin
-            .from("sms_conversations")
-            .select("direction, message")
-            .eq("missed_call_id", missedCall.id)
-            .order("sent_at", { ascending: true });
 
           // Generate AI reply
           const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -332,6 +336,7 @@ Never make up prices. Never promise specific times. Keep it simple.`,
 
           return FALLBACK_TWIML(
             aiReply.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+            isFirstReply,
           );
         } catch (err) {
           console.error("[sms-reply]", err);
