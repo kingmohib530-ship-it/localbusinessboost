@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/receptionist")({
   component: ReceptionistPage,
@@ -142,7 +143,11 @@ function ReceptionistPage() {
   async function testReceptionist() {
     setTestingReceptionist(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setTestingReceptionist(false); return; }
+    if (!user) {
+      toast.error("Please sign in again and retry.");
+      setTestingReceptionist(false);
+      return;
+    }
 
     const message =
       greetingMessage.trim() ||
@@ -171,6 +176,9 @@ function ReceptionistPage() {
       await loadCalls();
       setTab("calls");
       loadMessages(missedCall.id);
+    } else {
+      console.error("[receptionist] test call failed", error);
+      toast.error("Couldn't send the test message. Please try again.");
     }
     setTestingReceptionist(false);
   }
