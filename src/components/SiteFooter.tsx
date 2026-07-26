@@ -84,7 +84,7 @@ export function SiteFooter() {
             © {new Date().getFullYear()} Lanavix. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            AI Workforce for Contractors · Built for businesses that want to grow.
+            Missed-call recovery, reputation management, and lead generation for contractors.
           </p>
         </div>
       </div>
