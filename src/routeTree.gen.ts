@@ -35,6 +35,7 @@ import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
 import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
 import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
 import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
+import { Route as ApiConsumerRequestsRouteImport } from './routes/api/consumer-requests'
 import { Route as ApiCompetitorIntelRouteImport } from './routes/api/competitor-intel'
 import { Route as ApiBookingPlanRouteImport } from './routes/api/booking-plan'
 import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
@@ -197,6 +198,11 @@ const ApiReviewResponseRoute = ApiReviewResponseRouteImport.update({
 const ApiReviewRequestRoute = ApiReviewRequestRouteImport.update({
   id: '/api/review-request',
   path: '/api/review-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConsumerRequestsRoute = ApiConsumerRequestsRouteImport.update({
+  id: '/api/consumer-requests',
+  path: '/api/consumer-requests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCompetitorIntelRoute = ApiCompetitorIntelRouteImport.update({
@@ -410,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -532,6 +540,7 @@ export interface FileRoutesById {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -594,6 +603,7 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/consumer-requests'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -653,6 +663,7 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/consumer-requests'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -715,6 +726,7 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/consumer-requests'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -777,6 +789,7 @@ export interface RootRouteChildren {
   ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
   ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
+  ApiConsumerRequestsRoute: typeof ApiConsumerRequestsRoute
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
@@ -984,6 +997,13 @@ declare module '@tanstack/react-router' {
       path: '/api/review-request'
       fullPath: '/api/review-request'
       preLoaderRoute: typeof ApiReviewRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/consumer-requests': {
+      id: '/api/consumer-requests'
+      path: '/api/consumer-requests'
+      fullPath: '/api/consumer-requests'
+      preLoaderRoute: typeof ApiConsumerRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/competitor-intel': {
@@ -1350,6 +1370,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
   ApiBookingPlanRoute: ApiBookingPlanRoute,
   ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
+  ApiConsumerRequestsRoute: ApiConsumerRequestsRoute,
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,

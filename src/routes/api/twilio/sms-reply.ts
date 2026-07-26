@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioRequest } from "@/lib/twilio.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
+import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 function businessFooter(): string {
   const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
@@ -17,34 +18,6 @@ const FALLBACK_TWIML = (message: string, includeFooter = true) =>
     `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}${includeFooter ? businessFooter() : ""}</Message></Response>`,
     { headers: { "Content-Type": "text/xml" } },
   );
-
-const SERVICE_TYPE_KEYS = [
-  "hvac_tuneup",
-  "hvac_repair",
-  "hvac_install",
-  "plumbing",
-  "plumbing_emergency",
-  "roofing",
-  "electrical",
-  "cleaning",
-  "landscaping",
-  "pest_control",
-] as const;
-type ServiceTypeKey = (typeof SERVICE_TYPE_KEYS)[number];
-
-const ESTIMATED_VALUE_MAP: Record<ServiceTypeKey | "default", number> = {
-  hvac_tuneup: 150,
-  hvac_repair: 450,
-  hvac_install: 3500,
-  plumbing: 400,
-  plumbing_emergency: 650,
-  roofing: 1200,
-  electrical: 350,
-  cleaning: 200,
-  landscaping: 300,
-  pest_control: 250,
-  default: 400,
-};
 
 function deriveUrgency(scheduledMs: number): "emergency" | "same_day" | "this_week" | "scheduled" {
   const hoursOut = (scheduledMs - Date.now()) / (1000 * 60 * 60);
