@@ -50,6 +50,9 @@ export function SiteFooter() {
               Your 24/7 AI business team. Built for local service businesses and contractors who want
               more customers without more hours.
             </p>
+            <a href="tel:+15719215254" className="block text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors">
+              +1 (571) 921-5254
+            </a>
           </div>
           {COLS.map((c) => (
             <div key={c.title}>
