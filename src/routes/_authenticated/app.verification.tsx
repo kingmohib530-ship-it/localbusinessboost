@@ -159,7 +159,8 @@ function VerificationPage() {
       .upload(path, file, { upsert: false });
 
     if (uploadError) {
-      setErrorMsg(`Upload failed: ${uploadError.message}`);
+      console.error("[verification] upload failed", uploadError);
+      setErrorMsg("Upload failed — please try again.");
       setUploading(null);
       return;
     }
