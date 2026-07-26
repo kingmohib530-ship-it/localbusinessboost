@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as RequestRouteImport } from './routes/request'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -23,8 +24,10 @@ import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as ConsumerAuthenticatedRouteRouteImport } from './routes/_consumerAuthenticated/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RequestAuthRouteImport } from './routes/request.auth'
 import { Route as CheckoutStartRouteImport } from './routes/checkout.start'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -53,6 +56,7 @@ import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/upd
 import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
+import { Route as ConsumerAuthenticatedRequestNewRouteImport } from './routes/_consumerAuthenticated/request.new'
 import { Route as AuthenticatedAppVerificationRouteImport } from './routes/_authenticated/app.verification'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
@@ -74,6 +78,11 @@ const TermsRoute = TermsRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequestRoute = RequestRouteImport.update({
+  id: '/request',
+  path: '/request',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RefundRoute = RefundRouteImport.update({
@@ -136,6 +145,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsumerAuthenticatedRouteRoute =
+  ConsumerAuthenticatedRouteRouteImport.update({
+    id: '/_consumerAuthenticated',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -144,6 +158,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const RequestAuthRoute = RequestAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => RequestRoute,
 } as any)
 const CheckoutStartRoute = CheckoutStartRouteImport.update({
   id: '/checkout/start',
@@ -294,6 +313,12 @@ const ApiAccountDeleteRoute = ApiAccountDeleteRouteImport.update({
   path: '/api/account/delete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsumerAuthenticatedRequestNewRoute =
+  ConsumerAuthenticatedRequestNewRouteImport.update({
+    id: '/request/new',
+    path: '/request/new',
+    getParentRoute: () => ConsumerAuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppVerificationRoute =
   AuthenticatedAppVerificationRouteImport.update({
     id: '/verification',
@@ -378,6 +403,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/request': typeof RequestRouteWithChildren
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
@@ -391,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
+  '/request/auth': typeof RequestAuthRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
@@ -400,6 +427,7 @@ export interface FileRoutesByFullPath {
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
@@ -435,6 +463,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/request': typeof RequestRouteWithChildren
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
@@ -447,6 +476,7 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
+  '/request/auth': typeof RequestAuthRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
@@ -456,6 +486,7 @@ export interface FileRoutesByTo {
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
@@ -481,6 +512,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_consumerAuthenticated': typeof ConsumerAuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
@@ -493,6 +525,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/request': typeof RequestRouteWithChildren
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
@@ -506,6 +539,7 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
+  '/request/auth': typeof RequestAuthRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
   '/_authenticated/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
@@ -515,6 +549,7 @@ export interface FileRoutesById {
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/_consumerAuthenticated/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
@@ -552,6 +587,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/request'
     | '/signup'
     | '/terms'
     | '/app'
@@ -565,6 +601,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
+    | '/request/auth'
     | '/app/admin'
     | '/app/agents'
     | '/app/business-facts'
@@ -574,6 +611,7 @@ export interface FileRouteTypes {
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
+    | '/request/new'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
@@ -609,6 +647,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/request'
     | '/signup'
     | '/terms'
     | '/api/appointments'
@@ -621,6 +660,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
+    | '/request/auth'
     | '/app/admin'
     | '/app/agents'
     | '/app/business-facts'
@@ -630,6 +670,7 @@ export interface FileRouteTypes {
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
+    | '/request/new'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
@@ -654,6 +695,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_consumerAuthenticated'
     | '/about'
     | '/audit'
     | '/auth'
@@ -666,6 +708,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/request'
     | '/signup'
     | '/terms'
     | '/_authenticated/app'
@@ -679,6 +722,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
+    | '/request/auth'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/agents'
     | '/_authenticated/app/business-facts'
@@ -688,6 +732,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/verification'
+    | '/_consumerAuthenticated/request/new'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
@@ -713,6 +758,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ConsumerAuthenticatedRouteRoute: typeof ConsumerAuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuditRoute: typeof AuditRoute
   AuthRoute: typeof AuthRouteWithChildren
@@ -725,6 +771,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
+  RequestRoute: typeof RequestRouteWithChildren
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
@@ -769,6 +816,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/request': {
+      id: '/request'
+      path: '/request'
+      fullPath: '/request'
+      preLoaderRoute: typeof RequestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/refund': {
@@ -855,6 +909,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_consumerAuthenticated': {
+      id: '/_consumerAuthenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ConsumerAuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -868,6 +929,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/request/auth': {
+      id: '/request/auth'
+      path: '/auth'
+      fullPath: '/request/auth'
+      preLoaderRoute: typeof RequestAuthRouteImport
+      parentRoute: typeof RequestRoute
     }
     '/checkout/start': {
       id: '/checkout/start'
@@ -1065,6 +1133,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAccountDeleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_consumerAuthenticated/request/new': {
+      id: '/_consumerAuthenticated/request/new'
+      path: '/request/new'
+      fullPath: '/request/new'
+      preLoaderRoute: typeof ConsumerAuthenticatedRequestNewRouteImport
+      parentRoute: typeof ConsumerAuthenticatedRouteRoute
+    }
     '/_authenticated/app/verification': {
       id: '/_authenticated/app/verification'
       path: '/verification'
@@ -1206,6 +1281,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ConsumerAuthenticatedRouteRouteChildren {
+  ConsumerAuthenticatedRequestNewRoute: typeof ConsumerAuthenticatedRequestNewRoute
+}
+
+const ConsumerAuthenticatedRouteRouteChildren: ConsumerAuthenticatedRouteRouteChildren =
+  {
+    ConsumerAuthenticatedRequestNewRoute: ConsumerAuthenticatedRequestNewRoute,
+  }
+
+const ConsumerAuthenticatedRouteRouteWithChildren =
+  ConsumerAuthenticatedRouteRoute._addFileChildren(
+    ConsumerAuthenticatedRouteRouteChildren,
+  )
+
 interface AuthRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
 }
@@ -1215,6 +1304,17 @@ const AuthRouteChildren: AuthRouteChildren = {
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
+interface RequestRouteChildren {
+  RequestAuthRoute: typeof RequestAuthRoute
+}
+
+const RequestRouteChildren: RequestRouteChildren = {
+  RequestAuthRoute: RequestAuthRoute,
+}
+
+const RequestRouteWithChildren =
+  RequestRoute._addFileChildren(RequestRouteChildren)
 
 interface ApiAppointmentsRouteChildren {
   ApiAppointmentsIdRoute: typeof ApiAppointmentsIdRoute
@@ -1231,6 +1331,7 @@ const ApiAppointmentsRouteWithChildren = ApiAppointmentsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ConsumerAuthenticatedRouteRoute: ConsumerAuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuditRoute: AuditRoute,
   AuthRoute: AuthRouteWithChildren,
@@ -1243,6 +1344,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,
+  RequestRoute: RequestRouteWithChildren,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
