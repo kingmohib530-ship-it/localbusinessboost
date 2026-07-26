@@ -159,6 +159,15 @@ function Settings() {
               <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
             </Button>
           </Card>
+          <Card className="p-6 space-y-3">
+            <h2 className="font-semibold">Business facts</h2>
+            <p className="text-sm text-muted-foreground">
+              See what Lanavix knows about your business, and add or correct facts your AI receptionist can use.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/app/business-facts">What Lanavix knows →</Link>
+            </Button>
+          </Card>
         </>
       )}
 

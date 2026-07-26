@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  LayoutDashboard, Phone, Target, Calendar, Star, Users, Settings, LogOut,
+  LayoutDashboard, Phone, Target, Calendar, Star, Users, Brain, Settings, LogOut,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/app")({
 });
 
 const nav: {
-  to: "/app" | "/app/receptionist" | "/app/agents" | "/app/calendar" | "/app/reputation" | "/app/network" | "/app/settings" | null;
+  to: "/app" | "/app/receptionist" | "/app/agents" | "/app/calendar" | "/app/reputation" | "/app/network" | "/app/business-facts" | "/app/settings" | null;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
@@ -23,6 +23,7 @@ const nav: {
   { to: "/app/calendar", label: "Calendar", icon: Calendar },
   { to: "/app/reputation", label: "Reputation", icon: Star },
   { to: "/app/network", label: "Network", icon: Users },
+  { to: "/app/business-facts", label: "Business Facts", icon: Brain },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
 
