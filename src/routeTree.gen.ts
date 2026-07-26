@@ -48,6 +48,7 @@ import { Route as ApiPublicContactRouteImport } from './routes/api/public/contac
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiConsumerRequestsMatchIdRouteImport } from './routes/api/consumer-requests/$matchId'
 import { Route as ApiBusinessFactsSyncWebsiteRouteImport } from './routes/api/business-facts/sync-website'
 import { Route as ApiBusinessFactsSyncGoogleRouteImport } from './routes/api/business-facts/sync-google'
 import { Route as ApiBusinessFactsSearchGooglePlacesRouteImport } from './routes/api/business-facts/search-google-places'
@@ -269,6 +270,12 @@ const ApiLeadGeneratorExecuteStepRoute =
     path: '/api/lead-generator/execute-step',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiConsumerRequestsMatchIdRoute =
+  ApiConsumerRequestsMatchIdRouteImport.update({
+    id: '/$matchId',
+    path: '/$matchId',
+    getParentRoute: () => ApiConsumerRequestsRoute,
+  } as any)
 const ApiBusinessFactsSyncWebsiteRoute =
   ApiBusinessFactsSyncWebsiteRouteImport.update({
     id: '/api/business-facts/sync-website',
@@ -416,7 +423,7 @@ export interface FileRoutesByFullPath {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
-  '/api/consumer-requests': typeof ApiConsumerRequestsRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -444,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -476,7 +484,7 @@ export interface FileRoutesByTo {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
-  '/api/consumer-requests': typeof ApiConsumerRequestsRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -504,6 +512,7 @@ export interface FileRoutesByTo {
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -540,7 +549,7 @@ export interface FileRoutesById {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
-  '/api/consumer-requests': typeof ApiConsumerRequestsRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -568,6 +577,7 @@ export interface FileRoutesById {
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -631,6 +641,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/search-google-places'
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
+    | '/api/consumer-requests/$matchId'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -691,6 +702,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/search-google-places'
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
+    | '/api/consumer-requests/$matchId'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -754,6 +766,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/search-google-places'
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
+    | '/api/consumer-requests/$matchId'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -789,7 +802,7 @@ export interface RootRouteChildren {
   ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
   ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
-  ApiConsumerRequestsRoute: typeof ApiConsumerRequestsRoute
+  ApiConsumerRequestsRoute: typeof ApiConsumerRequestsRouteWithChildren
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
@@ -1090,6 +1103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/consumer-requests/$matchId': {
+      id: '/api/consumer-requests/$matchId'
+      path: '/$matchId'
+      fullPath: '/api/consumer-requests/$matchId'
+      preLoaderRoute: typeof ApiConsumerRequestsMatchIdRouteImport
+      parentRoute: typeof ApiConsumerRequestsRoute
+    }
     '/api/business-facts/sync-website': {
       id: '/api/business-facts/sync-website'
       path: '/api/business-facts/sync-website'
@@ -1348,6 +1368,17 @@ const ApiAppointmentsRouteWithChildren = ApiAppointmentsRoute._addFileChildren(
   ApiAppointmentsRouteChildren,
 )
 
+interface ApiConsumerRequestsRouteChildren {
+  ApiConsumerRequestsMatchIdRoute: typeof ApiConsumerRequestsMatchIdRoute
+}
+
+const ApiConsumerRequestsRouteChildren: ApiConsumerRequestsRouteChildren = {
+  ApiConsumerRequestsMatchIdRoute: ApiConsumerRequestsMatchIdRoute,
+}
+
+const ApiConsumerRequestsRouteWithChildren =
+  ApiConsumerRequestsRoute._addFileChildren(ApiConsumerRequestsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1370,7 +1401,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
   ApiBookingPlanRoute: ApiBookingPlanRoute,
   ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
-  ApiConsumerRequestsRoute: ApiConsumerRequestsRoute,
+  ApiConsumerRequestsRoute: ApiConsumerRequestsRouteWithChildren,
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
