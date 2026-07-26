@@ -124,7 +124,15 @@ function AdminDashboard() {
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "var(--muted-foreground)" }}>Loading...</div>
         ) : users.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--muted-foreground)" }}>No users yet.</div>
+          <div style={{ padding: "48px 32px", textAlign: "center" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <Users size={26} color="var(--primary)" strokeWidth={1.75} />
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>No users yet</h3>
+            <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 380, margin: "0 auto", lineHeight: 1.6 }}>
+              Once someone signs up for Lanavix, they'll show up here.
+            </p>
+          </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>

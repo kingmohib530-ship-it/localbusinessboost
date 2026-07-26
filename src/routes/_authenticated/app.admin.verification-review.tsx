@@ -188,8 +188,14 @@ function VerificationReviewPage() {
             </div>
           )}
           {!loading && filtered.length === 0 && (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: 24, textAlign: "center", fontSize: 13, color: "var(--muted-foreground)" }}>
-              Nothing here.
+            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "40px 24px", textAlign: "center" }}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                <ShieldCheck size={22} color="var(--primary)" strokeWidth={1.75} />
+              </div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>Nothing here</h3>
+              <p style={{ fontSize: 13, color: "var(--muted-foreground)", maxWidth: 280, margin: "0 auto", lineHeight: 1.5 }}>
+                {filter === "all" ? "No verification submissions yet." : `No ${filter} businesses right now.`}
+              </p>
             </div>
           )}
           {filtered.map((p) => (
