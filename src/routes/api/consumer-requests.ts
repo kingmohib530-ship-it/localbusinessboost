@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { matchBusinessesForRequest } from "@/lib/consumerRequests.server";
+import { matchBusinessesForRequest, notifyMatchedBusinesses } from "@/lib/consumerRequests.server";
 import { SERVICE_TYPE_KEYS, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -76,20 +76,24 @@ export const Route = createFileRoute("/api/consumer-requests")({
           }
 
           const matches = await matchBusinessesForRequest(serviceType, city);
+          let matchCount = 0;
 
           if (matches.length > 0) {
             const { error: matchErr } = await supabaseAdmin
               .from("consumer_request_matches")
               .insert(matches.map((m) => ({ request_id: newRequest.id, user_id: m.id })));
             if (matchErr) {
+              // The request itself was saved successfully - a failed
+              // match-fan-out shouldn't be reported as a hard error to the
+              // consumer, just an accurate (zero) matchCount below.
               console.error("[consumer-requests] failed to create matches", matchErr);
-              // The request itself was saved successfully - a partial
-              // match-fan-out failure shouldn't be reported as a hard
-              // error to the consumer, just a lower matchCount below.
+            } else {
+              matchCount = matches.length;
+              await notifyMatchedBusinesses(matches, { serviceType, city, description });
             }
           }
 
-          return Response.json({ requestId: newRequest.id, matchCount: matches.length });
+          return Response.json({ requestId: newRequest.id, matchCount });
         } catch (err) {
           console.error("[consumer-requests]", err);
           return Response.json(
