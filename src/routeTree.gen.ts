@@ -44,6 +44,7 @@ import { Route as ApiPublicContactRouteImport } from './routes/api/public/contac
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiBusinessFactsSearchGooglePlacesRouteImport } from './routes/api/business-facts/search-google-places'
 import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
 import { Route as ApiAdminVerificationReviewRouteImport } from './routes/api/admin/verification-review'
 import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/update-scores'
@@ -240,6 +241,12 @@ const ApiLeadGeneratorExecuteStepRoute =
     path: '/api/lead-generator/execute-step',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiBusinessFactsSearchGooglePlacesRoute =
+  ApiBusinessFactsSearchGooglePlacesRouteImport.update({
+    id: '/api/business-facts/search-google-places',
+    path: '/api/business-facts/search-google-places',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -377,6 +384,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -429,6 +437,7 @@ export interface FileRoutesByTo {
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -484,6 +493,7 @@ export interface FileRoutesById {
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/api/admin/update-scores'
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
+    | '/api/business-facts/search-google-places'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -591,6 +602,7 @@ export interface FileRouteTypes {
     | '/api/admin/update-scores'
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
+    | '/api/business-facts/search-google-places'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -645,6 +657,7 @@ export interface FileRouteTypes {
     | '/api/admin/update-scores'
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
+    | '/api/business-facts/search-google-places'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -689,6 +702,7 @@ export interface RootRouteChildren {
   ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
   ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
   ApiAdminVerificationReviewRoute: typeof ApiAdminVerificationReviewRoute
+  ApiBusinessFactsSearchGooglePlacesRoute: typeof ApiBusinessFactsSearchGooglePlacesRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
@@ -947,6 +961,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/business-facts/search-google-places': {
+      id: '/api/business-facts/search-google-places'
+      path: '/api/business-facts/search-google-places'
+      fullPath: '/api/business-facts/search-google-places'
+      preLoaderRoute: typeof ApiBusinessFactsSearchGooglePlacesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/appointments/$id': {
       id: '/api/appointments/$id'
       path: '/$id'
@@ -1174,6 +1195,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,
   ApiAdminUpdateScoresRoute: ApiAdminUpdateScoresRoute,
   ApiAdminVerificationReviewRoute: ApiAdminVerificationReviewRoute,
+  ApiBusinessFactsSearchGooglePlacesRoute:
+    ApiBusinessFactsSearchGooglePlacesRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
