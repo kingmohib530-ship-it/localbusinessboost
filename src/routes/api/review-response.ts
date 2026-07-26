@@ -5,6 +5,14 @@ import { logActivity } from "@/lib/activityLog.server";
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
 
+/** Formats an E.164 US number ("+15719215254") as "(571) 921-5254"; returns null for anything else. */
+function formatPhoneForDisplay(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/^\+1/, "");
+  if (!/^\d{10}$/.test(digits)) return null;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export const Route = createFileRoute("/api/review-response")({
   server: {
     handlers: {
@@ -51,6 +59,16 @@ export const Route = createFileRoute("/api/review-response")({
             return Response.json({ error: "Review text is required" }, { status: 400 });
           }
 
+          // The AI receptionist's Twilio number is the real number customers
+          // already text/call this business on, so it's the correct contact
+          // to offer in a negative-review response - never a placeholder.
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("twilio_phone_number")
+            .eq("id", user.id)
+            .maybeSingle();
+          const contactPhone = formatPhoneForDisplay(profile?.twilio_phone_number);
+
           // ===== Basic input hardening =====
           const safeReviewText = String(reviewText).slice(0, 4000);
           const safeReviewerName = reviewerName
@@ -85,7 +103,7 @@ Write a ${isNegative ? "empathetic and professional response to this negative re
 Requirements:
 - 2-4 sentences maximum
 - Address the reviewer by name if provided
-- ${isNegative ? "Apologize sincerely, acknowledge the issue, offer to make it right with contact info placeholder [PHONE]" : "Thank them genuinely, mention a specific detail from their review"}
+- ${isNegative ? (contactPhone ? `Apologize sincerely, acknowledge the issue, and offer to make it right - invite them to call ${contactPhone}` : "Apologize sincerely, acknowledge the issue, and invite them to reach out directly so you can make it right (no phone number is on file, so don't invent one or use a placeholder)") : "Thank them genuinely, mention a specific detail from their review"}
 - Sound human and personal, not corporate
 - End with something that invites future business (for positive) or resolution (for negative)
 - Do NOT use hashtags, emojis, or generic phrases like "We value your feedback"
