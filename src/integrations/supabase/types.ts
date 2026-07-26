@@ -146,6 +146,39 @@ export type Database = {
         }
         Relationships: []
       }
+      business_facts: {
+        Row: {
+          created_at: string
+          fact_text: string
+          fact_type: string
+          id: string
+          source: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fact_text: string
+          fact_type: string
+          id?: string
+          source: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fact_text?: string
+          fact_type?: string
+          id?: string
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       businesses: {
         Row: {
           created_at: string | null
@@ -578,6 +611,7 @@ export type Database = {
           emergency_hours: boolean
           escalation_rules: string | null
           full_name: string | null
+          google_place_id: string | null
           greeting_message: string | null
           id: string
           industry: string | null
@@ -622,6 +656,7 @@ export type Database = {
           emergency_hours?: boolean
           escalation_rules?: string | null
           full_name?: string | null
+          google_place_id?: string | null
           greeting_message?: string | null
           id: string
           industry?: string | null
@@ -666,6 +701,7 @@ export type Database = {
           emergency_hours?: boolean
           escalation_rules?: string | null
           full_name?: string | null
+          google_place_id?: string | null
           greeting_message?: string | null
           id?: string
           industry?: string | null
