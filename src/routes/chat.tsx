@@ -73,7 +73,7 @@ function PublicChatPage() {
             Tell us about your business
           </h1>
           <p className="mt-3 text-muted-foreground">
-            Share a few details and our team will reach out shortly.
+            Share a few details and I'll reach out shortly.
           </p>
         </div>
 
