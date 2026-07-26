@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, type CSSProperties } from "react";
-import { Target, Star, Calendar, Search, Check } from "lucide-react";
+import { Target, Star, Calendar, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LeadGenerator from "@/components/LeadGenerator";
 import { toast } from "sonner";
@@ -122,7 +122,6 @@ function AgentsHub() {
   const [industry, setIndustry] = useState("");
   const [city, setCity] = useState("");
   const [running, setRunning] = useState(false);
-  const [step, setStep] = useState(0);
   const [competitorResult, setCompetitorResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState("");
 
@@ -165,15 +164,11 @@ function AgentsHub() {
     setCompetitorResult(null);
     setReviewResponse(null);
     setBookingPlan(null);
-    setStep(0);
-
-    const timer = setInterval(() => setStep(s => Math.min(s + 1, steps.length - 1)), 1400);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) {
-        clearInterval(timer);
         setError("Please sign in again and retry.");
         setRunning(false);
         return;
@@ -189,8 +184,6 @@ function AgentsHub() {
       });
 
       const data = await res.json();
-      clearInterval(timer);
-      setStep(steps.length);
 
       if (!res.ok || data.error) {
         setError(data.error || "Something went wrong. Please try again.");
@@ -203,7 +196,6 @@ function AgentsHub() {
         setBookingPlan(data);
       }
     } catch (err) {
-      clearInterval(timer);
       setError("Network error. Please try again.");
     } finally {
       setRunning(false);
@@ -221,15 +213,11 @@ function AgentsHub() {
     setCompetitorResult(null);
     setReviewResponse(null);
     setBookingPlan(null);
-    setStep(0);
-
-    const timer = setInterval(() => setStep(s => Math.min(s + 1, steps.length - 1)), 1400);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) {
-        clearInterval(timer);
         setError("Please sign in again and retry.");
         setRunning(false);
         return;
@@ -249,8 +237,6 @@ function AgentsHub() {
       });
 
       const data = await res.json();
-      clearInterval(timer);
-      setStep(steps.length);
 
       if (!res.ok || data.error) {
         setError(data.error || "Something went wrong. Please try again.");
@@ -259,7 +245,6 @@ function AgentsHub() {
 
       setReviewResponse(data.response);
     } catch (err) {
-      clearInterval(timer);
       setError("Network error. Please try again.");
     } finally {
       setRunning(false);
@@ -466,14 +451,10 @@ function AgentsHub() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {steps.map((s, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10,
-                background: i < step ? "var(--accent)" : i === step ? "var(--accent)" : "var(--muted)",
-                border: `1px solid ${i < step ? "var(--border)" : i === step ? "var(--primary)" : "var(--border)"}` }}>
-                <div style={{ width: 20, height: 20, borderRadius: "50%", background: i < step ? "var(--accent-2)" : i === step ? "var(--primary)" : "var(--border)",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {i < step && <Check size={12} color="white" strokeWidth={3} />}
-                </div>
-                <span style={{ fontSize: 13, color: i < step ? "var(--accent-2)" : i === step ? "var(--primary)" : "var(--muted-foreground)" }}>{s}</span>
+              <div key={i} className="animate-pulse" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10,
+                background: "var(--accent)", border: "1px solid var(--border)" }}>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--primary)", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "var(--primary)" }}>{s}</span>
               </div>
             ))}
           </div>
