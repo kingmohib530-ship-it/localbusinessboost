@@ -112,6 +112,8 @@ function VerificationReviewPage() {
     try {
       await authedFetch("/api/admin/verification-review", { documentId: doc.id, status });
       setDocs((d) => d.map((x) => (x.id === doc.id ? { ...x, status } : x)));
+      setActionOk(true);
+      setActionMsg(`Document ${status}.`);
     } catch (e: any) {
       setActionOk(false);
       setActionMsg(e.message || "Failed to update document.");
