@@ -2,6 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Calendar as CalendarIcon, Plus, X, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
   component: CalendarPage,
@@ -73,6 +83,7 @@ function CalendarPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => { loadAppointments(); }, []);
 
@@ -186,7 +197,7 @@ function CalendarPage() {
 
   async function handleDelete() {
     if (modal?.mode !== "edit") return;
-    if (!confirm("Delete this appointment? This cannot be undone.")) return;
+    setConfirmingDelete(false);
     setSaving(true);
     try {
       const headers = await authHeader();
@@ -381,7 +392,7 @@ function CalendarPage() {
                 {saving ? "Saving..." : modal.mode === "create" ? "Add appointment" : "Save changes"}
               </button>
               {modal.mode === "edit" && (
-                <button onClick={handleDelete} disabled={saving}
+                <button onClick={() => setConfirmingDelete(true)} disabled={saving}
                   style={{ padding: "12px 18px", background: "var(--card)", color: "var(--destructive)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
                   Delete
                 </button>
@@ -390,6 +401,19 @@ function CalendarPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this appointment?</AlertDialogTitle>
+            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

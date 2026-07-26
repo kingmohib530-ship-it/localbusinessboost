@@ -3,6 +3,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { Target, Star, Calendar, Search, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LeadGenerator from "@/components/LeadGenerator";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/agents")({
   component: AgentsHub,
@@ -277,13 +278,13 @@ function AgentsHub() {
     lines.push("", "INSIGHTS");
     competitorResult.insights.forEach((n, i) => lines.push(`${i + 1}. ${n}`));
     navigator.clipboard.writeText(lines.join("\n"));
-    alert("Copied to clipboard!");
+    toast.success("Copied to clipboard!");
   }
 
   function copyReviewResponse() {
     if (!reviewResponse) return;
     navigator.clipboard.writeText(reviewResponse);
-    alert("Response copied to clipboard!");
+    toast.success("Response copied to clipboard!");
   }
 
   function copyBookingPlan() {
@@ -310,7 +311,7 @@ function AgentsHub() {
       bookingPlan.nextActions.forEach((a, i) => lines.push(`${i + 1}. ${a.title}${a.eta ? ` (${a.eta})` : ""}`));
     }
     navigator.clipboard.writeText(lines.join("\n"));
-    alert("Plan copied to clipboard!");
+    toast.success("Plan copied to clipboard!");
   }
 
   const hasResult = !!competitorResult || !!reviewResponse || !!bookingPlan;

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Send, Star, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/reputation")({
   component: ReputationPage,
@@ -157,7 +158,7 @@ function ReputationPage() {
 
   function copyResponse() {
     navigator.clipboard.writeText(aiResponse);
-    alert("Response copied to clipboard!");
+    toast.success("Response copied to clipboard!");
   }
 
   const stats = {
