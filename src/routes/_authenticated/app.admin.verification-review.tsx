@@ -57,6 +57,7 @@ function VerificationReviewPage() {
   const [acting, setActing] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
   const [actionOk, setActionOk] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     if (!allowed) return;
@@ -65,7 +66,8 @@ function VerificationReviewPage() {
 
   async function load() {
     setLoading(true);
-    const [{ data: profileData }, { data: docData }] = await Promise.all([
+    setLoadError("");
+    const [{ data: profileData, error: profilesError }, { data: docData, error: docsError }] = await Promise.all([
       supabase
         .from("profiles")
         .select(
@@ -77,6 +79,10 @@ function VerificationReviewPage() {
         .select("id, user_id, document_type, file_name, storage_path, status, uploaded_at")
         .order("uploaded_at", { ascending: false }),
     ]);
+    if (profilesError || docsError) {
+      console.error("[verification-review] failed to load data", profilesError || docsError);
+      setLoadError("Couldn't load verification data. Please refresh the page.");
+    }
     setProfiles((profileData as ProfileRow[]) ?? []);
     setDocs((docData as DocRow[]) ?? []);
     setLoading(false);
@@ -164,6 +170,8 @@ function VerificationReviewPage() {
       <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 20 }}>
         Review submitted business details and documents, then approve, reject, or request more info.
       </p>
+
+      {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{loadError}</p>}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         {FILTERS.map((f) => (

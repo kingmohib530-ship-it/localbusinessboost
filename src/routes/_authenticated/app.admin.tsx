@@ -34,6 +34,7 @@ function timeAgo(dateStr: string) {
 function AdminDashboard() {
   const allowed = useRequireAdmin();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [users, setUsers] = useState<UserRow[]>([]);
   const [totalAudits, setTotalAudits] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
@@ -42,16 +43,22 @@ function AdminDashboard() {
   useEffect(() => {
     if (!allowed) return;
     async function load() {
+      setLoadError("");
       // Load profiles
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, full_name, business_name, industry, city, subscription_tier")
         .order("id");
 
       // Load auth users via admin — fallback to profiles only
       // We'll join what we can from profiles + use created_at trick
-      const { data: leads } = await supabase.from("leads").select("id");
-      const { data: reviews } = await supabase.from("review_requests").select("id");
+      const { data: leads, error: leadsError } = await supabase.from("leads").select("id");
+      const { data: reviews, error: reviewsError } = await supabase.from("review_requests").select("id");
+
+      if (profilesError || leadsError || reviewsError) {
+        console.error("[admin] failed to load data", profilesError || leadsError || reviewsError);
+        setLoadError("Couldn't load platform data. Please refresh the page.");
+      }
 
       setTotalLeads(leads?.length ?? 0);
       setTotalReviews(reviews?.length ?? 0);
@@ -101,6 +108,8 @@ function AdminDashboard() {
           Review business verifications →
         </Link>
       </div>
+
+      {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{loadError}</p>}
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 32 }}>

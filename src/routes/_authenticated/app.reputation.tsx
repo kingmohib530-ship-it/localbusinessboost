@@ -46,6 +46,7 @@ function ReputationPage() {
   const [requests, setRequests] = useState<ReviewRequest[]>([]);
   const [responses, setResponses] = useState<ReviewResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   // Request form
   const [custName, setCustName] = useState("");
@@ -68,12 +69,17 @@ function ReputationPage() {
 
   async function loadData() {
     setLoading(true);
+    setLoadError("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
     const [req, res] = await Promise.all([
       supabase.from("review_requests").select("*").eq("user_id", user.id).order("sent_at", { ascending: false }),
       supabase.from("review_responses").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
+    if (req.error || res.error) {
+      console.error("[reputation] failed to load data", req.error || res.error);
+      setLoadError("Couldn't load your reputation data. Please refresh the page.");
+    }
     setRequests(req.data || []);
     setResponses(res.data || []);
     setLoading(false);
@@ -191,6 +197,8 @@ function ReputationPage() {
           Send review requests after every job. Generate professional responses in seconds.
         </p>
       </div>
+
+      {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{loadError}</p>}
 
       {/* Dashboard tab */}
       {tab === "dashboard" && (

@@ -88,10 +88,12 @@ function TodayDashboard() {
   const [reviewResponses, setReviewResponses] = useState<ReviewResponseRow[]>([]);
   const [revenueAppointments, setRevenueAppointments] = useState<AppointmentRevenueRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadDashboard() {
       try {
+        setError("");
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         const [
@@ -140,6 +142,7 @@ function TodayDashboard() {
         setRevenueAppointments((appointmentRevenueData as AppointmentRevenueRow[]) ?? []);
       } catch (e) {
         console.error(e);
+        setError("Couldn't load your dashboard. Please refresh the page.");
       } finally {
         setLoading(false);
       }
@@ -226,6 +229,8 @@ function TodayDashboard() {
           Here's how your business is performing this month.
         </p>
       </div>
+
+      {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{error}</p>}
 
       {/* Upgrade banner for free users */}
       {isFree && !loading && (

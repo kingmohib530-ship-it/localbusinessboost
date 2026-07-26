@@ -38,6 +38,7 @@ function ReceptionistPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [tab, setTab] = useState<"calls" | "setup">("calls");
   const [twilioNumber, setTwilioNumber] = useState("");
   const [savingNumber, setSavingNumber] = useState(false);
@@ -108,13 +109,18 @@ function ReceptionistPage() {
 
   async function loadCalls() {
     setLoading(true);
+    setLoadError("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase
+    if (!user) { setLoading(false); return; }
+    const { data, error } = await supabase
       .from("missed_calls")
       .select("*")
       .eq("user_id", user.id)
       .order("called_at", { ascending: false });
+    if (error) {
+      console.error("[receptionist] failed to load calls", error);
+      setLoadError("Couldn't load your calls. Please refresh the page.");
+    }
     setCalls(data || []);
     setLoading(false);
   }
@@ -231,6 +237,8 @@ function ReceptionistPage() {
           Every missed call gets an automatic text within 60 seconds — day or night.
         </p>
       </div>
+
+      {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{loadError}</p>}
 
       {/* Setup tab */}
       {tab === "setup" && (

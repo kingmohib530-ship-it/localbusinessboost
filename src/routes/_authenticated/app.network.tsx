@@ -20,15 +20,17 @@ function NetworkPage() {
   const [saveMsg, setSaveMsg] = useState("");
   const [saveOk, setSaveOk] = useState(true);
   const [appointments, setAppointments] = useState<ConsumerAppointmentRow[]>([]);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     setLoading(true);
+    setLoadError("");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    const [{ data: profile }, { data: appts }] = await Promise.all([
+    const [{ data: profile, error: profileError }, { data: appts, error: apptsError }] = await Promise.all([
       supabase.from("profiles").select("accept_consumer_leads").eq("id", user.id).single(),
       supabase
         .from("appointments")
@@ -36,6 +38,11 @@ function NetworkPage() {
         .eq("user_id", user.id)
         .eq("source", "consumer_marketplace"),
     ]);
+
+    if (profileError || apptsError) {
+      console.error("[network] failed to load data", profileError || apptsError);
+      setLoadError("Couldn't load your network data. Please refresh the page.");
+    }
 
     setAccept(profile?.accept_consumer_leads ?? true);
     setAppointments((appts as ConsumerAppointmentRow[]) ?? []);
@@ -82,6 +89,7 @@ function NetworkPage() {
       {loading && (
         <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 16 }}>Loading...</p>
       )}
+      {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 16 }}>{loadError}</p>}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}>
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
