@@ -212,7 +212,11 @@ function ReputationPage() {
             ))}
           </div>
 
-          {requests.length === 0 && responses.length === 0 ? (
+          {loading ? (
+            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+              Loading...
+            </div>
+          ) : requests.length === 0 && responses.length === 0 ? (
             <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
               <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                 <Star size={26} color="var(--primary)" strokeWidth={1.75} />

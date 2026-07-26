@@ -337,6 +337,13 @@ function ReceptionistPage() {
             ))}
           </div>
 
+          {/* Loading state */}
+          {loading && (
+            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+              Loading...
+            </div>
+          )}
+
           {/* Empty state */}
           {!loading && calls.length === 0 && (
             <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>

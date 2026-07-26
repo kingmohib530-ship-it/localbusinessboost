@@ -297,6 +297,9 @@ function TodayDashboard() {
       {/* Recent activity */}
       <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Recent activity</h2>
+        {loading && (
+          <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Loading...</p>
+        )}
         {!loading && activity.length === 0 && (
           <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
         )}

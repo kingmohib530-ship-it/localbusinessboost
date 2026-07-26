@@ -79,6 +79,10 @@ function NetworkPage() {
         </p>
       </div>
 
+      {loading && (
+        <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 16 }}>Loading...</p>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}>
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>

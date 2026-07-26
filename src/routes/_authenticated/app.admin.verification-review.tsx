@@ -182,6 +182,11 @@ function VerificationReviewPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: selected ? "380px 1fr" : "1fr", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {loading && (
+            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: 24, textAlign: "center", fontSize: 13, color: "var(--muted-foreground)" }}>
+              Loading...
+            </div>
+          )}
           {!loading && filtered.length === 0 && (
             <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: 24, textAlign: "center", fontSize: 13, color: "var(--muted-foreground)" }}>
               Nothing here.

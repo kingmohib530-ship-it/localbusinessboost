@@ -275,6 +275,12 @@ function CalendarPage() {
 
       {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
+      {loading && (
+        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+          Loading...
+        </div>
+      )}
+
       {!loading && appointments.length === 0 && !error && (
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
           <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
