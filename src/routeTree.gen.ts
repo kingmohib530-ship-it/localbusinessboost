@@ -19,7 +19,6 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CookiesRouteImport } from './routes/cookies'
-import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
@@ -112,11 +111,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -354,7 +348,6 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
-  '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
@@ -409,7 +402,6 @@ export interface FileRoutesByTo {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
-  '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
@@ -465,7 +457,6 @@ export interface FileRoutesById {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
   '/chat': typeof ChatRoute
-  '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
@@ -522,7 +513,6 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/chat'
-    | '/contact'
     | '/cookies'
     | '/dashboard'
     | '/faq'
@@ -577,7 +567,6 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/chat'
-    | '/contact'
     | '/cookies'
     | '/dashboard'
     | '/faq'
@@ -632,7 +621,6 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/chat'
-    | '/contact'
     | '/cookies'
     | '/dashboard'
     | '/faq'
@@ -689,7 +677,6 @@ export interface RootRouteChildren {
   AuditRoute: typeof AuditRoute
   AuthRoute: typeof AuthRouteWithChildren
   ChatRoute: typeof ChatRoute
-  ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   DashboardRoute: typeof DashboardRoute
   FaqRoute: typeof FaqRoute
@@ -796,13 +783,6 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -1190,7 +1170,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuditRoute: AuditRoute,
   AuthRoute: AuthRouteWithChildren,
   ChatRoute: ChatRoute,
-  ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   DashboardRoute: DashboardRoute,
   FaqRoute: FaqRoute,
