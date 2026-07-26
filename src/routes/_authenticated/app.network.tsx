@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Users, TrendingUp, Gauge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/app/network")({
   component: NetworkPage,
@@ -103,21 +104,7 @@ function NetworkPage() {
               When on, consumers who text Lanavix Local looking for your service in your city can be matched and booked directly onto your calendar.
             </div>
           </div>
-          <button
-            onClick={toggleAccept}
-            disabled={saving || loading}
-            role="switch"
-            aria-checked={accept}
-            style={{
-              width: 48, height: 28, borderRadius: 999, border: "none", cursor: saving ? "not-allowed" : "pointer",
-              background: accept ? "var(--primary)" : "var(--border)", position: "relative", flexShrink: 0, padding: 0,
-            }}
-          >
-            <span style={{
-              position: "absolute", top: 3, left: accept ? 23 : 3, width: 22, height: 22, borderRadius: "50%",
-              background: "white", transition: "left 0.15s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-            }} />
-          </button>
+          <Switch checked={accept} onCheckedChange={toggleAccept} disabled={saving || loading} />
         </div>
         {saveMsg && <div style={{ fontSize: 12, color: saveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 10 }}>{saveMsg}</div>}
       </div>

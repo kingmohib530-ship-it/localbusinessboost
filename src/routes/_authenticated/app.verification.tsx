@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BadgeCheck, Upload, Trash2, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/app/verification")({
   component: VerificationPage,
@@ -529,14 +530,7 @@ function ToggleField({ label, value, onChange }: { label: string; value: boolean
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{label}</span>
-      <button
-        onClick={() => onChange(!value)}
-        role="switch"
-        aria-checked={value}
-        style={{ width: 44, height: 26, borderRadius: 999, border: "none", cursor: "pointer", background: value ? "var(--primary)" : "var(--border)", position: "relative", flexShrink: 0, padding: 0 }}
-      >
-        <span style={{ position: "absolute", top: 3, left: value ? 21 : 3, width: 20, height: 20, borderRadius: "50%", background: "white", transition: "left 0.15s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-      </button>
+      <Switch checked={value} onCheckedChange={onChange} />
     </div>
   );
 }
