@@ -1,9 +1,11 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   LayoutDashboard, Phone, Target, Calendar, Star, Users, Settings, LogOut,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppShell,
@@ -27,8 +29,16 @@ const nav: {
 function AppShell() {
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [signingOut, setSigningOut] = useState(false);
   const signOut = async () => {
-    await supabase.auth.signOut();
+    setSigningOut(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("[app] sign out failed", error);
+      toast.error("Couldn't sign out. Please try again.");
+      setSigningOut(false);
+      return;
+    }
     navigate({ to: "/auth", replace: true });
   };
 
@@ -74,8 +84,8 @@ function AppShell() {
           })}
         </nav>
         <div className="p-3 border-t border-border">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={signOut}>
-            <LogOut className="h-4 w-4" /> Sign out
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={signOut} disabled={signingOut}>
+            <LogOut className="h-4 w-4" /> {signingOut ? "Signing out..." : "Sign out"}
           </Button>
         </div>
       </aside>
