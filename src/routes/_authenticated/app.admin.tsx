@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Lock, Users, Target, Star, DollarSign, Database, Rocket, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/lib/admin";
 
@@ -76,10 +77,10 @@ function AdminDashboard() {
   if (!allowed) return null;
 
   const stats = [
-    { label: "Total users", value: users.length, icon: "👥", color: "#818cf8" },
-    { label: "Leads generated", value: totalLeads, icon: "🎯", color: "#34d399" },
-    { label: "Review requests", value: totalReviews, icon: "⭐", color: "#fbbf24" },
-    { label: "Paying customers", value: users.filter(u => u.subscription_tier && u.subscription_tier !== "starter").length, icon: "💰", color: "#f472b6" },
+    { label: "Total users", value: users.length, Icon: Users },
+    { label: "Leads generated", value: totalLeads, Icon: Target },
+    { label: "Review requests", value: totalReviews, Icon: Star },
+    { label: "Paying customers", value: users.filter(u => u.subscription_tier && u.subscription_tier !== "starter").length, Icon: DollarSign },
   ];
 
   return (
@@ -87,8 +88,8 @@ function AdminDashboard() {
 
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#f87171", background: "rgba(239,68,68,0.15)", padding: "4px 12px", borderRadius: 20, marginBottom: 12, border: "1px solid rgba(239,68,68,0.25)" }}>
-          🔐 Admin only
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--destructive)", background: "var(--accent)", padding: "4px 12px", borderRadius: 20, marginBottom: 12, border: "1px solid var(--border)" }}>
+          <Lock size={12} strokeWidth={2} /> Admin only
         </div>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", margin: "0 0 6px" }}>
           Lanavix Admin
@@ -105,8 +106,10 @@ function AdminDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 32 }}>
         {stats.map(s => (
           <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
-            <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1 }}>{loading ? "—" : s.value}</div>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+              <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{loading ? "—" : s.value}</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
@@ -147,8 +150,8 @@ function AdminDashboard() {
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{
                         fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                        background: u.subscription_tier && u.subscription_tier !== "starter" ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
-                        color: u.subscription_tier && u.subscription_tier !== "starter" ? "#34d399" : "#818cf8"
+                        background: "var(--accent)",
+                        color: u.subscription_tier && u.subscription_tier !== "starter" ? "var(--accent-2)" : "var(--muted-foreground)"
                       }}>
                         {u.subscription_tier || "starter"}
                       </span>
@@ -164,13 +167,13 @@ function AdminDashboard() {
       {/* Quick links */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginTop: 24 }}>
         {[
-          { label: "Supabase dashboard", url: "https://supabase.com/dashboard/project/fnmmojfvxbdupzigcnyw", icon: "🗄️" },
-          { label: "Vercel deployments", url: "https://vercel.com/dashboard", icon: "🚀" },
-          { label: "Anthropic usage", url: "https://console.anthropic.com/settings/billing", icon: "🤖" },
+          { label: "Supabase dashboard", url: "https://supabase.com/dashboard/project/fnmmojfvxbdupzigcnyw", Icon: Database },
+          { label: "Vercel deployments", url: "https://vercel.com/dashboard", Icon: Rocket },
+          { label: "Anthropic usage", url: "https://console.anthropic.com/settings/billing", Icon: Bot },
         ].map(l => (
           <a key={l.label} href={l.url} target="_blank" rel="noreferrer"
             style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "14px 16px", textDecoration: "none", display: "flex", alignItems: "center", gap: 10, color: "var(--foreground)", fontSize: 14, fontWeight: 500 }}>
-            <span style={{ fontSize: 18 }}>{l.icon}</span>
+            <l.Icon size={18} color="var(--primary)" strokeWidth={1.75} />
             {l.label}
           </a>
         ))}
