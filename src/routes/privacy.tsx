@@ -45,7 +45,7 @@ const SECTIONS = [
   },
   {
     title: "8. Security",
-    body: `We use industry-standard encryption and security practices to protect your data. Your data is stored in Supabase, which uses bank-grade security infrastructure. However, no system is 100% secure and we cannot guarantee absolute security.`,
+    body: `Your account data is protected by database-level Row Level Security policies, so an account can only ever query its own data - this is enforced by the database itself, not just the application. Data is encrypted in transit (HTTPS) and at rest. We never handle your customers' card details directly: all payments are processed by Stripe, which is PCI DSS certified. No system is 100% secure, and we cannot guarantee absolute security.`,
   },
   {
     title: "9. Cookies",
