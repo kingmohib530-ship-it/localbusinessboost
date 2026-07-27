@@ -16,7 +16,6 @@ import {
   Zap,
   Bug,
   Check,
-  X,
   ChevronDown,
   ShieldCheck,
   Link2,
@@ -67,8 +66,14 @@ const steps = [
   { num: '03', icon: Wallet, title: 'Open inbox to booked jobs', body: "Wake up to new conversations, confirmed appointments, and fresh 5-star reviews you didn't have to ask for." },
 ]
 
-const withoutLanavix = ['A missed call is a job that goes to whoever answers next', 'Customers forget to leave reviews', 'Leads scattered across 5 places', 'Evenings spent chasing follow-ups', 'Competitors outrank you on Google', "Paying for ads that don't convert"]
-const withLanavix = ['Every missed call texted back in 60s', 'Reviews arrive after every job, automatically', 'All leads in one simple inbox', 'AI books jobs while you sleep', 'More reviews = higher Google rank = more calls', 'Organic leads from the AI, no ad spend']
+const beforeAfter = [
+  { before: 'A missed call is a job that goes to whoever answers next', after: 'Every missed call texted back in 60s' },
+  { before: 'Customers forget to leave reviews', after: 'Reviews arrive after every job, automatically' },
+  { before: 'Leads scattered across 5 places', after: 'All leads in one simple inbox' },
+  { before: 'Evenings spent chasing follow-ups', after: 'AI books jobs while you sleep' },
+  { before: 'Competitors outrank you on Google', after: 'More reviews means a higher Google rank means more calls' },
+  { before: "Paying for ads that don't convert", after: 'Organic leads from the AI, no ad spend' },
+]
 
 const earlyAccess = [
   { icon: ShieldCheck, title: 'Founding member pricing', body: 'Lock in your rate today and never pay more — even as we raise prices for new customers.' },
@@ -309,9 +314,9 @@ function HomePage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">Setup takes 5 minutes</p>
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Set it up once. It works forever.</h2>
           <p className="mt-4 text-muted-foreground mb-16">There's no IT team to hire and nothing to maintain — connect it once and it keeps working.</p>
-          <div className="grid sm:grid-cols-3 gap-6 mb-16 text-left">
-            {steps.map((step) => (
-              <div key={step.num} className="rounded-xl border border-border bg-card p-7">
+          <div className="flex flex-col sm:flex-row rounded-xl border border-border bg-card text-left mb-16 overflow-hidden">
+            {steps.map((step, i) => (
+              <div key={step.num} className={`flex-1 p-7 ${i > 0 ? 'sm:border-l border-border' : ''}`}>
                 <div className="flex items-center gap-3 mb-5">
                   <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">{step.num}</span>
                   <step.icon className="h-5 w-5 text-primary" />
@@ -321,17 +326,16 @@ function HomePage() {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-3 max-w-2xl mx-auto">
             {[
               { val: '<60s', label: 'To reply to missed calls' },
               { val: '5 min', label: 'To connect, no code' },
               { val: 'Founding', label: 'Member pricing, locked in' },
               { val: '30 days', label: 'Money-back guarantee' },
             ].map((s) => (
-              <div key={s.val} className="rounded-lg border border-border bg-card py-5 px-3 text-center">
-                <div className="text-lg font-semibold text-primary">{s.val}</div>
-                <div className="text-xs text-muted-foreground mt-1 leading-snug">{s.label}</div>
-              </div>
+              <span key={s.val} className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-medium text-foreground/80">
+                <span className="font-semibold text-primary">{s.val}</span> {s.label}
+              </span>
             ))}
           </div>
         </div>
@@ -339,29 +343,18 @@ function HomePage() {
 
       {/* COMPARISON */}
       <section id="results" className="py-24 px-6 bg-secondary/50 border-y border-border">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-center mb-14">
             What changes when you use Lanavix
           </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-border bg-card p-7">
-              <p className="text-destructive font-semibold text-sm mb-5">Without Lanavix</p>
-              {withoutLanavix.map((item) => (
-                <div key={item} className="flex items-start gap-2.5 mb-3.5 text-sm">
-                  <X className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">{item}</span>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-xl border border-primary/30 bg-card p-7">
-              <p className="text-primary font-semibold text-sm mb-5">With Lanavix</p>
-              {withLanavix.map((item) => (
-                <div key={item} className="flex items-start gap-2.5 mb-3.5 text-sm">
-                  <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <span className="text-foreground/80">{item}</span>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-3">
+            {beforeAfter.map((row) => (
+              <div key={row.before} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border border-border bg-card p-5">
+                <span className="text-sm text-muted-foreground line-through decoration-destructive/40 flex-1">{row.before}</span>
+                <ArrowRight className="h-4 w-4 text-primary shrink-0 hidden sm:block" />
+                <span className="text-sm text-foreground font-medium flex-1">{row.after}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
