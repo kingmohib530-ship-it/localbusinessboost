@@ -84,7 +84,7 @@ export function SiteFooter() {
             © {new Date().getFullYear()} Lanavix. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Missed-call recovery, reputation management, and lead generation for contractors.
+            Built by Mohib Ahmadzai in Prince William County, VA.
           </p>
         </div>
       </div>

@@ -73,7 +73,7 @@ const withLanavix = ['Every missed call texted back in 60s', 'Reviews arrive aft
 const earlyAccess = [
   { icon: ShieldCheck, title: 'Founding member pricing', body: 'Lock in your rate today and never pay more — even as we raise prices for new customers.' },
   { icon: Target, title: 'Built for your trade', body: 'Every prompt, every message, every lead search is trained specifically on contractor businesses — not generic small businesses.' },
-  { icon: Inbox, title: 'Direct line to the team', body: 'Early members get direct access to the founders. Your feedback shapes the product.' },
+  { icon: Inbox, title: 'Talk to Mohib, not a bot', body: 'Early members get a direct line to the founder — real answers, not a support queue.' },
 ]
 
 const faqs = [
@@ -384,6 +384,20 @@ function HomePage() {
                 <p className="text-muted-foreground text-sm leading-relaxed">{card.body}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-6 rounded-xl border border-border bg-card p-7 flex flex-col sm:flex-row gap-6 items-center sm:items-start text-left max-w-2xl mx-auto">
+            <img
+              src="/mohib-founder-photo.jpg"
+              alt="Mohib Ahmadzai, founder of Lanavix"
+              className="h-20 w-20 rounded-full object-cover shrink-0"
+            />
+            <div>
+              <p className="font-semibold text-sm mb-1">Mohib Ahmadzai, founder</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                I built Lanavix because too many contractors lose real business to a missed call or a review that never got a response. Early members can email or text me directly — your feedback shapes exactly what gets built next.
+              </p>
+            </div>
           </div>
         </div>
       </section>
