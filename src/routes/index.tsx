@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ArrowRight,
   Phone,
@@ -110,6 +110,42 @@ const stripeLinks: Record<string, string> = {
   'Agency-annual': 'https://buy.stripe.com/test_3cIbJ2fpAcp902n7KJa7C05',
 }
 
+// Fades a section up into view the first time it scrolls into the
+// viewport, using the animate-fade-up keyframe already defined in
+// styles.css. Starts fully visible (no opacity-0) until after mount, so a
+// visitor without JS, or a crawler that doesn't run it, still sees
+// everything immediately - the reveal is a bonus for real browsers, not
+// something content depends on to appear at all.
+function Reveal({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.15 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const waitingToReveal = mounted && !visible
+  return (
+    <div ref={ref} className={`${waitingToReveal ? 'opacity-0' : ''} ${visible ? 'animate-fade-up' : ''} ${className}`}>
+      {children}
+    </div>
+  )
+}
+
 function HomePage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -186,7 +222,7 @@ function HomePage() {
 
       {/* PAIN */}
       <section id="features" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
+        <Reveal className="max-w-5xl mx-auto">
           <div className="max-w-2xl mx-auto text-center mb-14">
             <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-balance">
               You're working 12-hour days and still losing customers you've already earned
@@ -195,7 +231,7 @@ function HomePage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {painPoints.map((item) => (
-              <div key={item.title} className="rounded-xl border border-border bg-card p-6">
+              <div key={item.title} className="rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/40">
                 <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center mb-4">
                   <item.icon className="h-4.5 w-4.5 text-foreground/70" />
                 </div>
@@ -205,12 +241,12 @@ function HomePage() {
             ))}
           </div>
           <p className="mt-4 text-center text-xs text-muted-foreground/60">62% stat: 411 Locals, also cited by ServiceTitan</p>
-        </div>
+        </Reveal>
       </section>
 
       {/* SOLUTION */}
       <section id="how-it-works" className="py-24 px-6 bg-secondary/50 border-y border-border">
-        <div className="max-w-5xl mx-auto">
+        <Reveal className="max-w-5xl mx-auto">
           <div className="max-w-2xl mx-auto text-center mb-20">
             <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">The solution</p>
             <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-balance">
@@ -305,18 +341,18 @@ function HomePage() {
               <p className="text-emerald-300 text-sm font-semibold text-center mt-3">+27 more leads in a real run. Generated in 34 seconds.</p>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* HOW IT WORKS */}
       <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+        <Reveal className="max-w-4xl mx-auto text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">Setup takes 5 minutes</p>
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Set it up once. It works forever.</h2>
           <p className="mt-4 text-muted-foreground mb-16">There's no IT team to hire and nothing to maintain — connect it once and it keeps working.</p>
           <div className="flex flex-col sm:flex-row rounded-xl border border-border bg-card text-left mb-16 overflow-hidden">
             {steps.map((step, i) => (
-              <div key={step.num} className={`flex-1 p-7 ${i > 0 ? 'sm:border-l border-border' : ''}`}>
+              <div key={step.num} className={`flex-1 p-7 transition-colors hover:bg-accent/30 ${i > 0 ? 'sm:border-l border-border' : ''}`}>
                 <div className="flex items-center gap-3 mb-5">
                   <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">{step.num}</span>
                   <step.icon className="h-5 w-5 text-primary" />
@@ -338,30 +374,30 @@ function HomePage() {
               </span>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* COMPARISON */}
       <section id="results" className="py-24 px-6 bg-secondary/50 border-y border-border">
-        <div className="max-w-2xl mx-auto">
+        <Reveal className="max-w-2xl mx-auto">
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-center mb-14">
             What changes when you use Lanavix
           </h2>
           <div className="space-y-3">
             {beforeAfter.map((row) => (
-              <div key={row.before} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border border-border bg-card p-5">
+              <div key={row.before} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40">
                 <span className="text-sm text-muted-foreground line-through decoration-destructive/40 flex-1">{row.before}</span>
                 <ArrowRight className="h-4 w-4 text-primary shrink-0 hidden sm:block" />
                 <span className="text-sm text-foreground font-medium flex-1">{row.after}</span>
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* EARLY ACCESS */}
       <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+        <Reveal className="max-w-4xl mx-auto text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">Early access</p>
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-balance">
             Built for contractors across America — launching now
@@ -371,7 +407,7 @@ function HomePage() {
           </p>
           <div className="grid sm:grid-cols-3 gap-5 text-left">
             {earlyAccess.map((card) => (
-              <div key={card.title} className="rounded-xl border border-border bg-card p-7">
+              <div key={card.title} className="rounded-xl border border-border bg-card p-7 transition-colors hover:border-primary/40">
                 <card.icon className="h-6 w-6 text-primary mb-4" />
                 <h3 className="font-semibold text-base mb-2">{card.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{card.body}</p>
@@ -392,12 +428,12 @@ function HomePage() {
               </p>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* PRICING */}
       <section id="pricing" className="py-24 px-6 bg-secondary/50 border-y border-border">
-        <div className="max-w-5xl mx-auto text-center">
+        <Reveal className="max-w-5xl mx-auto text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mb-3">Simple pricing. Serious results.</h2>
           <p className="text-muted-foreground mb-10">Every plan includes a 14-day free trial. Cancel any time.</p>
 
@@ -419,7 +455,7 @@ function HomePage() {
 
           <div className="grid sm:grid-cols-3 gap-5 text-left">
             {pricing[billingPeriod].map((plan) => (
-              <div key={plan.name} className={`relative rounded-2xl p-8 flex flex-col bg-card border ${plan.highlight ? 'border-primary ring-1 ring-primary/20' : 'border-border'}`}>
+              <div key={plan.name} className={`relative rounded-2xl p-8 flex flex-col bg-card border transition-colors ${plan.highlight ? 'border-primary ring-1 ring-primary/20' : 'border-border hover:border-primary/40'}`}>
                 {plan.highlight && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full">
                     Most popular
@@ -457,12 +493,12 @@ function HomePage() {
               <p className="text-muted-foreground text-sm leading-relaxed">If you don't recover at least one job worth more than your monthly fee in the first 30 days, we'll refund every penny. No questions asked.</p>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* FAQ */}
       <section className="py-24 px-6">
-        <div className="max-w-2xl mx-auto">
+        <Reveal className="max-w-2xl mx-auto">
           <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-center mb-12">Common questions</h2>
           <div className="flex flex-col">
             {faqs.map((faq, i) => (
@@ -474,18 +510,20 @@ function HomePage() {
                   <span className="font-medium text-sm">{faq.q}</span>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
-                {openFaq === i && (
-                  <p className="pb-5 text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
-                )}
+                <div className={`grid transition-all duration-300 ease-in-out ${openFaq === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <p className="pb-5 text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* FINAL CTA */}
       <section className="section-ink py-24 px-6 text-center">
-        <div className="max-w-xl mx-auto">
+        <Reveal className="max-w-xl mx-auto">
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-balance mb-5">
             Find out how many customers you're losing right now — free
           </h2>
@@ -504,7 +542,7 @@ function HomePage() {
             <span>30-day money-back guarantee</span>
             <span>No credit card to start</span>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <SiteFooter />
