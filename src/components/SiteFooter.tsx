@@ -47,8 +47,8 @@ export function SiteFooter() {
               <span className="font-display font-bold tracking-tight">Lanavix</span>
             </div>
             <p className="text-sm text-muted-foreground mt-4 max-w-xs">
-              Your 24/7 AI business team. Built for local service businesses and contractors who want
-              more customers without more hours.
+              Missed-call text-back, review requests, and local lead-finding — built for contractors,
+              running in the background of your day.
             </p>
             <a href="tel:+15719215254" className="block text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors">
               +1 (571) 921-5254

@@ -62,7 +62,7 @@ const painPoints = [
 ]
 
 const steps = [
-  { num: '01', icon: Link2, title: 'Connect in 5 minutes', body: "Add your phone number and Google Business Profile link. That's it. No installs, no code, no tech skills." },
+  { num: '01', icon: Link2, title: 'Connect in 5 minutes', body: "Add your phone number and your Google Business Profile link. That's the whole setup." },
   { num: '02', icon: Bot, title: 'AI works 24/7 for you', body: 'Missed calls get texted back. Reviews get requested. Leads get found. All automatically, day and night.' },
   { num: '03', icon: Wallet, title: 'Open inbox to booked jobs', body: "Wake up to new conversations, confirmed appointments, and fresh 5-star reviews you didn't have to ask for." },
 ]
@@ -77,7 +77,7 @@ const earlyAccess = [
 ]
 
 const faqs = [
-  { q: 'Do I need to be tech-savvy to use this?', a: 'Not at all. Setup takes 5 minutes. You give us your phone number and Google Business Profile link — we handle everything else. No apps to install, no code, no training required.' },
+  { q: 'Do I need to be tech-savvy to use this?', a: "Not at all. Setup takes about five minutes: give us your phone number and your Google Business Profile link, and we take it from there." },
   { q: 'How fast will I see results?', a: "Missed Call Text-Back starts working the second you connect your number — every missed call gets a reply within 60 seconds from day one. We're in early access, so we don't have enough customers yet to promise a typical timeline for reviews or leads, but the AI is working for you immediately." },
   { q: 'Does this work for my trade?', a: 'Yes. Lanavix is built for HVAC, plumbing, roofing, electrical, cleaning, landscaping, and pest control. The AI is trained on contractor conversations — not generic business language.' },
   { q: 'Will it replace my current software?', a: 'No. Lanavix runs alongside whatever you already use. It handles the specific jobs that fall through the cracks: missed calls, review follow-ups, and finding new leads nearby.' },
@@ -135,7 +135,7 @@ function HomePage() {
           </h1>
           <p className="mt-3 text-xs text-ink-muted/70">Source: ServiceTitan analysis of 50,000+ contractor phone lines</p>
           <p className="mt-6 text-lg text-ink-muted max-w-xl mx-auto leading-relaxed">
-            Lanavix texts back every missed call in <span className="text-ink-foreground font-medium">60 seconds</span>, gets you 5-star reviews after every job, and finds new leads in your area — without you lifting a finger.
+            Lanavix texts back every missed call in <span className="text-ink-foreground font-medium">60 seconds</span>, gets you 5-star reviews after every job, and finds new leads in your area — running in the background while you're on the job.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link to="/audit">
@@ -211,7 +211,7 @@ function HomePage() {
             <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-balance">
               Three tools that pay for themselves in the first week
             </h2>
-            <p className="mt-4 text-muted-foreground">No setup fees. No tech skills. No training. Just more booked jobs.</p>
+            <p className="mt-4 text-muted-foreground">You don't need to be technical to run this. You need about five minutes.</p>
           </div>
 
           {/* Feature 1 */}
@@ -260,7 +260,7 @@ function HomePage() {
             </div>
             <div className="md:order-2 order-1">
               <Star className="h-7 w-7 text-primary mb-5" />
-              <p className="text-primary font-semibold text-xs uppercase tracking-widest mb-3">Double your Google reviews in 90 days</p>
+              <p className="text-primary font-semibold text-xs uppercase tracking-widest mb-3">More 5-star reviews, without asking twice</p>
               <h3 className="font-display text-2xl font-bold mb-4">Reputation Autopilot</h3>
               <p className="text-muted-foreground leading-relaxed mb-5">
                 After every job, we automatically text your customer a direct Google review link. When a bad review hits, we alert you instantly and write a professional response in 30 seconds.
@@ -275,7 +275,7 @@ function HomePage() {
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             <div>
               <Target className="h-7 w-7 text-primary mb-5" />
-              <p className="text-primary font-semibold text-xs uppercase tracking-widest mb-3">30 new leads in your area — in 60 seconds</p>
+              <p className="text-primary font-semibold text-xs uppercase tracking-widest mb-3">New leads in your area, in under a minute</p>
               <h3 className="font-display text-2xl font-bold mb-4">Local Lead Blast</h3>
               <p className="text-muted-foreground leading-relaxed mb-5">
                 Tell us your trade and city. Our AI finds 30 real local businesses that need your service, with the owner's name, phone number, and a personalized opening line ready to send.
@@ -308,7 +308,7 @@ function HomePage() {
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">Setup takes 5 minutes</p>
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Set it up once. It works forever.</h2>
-          <p className="mt-4 text-muted-foreground mb-16">No IT team. No training. No ongoing work from you.</p>
+          <p className="mt-4 text-muted-foreground mb-16">There's no IT team to hire and nothing to maintain — connect it once and it keeps working.</p>
           <div className="grid sm:grid-cols-3 gap-6 mb-16 text-left">
             {steps.map((step) => (
               <div key={step.num} className="rounded-xl border border-border bg-card p-7">
