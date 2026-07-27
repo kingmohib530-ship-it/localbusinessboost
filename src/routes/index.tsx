@@ -53,12 +53,12 @@ const industries: [LucideIcon, string][] = [
 ]
 
 const painPoints = [
-  { icon: Phone, title: "Phone rings while you're on a job", stat: 'Avg. missed job: $450' },
-  { icon: Star, title: "Customers don't leave reviews even when they love you", stat: 'Losing 30% of potential jobs' },
-  { icon: Inbox, title: 'Leads scattered across phone, Facebook, and voicemail', stat: '40% of leads go cold in 24 hrs' },
-  { icon: Clock, title: 'Following up with leads eats your whole evening', stat: '3–5 hrs/week of your time' },
+  { icon: Phone, title: "Phone rings while you're on a job", stat: '62% of calls go unanswered' },
+  { icon: Star, title: "Customers don't leave reviews even when they love you", stat: 'Silence looks like indifference to the next customer' },
+  { icon: Inbox, title: 'Leads scattered across phone, Facebook, and voicemail', stat: 'Somebody else answers first' },
+  { icon: Clock, title: 'Following up with leads eats your whole evening', stat: 'Time you should be off the clock' },
   { icon: Search, title: 'Competitors with more reviews rank above you on Google', stat: 'Invisible to new customers' },
-  { icon: Wallet, title: "Paying for ads that go to a website that doesn't convert", stat: 'Avg. wasted: $800/month' },
+  { icon: Wallet, title: "Paying for ads that go to a website that doesn't convert", stat: 'Money spent, no job booked' },
 ]
 
 const steps = [
@@ -67,7 +67,7 @@ const steps = [
   { num: '03', icon: Wallet, title: 'Open inbox to booked jobs', body: "Wake up to new conversations, confirmed appointments, and fresh 5-star reviews you didn't have to ask for." },
 ]
 
-const withoutLanavix = ['Missed call = lost $400 job', 'Customers forget to leave reviews', 'Leads scattered across 5 places', 'Evenings spent chasing follow-ups', 'Competitors outrank you on Google', "Paying for ads that don't convert"]
+const withoutLanavix = ['A missed call is a job that goes to whoever answers next', 'Customers forget to leave reviews', 'Leads scattered across 5 places', 'Evenings spent chasing follow-ups', 'Competitors outrank you on Google', "Paying for ads that don't convert"]
 const withLanavix = ['Every missed call texted back in 60s', 'Reviews arrive after every job, automatically', 'All leads in one simple inbox', 'AI books jobs while you sleep', 'More reviews = higher Google rank = more calls', 'Organic leads from the AI, no ad spend']
 
 const earlyAccess = [
@@ -78,7 +78,7 @@ const earlyAccess = [
 
 const faqs = [
   { q: 'Do I need to be tech-savvy to use this?', a: 'Not at all. Setup takes 5 minutes. You give us your phone number and Google Business Profile link — we handle everything else. No apps to install, no code, no training required.' },
-  { q: 'How fast will I see results?', a: 'Missed Call Text-Back starts working the moment you connect your number. Most contractors see their first recovered job within the first week. Reviews typically start coming in within 2–3 days of sending your first batch of requests.' },
+  { q: 'How fast will I see results?', a: "Missed Call Text-Back starts working the second you connect your number — every missed call gets a reply within 60 seconds from day one. We're in early access, so we don't have enough customers yet to promise a typical timeline for reviews or leads, but the AI is working for you immediately." },
   { q: 'Does this work for my trade?', a: 'Yes. Lanavix is built for HVAC, plumbing, roofing, electrical, cleaning, landscaping, and pest control. The AI is trained on contractor conversations — not generic business language.' },
   { q: 'Will it replace my current software?', a: 'No. Lanavix runs alongside whatever you already use. It handles the specific jobs that fall through the cracks: missed calls, review follow-ups, and finding new leads nearby.' },
   { q: "What if I don't like it?", a: "You're covered by our 30-day money-back guarantee. If you don't recover at least one job worth more than your monthly fee in the first 30 days, we refund every penny. No questions asked." },
@@ -131,8 +131,9 @@ function HomePage() {
             </span>
           </div>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] text-balance">
-            Stop losing <span className="text-primary-foreground/90 underline decoration-[var(--accent-2)] decoration-4 underline-offset-8">$2,000 a week</span> to missed calls
+            Small service businesses lose <span className="text-primary-foreground/90 underline decoration-[var(--accent-2)] decoration-4 underline-offset-8">$126,000 a year</span> to missed calls
           </h1>
+          <p className="mt-3 text-xs text-ink-muted/70">Source: ServiceTitan analysis of 50,000+ contractor phone lines</p>
           <p className="mt-6 text-lg text-ink-muted max-w-xl mx-auto leading-relaxed">
             Lanavix texts back every missed call in <span className="text-ink-foreground font-medium">60 seconds</span>, gets you 5-star reviews after every job, and finds new leads in your area — without you lifting a finger.
           </p>
@@ -198,6 +199,7 @@ function HomePage() {
               </div>
             ))}
           </div>
+          <p className="mt-4 text-center text-xs text-muted-foreground/60">62% stat: 411 Locals, also cited by ServiceTitan</p>
         </div>
       </section>
 
@@ -222,7 +224,8 @@ function HomePage() {
                 When you're on a roof, under a sink, or driving between jobs — Lanavix texts back every missed call within 60 seconds. AI handles the conversation and books the appointment.
               </p>
               <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-                62% of calls to small businesses go unanswered. Each one is a $200–$2,000 job walking out the door.
+                62% of calls to small businesses go unanswered, and missed calls cost small service businesses an average of $126,000 a year.
+                <span className="block mt-1.5 text-xs text-muted-foreground/60">Sources: 411 Locals; ServiceTitan analysis of 50,000+ contractor phone lines</span>
               </div>
             </div>
             <div className="rounded-2xl bg-ink text-ink-foreground p-6">
@@ -263,7 +266,7 @@ function HomePage() {
                 After every job, we automatically text your customer a direct Google review link. When a bad review hits, we alert you instantly and write a professional response in 30 seconds.
               </p>
               <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-                Going from 3.8 → 4.5 stars increases calls by 30%. That's the difference between 10 and 13 jobs a week.
+                Most people check your reviews before they ever call. Recent 5-star reviews, and a fast reply to a bad one, are what they see first.
               </div>
             </div>
           </div>
@@ -278,7 +281,7 @@ function HomePage() {
                 Tell us your trade and city. Our AI finds 30 real local businesses that need your service, with the owner's name, phone number, and a personalized opening line ready to send.
               </p>
               <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-                The average Lanavix user closes 2–4 jobs from their first Lead Blast. Average job value: $350–$1,800.
+                Every lead comes from a real Google Places search in your trade and city — never invented, never recycled from someone else's list.
               </div>
             </div>
             <div className="rounded-2xl bg-ink text-ink-foreground p-6">
@@ -321,8 +324,8 @@ function HomePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
             {[
               { val: '<60s', label: 'To reply to missed calls' },
-              { val: '$2k–$8k', label: 'Recovered revenue/month' },
-              { val: '2–4 jobs', label: 'From first Lead Blast' },
+              { val: '5 min', label: 'To connect, no code' },
+              { val: 'Founding', label: 'Member pricing, locked in' },
               { val: '30 days', label: 'Money-back guarantee' },
             ].map((s) => (
               <div key={s.val} className="rounded-lg border border-border bg-card py-5 px-3 text-center">
@@ -489,9 +492,9 @@ function HomePage() {
           </Link>
           <p className="text-ink-muted text-xs mt-4">No signup required · No credit card · 60 seconds · Keep the report</p>
           <div className="flex flex-wrap gap-6 justify-center mt-12 text-xs text-ink-muted">
-            <span>Bank-grade security</span>
             <span>Setup in 5 minutes</span>
-            <span>Results in week 1</span>
+            <span>Founding member pricing</span>
+            <span>30-day money-back guarantee</span>
             <span>No credit card to start</span>
           </div>
         </div>
