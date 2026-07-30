@@ -111,7 +111,10 @@ export async function checkSmsHourlyRateLimit(userId: string): Promise<QuotaResu
   });
   if (error) {
     console.error("[planLimits] sms hourly rate limit check failed", error);
-    return { allowed: true }; // fail open — never block sends on an infra hiccup
+    // Fail closed — this cap exists specifically to stop a bug or a
+    // compromised account from blowing through hundreds of sends, so an
+    // infra hiccup here should block sends, not wave them through.
+    return { allowed: false, reason: "Service temporarily unavailable. Please try again shortly." };
   }
   if (!allowed) {
     return { allowed: false, reason: "Too many messages sent in the last hour. Please try again shortly." };
