@@ -7,6 +7,10 @@
  * meta tags.
  */
 
+import { fetchSafeExternal, isSafeExternalUrl } from "./ssrfGuard.server";
+
+const MAX_RESPONSE_BYTES = 300_000;
+
 export interface WebsiteTechnicalCheck {
   hasWebsite: boolean;
   reachable: boolean;
@@ -31,17 +35,14 @@ function withScheme(url: string, scheme: "https" | "http"): string {
   return `${scheme}://${url.replace(/^https?:\/\//i, "")}`;
 }
 
-async function fetchWithTimeout(url: string, timeoutMs: number): Promise<{ res: Response; ms: number } | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<{ res: Response; text: string; ms: number } | null> {
+  if (!isSafeExternalUrl(url)) return null;
   const start = Date.now();
   try {
-    const res = await fetch(url, { signal: controller.signal, redirect: "follow" });
-    return { res, ms: Date.now() - start };
+    const { res, text } = await fetchSafeExternal(url, { timeoutMs, maxBytes: MAX_RESPONSE_BYTES });
+    return { res, text, ms: Date.now() - start };
   } catch {
     return null;
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -67,12 +68,11 @@ export async function checkWebsite(rawUrl?: string): Promise<WebsiteTechnicalChe
   const httpsAttempt = await fetchWithTimeout(httpsUrl, 8000);
 
   if (httpsAttempt) {
-    const { res, ms } = httpsAttempt;
+    const { res, text, ms } = httpsAttempt;
     if (!res.ok) {
       return { hasWebsite: true, reachable: false, sslValid: true, loadTimeMs: ms, hasTitleTag: null, hasMetaDescription: null, hasViewportTag: null };
     }
-    const html = await res.text().catch(() => "");
-    return { hasWebsite: true, reachable: true, sslValid: true, loadTimeMs: ms, ...scanHtml(html) };
+    return { hasWebsite: true, reachable: true, sslValid: true, loadTimeMs: ms, ...scanHtml(text) };
   }
 
   // https failed outright (could be a TLS/cert problem, or the domain is
@@ -83,12 +83,11 @@ export async function checkWebsite(rawUrl?: string): Promise<WebsiteTechnicalChe
     return { hasWebsite: true, reachable: false, sslValid: null, loadTimeMs: null, hasTitleTag: null, hasMetaDescription: null, hasViewportTag: null };
   }
 
-  const { res, ms } = httpAttempt;
+  const { res, text, ms } = httpAttempt;
   if (!res.ok) {
     return { hasWebsite: true, reachable: false, sslValid: false, loadTimeMs: ms, hasTitleTag: null, hasMetaDescription: null, hasViewportTag: null };
   }
-  const html = await res.text().catch(() => "");
-  return { hasWebsite: true, reachable: true, sslValid: false, loadTimeMs: ms, ...scanHtml(html) };
+  return { hasWebsite: true, reachable: true, sslValid: false, loadTimeMs: ms, ...scanHtml(text) };
 }
 
 /** Renders the check as plain-English facts for the AI prompt — never lets the model contradict these. */
