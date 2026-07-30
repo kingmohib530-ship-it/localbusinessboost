@@ -77,9 +77,7 @@ export const Route = createFileRoute("/api/workflow")({
             );
           }
 
-          console.log(
-            `[/api/workflow] user=${user.id} request="${userRequest.slice(0, 80)}${userRequest.length > 80 ? "…" : ""}"`,
-          );
+          console.log(`[/api/workflow] user=${user.id} requestLength=${userRequest.length}`);
 
           // Pass userId for future per-user Monday.com boards / personalization.
           const result = await runLunavxWorkflow(userRequest, user.id);
@@ -87,10 +85,7 @@ export const Route = createFileRoute("/api/workflow")({
         } catch (err) {
           console.error("/api/workflow error:", err);
           return Response.json(
-            {
-              success: false,
-              error: err instanceof Error ? err.message : "Unknown server error",
-            },
+            { success: false, error: "Something went wrong. Please try again." },
             { status: 500 },
           );
         }
