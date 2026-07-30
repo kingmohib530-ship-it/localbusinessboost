@@ -34,8 +34,14 @@ const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }
 
 const TEST_CALLER_PHONE = "+15555550100";
 
+const PAGE_SIZE = 20;
+
 function ReceptionistPage() {
   const [calls, setCalls] = useState<MissedCall[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [callStats, setCallStats] = useState({ total: 0, texted: 0, replied: 0 });
   const [selected, setSelected] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +63,27 @@ function ReceptionistPage() {
   const [testingReceptionist, setTestingReceptionist] = useState(false);
 
   useEffect(() => {
-    loadCalls();
+    loadCalls(0);
+    loadCallStats();
     loadProfile();
     loadAppointmentsBooked();
   }, []);
+
+  /**
+   * Independent of the paginated call list below - "texted"/"replied" need
+   * accurate all-time counts regardless of how many pages have been loaded.
+   * Counts use head:true, a real SQL COUNT rather than a row fetch.
+   */
+  async function loadCallStats() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const [total, texted, replied] = await Promise.all([
+      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id).neq("status", "no_response"),
+      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("status", ["replied", "booked"]),
+    ]);
+    setCallStats({ total: total.count ?? 0, texted: texted.count ?? 0, replied: replied.count ?? 0 });
+  }
 
   async function loadProfile() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -108,22 +131,27 @@ function ReceptionistPage() {
     setSavingConfig(false);
   }
 
-  async function loadCalls() {
-    setLoading(true);
+  async function loadCalls(page: number) {
+    if (page === 0) setLoading(true); else setLoadingMore(true);
     setLoadError("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
+    if (!user) { setLoading(false); setLoadingMore(false); return; }
+    const from = page * PAGE_SIZE;
     const { data, error } = await supabase
       .from("missed_calls")
       .select("*")
       .eq("user_id", user.id)
-      .order("called_at", { ascending: false });
+      .order("called_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
     if (error) {
       console.error("[receptionist] failed to load calls", error);
       setLoadError("Couldn't load your calls. Please refresh the page.");
     }
-    setCalls(data || []);
+    const rows = data || [];
+    setCalls((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setHasMore(rows.length === PAGE_SIZE);
     setLoading(false);
+    setLoadingMore(false);
   }
 
   async function loadAppointmentsBooked() {
@@ -180,7 +208,9 @@ function ReceptionistPage() {
         direction: "outbound",
         message,
       });
-      await loadCalls();
+      setPageIndex(0);
+      await loadCalls(0);
+      loadCallStats();
       setTab("calls");
       loadMessages(missedCall.id);
     } else {
@@ -191,9 +221,9 @@ function ReceptionistPage() {
   }
 
   const stats = {
-    total: calls.length,
-    texted: calls.filter(c => c.status !== "no_response").length,
-    replied: calls.filter(c => ["replied", "booked"].includes(c.status)).length,
+    total: callStats.total,
+    texted: callStats.texted,
+    replied: callStats.replied,
     booked: appointmentsBooked,
   };
 
@@ -398,6 +428,14 @@ function ReceptionistPage() {
                     </div>
                   );
                 })}
+                {hasMore && (
+                  <button
+                    onClick={() => { const next = pageIndex + 1; setPageIndex(next); loadCalls(next); }}
+                    disabled={loadingMore}
+                    style={{ alignSelf: "center", marginTop: 4, padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    {loadingMore ? "Loading..." : "Load more"}
+                  </button>
+                )}
               </div>
 
               {selected && selectedCall && (
