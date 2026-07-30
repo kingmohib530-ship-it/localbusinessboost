@@ -41,11 +41,6 @@ async function getPlan(userId: string): Promise<{ tier: string; isPaidActive: bo
   return { tier, isPaidActive };
 }
 
-function monthStartIso(): string {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-}
-
 /**
  * Missed-call auto-texts and conversation replies are unlimited on every
  * paid plan (Solo/Crew/Agency) — there's no marketed free tier to
@@ -147,9 +142,18 @@ export async function checkCrewFeatureQuota(userId: string): Promise<QuotaResult
 
 /**
  * Local Lead Blast isn't available without an active subscription. Solo is
- * capped at SOLO_LEAD_BLAST_MONTHLY_CAP runs/month (counted via the
- * "lead_generator_research" activity_log entry each run writes). Crew and
- * Agency are unlimited.
+ * capped at SOLO_LEAD_BLAST_MONTHLY_CAP runs/month. Crew and Agency are
+ * unlimited.
+ *
+ * Uses the same atomic increment-and-check RPC as the other monthly caps
+ * in this file, keyed by calendar month so each month gets a fresh
+ * bucket. This used to be a plain read-count-then-compare against
+ * activity_log, which had two problems: two concurrent runs could both
+ * read a count under the cap and both pass (the actual activity_log write
+ * only happens after the run finishes, so there was a wide race window),
+ * and a failed count query silently defaulted to allowed instead of
+ * denying. Both are fixed by switching to the atomic RPC and failing
+ * closed on error, matching every sibling check in this file.
  */
 export async function checkLeadGeneratorQuota(userId: string): Promise<QuotaResult> {
   const { tier, isPaidActive } = await getPlan(userId);
@@ -161,14 +165,18 @@ export async function checkLeadGeneratorQuota(userId: string): Promise<QuotaResu
   }
   if (tier !== "solo") return { allowed: true };
 
-  const { count } = await supabaseAdmin
-    .from("activity_log")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("type", "lead_generator_research")
-    .gte("created_at", monthStartIso());
-
-  if ((count ?? 0) >= SOLO_LEAD_BLAST_MONTHLY_CAP) {
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const { data: allowed, error } = await supabaseAdmin.rpc("check_rate_limit", {
+    p_user_id: userId,
+    p_route: `lead-generator-quota-${monthKey}`,
+    p_max_requests: SOLO_LEAD_BLAST_MONTHLY_CAP,
+    p_window_seconds: 31 * 24 * 3600,
+  });
+  if (error) {
+    console.error("[planLimits] lead generator quota check failed", error);
+    return { allowed: false, reason: "Service temporarily unavailable. Please try again shortly." };
+  }
+  if (!allowed) {
     return {
       allowed: false,
       reason: `Solo plan is capped at ${SOLO_LEAD_BLAST_MONTHLY_CAP} Local Lead Blast runs/month. Upgrade to Crew for unlimited runs.`,
