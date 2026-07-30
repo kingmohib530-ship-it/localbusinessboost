@@ -273,7 +273,6 @@ function CalendarPage() {
     color: "var(--foreground)",
     background: "var(--input)",
     fontFamily: "inherit",
-    outline: "none",
     boxSizing: "border-box" as const,
   };
 
@@ -390,16 +389,16 @@ function CalendarPage() {
             {modal.mode === "create" && (
               <>
                 <Field label="Customer name *">
-                  <input style={inputStyle} value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="e.g. John Smith" />
+                  <input className="lv-input" style={inputStyle} value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="e.g. John Smith" />
                 </Field>
                 <Field label="Phone">
-                  <input style={inputStyle} value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} placeholder="e.g. 404-555-0100" />
+                  <input className="lv-input" style={inputStyle} value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} placeholder="e.g. 404-555-0100" />
                 </Field>
                 <Field label="Email">
-                  <input style={inputStyle} value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} placeholder="e.g. john@example.com" />
+                  <input className="lv-input" style={inputStyle} value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} placeholder="e.g. john@example.com" />
                 </Field>
                 <Field label="Service type *">
-                  <input style={inputStyle} value={form.service_type} onChange={(e) => setForm({ ...form, service_type: e.target.value })} placeholder="e.g. HVAC repair" />
+                  <input className="lv-input" style={inputStyle} value={form.service_type} onChange={(e) => setForm({ ...form, service_type: e.target.value })} placeholder="e.g. HVAC repair" />
                 </Field>
               </>
             )}
@@ -414,7 +413,7 @@ function CalendarPage() {
                   </div>
                 </div>
                 <Field label="Status">
-                  <select style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Appointment["status"] })}>
+                  <select className="lv-input" style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Appointment["status"] })}>
                     {(["pending", "confirmed", "completed", "cancelled", "no_show"] as const).map((s) => (
                       <option key={s} value={s}>{STATUS_STYLES[s].label}</option>
                     ))}
@@ -424,13 +423,13 @@ function CalendarPage() {
             )}
 
             <Field label="Date and time *">
-              <input type="datetime-local" style={inputStyle} value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
+              <input type="datetime-local" className="lv-input" style={inputStyle} value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
             </Field>
             <Field label="Estimated value ($)">
-              <input type="number" min={0} step={1} style={inputStyle} value={form.estimated_value} onChange={(e) => setForm({ ...form, estimated_value: e.target.value })} placeholder="e.g. 450" />
+              <input type="number" min={0} step={1} className="lv-input" style={inputStyle} value={form.estimated_value} onChange={(e) => setForm({ ...form, estimated_value: e.target.value })} placeholder="e.g. 450" />
             </Field>
             <Field label="Notes">
-              <textarea style={{ ...inputStyle, resize: "vertical" as const }} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
+              <textarea className="lv-input" style={{ ...inputStyle, resize: "vertical" as const }} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
             </Field>
 
             {formError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{formError}</p>}

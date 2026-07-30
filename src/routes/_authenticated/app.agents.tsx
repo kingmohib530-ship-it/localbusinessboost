@@ -114,7 +114,6 @@ const inputStyle: CSSProperties = {
   fontFamily: "inherit",
   color: "var(--foreground)",
   background: "var(--input)",
-  outline: "none",
   boxSizing: "border-box",
 };
 
@@ -350,13 +349,13 @@ function AgentsHub() {
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
             <input value={industry} onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           <div style={{ marginBottom: 22 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
             <input value={city} onChange={e => setCity(e.target.value)}
               placeholder="e.g. Atlanta GA, Dallas TX..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
           <button onClick={runCampaign}
@@ -381,13 +380,13 @@ function AgentsHub() {
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
             <input value={industry} onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           <div style={{ marginBottom: 22 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
             <input value={city} onChange={e => setCity(e.target.value)}
               placeholder="e.g. Atlanta GA, Dallas TX..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
           <button onClick={runCampaign}
@@ -416,14 +415,14 @@ function AgentsHub() {
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Reviewer name</label>
             <input value={reviewerName} onChange={e => setReviewerName(e.target.value)}
               placeholder="e.g. Sarah M."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           <div style={{ marginBottom: 22 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Review text *</label>
             <textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
               placeholder="Paste the review here..."
               rows={4}
-              style={{ ...inputStyle, resize: "vertical" }} />
+              className="lv-input" style={{ ...inputStyle, resize: "vertical" }} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
           <button onClick={runReviewRecovery}

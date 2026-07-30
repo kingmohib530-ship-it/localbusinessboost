@@ -138,3 +138,16 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-up { animation: zy-fade-up .6s cubic-bezier(.2,.7,.2,1) both; }
+
+/* Shared focus ring for the dashboard's inline-style inputs (app.*.tsx),
+   which set outline:none inline with nothing replacing it. An inline
+   style always beats a stylesheet rule for the same property, so the
+   base outline:none has to live here too, not just the :focus-visible
+   override, or the inline style would just win back the removed ring. */
+.lv-input {
+  outline: none;
+}
+.lv-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}

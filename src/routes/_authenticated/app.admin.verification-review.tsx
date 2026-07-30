@@ -289,7 +289,7 @@ function VerificationReviewPage() {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 placeholder="e.g. Please upload a clearer photo of your insurance certificate."
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }}
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }}
               />
             </div>
 

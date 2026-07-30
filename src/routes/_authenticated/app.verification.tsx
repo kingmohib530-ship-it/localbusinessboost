@@ -315,7 +315,7 @@ function VerificationPage() {
             <select
               value={profile.team_size ?? ""}
               onChange={(e) => updateField("team_size", e.target.value || null)}
-              style={selectStyle}
+              className="lv-input" style={selectStyle}
             >
               <option value="">Select…</option>
               {TEAM_SIZES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -396,7 +396,7 @@ function VerificationPage() {
             />
           </Field>
           <Field label="Price unit">
-            <select value={profile.price_unit} onChange={(e) => updateField("price_unit", e.target.value)} style={selectStyle}>
+            <select value={profile.price_unit} onChange={(e) => updateField("price_unit", e.target.value)} className="lv-input" style={selectStyle}>
               {PRICE_UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
             </select>
           </Field>
@@ -517,14 +517,15 @@ function TextInput({ value, onChange, placeholder, maxLength }: { value: string;
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       maxLength={maxLength}
-      style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
+      className="lv-input"
+      style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }}
     />
   );
 }
 
 const selectStyle: React.CSSProperties = {
   width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14,
-  color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+  color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box",
 };
 
 function ToggleField({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {

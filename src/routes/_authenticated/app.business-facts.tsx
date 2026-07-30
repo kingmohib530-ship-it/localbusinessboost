@@ -53,7 +53,6 @@ const inputStyle: React.CSSProperties = {
   color: "var(--foreground)",
   background: "var(--input)",
   fontFamily: "inherit",
-  outline: "none",
   boxSizing: "border-box",
 };
 
@@ -390,7 +389,7 @@ function BusinessFactsPage() {
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             placeholder="https://yourbusiness.com"
-            style={{ ...inputStyle, flex: "1 1 260px" }}
+            className="lv-input" style={{ ...inputStyle, flex: "1 1 260px" }}
             disabled={profileLoading}
           />
           <button onClick={saveWebsite} disabled={savingWebsite || profileLoading}
@@ -436,7 +435,7 @@ function BusinessFactsPage() {
                 value={googleQuery}
                 onChange={(e) => setGoogleQuery(e.target.value)}
                 placeholder={businessName ? `${businessName}${city ? ` ${city}` : ""}` : "Your business name and city"}
-                style={{ ...inputStyle, flex: "1 1 260px" }}
+                className="lv-input" style={{ ...inputStyle, flex: "1 1 260px" }}
               />
               <button onClick={searchGoogle} disabled={searchingGoogle}
                 style={{ padding: "10px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -469,7 +468,7 @@ function BusinessFactsPage() {
       <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 12 }}>Add a fact</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <select value={newFactType} onChange={(e) => setNewFactType(e.target.value as FactType)} style={{ ...inputStyle, flex: "0 0 160px" }}>
+          <select value={newFactType} onChange={(e) => setNewFactType(e.target.value as FactType)} className="lv-input" style={{ ...inputStyle, flex: "0 0 160px" }}>
             {(Object.keys(FACT_TYPE_LABELS) as FactType[]).map((t) => (
               <option key={t} value={t}>{FACT_TYPE_LABELS[t]}</option>
             ))}
@@ -478,7 +477,7 @@ function BusinessFactsPage() {
             value={newFactText}
             onChange={(e) => setNewFactText(e.target.value)}
             placeholder="e.g. Drain cleaning starts at $150"
-            style={{ ...inputStyle, flex: "1 1 300px" }}
+            className="lv-input" style={{ ...inputStyle, flex: "1 1 300px" }}
           />
           <button onClick={addFact} disabled={addingFact}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -569,7 +568,7 @@ function BusinessFactsPage() {
                           <input
                             value={editingText}
                             onChange={(e) => setEditingText(e.target.value)}
-                            style={{ ...inputStyle, flex: "1 1 260px" }}
+                            className="lv-input" style={{ ...inputStyle, flex: "1 1 260px" }}
                             autoFocus
                           />
                           <div style={{ display: "flex", gap: 6 }}>
