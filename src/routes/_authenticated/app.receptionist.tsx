@@ -25,6 +25,7 @@ interface Message {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  received:    { bg: "var(--muted)", color: "var(--muted-foreground)", label: "Text not sent" },
   texted:      { bg: "var(--accent)", color: "var(--primary)", label: "Texted" },
   replied:     { bg: "var(--accent)", color: "var(--accent-2)", label: "Replied" },
   booked:      { bg: "var(--accent)", color: "var(--accent-2)", label: "Booked ✓" },

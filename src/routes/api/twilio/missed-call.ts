@@ -62,13 +62,14 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
             return EMPTY_TWIML;
           }
 
-          // Save the missed call
+          // Save the missed call as "received" — only flipped to "texted"
+          // once Twilio actually confirms the send was accepted, below.
           const { data: missedCall } = await supabaseAdmin
             .from("missed_calls")
             .insert({
               user_id: profile.id,
               caller_phone: callerPhone,
-              status: "texted",
+              status: "received",
             })
             .select()
             .single();
@@ -90,7 +91,7 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
               profile.greeting_message ||
               `Hi! This is ${businessName}. Sorry we missed your call — we're on a job right now. We'd love to help you with ${service}. What do you need? Reply here and we'll get back to you ASAP 👇`;
 
-            await fetch(
+            const twilioRes = await fetch(
               `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
               {
                 method: "POST",
@@ -106,14 +107,20 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
               },
             );
 
-            // Save outbound message to conversation
-            await supabaseAdmin.from("sms_conversations").insert({
-              missed_call_id: missedCall.id,
-              user_id: profile.id,
-              caller_phone: callerPhone,
-              direction: "outbound",
-              message: autoMessage,
-            });
+            if (twilioRes.ok) {
+              await Promise.all([
+                supabaseAdmin.from("missed_calls").update({ status: "texted" }).eq("id", missedCall.id),
+                supabaseAdmin.from("sms_conversations").insert({
+                  missed_call_id: missedCall.id,
+                  user_id: profile.id,
+                  caller_phone: callerPhone,
+                  direction: "outbound",
+                  message: autoMessage,
+                }),
+              ]);
+            } else {
+              console.error("[missed-call] Twilio send failed", twilioRes.status, await twilioRes.text().catch(() => ""));
+            }
           }
 
           return EMPTY_TWIML;
