@@ -652,7 +652,7 @@ function AtlasOutput({ data }: { data: AtlasResult }) {
     </div>
   );
 }
-type MondayItemId = { itemId?: number; error?: string };
+type MondayItemId = { itemId?: string; error?: string };
 
 function PulseOutput({ data }: { data: PulseResult }) {
   return (
@@ -1270,7 +1270,7 @@ function SaveToMondayButton({
   const [status, setStatus] = useState<
     | { kind: "idle" }
     | { kind: "saving" }
-    | { kind: "ok"; itemId: number }
+    | { kind: "ok"; itemId: string }
     | { kind: "err"; msg: string }
   >({ kind: "idle" });
 
@@ -1291,7 +1291,7 @@ function SaveToMondayButton({
       });
       const j = (await res.json()) as {
         success?: boolean;
-        itemId?: number;
+        itemId?: string;
         error?: string;
       };
       if (!res.ok || !j.success || !j.itemId) {

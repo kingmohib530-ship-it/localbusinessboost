@@ -399,7 +399,7 @@ export async function syncLeadStatusToMonday(
   priority: string,
 ): Promise<void> {
   try {
-    await updateMondayItem(Number(mondayItemId), {
+    await updateMondayItem(mondayItemId, {
       color_mm40t58z: { label: PRIORITY_LABEL[priority] || "Warm" },
     });
     await createMondayUpdate(mondayItemId, `Status changed to: ${status}`);
