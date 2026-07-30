@@ -8,10 +8,7 @@
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { PAID_PLAN_IDS } from "./pricingPlans";
-
-export const SOLO_REVIEW_REQUEST_MONTHLY_CAP = 100;
-export const SOLO_LEAD_BLAST_MONTHLY_CAP = 5;
+import { PAID_PLAN_IDS, SOLO_REVIEW_REQUEST_MONTHLY_CAP, SOLO_LEAD_BLAST_MONTHLY_CAP } from "./pricingPlans";
 
 // Pure abuse/cost-control ceiling, independent of plan tier — even an
 // unlimited-SMS paid plan shouldn't be able to blow through hundreds of

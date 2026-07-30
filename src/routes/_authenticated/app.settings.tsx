@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PRICING_PLANS, type PlanId } from "@/lib/pricingPlans";
+import { PRICING_PLANS, type PlanId, SOLO_REVIEW_REQUEST_MONTHLY_CAP, SOLO_LEAD_BLAST_MONTHLY_CAP } from "@/lib/pricingPlans";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   component: Settings,
@@ -18,12 +18,35 @@ const VERIFICATION_LABELS: Record<string, string> = {
   elite: "Verified Elite",
 };
 
+function UsageBar({ label, used, cap }: { label: string; used: number; cap: number }) {
+  const pct = Math.min(100, Math.round((used / cap) * 100));
+  const nearCap = used >= cap;
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={nearCap ? "text-destructive font-medium" : "text-foreground"}>
+          {used}/{cap} this month
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className={nearCap ? "h-full bg-destructive" : "h-full bg-primary"}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function Settings() {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [planId, setPlanId] = useState<PlanId>("starter");
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [verificationStatus, setVerificationStatus] = useState<string>("unverified");
+  const [reviewRequestsThisMonth, setReviewRequestsThisMonth] = useState(0);
+  const [leadBlastRunsThisMonth, setLeadBlastRunsThisMonth] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -47,6 +70,20 @@ function Settings() {
       setSubscriptionStatus(profile?.subscription_status ?? null);
       setVerificationStatus(profile?.verification_status || "unverified");
       setLoading(false);
+
+      // Only Solo has caps worth showing usage against — Crew/Agency are
+      // unlimited on both, so skip the count queries for every other tier.
+      if (profile?.subscription_tier === "solo") {
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+        const [reviewRequests, leadBlastRuns] = await Promise.all([
+          supabase.from("review_requests").select("id", { count: "exact", head: true })
+            .eq("user_id", data.user.id).gte("sent_at", monthStart),
+          supabase.from("activity_log").select("id", { count: "exact", head: true })
+            .eq("user_id", data.user.id).eq("type", "lead_generator_research").gte("created_at", monthStart),
+        ]);
+        setReviewRequestsThisMonth(reviewRequests.count ?? 0);
+        setLeadBlastRunsThisMonth(leadBlastRuns.count ?? 0);
+      }
     });
   }, []);
 
@@ -155,6 +192,20 @@ function Settings() {
                     ? "Your last payment failed — update your billing details to avoid losing access."
                     : `You're subscribed to ${PRICING_PLANS[planId].name} ($${PRICING_PLANS[planId].price}/mo).`}
             </p>
+            {planId === "solo" && !loading && (
+              <div className="space-y-3 pt-1">
+                <UsageBar
+                  label="Review request texts"
+                  used={reviewRequestsThisMonth}
+                  cap={SOLO_REVIEW_REQUEST_MONTHLY_CAP}
+                />
+                <UsageBar
+                  label="Local Lead Blast runs"
+                  used={leadBlastRunsThisMonth}
+                  cap={SOLO_LEAD_BLAST_MONTHLY_CAP}
+                />
+              </div>
+            )}
             <Button asChild variant="outline" size="sm">
               <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
             </Button>
