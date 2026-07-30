@@ -118,6 +118,102 @@ interface RawAudit {
   };
 }
 
+const VALID_EFFORTS = new Set(["quick", "medium", "strategic"]);
+const VALID_IMPACTS = new Set(["high", "medium", "low"]);
+const VALID_GRADES = new Set(["Excellent", "Good", "Fair", "Needs work", "Critical"]);
+const CATEGORY_KEYS = ["visibility", "reputation", "leadCapture", "conversion"] as const;
+
+function isValidFix(x: unknown): x is AuditFix {
+  if (!x || typeof x !== "object") return false;
+  const f = x as Partial<AuditFix>;
+  return (
+    typeof f.text === "string" &&
+    f.text.length > 0 &&
+    typeof f.effort === "string" &&
+    VALID_EFFORTS.has(f.effort) &&
+    typeof f.impact === "string" &&
+    VALID_IMPACTS.has(f.impact)
+  );
+}
+
+function isValidRawCategory(x: unknown): x is RawCategory {
+  if (!x || typeof x !== "object") return false;
+  const c = x as Partial<RawCategory>;
+  return (
+    typeof c.score === "number" &&
+    c.score >= 0 &&
+    c.score <= 100 &&
+    typeof c.headline === "string" &&
+    c.headline.length > 0 &&
+    Array.isArray(c.fixes) &&
+    c.fixes.length === 3 &&
+    c.fixes.every(isValidFix)
+  );
+}
+
+/** Guards against the AI returning a malformed shape (missing field, wrong type) before it's trusted and graded. */
+function isValidRawAudit(x: unknown): x is RawAudit {
+  if (!x || typeof x !== "object") return false;
+  const a = x as Partial<RawAudit> & { categories?: Record<string, unknown> };
+  return (
+    typeof a.overallScore === "number" &&
+    a.overallScore >= 0 &&
+    a.overallScore <= 100 &&
+    typeof a.executiveSummary === "string" &&
+    a.executiveSummary.length > 0 &&
+    typeof a.revenueOpportunity === "string" &&
+    a.revenueOpportunity.length > 0 &&
+    typeof a.revenueOpportunityDetail === "string" &&
+    a.revenueOpportunityDetail.length > 0 &&
+    typeof a.topWin === "string" &&
+    a.topWin.length > 0 &&
+    !!a.categories &&
+    typeof a.categories === "object" &&
+    CATEGORY_KEYS.every((k) => isValidRawCategory(a.categories![k]))
+  );
+}
+
+function isValidAuditCategory(x: unknown): x is AuditCategory {
+  if (!x || typeof x !== "object") return false;
+  const c = x as Partial<AuditCategory>;
+  return (
+    typeof c.score === "number" &&
+    c.score >= 0 &&
+    c.score <= 100 &&
+    typeof c.grade === "string" &&
+    VALID_GRADES.has(c.grade) &&
+    typeof c.headline === "string" &&
+    c.headline.length > 0 &&
+    Array.isArray(c.fixes) &&
+    c.fixes.length === 3 &&
+    c.fixes.every(isValidFix)
+  );
+}
+
+/** Guards saveAuditLead's client-supplied result — a client could otherwise submit any fabricated score/copy to be stored and emailed. */
+function isValidAuditResult(x: unknown): x is AuditResult {
+  if (!x || typeof x !== "object") return false;
+  const r = x as Partial<AuditResult> & { categories?: Record<string, unknown> };
+  return (
+    typeof r.businessName === "string" &&
+    r.businessName.length > 0 &&
+    typeof r.industry === "string" &&
+    r.industry.length > 0 &&
+    typeof r.overallScore === "number" &&
+    r.overallScore >= 0 &&
+    r.overallScore <= 100 &&
+    typeof r.overallGrade === "string" &&
+    VALID_GRADES.has(r.overallGrade) &&
+    typeof r.executiveSummary === "string" &&
+    typeof r.revenueOpportunity === "string" &&
+    typeof r.revenueOpportunityDetail === "string" &&
+    typeof r.topWin === "string" &&
+    !!r.categories &&
+    typeof r.categories === "object" &&
+    CATEGORY_KEYS.every((k) => isValidAuditCategory(r.categories![k]))
+  );
+}
+
 function addGrades(raw: RawAudit, input: AuditInput, technicalCheck: WebsiteTechnicalCheck): AuditResult {
   const withGrade = (c: RawCategory): AuditCategory => ({ ...c, grade: GRADE(c.score) });
   return {
@@ -220,11 +316,14 @@ const auditServerFn = createServerFn({ method: "POST" })
     const match = clean.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("Audit returned invalid JSON. Please try again.");
 
-    let parsed: RawAudit;
+    let parsed: unknown;
     try {
-      parsed = JSON.parse(match[0]) as RawAudit;
+      parsed = JSON.parse(match[0]);
     } catch {
       throw new Error("Audit returned invalid JSON. Please try again.");
+    }
+    if (!isValidRawAudit(parsed)) {
+      throw new Error("Audit returned an unexpected shape. Please try again.");
     }
 
     return addGrades(parsed, data, technicalCheck);
