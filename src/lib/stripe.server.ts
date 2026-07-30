@@ -62,6 +62,7 @@ export async function verifyWebhook(req: Request, env: StripeEnv): Promise<{ typ
   const v1Signatures: string[] = [];
   for (const part of signature.split(",")) {
     const [key, value] = part.split("=", 2);
+    if (!key || !value) continue; // malformed segment (no "=", or an empty side) — skip rather than storing undefined
     if (key === "t") timestamp = value;
     if (key === "v1") v1Signatures.push(value);
   }
