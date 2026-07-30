@@ -342,6 +342,15 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function renderAuditReportEmail(result: AuditResult): { subject: string; text: string; html: string } {
   const cats = Object.entries(result.categories) as Array<[string, AuditCategory]>;
   const catLabel: Record<string, string> = {
@@ -370,24 +379,27 @@ ${textSections}
 
 — Lanavix (https://www.lanavix.com)`;
 
+  // Every value below traces back to either the AI's audit output or the
+  // client-supplied result object saveAuditLead validates — none of it is
+  // safe to drop straight into HTML, so it's escaped before interpolation.
   const htmlSections = cats.map(([key, cat]) => {
-    const fixes = cat.fixes.map((f) => `<li style="margin-bottom:8px;">${f.text}</li>`).join("");
-    return `<h3 style="margin:24px 0 4px;color:#0F172A;">${catLabel[key] || key} — ${cat.score}/100 (${cat.grade})</h3>
-<p style="color:#475569;font-style:italic;margin:0 0 8px;">${cat.headline}</p>
+    const fixes = cat.fixes.map((f) => `<li style="margin-bottom:8px;">${escapeHtml(f.text)}</li>`).join("");
+    return `<h3 style="margin:24px 0 4px;color:#0F172A;">${escapeHtml(catLabel[key] || key)} — ${cat.score}/100 (${escapeHtml(cat.grade)})</h3>
+<p style="color:#475569;font-style:italic;margin:0 0 8px;">${escapeHtml(cat.headline)}</p>
 <ol style="color:#0F172A;padding-left:20px;margin:0;">${fixes}</ol>`;
   }).join("");
 
   const html = `<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;color:#0F172A;">
 <h1 style="font-size:22px;margin-bottom:4px;">Your Lanavix Business Audit</h1>
-<p style="color:#475569;margin-top:0;">${result.businessName}</p>
-<p style="font-size:32px;font-weight:800;margin:16px 0 0;">${result.overallScore}/100 <span style="font-size:16px;font-weight:600;color:#475569;">(${result.overallGrade})</span></p>
-<p style="color:#475569;">${result.executiveSummary}</p>
+<p style="color:#475569;margin-top:0;">${escapeHtml(result.businessName)}</p>
+<p style="font-size:32px;font-weight:800;margin:16px 0 0;">${result.overallScore}/100 <span style="font-size:16px;font-weight:600;color:#475569;">(${escapeHtml(result.overallGrade)})</span></p>
+<p style="color:#475569;">${escapeHtml(result.executiveSummary)}</p>
 <div style="background:#ECFDF5;border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:16px;margin:16px 0;">
-  <strong>Revenue opportunity: ${result.revenueOpportunity}</strong>
-  <p style="margin:4px 0 0;color:#047857;">${result.revenueOpportunityDetail}</p>
+  <strong>Revenue opportunity: ${escapeHtml(result.revenueOpportunity)}</strong>
+  <p style="margin:4px 0 0;color:#047857;">${escapeHtml(result.revenueOpportunityDetail)}</p>
 </div>
 <div style="background:#EEF2FF;border-radius:12px;padding:16px;margin:16px 0;">
-  <strong>Top win:</strong> ${result.topWin}
+  <strong>Top win:</strong> ${escapeHtml(result.topWin)}
 </div>
 ${htmlSections}
 <p style="margin-top:32px;color:#94A3B8;font-size:13px;">— Lanavix · <a href="https://www.lanavix.com">lanavix.com</a></p>
@@ -402,10 +414,10 @@ const saveAuditLeadServerFn = createServerFn({ method: "POST" })
     if (!d.email || typeof d.email !== "string" || !isValidEmail(d.email)) {
       throw new Error("A valid email address is required");
     }
-    if (!d.result || typeof d.result !== "object") {
-      throw new Error("Missing audit result");
+    if (!d.result || !isValidAuditResult(d.result)) {
+      throw new Error("Invalid audit result");
     }
-    return { email: d.email, result: d.result as AuditResult };
+    return { email: d.email, result: d.result };
   })
   .handler(async ({ data }) => {
     const ip =
