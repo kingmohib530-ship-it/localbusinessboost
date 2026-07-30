@@ -186,7 +186,7 @@ function ReceptionistPage() {
 
     const message =
       greetingMessage.trim() ||
-      "Hi! Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP 👇";
+      "Hi! Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP.";
 
     const { data: missedCall, error } = await supabase
       .from("missed_calls")
@@ -326,7 +326,7 @@ function ReceptionistPage() {
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Greeting message</label>
               <textarea value={greetingMessage} onChange={e => setGreetingMessage(e.target.value)} rows={3}
-                placeholder={`Hi! This is [Your Business]. Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP 👇`}
+                placeholder={`Hi! This is [Your Business]. Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP.`}
                 style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
             </div>
 

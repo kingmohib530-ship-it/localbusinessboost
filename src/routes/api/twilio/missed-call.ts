@@ -89,7 +89,7 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
 
             const autoMessage =
               profile.greeting_message ||
-              `Hi! This is ${businessName}. Sorry we missed your call — we're on a job right now. We'd love to help you with ${service}. What do you need? Reply here and we'll get back to you ASAP 👇`;
+              `Hi! This is ${businessName}. Sorry we missed your call — we're on a job right now. We'd love to help you with ${service}. What do you need? Reply here and we'll get back to you ASAP.`;
 
             const twilioRes = await fetch(
               `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
