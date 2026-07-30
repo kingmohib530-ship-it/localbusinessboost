@@ -3,6 +3,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { Target, Star, Calendar, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LeadGenerator from "@/components/LeadGenerator";
+import { StarRatingInput } from "@/components/StarRatingInput";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/agents")({
@@ -409,12 +410,7 @@ function AgentsHub() {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Star rating</label>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[1, 2, 3, 4, 5].map(n => (
-                <span key={n} onClick={() => setStarRating(n)}
-                  style={{ fontSize: 24, cursor: "pointer", color: n <= starRating ? "var(--primary)" : "var(--border)" }}>★</span>
-              ))}
-            </div>
+            <StarRatingInput rating={starRating} onChange={setStarRating} size={24} />
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Reviewer name</label>

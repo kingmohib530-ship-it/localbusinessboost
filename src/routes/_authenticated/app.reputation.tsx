@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Send, Star, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { StarRatingInput } from "@/components/StarRatingInput";
 
 export const Route = createFileRoute("/_authenticated/app/reputation")({
   component: ReputationPage,
@@ -26,20 +27,6 @@ interface ReviewResponse {
   created_at: string;
 }
 
-const STARS = [1, 2, 3, 4, 5];
-
-function StarRating({ rating, onClick }: { rating: number; onClick?: (n: number) => void }) {
-  return (
-    <div style={{ display: "flex", gap: 4 }}>
-      {STARS.map(s => (
-        <span key={s} onClick={() => onClick?.(s)}
-          style={{ fontSize: 20, cursor: onClick ? "pointer" : "default", color: s <= rating ? "var(--primary)" : "var(--border)" }}>
-          ★
-        </span>
-      ))}
-    </div>
-  );
-}
 
 const PAGE_SIZE = 20;
 
@@ -337,7 +324,7 @@ function ReputationPage() {
                 {responses.map(r => (
                   <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      {r.star_rating && <StarRating rating={r.star_rating} />}
+                      {r.star_rating && <StarRatingInput rating={r.star_rating} size={16} />}
                       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{r.reviewer_name || "Anonymous"}</span>
                     </div>
                     <div style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -418,7 +405,7 @@ function ReputationPage() {
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Star rating</label>
-              <StarRating rating={starRating} onClick={setStarRating} />
+              <StarRatingInput rating={starRating} onChange={setStarRating} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
