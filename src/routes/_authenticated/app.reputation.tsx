@@ -41,10 +41,19 @@ function StarRating({ rating, onClick }: { rating: number; onClick?: (n: number)
   );
 }
 
+const PAGE_SIZE = 20;
+
 function ReputationPage() {
   const [tab, setTab] = useState<"dashboard" | "request" | "respond">("dashboard");
   const [requests, setRequests] = useState<ReviewRequest[]>([]);
+  const [requestsLoadingMore, setRequestsLoadingMore] = useState(false);
+  const [requestsHasMore, setRequestsHasMore] = useState(false);
+  const [requestsPageIndex, setRequestsPageIndex] = useState(0);
   const [responses, setResponses] = useState<ReviewResponse[]>([]);
+  const [responsesLoadingMore, setResponsesLoadingMore] = useState(false);
+  const [responsesHasMore, setResponsesHasMore] = useState(false);
+  const [responsesPageIndex, setResponsesPageIndex] = useState(0);
+  const [stats, setStats] = useState({ sent: 0, reviewed: 0, responses: 0, avgRating: "—" });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -65,24 +74,86 @@ function ReputationPage() {
   const [aiResponse, setAiResponse] = useState("");
   const [genError, setGenError] = useState("");
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadStats();
+    loadRequests(0);
+    loadResponses(0);
+  }, []);
 
-  async function loadData() {
+  /**
+   * Independent of the two paginated lists below - these tiles need
+   * accurate all-time totals regardless of how many pages of history the
+   * user has loaded so far. Counts use head:true (a real SQL COUNT, not a
+   * row fetch); avg rating reads only the one narrow column it needs
+   * instead of full rows.
+   */
+  async function loadStats() {
     setLoading(true);
     setLoadError("");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
-    const [req, res] = await Promise.all([
-      supabase.from("review_requests").select("*").eq("user_id", user.id).order("sent_at", { ascending: false }),
-      supabase.from("review_responses").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+    const [sentCount, reviewedCount, responsesCount, ratings] = await Promise.all([
+      supabase.from("review_requests").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("review_requests").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "reviewed"),
+      supabase.from("review_responses").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("review_responses").select("star_rating").eq("user_id", user.id).not("star_rating", "is", null),
     ]);
-    if (req.error || res.error) {
-      console.error("[reputation] failed to load data", req.error || res.error);
+    if (sentCount.error || reviewedCount.error || responsesCount.error || ratings.error) {
+      console.error("[reputation] failed to load stats", sentCount.error || reviewedCount.error || responsesCount.error || ratings.error);
       setLoadError("Couldn't load your reputation data. Please refresh the page.");
     }
-    setRequests(req.data || []);
-    setResponses(res.data || []);
+    const ratingValues = (ratings.data || []).map((r) => r.star_rating || 0);
+    setStats({
+      sent: sentCount.count ?? 0,
+      reviewed: reviewedCount.count ?? 0,
+      responses: responsesCount.count ?? 0,
+      avgRating: ratingValues.length > 0
+        ? (ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length).toFixed(1)
+        : "—",
+    });
     setLoading(false);
+  }
+
+  async function loadRequests(page: number) {
+    if (page > 0) setRequestsLoadingMore(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setRequestsLoadingMore(false); return; }
+    const from = page * PAGE_SIZE;
+    const { data, error } = await supabase
+      .from("review_requests")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("sent_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) {
+      console.error("[reputation] failed to load requests", error);
+      setLoadError("Couldn't load your reputation data. Please refresh the page.");
+    }
+    const rows = data || [];
+    setRequests((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setRequestsHasMore(rows.length === PAGE_SIZE);
+    setRequestsLoadingMore(false);
+  }
+
+  async function loadResponses(page: number) {
+    if (page > 0) setResponsesLoadingMore(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setResponsesLoadingMore(false); return; }
+    const from = page * PAGE_SIZE;
+    const { data, error } = await supabase
+      .from("review_responses")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) {
+      console.error("[reputation] failed to load responses", error);
+      setLoadError("Couldn't load your reputation data. Please refresh the page.");
+    }
+    const rows = data || [];
+    setResponses((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setResponsesHasMore(rows.length === PAGE_SIZE);
+    setResponsesLoadingMore(false);
   }
 
   async function sendRequest() {
@@ -117,7 +188,9 @@ function ReputationPage() {
       setSendOk(true);
       setSendMsg("Review request sent!");
       setCustName(""); setCustPhone(""); setJobDesc("");
-      loadData();
+      setRequestsPageIndex(0);
+      loadRequests(0);
+      loadStats();
     } catch {
       setSendOk(false);
       setSendMsg("Something went wrong. Please try again.");
@@ -166,15 +239,6 @@ function ReputationPage() {
     navigator.clipboard.writeText(aiResponse);
     toast.success("Response copied to clipboard!");
   }
-
-  const stats = {
-    sent: requests.length,
-    reviewed: requests.filter(r => r.status === "reviewed").length,
-    responses: responses.length,
-    avgRating: responses.filter(r => r.star_rating).length > 0
-      ? (responses.reduce((a, r) => a + (r.star_rating || 0), 0) / responses.filter(r => r.star_rating).length).toFixed(1)
-      : "—",
-  };
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
@@ -243,7 +307,7 @@ function ReputationPage() {
               {/* Recent requests */}
               <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Recent requests</div>
-                {requests.slice(0, 6).map(r => (
+                {requests.map(r => (
                   <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: "var(--foreground)" }}>{r.customer_name || r.customer_phone}</div>
@@ -257,12 +321,20 @@ function ReputationPage() {
                   </div>
                 ))}
                 {requests.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No requests yet</p>}
+                {requestsHasMore && (
+                  <button
+                    onClick={() => { const next = requestsPageIndex + 1; setRequestsPageIndex(next); loadRequests(next); }}
+                    disabled={requestsLoadingMore}
+                    style={{ display: "block", margin: "10px auto 0", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    {requestsLoadingMore ? "Loading..." : "Load more"}
+                  </button>
+                )}
               </div>
 
               {/* Recent responses */}
               <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Responses written</div>
-                {responses.slice(0, 4).map(r => (
+                {responses.map(r => (
                   <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       {r.star_rating && <StarRating rating={r.star_rating} />}
@@ -274,6 +346,14 @@ function ReputationPage() {
                   </div>
                 ))}
                 {responses.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No responses yet</p>}
+                {responsesHasMore && (
+                  <button
+                    onClick={() => { const next = responsesPageIndex + 1; setResponsesPageIndex(next); loadResponses(next); }}
+                    disabled={responsesLoadingMore}
+                    style={{ display: "block", margin: "10px auto 0", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    {responsesLoadingMore ? "Loading..." : "Load more"}
+                  </button>
+                )}
               </div>
             </div>
           )}
