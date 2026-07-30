@@ -13,7 +13,7 @@ async function sendEmail(opts: { to: string; subject: string; text: string; html
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.log(`[email] RESEND_API_KEY not configured — would have sent "${opts.subject}" to ${opts.to}`);
+    console.log("[email] RESEND_API_KEY not configured — email not sent");
     return;
   }
 
