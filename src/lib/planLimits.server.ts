@@ -8,6 +8,7 @@
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { PAID_PLAN_IDS } from "./pricingPlans";
 
 export const SOLO_REVIEW_REQUEST_MONTHLY_CAP = 100;
 export const SOLO_LEAD_BLAST_MONTHLY_CAP = 5;
@@ -32,7 +33,11 @@ async function getPlan(userId: string): Promise<{ tier: string; isPaidActive: bo
     .eq("id", userId)
     .maybeSingle();
   const tier = data?.subscription_tier || "starter";
-  const isPaidActive = tier !== "starter" && ["active", "trialing", "past_due"].includes(data?.subscription_status || "");
+  // Explicit allow-list, not "anything but starter" — an unrecognized or
+  // corrupted tier value should default to no access, not paid access.
+  const isPaidActive =
+    (PAID_PLAN_IDS as string[]).includes(tier) &&
+    ["active", "trialing", "past_due"].includes(data?.subscription_status || "");
   return { tier, isPaidActive };
 }
 
