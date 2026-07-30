@@ -71,14 +71,23 @@ export async function checkReviewRequestQuota(userId: string): Promise<QuotaResu
   }
   if (tier !== "solo") return { allowed: true };
 
-  const { count } = await supabaseAdmin
-    .from("review_requests")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("status", "sent")
-    .gte("created_at", monthStartIso());
-
-  if ((count ?? 0) >= SOLO_REVIEW_REQUEST_MONTHLY_CAP) {
+  // Atomic claim against the monthly cap - reuses the same atomic
+  // increment-and-check RPC as the hourly SMS rate limit below, keyed by
+  // calendar month so each month gets a fresh bucket. A plain read-count-
+  // then-compare here would let two concurrent sends both read a count
+  // under the cap and both pass.
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const { data: allowed, error } = await supabaseAdmin.rpc("check_rate_limit", {
+    p_user_id: userId,
+    p_route: `review-request-quota-${monthKey}`,
+    p_max_requests: SOLO_REVIEW_REQUEST_MONTHLY_CAP,
+    p_window_seconds: 31 * 24 * 3600,
+  });
+  if (error) {
+    console.error("[planLimits] review request quota check failed", error);
+    return { allowed: false, reason: "Service temporarily unavailable. Please try again shortly." };
+  }
+  if (!allowed) {
     return {
       allowed: false,
       reason: `Solo plan is capped at ${SOLO_REVIEW_REQUEST_MONTHLY_CAP} review request texts/month. Upgrade to Crew for unlimited review texts.`,
