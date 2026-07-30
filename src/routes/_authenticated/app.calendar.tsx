@@ -75,17 +75,27 @@ const EMPTY_FORM = {
   status: "pending" as Appointment["status"],
 };
 
+const PAGE_SIZE = 20;
+
 function CalendarPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
   const [error, setError] = useState("");
+  const [monthCount, setMonthCount] = useState(0);
+  const [monthTotal, setMonthTotal] = useState(0);
   const [modal, setModal] = useState<ModalState>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  useEffect(() => { loadAppointments(); }, []);
+  useEffect(() => {
+    loadAppointments(0);
+    loadMonthStats();
+  }, []);
 
   async function authHeader() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -94,19 +104,48 @@ function CalendarPage() {
     return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   }
 
-  async function loadAppointments() {
-    setLoading(true);
+  /**
+   * Independent of the paginated list below - these tiles need an accurate
+   * total for the current calendar month regardless of how many pages of
+   * the full history the user has loaded so far.
+   */
+  async function loadMonthStats() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("estimated_value")
+      .eq("user_id", user.id)
+      .gte("scheduled_at", monthStart)
+      .lt("scheduled_at", monthEnd);
+    if (error) {
+      console.error("[calendar] failed to load month stats", error);
+      return;
+    }
+    const rows = data ?? [];
+    setMonthCount(rows.length);
+    setMonthTotal(rows.reduce((sum, r) => sum + (r.estimated_value || 0), 0));
+  }
+
+  async function loadAppointments(page: number) {
+    if (page === 0) setLoading(true); else setLoadingMore(true);
     setError("");
     try {
       const headers = await authHeader();
-      const res = await fetch("/api/appointments", { headers });
+      const res = await fetch(`/api/appointments?page=${page}`, { headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load appointments");
-      setAppointments(data.appointments ?? []);
+      const rows = data.appointments ?? [];
+      setAppointments((prev) => (page === 0 ? rows : [...prev, ...rows]));
+      setHasMore(!!data.hasMore);
     } catch (err: any) {
       setError(err.message || "Failed to load appointments.");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
@@ -187,7 +226,9 @@ function CalendarPage() {
       }
 
       setModal(null);
-      loadAppointments();
+      setPageIndex(0);
+      loadAppointments(0);
+      loadMonthStats();
     } catch (err: any) {
       setFormError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -205,22 +246,15 @@ function CalendarPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete appointment");
       setModal(null);
-      loadAppointments();
+      setPageIndex(0);
+      loadAppointments(0);
+      loadMonthStats();
     } catch (err: any) {
       setFormError(err.message || "Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
   }
-
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const thisMonthAppointments = appointments.filter((a) => {
-    const t = new Date(a.scheduled_at);
-    return t >= monthStart && t < monthEnd;
-  });
-  const monthTotal = thisMonthAppointments.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
 
   const groups = new Map<string, Appointment[]>();
   for (const a of appointments) {
@@ -261,7 +295,7 @@ function CalendarPage() {
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
             <CalendarIcon size={16} color="var(--primary)" strokeWidth={1.75} />
           </div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{thisMonthAppointments.length}</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{monthCount}</div>
           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>Appointments this month</div>
         </div>
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
@@ -327,6 +361,15 @@ function CalendarPage() {
           </div>
         </div>
       ))}
+
+      {hasMore && (
+        <button
+          onClick={() => { const next = pageIndex + 1; setPageIndex(next); loadAppointments(next); }}
+          disabled={loadingMore}
+          style={{ display: "block", margin: "0 auto", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          {loadingMore ? "Loading..." : "Load more"}
+        </button>
+      )}
 
       {modal && (
         <div
