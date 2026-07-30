@@ -536,6 +536,9 @@ Return ONLY one word, exactly one of: interested, not_interested, needs_time, as
 
   const result = await res.json();
   const text: string = (result.content?.[0]?.text || "").trim().toLowerCase();
-  const match = VALID_CLASSIFICATIONS.find((c) => text.includes(c));
+  // Exact match only — a substring check would let "not_interested" match
+  // "interested" first (since the shorter word is a substring of the
+  // longer one), misclassifying a decline as a lead who said yes.
+  const match = VALID_CLASSIFICATIONS.find((c) => text === c);
   return match || "asked_question";
 }
