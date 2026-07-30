@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logActivity } from "@/lib/activityLog.server";
+import { checkCrewFeatureQuota } from "@/lib/planLimits.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -51,6 +52,12 @@ export const Route = createFileRoute("/api/review-response")({
           }
           if (!allowed) {
             return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
+          }
+
+          // ===== Plan gate: AI review response writer is Crew/Agency =====
+          const quota = await checkCrewFeatureQuota(user.id);
+          if (!quota.allowed) {
+            return Response.json({ error: quota.reason }, { status: 402 });
           }
 
           const { reviewText, reviewerName, starRating } = await request.json();

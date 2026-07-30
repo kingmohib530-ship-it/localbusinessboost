@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Send, Star, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +43,7 @@ function ReputationPage() {
   const [stats, setStats] = useState({ sent: 0, reviewed: 0, responses: 0, avgRating: "—" });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
 
   // Request form
   const [custName, setCustName] = useState("");
@@ -65,7 +66,15 @@ function ReputationPage() {
     loadStats();
     loadRequests(0);
     loadResponses(0);
+    loadPlan();
   }, []);
+
+  async function loadPlan() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from("profiles").select("subscription_tier").eq("id", user.id).maybeSingle();
+    setSubscriptionTier(data?.subscription_tier ?? null);
+  }
 
   /**
    * Independent of the two paginated lists below - these tiles need
@@ -395,9 +404,22 @@ function ReputationPage() {
       )}
 
       {/* Write Response tab */}
-      {tab === "respond" && (
+      {tab === "respond" && (() => {
+        const isCrewPlus = subscriptionTier === "crew" || subscriptionTier === "agency";
+        return (
         <div style={{ maxWidth: 680 }}>
-          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28 }}>
+          {!isCrewPlus && (
+            <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>The AI review response writer is a Crew feature</div>
+                <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to Crew or Agency to generate responses automatically.</div>
+              </div>
+              <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+                Upgrade now →
+              </Link>
+            </div>
+          )}
+          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28, opacity: isCrewPlus ? 1 : 0.5, pointerEvents: isCrewPlus ? "auto" : "none" }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Write a review response</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
               Paste any review and get a professional, personalized response in seconds.
@@ -424,7 +446,7 @@ function ReputationPage() {
 
             {genError && <p style={{ fontSize: 13, color: "var(--destructive)", marginBottom: 14 }}>{genError}</p>}
 
-            <button onClick={generateResponse} disabled={generating}
+            <button onClick={generateResponse} disabled={generating || !isCrewPlus}
               style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: generating ? "not-allowed" : "pointer", opacity: generating ? 0.7 : 1, fontFamily: "inherit", marginBottom: aiResponse ? 16 : 0 }}>
               {generating ? "Writing response..." : "Generate response →"}
             </button>
@@ -443,7 +465,8 @@ function ReputationPage() {
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, type CSSProperties } from "react";
 import { Target, Star, Calendar, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,6 +105,20 @@ const STEPS_BY_CAMPAIGN: Record<string, string[]> = {
   ],
 };
 
+function CrewUpgradeBanner({ feature }: { feature: string }) {
+  return (
+    <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>{feature} is a Crew feature</div>
+        <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to Crew or Agency to unlock it.</div>
+      </div>
+      <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+        Upgrade now →
+      </Link>
+    </div>
+  );
+}
+
 const inputStyle: CSSProperties = {
   width: "100%",
   padding: "10px 14px",
@@ -131,21 +145,25 @@ function AgentsHub() {
   const [reviewResponse, setReviewResponse] = useState<string | null>(null);
 
   const [bookingPlan, setBookingPlan] = useState<BookingPlanResult | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       supabase
         .from("profiles")
-        .select("industry, city")
+        .select("industry, city, subscription_tier")
         .eq("id", user.id)
         .single()
         .then(({ data }) => {
           if (data?.industry) setIndustry(data.industry);
           if (data?.city) setCity(data.city);
+          setSubscriptionTier(data?.subscription_tier ?? null);
         });
     });
   }, []);
+
+  const isCrewPlus = subscriptionTier === "crew" || subscriptionTier === "agency";
 
   const campaign = CAMPAIGNS.find((c) => c.id === selected);
   const steps = STEPS_BY_CAMPAIGN[selected ?? ""] ?? [];
@@ -339,6 +357,7 @@ function AgentsHub() {
       {selected === "competitor-intel" && !running && !hasResult && (
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          {!isCrewPlus && <CrewUpgradeBanner feature="Competitor Intelligence" />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Search size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -358,8 +377,8 @@ function AgentsHub() {
               className="lv-input" style={inputStyle} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runCampaign}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={runCampaign} disabled={!isCrewPlus}
+            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
             Run Competitor Intelligence →
           </button>
           <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~20 seconds</p>
@@ -370,6 +389,7 @@ function AgentsHub() {
       {selected === "booking-booster" && !running && !hasResult && (
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          {!isCrewPlus && <CrewUpgradeBanner feature="Booking Follow-Up Plan" />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Calendar size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -389,8 +409,8 @@ function AgentsHub() {
               className="lv-input" style={inputStyle} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runCampaign}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={runCampaign} disabled={!isCrewPlus}
+            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
             Run Booking Follow-Up Plan →
           </button>
           <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~30 seconds</p>
@@ -401,6 +421,7 @@ function AgentsHub() {
       {selected === "review-recovery" && !running && !hasResult && (
         <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          {!isCrewPlus && <CrewUpgradeBanner feature="Review Response" />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Star size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -425,8 +446,8 @@ function AgentsHub() {
               className="lv-input" style={{ ...inputStyle, resize: "vertical" }} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runReviewRecovery}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={runReviewRecovery} disabled={!isCrewPlus}
+            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
             Run Review Response →
           </button>
           <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~10 seconds</p>

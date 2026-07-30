@@ -128,6 +128,24 @@ export async function checkSmsHourlyRateLimit(userId: string): Promise<QuotaResu
 }
 
 /**
+ * Gate for the AI-generation features marketed as Crew-and-up on the
+ * pricing page: the AI review response writer, the competitor intelligence
+ * report, and Booking Booster. Solo doesn't include these — only Crew and
+ * Agency do — so unlike the checks above, there's no Solo-specific cap
+ * here, just a flat tier requirement.
+ */
+export async function checkCrewFeatureQuota(userId: string): Promise<QuotaResult> {
+  const { tier, isPaidActive } = await getPlan(userId);
+  if (!isPaidActive || (tier !== "crew" && tier !== "agency")) {
+    return {
+      allowed: false,
+      reason: "This feature is included in Crew and Agency. Upgrade to unlock it.",
+    };
+  }
+  return { allowed: true };
+}
+
+/**
  * Local Lead Blast isn't available without an active subscription. Solo is
  * capped at SOLO_LEAD_BLAST_MONTHLY_CAP runs/month (counted via the
  * "lead_generator_research" activity_log entry each run writes). Crew and
