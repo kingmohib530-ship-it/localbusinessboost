@@ -57,17 +57,32 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
             return Response.json({ error: "Lead not found" }, { status: 404 });
           }
 
-          const { data: step, error: stepErr } = await supabaseAdmin
+          const { data: stepExists, error: stepErr } = await supabaseAdmin
             .from("lead_sequences")
-            .select("*")
+            .select("id")
             .eq("id", step_id)
             .eq("lead_id", lead_id)
             .maybeSingle();
-          if (stepErr || !step) {
+          if (stepErr || !stepExists) {
             return Response.json({ error: "Sequence step not found" }, { status: 404 });
           }
-          if (step.status !== "pending") {
-            return Response.json({ error: `Step is already ${step.status}` }, { status: 409 });
+
+          // Atomic claim: flips pending -> sending only if it's still
+          // pending, so two concurrent calls for the same step can't both
+          // pass the status check and both fire the Twilio send.
+          const { data: step, error: claimErr } = await supabaseAdmin
+            .from("lead_sequences")
+            .update({ status: "sending" })
+            .eq("id", step_id)
+            .eq("lead_id", lead_id)
+            .eq("status", "pending")
+            .select("*")
+            .maybeSingle();
+          if (claimErr) {
+            return Response.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+          }
+          if (!step) {
+            return Response.json({ error: "Step is already in progress or completed" }, { status: 409 });
           }
 
           let sendError: string | null = null;
