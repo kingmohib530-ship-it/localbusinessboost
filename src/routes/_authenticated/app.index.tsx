@@ -80,9 +80,15 @@ const QUICK_WINS = [
   },
 ];
 
+const ACTIVITY_PAGE_SIZE = 20;
+
 function TodayDashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [activityLoadingMore, setActivityLoadingMore] = useState(false);
+  const [activityHasMore, setActivityHasMore] = useState(false);
+  const [activityPageIndex, setActivityPageIndex] = useState(0);
+  const [outboundLeadsSent, setOutboundLeadsSent] = useState(0);
   const [missedCalls, setMissedCalls] = useState<MissedCallRow[]>([]);
   const [conversations, setConversations] = useState<SmsConversationRow[]>([]);
   const [reviewResponses, setReviewResponses] = useState<ReviewResponseRow[]>([]);
@@ -96,9 +102,10 @@ function TodayDashboard() {
         setError("");
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        const monthStartIso = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
         const [
           { data: profileData },
-          { data: activityData },
+          { data: leadBlastData },
           { data: missedCallData },
           { data: conversationData },
           { data: reviewResponseData },
@@ -109,12 +116,16 @@ function TodayDashboard() {
             .select("full_name, business_name, industry, subscription_tier, verification_status")
             .eq("id", user.id)
             .single(),
+          // Scoped to this calendar month and this activity type specifically,
+          // rather than deriving from the paginated "recent activity" list
+          // below - that list only ever holds whatever page the user has
+          // loaded, which isn't a safe source for a stat tile.
           supabase
             .from("activity_log")
-            .select("id, type, summary, metadata, created_at")
+            .select("metadata")
             .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(50),
+            .eq("type", "lead_blast")
+            .gte("created_at", monthStartIso),
           supabase
             .from("missed_calls")
             .select("status, called_at")
@@ -135,7 +146,10 @@ function TodayDashboard() {
             .neq("status", "cancelled"),
         ]);
         setProfile(profileData);
-        setActivity((activityData as ActivityRow[]) ?? []);
+        const leadBlastRows = (leadBlastData as Array<{ metadata: Record<string, unknown> | null }>) ?? [];
+        setOutboundLeadsSent(
+          leadBlastRows.reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0),
+        );
         setMissedCalls((missedCallData as MissedCallRow[]) ?? []);
         setConversations((conversationData as SmsConversationRow[]) ?? []);
         setReviewResponses((reviewResponseData as ReviewResponseRow[]) ?? []);
@@ -148,7 +162,28 @@ function TodayDashboard() {
       }
     }
     loadDashboard();
+    loadActivity(0);
   }, []);
+
+  async function loadActivity(page: number) {
+    if (page > 0) setActivityLoadingMore(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setActivityLoadingMore(false); return; }
+    const from = page * ACTIVITY_PAGE_SIZE;
+    const { data, error: activityError } = await supabase
+      .from("activity_log")
+      .select("id, type, summary, metadata, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range(from, from + ACTIVITY_PAGE_SIZE - 1);
+    if (activityError) {
+      console.error("[dashboard] failed to load activity", activityError);
+    }
+    const rows = (data as ActivityRow[]) ?? [];
+    setActivity((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setActivityHasMore(rows.length === ACTIVITY_PAGE_SIZE);
+    setActivityLoadingMore(false);
+  }
 
   const name = profile?.business_name || profile?.full_name || null;
   const isFree = !profile?.subscription_tier || profile?.subscription_tier === "starter";
@@ -169,9 +204,6 @@ function TodayDashboard() {
   const avgStars = ratedReviews.length > 0
     ? (ratedReviews.reduce((sum, r) => sum + (r.star_rating ?? 0), 0) / ratedReviews.length).toFixed(1)
     : null;
-
-  const leadBlastThisMonth = activity.filter((a) => a.type === "lead_blast" && inThisMonth(a.created_at));
-  const outboundLeadsSent = leadBlastThisMonth.reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0);
 
   const conversationsThisMonth = conversations.filter((c) => inThisMonth(c.sent_at));
   const conversationsHandled = new Set(
@@ -310,12 +342,20 @@ function TodayDashboard() {
         )}
         {activity.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            {activity.slice(0, 8).map((a) => (
+            {activity.map((a) => (
               <div key={a.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
                 <span style={{ color: "var(--foreground)" }}>{a.summary}</span>
                 <span style={{ color: "var(--muted-foreground)", whiteSpace: "nowrap" }}>{timeAgo(a.created_at)}</span>
               </div>
             ))}
+            {activityHasMore && (
+              <button
+                onClick={() => { const next = activityPageIndex + 1; setActivityPageIndex(next); loadActivity(next); }}
+                disabled={activityLoadingMore}
+                style={{ display: "block", margin: "12px auto 0", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                {activityLoadingMore ? "Loading..." : "Load more"}
+              </button>
+            )}
           </div>
         )}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
