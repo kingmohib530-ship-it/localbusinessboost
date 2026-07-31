@@ -28,6 +28,7 @@ import { SiteFooter } from '@/components/SiteFooter'
 import { Button } from '@/components/ui/button'
 import { pageMeta } from '@/lib/seo'
 import { PRICING_PLANS, PAID_PLAN_IDS } from '@/lib/pricingPlans'
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 
 export const Route = createFileRoute('/')({
   head: () => ({
@@ -164,25 +165,6 @@ function StaggerItem({ visible, index, className = '', style, children }: { visi
       {children}
     </div>
   )
-}
-
-/** Tracks the user's OS-level motion preference at runtime, not just via
- * CSS. Needed because the parallax/tilt/magnetic effects below move
- * elements by writing inline transform styles directly from JS on every
- * scroll or pointer event; the CSS reduced-motion overrides in styles.css
- * only catch actual CSS transitions/animations, they can't stop a script
- * from setting style.transform each frame. So every effect that does that
- * checks this flag itself before touching anything. */
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReduced(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return reduced
 }
 
 /** Drives the hero mockup panel's three pointer/scroll-linked effects at

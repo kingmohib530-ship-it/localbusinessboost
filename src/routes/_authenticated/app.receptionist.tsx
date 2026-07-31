@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/receptionist")({
   component: ReceptionistPage,
@@ -229,12 +232,14 @@ function ReceptionistPage() {
 
   const selectedCall = calls.find(c => c.id === selected);
   const connected = !!twilioNumber;
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
+      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, flexWrap: "wrap", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
@@ -274,7 +279,7 @@ function ReceptionistPage() {
       {/* Setup tab */}
       {tab === "setup" && (
         <div style={{ maxWidth: 620 }}>
-          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28, marginBottom: 16 }}>
+          <div className="glass-dark" style={{ borderRadius: 20, padding: 28, marginBottom: 16 }}>
             <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>How it works</h2>
             <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 20, lineHeight: 1.6 }}>
               When someone calls your business and you don't pick up, Lanavix automatically sends them a personalized text within 60 seconds and handles the conversation — qualifying the lead, answering questions, and booking appointments — so you wake up to booked jobs.
@@ -295,7 +300,7 @@ function ReceptionistPage() {
             ))}
           </div>
 
-          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Your Twilio number</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
               Enter the Twilio number Lanavix sends and receives texts on for your business. This is how missed calls get matched to your account.
@@ -311,7 +316,7 @@ function ReceptionistPage() {
             {numberMsg && <div style={{ fontSize: 12, color: numberSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{numberMsg}</div>}
           </div>
 
-          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Configuration</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16, lineHeight: 1.5 }}>
               Greeting message is sent verbatim as your auto-text when a call is missed. Business hours and escalation rules are saved to your business profile for reference.
@@ -344,7 +349,7 @@ function ReceptionistPage() {
             {configMsg && <div style={{ fontSize: 12, color: configSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{configMsg}</div>}
           </div>
 
-          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Environment variables needed</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14 }}>Add these to Vercel → Environment Variables</div>
             {["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"].map(v => (
@@ -373,27 +378,27 @@ function ReceptionistPage() {
               { label: "Auto-texted", value: stats.texted, Icon: MessageSquare },
               { label: "Conversations handled", value: stats.replied, Icon: Reply },
               { label: "Appointments booked", value: stats.booked, Icon: CheckCircle2 },
-            ].map(s => (
-              <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+            ].map((s, i) => (
+              <GlowPanel key={s.label} reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(i + 1) }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                   <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
-              </div>
+              </GlowPanel>
             ))}
           </div>
 
           {/* Loading state */}
           {loading && (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+            <div className="glass-dark" style={{ borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
               Loading...
             </div>
           )}
 
           {/* Empty state */}
           {!loading && calls.length === 0 && (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
+            <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(5) }}>
               <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                 <PhoneOff size={26} color="var(--primary)" strokeWidth={1.75} />
               </div>
@@ -414,8 +419,9 @@ function ReceptionistPage() {
                 {calls.map(call => {
                   const s = STATUS_COLORS[call.status] || STATUS_COLORS.texted;
                   return (
-                    <div key={call.id} onClick={() => loadMessages(call.id)}
-                      style={{ background: "var(--card)", border: `1.5px solid ${selected === call.id ? "var(--primary)" : "var(--border)"}`, borderRadius: 14, padding: "14px 18px", cursor: "pointer" }}>
+                    <GlowPanel key={call.id} reducedMotion={reducedMotion} onClick={() => loadMessages(call.id)}
+                      className="glass-dark hover-lift-dark rounded-2xl"
+                      style={{ border: `1.5px solid ${selected === call.id ? "var(--primary)" : "var(--border)"}`, padding: "14px 18px", cursor: "pointer" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                         <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{call.caller_name || call.caller_phone}</span>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: s.bg, color: s.color }}>{s.label}</span>
@@ -425,7 +431,7 @@ function ReceptionistPage() {
                         {new Date(call.called_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </div>
                       {call.notes && <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 6 }}>{call.notes}</div>}
-                    </div>
+                    </GlowPanel>
                   );
                 })}
                 {hasMore && (
@@ -439,7 +445,7 @@ function ReceptionistPage() {
               </div>
 
               {selected && selectedCall && (
-                <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", height: "fit-content", maxHeight: 500 }}>
+                <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", height: "fit-content", maxHeight: 500 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{selectedCall.caller_name || selectedCall.caller_phone}</div>

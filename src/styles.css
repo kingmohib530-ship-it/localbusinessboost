@@ -280,6 +280,57 @@
   }
 }
 
+/*
+ * Authenticated dashboard: same dark/glass system as the homepage, but
+ * scoped so it drops onto the app shell without rewriting every page's
+ * inline styles. Every app.*.tsx page already reads --card/--foreground/
+ * --border/--muted-foreground/--accent/--primary/etc. directly via inline
+ * style={{...}} objects (the codebase's established dashboard pattern,
+ * distinct from the marketing site's Tailwind classes), so redefining those
+ * SAME token names here means every existing inline style automatically
+ * renders dark the moment the shell wraps in .app-dark, no per-page style
+ * object needs touching for color alone. The --hd-* aliases underneath let
+ * the glass-dark/hover-lift-dark/hd-blur-in/hd-mesh-blob utilities already
+ * built for the homepage work here unchanged too.
+ */
+.app-dark {
+  --background: #08090b;
+  --surface: #0d0f13;
+  --elevated: #12141a;
+  --card: rgba(255, 255, 255, 0.05);
+  --card-foreground: #f5f6f7;
+  --foreground: #f5f6f7;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #9096a3;
+  --accent: rgba(99, 102, 241, 0.14);
+  --accent-foreground: #f5f6f7;
+  --accent-2: #22d3ee;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #f5f6f7;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.05);
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --warning-foreground: #08090b;
+
+  --hd-bg: var(--background);
+  --hd-surface: var(--surface);
+  --hd-fg: var(--foreground);
+  --hd-muted: var(--muted-foreground);
+  --hd-border: var(--border);
+  --hd-glass: var(--card);
+  --hd-glass-strong: rgba(255, 255, 255, 0.08);
+  --hd-primary: var(--primary);
+  --hd-primary-2: var(--accent-2);
+
+  background: var(--background);
+  color: var(--foreground);
+}
+
 /* Shared focus ring for the dashboard's inline-style inputs (app.*.tsx),
    which set outline:none inline with nothing replacing it. An inline
    style always beats a stylesheet rule for the same property, so the

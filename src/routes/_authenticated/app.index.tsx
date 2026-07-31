@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { DollarSign, Calendar, Star, Target, TrendingUp, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: TodayDashboard,
@@ -185,6 +188,9 @@ function TodayDashboard() {
     setActivityLoadingMore(false);
   }
 
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
+
   const name = profile?.business_name || profile?.full_name || null;
   const isFree = !profile?.subscription_tier || profile?.subscription_tier === "starter";
 
@@ -253,7 +259,7 @@ function TodayDashboard() {
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter, -apple-system, sans-serif" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
+      <div className={step} style={{ marginBottom: 32, ...delay(0) }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>
           {loading ? "Loading..." : name ? `Welcome back, ${name}` : "Welcome to Lanavix"}
         </h1>
@@ -266,7 +272,7 @@ function TodayDashboard() {
 
       {/* Upgrade banner for free users */}
       {isFree && !loading && (
-        <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>You don't have an active plan yet</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to unlock the receptionist, review automation, and Local Lead Blast.</div>
@@ -279,7 +285,7 @@ function TodayDashboard() {
 
       {/* Verification banner */}
       {!loading && profile?.verification_status === "unverified" && (
-        <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Get verified</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Earn a trust badge and unlock the consumer marketplace — takes about 5 minutes.</div>
@@ -290,7 +296,7 @@ function TodayDashboard() {
         </div>
       )}
       {!loading && profile?.verification_status === "pending" && (
-        <div style={{ background: "var(--elevated)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Verification in review</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>We're reviewing your documents — usually within 1–2 business days.</div>
@@ -300,23 +306,33 @@ function TodayDashboard() {
 
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 32 }}>
-        {stats.map((s) => (
-          <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+        {stats.map((s, i) => (
+          <GlowPanel
+            key={s.label}
+            reducedMotion={reducedMotion}
+            className={`${step} glass-dark hover-lift-dark rounded-2xl`}
+            style={{ padding: "16px 18px", ...delay(i + 2) }}
+          >
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
               <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
             </div>
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{loading ? "—" : s.value}</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
             {s.note && <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 2 }}>{s.note}</div>}
-          </div>
+          </GlowPanel>
         ))}
       </div>
 
       {/* Quick wins */}
-      <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Quick wins — pick one to start</h2>
+      <h2 className={step} style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14, ...delay(8) }}>Quick wins — pick one to start</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
-        {QUICK_WINS.map((w) => (
-          <div key={w.title} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, display: "flex", flexDirection: "column", gap: 10 }}>
+        {QUICK_WINS.map((w, i) => (
+          <GlowPanel
+            key={w.title}
+            reducedMotion={reducedMotion}
+            className={`${step} glass-dark hover-lift-dark rounded-2xl`}
+            style={{ padding: 22, display: "flex", flexDirection: "column", gap: 10, ...delay(i + 9) }}
+          >
             <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <w.Icon size={18} color="var(--primary)" strokeWidth={1.75} />
             </div>
@@ -327,12 +343,12 @@ function TodayDashboard() {
             <Link to={w.href} style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)", textDecoration: "none", marginTop: "auto" }}>
               {w.action}
             </Link>
-          </div>
+          </GlowPanel>
         ))}
       </div>
 
       {/* Recent activity */}
-      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
+      <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, ...delay(12) }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Recent activity</h2>
         {loading && (
           <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Loading...</p>
