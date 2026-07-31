@@ -38,60 +38,58 @@
   --color-ink-foreground: var(--ink-foreground);
   --color-ink-muted: var(--ink-muted);
   --color-ink-border: var(--ink-border);
-  --font-display: 'Big Shoulders Display', system-ui, sans-serif;
-  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 /*
- * Lanavix — workwear/dispatch identity for a trades & contractor audience.
- * Paper-white job tickets, workwear navy, warm steel gray, one safety-vest
- * orange used sparingly and only where it's doing a job (focus rings,
- * the one accent underline, "look here" badges) — never as running text
- * color, since orange-on-paper doesn't hold enough contrast at small sizes.
+ * Lanavix — clean, confident product design (Apple/Linear/Stripe/Notion
+ * territory): a light neutral ground, pure-white cards, one electric-blue
+ * accent doing all the "look here" work. No gradients, no glassmorphism —
+ * simplicity is the point, not a placeholder for more decoration later.
  */
 :root {
-  --radius: 0.25rem;
-  /* job-ticket paper */
-  --background: #F7F5F0;
-  /* ink */
-  --foreground: #1A1A1A;
-  --surface: #EFEBE2;
-  /* cards sit on a slightly lifted paper tone, not stark white */
-  --card: #FCFAF6;
-  --card-foreground: #1A1A1A;
+  --radius: 1rem; /* 16px base -> rounded-lg is 16px, rounded-xl is 20px: the card corner range this system asks for */
+  --background: #FAFAFA;
+  --foreground: #111111;
+  --surface: #F3F4F6;
+  --card: #FFFFFF;
+  --card-foreground: #111111;
   --elevated: #FFFFFF;
   --popover: #FFFFFF;
-  --popover-foreground: #1A1A1A;
-  /* workwear navy */
-  --primary: #1B2A41;
-  --primary-foreground: #F7F5F0;
-  /* safety-vest orange — the one accent, used sparingly and never as small text */
-  --accent-2: #D9670B;
-  --secondary: #ECE8DF;
-  --secondary-foreground: #1A1A1A;
-  --muted: #ECE8DF;
-  /* warm steel gray */
-  --muted-foreground: #5C6570;
-  /* neutral hover/highlight background — not the brand accent */
-  --accent: #ECE8DF;
-  --accent-foreground: #1A1A1A;
-  /* warm brick red, kept distinct from the orange so the two don't compete */
-  --destructive: #A63232;
+  --popover-foreground: #111111;
+  /* electric blue — the one accent, used for actions and focus, not decoration */
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  /* kept as an alias of the one accent so dashboard status colors and
+     untouched pages (not part of this pass) still resolve to something
+     real instead of breaking */
+  --accent-2: #2563EB;
+  --secondary: #F3F4F6;
+  --secondary-foreground: #111111;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  /* faint blue-tinted hover background, not the brand accent itself */
+  --accent: #EFF6FF;
+  --accent-foreground: #111111;
+  --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #DEDAD0;
-  --input: #DEDAD0;
-  --ring: #D9670B;
-  /* muted workwear green, used only for booked/confirmed status — quieter than the orange on purpose */
-  --success: #3F7A4C;
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #2563EB;
+  --success: #059669;
+  --warning: #D97706;
+  --warning-foreground: #FFFFFF;
 
-  /* Dark "ink" sections (hero / final CTA) are the same navy as --primary,
-     not a separate near-black, so the one dark band in the app doubles as
-     the brand color instead of a generic dark-mode slab. */
-  --ink: #1B2A41;
-  --ink-foreground: #F7F5F0;
-  --ink-muted: #A8B0BC;
-  --ink-border: rgba(247, 245, 240, 0.14);
+  /* Kept only for pages this pass doesn't touch (auth/chat logo tiles,
+     dashboard inline styles reading var(--ink)-family tokens directly) */
+  --ink: #111111;
+  --ink-foreground: #FAFAFA;
+  --ink-muted: #9CA3AF;
+  --ink-border: rgba(255, 255, 255, 0.12);
 }
 
 @layer base {
@@ -115,9 +113,9 @@
 
 @utility text-balance { text-wrap: balance; }
 
-/* Solid ink-navy mark, no rainbow gradient */
+/* Solid brand-blue mark, no rainbow gradient */
 @utility gradient-primary {
-  background-color: var(--ink);
+  background-color: var(--primary);
 }
 @utility gradient-text {
   color: var(--color-primary);
@@ -129,8 +127,8 @@
   border: 1px solid var(--color-border);
 }
 @utility glow-primary {
-  box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 8%, transparent),
-              0 8px 24px -12px color-mix(in oklab, var(--ink) 25%, transparent);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--primary) 8%, transparent),
+              0 8px 24px -12px color-mix(in oklab, var(--primary) 25%, transparent);
 }
 @utility hairline { border: 1px solid var(--border); }
 @utility section-ink {
@@ -162,70 +160,24 @@
   .animate-fade-up { animation: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }
 
-/*
- * Signature "job ticket" shape — see TicketCard.tsx. One corner clipped at
- * an angle for asymmetry, a perforated tear-line near the top like a slip
- * torn off a dispatch pad. Deliberately used in a handful of places, never
- * as the default card shape.
- *
- * The clip-path is what makes the tear-line's punch-holes work for free:
- * the parent's clip region ends exactly at the card's own edge (x = 0 /
- * x = 100%), so a circle centered ON that edge gets sliced clean in half
- * by the clip-path with no extra math — that's the notch. No border on
- * this shape on purpose: a clip-path doesn't bend a CSS border around the
- * angled corner, and real torn paper doesn't have a printed border either.
- *
- * --ticket-punch-bg must match whatever sits *behind* this card in a given
- * spot (a section background, not always the page background), or the
- * punched holes won't blend in — set it per instance.
- */
-.ticket-card {
-  --ticket-punch-bg: var(--background);
-  position: relative;
-  clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%, 0 28px);
-}
-.ticket-card::before,
-.ticket-card::after {
-  content: "";
-  position: absolute;
-  top: 24px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--ticket-punch-bg);
-}
-.ticket-card::before { left: -8px; }
-.ticket-card::after { right: -8px; }
-
-.ticket-tear-line {
-  position: absolute;
-  top: 24px;
-  left: 10px;
-  right: 10px;
-  border-top: 2px dashed color-mix(in oklab, currentColor 30%, transparent);
-  pointer-events: none;
-}
-
-.ticket-stub {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  transform: rotate(-3deg);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  color: var(--accent-2);
-  background: color-mix(in oklab, var(--accent-2) 14%, transparent);
-  border: 1px solid color-mix(in oklab, var(--accent-2) 45%, transparent);
-  padding: 2px 8px;
-  border-radius: 2px;
-  pointer-events: none;
+/* Card hover lift — the one micro-interaction cards get: a small rise and
+   a softer, larger shadow. Skipped entirely under reduced motion via the
+   transition-duration override above, so it becomes a plain instant
+   shadow swap instead of a moving card for anyone who's asked for that. */
+@utility hover-lift {
+  transition: transform 0.2s cubic-bezier(.2,.7,.2,1), box-shadow 0.2s cubic-bezier(.2,.7,.2,1), border-color 0.2s ease;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px -16px rgba(17, 17, 17, 0.16);
+  }
 }
 
 /* Shared focus ring for the dashboard's inline-style inputs (app.*.tsx),

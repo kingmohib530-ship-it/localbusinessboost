@@ -47,8 +47,8 @@ export function SiteFooter() {
               <span className="font-display font-bold tracking-tight">Lanavix</span>
             </div>
             <p className="text-sm text-muted-foreground mt-4 max-w-xs">
-              Missed-call text-back, review requests, and local lead-finding — built for contractors,
-              running in the background of your day.
+              Missed-call text-back, review requests, and local lead-finding, built for contractors
+              and running quietly in the background of your day.
             </p>
             <a href="tel:+15719215254" className="block text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors">
               +1 (571) 921-5254
