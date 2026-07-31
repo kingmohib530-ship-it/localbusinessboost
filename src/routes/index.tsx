@@ -26,6 +26,7 @@ import {
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/SiteFooter'
 import { Button } from '@/components/ui/button'
+import { TicketCard } from '@/components/TicketCard'
 import { pageMeta } from '@/lib/seo'
 import { PRICING_PLANS, PAID_PLAN_IDS } from '@/lib/pricingPlans'
 
@@ -156,7 +157,7 @@ function HomePage() {
       <div className="bg-ink text-ink-foreground text-center text-xs sm:text-sm py-2.5 px-4">
         <span className="text-ink-muted">Now in early access —</span>{' '}
         <span className="font-medium">founding member pricing locked in for life.</span>{' '}
-        <Link to="/audit" className="underline decoration-ink-muted underline-offset-4 hover:text-ink-foreground/80">
+        <Link to="/audit" className="text-accent-2 underline decoration-accent-2/50 underline-offset-4 hover:decoration-accent-2">
           Claim your spot
         </Link>
       </div>
@@ -200,7 +201,7 @@ function HomePage() {
               { val: '30-day', label: 'Money-back guarantee' },
             ].map((s) => (
               <div key={s.val}>
-                <div className="text-xl sm:text-2xl font-semibold tracking-tight">{s.val}</div>
+                <div className="text-xl sm:text-2xl font-mono font-semibold tracking-tight">{s.val}</div>
                 <div className="text-xs text-ink-muted mt-1 leading-snug">{s.label}</div>
               </div>
             ))}
@@ -269,35 +270,39 @@ function HomePage() {
                 <span className="block mt-1.5 text-xs text-muted-foreground/60">Sources: 411 Locals; ServiceTitan analysis of 50,000+ contractor phone lines</span>
               </div>
             </div>
-            <div className="rounded-2xl bg-ink text-ink-foreground p-6">
+            <TicketCard
+              ticketNumber="JT-4471"
+              punchBackground="color-mix(in oklab, var(--secondary) 50%, var(--background))"
+              className="bg-ink text-ink-foreground p-6 pt-9"
+            >
               <p className="text-ink-muted text-[11px] font-semibold uppercase tracking-widest mb-4">Example</p>
-              <div className="rounded-lg bg-destructive/15 border border-destructive/30 px-3 py-2.5 text-sm text-red-200 mb-2">
+              <div className="rounded-sm bg-destructive/15 border border-destructive/30 px-3 py-2.5 text-sm text-[#F0BEB4] mb-2">
                 Missed call from (571) 555-0182
               </div>
-              <p className="text-ink-muted text-xs text-center my-2">Lanavix responds in 47 seconds</p>
-              <div className="rounded-lg bg-white/10 px-3 py-2.5 text-sm mb-2">
+              <p className="text-ink-muted text-xs text-center my-2 font-mono">Lanavix responds in 00:47</p>
+              <div className="rounded-sm bg-white/10 px-3 py-2.5 text-sm mb-2">
                 "Hi! This is Peak HVAC. Sorry we missed you — we're on a call right now. What do you need help with? Reply and we'll get you booked today!"
               </div>
-              <div className="rounded-lg bg-primary/15 border border-primary/30 px-3 py-2.5 text-sm text-emerald-200 mb-3">
+              <div className="rounded-sm bg-white/10 px-3 py-2.5 text-sm mb-3">
                 Reply: "AC unit not cooling. Can come tomorrow?"
               </div>
-              <p className="text-emerald-300 text-sm font-semibold text-center">Job booked. $380 revenue saved.</p>
-            </div>
+              <p className="text-accent-2 text-sm font-semibold text-center">Job booked. $380 revenue saved.</p>
+            </TicketCard>
           </div>
 
           {/* Feature 2 */}
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center mb-24">
-            <div className="rounded-2xl bg-ink text-ink-foreground p-6 md:order-1 order-2">
+            <div className="rounded-sm bg-ink text-ink-foreground p-6 md:order-1 order-2">
               <p className="text-ink-muted text-[11px] font-semibold uppercase tracking-widest mb-4">Example</p>
-              <div className="rounded-lg bg-white/10 px-3 py-2.5 text-sm mb-2">Job completed for Sarah M.</div>
-              <p className="text-ink-muted text-xs text-center my-2">Lanavix sends review request 2 hours later</p>
-              <div className="rounded-lg bg-white/10 px-3 py-2.5 text-sm mb-2">
+              <div className="rounded-sm bg-white/10 px-3 py-2.5 text-sm mb-2">Job completed for Sarah M.</div>
+              <p className="text-ink-muted text-xs text-center my-2 font-mono">2h later</p>
+              <div className="rounded-sm bg-white/10 px-3 py-2.5 text-sm mb-2">
                 "Hi Sarah! Thanks for choosing us for your AC tune-up. If we did a great job, a quick Google review means the world: [link]"
               </div>
-              <div className="rounded-lg bg-primary/15 border border-primary/30 px-3 py-2.5 text-sm text-emerald-200 mb-3">
+              <div className="rounded-sm bg-white/10 px-3 py-2.5 text-sm mb-3">
                 ★★★★★ New 5-star review received
               </div>
-              <p className="text-emerald-300 text-sm font-semibold text-center">Review #89. Google ranking improved.</p>
+              <p className="text-accent-2 text-sm font-semibold text-center">Review #89. Google ranking improved.</p>
             </div>
             <div className="md:order-2 order-1">
               <Star className="h-7 w-7 text-primary mb-5" />
@@ -325,7 +330,7 @@ function HomePage() {
                 Every lead comes from a real Google Places search in your trade and city — never invented, never recycled from someone else's list.
               </div>
             </div>
-            <div className="rounded-2xl bg-ink text-ink-foreground p-6">
+            <div className="rounded-sm bg-ink text-ink-foreground p-6">
               <p className="text-ink-muted text-[11px] font-semibold uppercase tracking-widest mb-1">Illustrative example — not real businesses</p>
               <p className="text-ink-muted text-xs mb-4">What a Lead Blast looks like — Roofing · Atlanta GA</p>
               {[
@@ -333,12 +338,12 @@ function HomePage() {
                 { name: 'Sample: local gym', phone: '404-555-0234', opening: "Hey, gyms with flat roofs need resealing every few years — especially with all the rooftop equipment. We're local and could take a look for free." },
                 { name: 'Sample: local medical office', phone: '404-555-0891', opening: "Hi, medical offices can't afford a leak during business hours. We specialize in commercial roofing in Buckhead and offer same-week inspections." },
               ].map((lead) => (
-                <div key={lead.name} className="rounded-lg bg-white/10 px-3 py-2.5 mb-2">
-                  <p className="font-medium text-sm mb-1">{lead.name} · {lead.phone}</p>
+                <div key={lead.name} className="rounded-sm bg-white/10 px-3 py-2.5 mb-2">
+                  <p className="font-medium text-sm mb-1">{lead.name} · <span className="font-mono">{lead.phone}</span></p>
                   <p className="text-ink-muted text-xs">"{lead.opening}"</p>
                 </div>
               ))}
-              <p className="text-emerald-300 text-sm font-semibold text-center mt-3">+27 more leads in a real run. Generated in 34 seconds.</p>
+              <p className="text-accent-2 text-sm font-semibold text-center mt-3">+27 more leads in a real run. Generated in 34 seconds.</p>
             </div>
           </div>
         </Reveal>
@@ -354,7 +359,7 @@ function HomePage() {
             {steps.map((step, i) => (
               <div key={step.num} className={`flex-1 p-7 transition-colors hover:bg-accent/30 ${i > 0 ? 'sm:border-l border-border' : ''}`}>
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">{step.num}</span>
+                  <span className="h-7 w-7 rounded-sm bg-primary text-primary-foreground text-xs font-mono font-bold flex items-center justify-center">{step.num}</span>
                   <step.icon className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="font-semibold text-base mb-2">{step.title}</h3>
@@ -387,7 +392,7 @@ function HomePage() {
             {beforeAfter.map((row) => (
               <div key={row.before} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40">
                 <span className="text-sm text-muted-foreground line-through decoration-destructive/40 flex-1">{row.before}</span>
-                <ArrowRight className="h-4 w-4 text-primary shrink-0 hidden sm:block" />
+                <ArrowRight className="h-4 w-4 text-accent-2 shrink-0 hidden sm:block" />
                 <span className="text-sm text-foreground font-medium flex-1">{row.after}</span>
               </div>
             ))}
@@ -449,7 +454,7 @@ function HomePage() {
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${billingPeriod === 'annual' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Annual
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${billingPeriod === 'annual' ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>Save 20%</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${billingPeriod === 'annual' ? 'bg-accent-2 text-foreground' : 'bg-accent-2/15 text-accent-2'}`}>Save 20%</span>
             </button>
           </div>
 
@@ -457,7 +462,7 @@ function HomePage() {
             {pricing[billingPeriod].map((plan) => (
               <div key={plan.name} className={`relative rounded-2xl p-8 flex flex-col bg-card border transition-colors ${plan.highlight ? 'border-primary ring-1 ring-primary/20' : 'border-border hover:border-primary/40'}`}>
                 {plan.highlight && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-accent-2 text-foreground text-xs font-bold px-4 py-1 rounded-full">
                     Most popular
                   </div>
                 )}

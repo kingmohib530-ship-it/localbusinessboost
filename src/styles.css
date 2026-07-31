@@ -38,48 +38,60 @@
   --color-ink-foreground: var(--ink-foreground);
   --color-ink-muted: var(--ink-muted);
   --color-ink-border: var(--ink-border);
-  --font-display: 'Inter', system-ui, sans-serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Big Shoulders Display', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
-/* Lanavix — premium, restrained light theme for a trades/contractor audience. */
+/*
+ * Lanavix — workwear/dispatch identity for a trades & contractor audience.
+ * Paper-white job tickets, workwear navy, warm steel gray, one safety-vest
+ * orange used sparingly and only where it's doing a job (focus rings,
+ * the one accent underline, "look here" badges) — never as running text
+ * color, since orange-on-paper doesn't hold enough contrast at small sizes.
+ */
 :root {
-  --radius: 0.625rem;
-  /* warm paper white */
-  --background: #FBFAF8;
-  /* near-black ink */
-  --foreground: #14171C;
-  --surface: #F4F3EF;
-  /* cards sit on white */
-  --card: #FFFFFF;
-  --card-foreground: #14171C;
+  --radius: 0.25rem;
+  /* job-ticket paper */
+  --background: #F7F5F0;
+  /* ink */
+  --foreground: #1A1A1A;
+  --surface: #EFEBE2;
+  /* cards sit on a slightly lifted paper tone, not stark white */
+  --card: #FCFAF6;
+  --card-foreground: #1A1A1A;
   --elevated: #FFFFFF;
   --popover: #FFFFFF;
-  --popover-foreground: #14171C;
-  /* deep forest green */
-  --primary: #1F6F54;
-  --primary-foreground: #FFFFFF;
-  /* muted secondary green, used sparingly */
-  --accent-2: #2F8A6A;
-  --secondary: #F1F0EC;
-  --secondary-foreground: #14171C;
-  --muted: #F1F0EC;
-  --muted-foreground: #62666D;
-  /* soft green tint for hover/highlight backgrounds */
-  --accent: #E8F2EC;
-  --accent-foreground: #14171C;
-  --destructive: #C4362A;
+  --popover-foreground: #1A1A1A;
+  /* workwear navy */
+  --primary: #1B2A41;
+  --primary-foreground: #F7F5F0;
+  /* safety-vest orange — the one accent, used sparingly and never as small text */
+  --accent-2: #D9670B;
+  --secondary: #ECE8DF;
+  --secondary-foreground: #1A1A1A;
+  --muted: #ECE8DF;
+  /* warm steel gray */
+  --muted-foreground: #5C6570;
+  /* neutral hover/highlight background — not the brand accent */
+  --accent: #ECE8DF;
+  --accent-foreground: #1A1A1A;
+  /* warm brick red, kept distinct from the orange so the two don't compete */
+  --destructive: #A63232;
   --destructive-foreground: #FFFFFF;
-  --border: #E4E2DC;
-  --input: #E4E2DC;
-  --ring: #1F6F54;
-  --success: #1F6F54;
+  --border: #DEDAD0;
+  --input: #DEDAD0;
+  --ring: #D9670B;
+  /* muted workwear green, used only for booked/confirmed status — quieter than the orange on purpose */
+  --success: #3F7A4C;
 
-  /* Dark "ink" sections used for hero / high-contrast bands only */
-  --ink: #0E1116;
-  --ink-foreground: #F6F5F1;
-  --ink-muted: #9BA1A9;
-  --ink-border: rgba(255,255,255,0.12);
+  /* Dark "ink" sections (hero / final CTA) are the same navy as --primary,
+     not a separate near-black, so the one dark band in the app doubles as
+     the brand color instead of a generic dark-mode slab. */
+  --ink: #1B2A41;
+  --ink-foreground: #F7F5F0;
+  --ink-muted: #A8B0BC;
+  --ink-border: rgba(247, 245, 240, 0.14);
 }
 
 @layer base {
@@ -91,6 +103,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  /* Plain links (nav, footer, in-page anchors) have no focus style of
+     their own, so without this they'd fall back to each browser's own
+     default outline instead of the accent ring the rest of the app uses. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }
 
@@ -138,6 +157,76 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-up { animation: zy-fade-up .6s cubic-bezier(.2,.7,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Signature "job ticket" shape — see TicketCard.tsx. One corner clipped at
+ * an angle for asymmetry, a perforated tear-line near the top like a slip
+ * torn off a dispatch pad. Deliberately used in a handful of places, never
+ * as the default card shape.
+ *
+ * The clip-path is what makes the tear-line's punch-holes work for free:
+ * the parent's clip region ends exactly at the card's own edge (x = 0 /
+ * x = 100%), so a circle centered ON that edge gets sliced clean in half
+ * by the clip-path with no extra math — that's the notch. No border on
+ * this shape on purpose: a clip-path doesn't bend a CSS border around the
+ * angled corner, and real torn paper doesn't have a printed border either.
+ *
+ * --ticket-punch-bg must match whatever sits *behind* this card in a given
+ * spot (a section background, not always the page background), or the
+ * punched holes won't blend in — set it per instance.
+ */
+.ticket-card {
+  --ticket-punch-bg: var(--background);
+  position: relative;
+  clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%, 0 28px);
+}
+.ticket-card::before,
+.ticket-card::after {
+  content: "";
+  position: absolute;
+  top: 24px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ticket-punch-bg);
+}
+.ticket-card::before { left: -8px; }
+.ticket-card::after { right: -8px; }
+
+.ticket-tear-line {
+  position: absolute;
+  top: 24px;
+  left: 10px;
+  right: 10px;
+  border-top: 2px dashed color-mix(in oklab, currentColor 30%, transparent);
+  pointer-events: none;
+}
+
+.ticket-stub {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  transform: rotate(-3deg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--accent-2);
+  background: color-mix(in oklab, var(--accent-2) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent-2) 45%, transparent);
+  padding: 2px 8px;
+  border-radius: 2px;
+  pointer-events: none;
+}
 
 /* Shared focus ring for the dashboard's inline-style inputs (app.*.tsx),
    which set outline:none inline with nothing replacing it. An inline
