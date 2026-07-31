@@ -180,12 +180,15 @@
 /*
  * Hero v2 exploration — dark, glassy, Linear/Raycast/Framer-territory.
  * Scoped to its own class rather than :root: the rest of the homepage is
- * still the light system from the previous pass, so this stays local
- * until the hero itself is approved and the dark system rolls out
- * everywhere. Not reused anywhere else yet.
+ * now approved and rolled out to the whole homepage — .page-dark sits on
+ * the page's outer wrapper so every section, the nav, and the cookie
+ * banner (when rendered on this route) can read the same tokens. Other
+ * routes (pricing, about, the dashboard) don't wrap themselves in this
+ * class, so they're untouched and keep the light system.
  */
-.hero-dark {
+.page-dark {
   --hd-bg: #08090b;
+  --hd-surface: #0d0f13;
   --hd-fg: #f5f6f7;
   --hd-muted: #9096a3;
   --hd-border: rgba(255, 255, 255, 0.09);
@@ -195,6 +198,16 @@
   --hd-primary-2: #22d3ee;
   background: var(--hd-bg);
   color: var(--hd-fg);
+}
+
+/* Shorthand for the glass-panel look used across every card on the dark
+   homepage, so we're not repeating the same three arbitrary-value
+   classes on every card in index.tsx. */
+@utility glass-dark {
+  background: var(--hd-glass);
+  border: 1px solid var(--hd-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* A spring/overshoot curve for entrances — a flat ease-out settles, this
@@ -252,6 +265,18 @@
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 32px -16px rgba(17, 17, 17, 0.16);
+  }
+}
+
+/* Same lift, but a plain dark drop-shadow would be invisible against the
+   dark homepage's own background, so this one lifts into a soft violet
+   glow instead and brightens the glass border to match. */
+@utility hover-lift-dark {
+  transition: transform 0.2s cubic-bezier(.2,.7,.2,1), box-shadow 0.2s cubic-bezier(.2,.7,.2,1), border-color 0.2s ease;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px -12px rgba(99, 102, 241, 0.28), 0 4px 18px -6px rgba(0, 0, 0, 0.45);
+    border-color: rgba(99, 102, 241, 0.35);
   }
 }
 
