@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type CSSProperties, type MouseEvent } from 'react'
 import {
   ArrowRight,
   Phone,
@@ -166,6 +166,147 @@ function StaggerItem({ visible, index, className = '', style, children }: { visi
   )
 }
 
+/** Tracks the user's OS-level motion preference at runtime, not just via
+ * CSS. Needed because the parallax/tilt/magnetic effects below move
+ * elements by writing inline transform styles directly from JS on every
+ * scroll or pointer event; the CSS reduced-motion overrides in styles.css
+ * only catch actual CSS transitions/animations, they can't stop a script
+ * from setting style.transform each frame. So every effect that does that
+ * checks this flag itself before touching anything. */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReduced(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return reduced
+}
+
+/** Drives the hero mockup panel's three pointer/scroll-linked effects at
+ * once, since they all end up writing the same element's transform: a
+ * scroll-linked parallax drift, a cursor-follow 3D tilt, and the CSS
+ * variables a radial-gradient spotlight reads to follow the cursor.
+ * Reports a fixed neutral state and skips both listeners entirely under
+ * reduced motion, rather than just toning the movement down. */
+function useHeroMockup(reducedMotion: boolean) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0, mx: 50, my: 50 })
+  const [parallax, setParallax] = useState(0)
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setParallax(0)
+      return
+    }
+    let raf = 0
+    function onScroll() {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const el = ref.current
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        const centerOffset = rect.top + rect.height / 2 - window.innerHeight / 2
+        setParallax(centerOffset * -0.06)
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(raf)
+    }
+  }, [reducedMotion])
+
+  function onMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (reducedMotion) return
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width
+    const py = (e.clientY - rect.top) / rect.height
+    setTilt({ rx: (0.5 - py) * 8, ry: (px - 0.5) * 8, mx: px * 100, my: py * 100 })
+  }
+  function onMouseLeave() {
+    if (reducedMotion) return
+    setTilt({ rx: 0, ry: 0, mx: 50, my: 50 })
+  }
+
+  const style: CSSProperties & Record<string, string> = {
+    transform: `translateY(${parallax}px) perspective(1200px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
+    transition: 'transform 0.15s ease-out',
+    '--mx': `${tilt.mx}%`,
+    '--my': `${tilt.my}%`,
+  }
+
+  return { ref, style, onMouseMove, onMouseLeave }
+}
+
+/** A button that pulls slightly toward the cursor within its own bounds
+ * on hover. Inert under reduced motion: no listener runs at all, so a
+ * motion-sensitive visitor never gets pointer-tracked movement regardless
+ * of how subtle it is. */
+/** A lighter-weight parallax for small decorative elements floating near
+ * the hero mockup: each one takes its own speed, so they drift at
+ * different rates from both the mockup and each other, real layered
+ * depth rather than one element moving on its own. */
+function useSimpleParallax(speed: number, reducedMotion: boolean) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [offset, setOffset] = useState(0)
+  useEffect(() => {
+    if (reducedMotion) {
+      setOffset(0)
+      return
+    }
+    let raf = 0
+    function onScroll() {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const el = ref.current
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        const centerOffset = rect.top + rect.height / 2 - window.innerHeight / 2
+        setOffset(centerOffset * speed)
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(raf)
+    }
+  }, [speed, reducedMotion])
+  return { ref, offset }
+}
+
+function useMagnetic(reducedMotion: boolean, strength = 0.3) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+
+  function onMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (reducedMotion) return
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const relX = e.clientX - (rect.left + rect.width / 2)
+    const relY = e.clientY - (rect.top + rect.height / 2)
+    setOffset({ x: relX * strength, y: relY * strength })
+  }
+  function onMouseLeave() {
+    if (reducedMotion) return
+    setOffset({ x: 0, y: 0 })
+  }
+
+  const style: CSSProperties = {
+    transform: `translate(${offset.x}px, ${offset.y}px)`,
+    transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+  }
+
+  return { ref, style, onMouseMove, onMouseLeave }
+}
+
 function HomePage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -183,10 +324,20 @@ function HomePage() {
   const earlyAccessReveal = useReveal()
   const pricingReveal = useReveal()
 
-  // Staggered opacity/translate steps for the hero's own page-load sequence,
-  // applied in order as each element mounts in.
-  const heroStep = `transition-all duration-700 ease-out ${heroLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`
-  const heroDelay = (i: number) => (heroLoaded ? { transitionDelay: `${i * 90}ms` } : undefined)
+  const reducedMotion = usePrefersReducedMotion()
+  const mockup = useHeroMockup(reducedMotion)
+  const chipFar = useSimpleParallax(0.1, reducedMotion)
+  const chipNear = useSimpleParallax(-0.05, reducedMotion)
+  const magneticPrimary = useMagnetic(reducedMotion, 0.25)
+  const magneticSecondary = useMagnetic(reducedMotion, 0.2)
+
+  // Blur-to-focus stagger for the hero's own page-load sequence: each
+  // element goes from blurred/faded/offset to sharp on its own animation
+  // delay, using the spring/overshoot easing baked into hd-blur-in. Stays
+  // at opacity-0 (no animation) until mount so a visitor without JS still
+  // sees everything immediately once hydration would normally kick in.
+  const heroStep = heroLoaded ? 'hd-blur-in' : 'opacity-0'
+  const heroDelay = (i: number) => (heroLoaded ? { animationDelay: `${i * 100}ms` } : undefined)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -201,47 +352,155 @@ function HomePage() {
 
       <SiteNav />
 
-      {/* HERO */}
-      <section className="bg-radial-glow border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-24 sm:py-32 text-center">
-          <div className={`inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 mb-8 ${heroStep}`} style={heroDelay(0)}>
-            <span className="text-xs font-medium tracking-wide text-muted-foreground">
-              Built for HVAC, plumbing, roofing &amp; the trades
-            </span>
-          </div>
-          <h1 className={`font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] text-balance ${heroStep}`} style={heroDelay(1)}>
-            Small service businesses lose <span className="text-primary underline decoration-primary/30 decoration-4 underline-offset-8">$126,000 a year</span> to missed calls
-          </h1>
-          <p className={`mt-3 text-xs text-muted-foreground/70 ${heroStep}`} style={heroDelay(2)}>Source: ServiceTitan analysis of 50,000+ contractor phone lines</p>
-          <p className={`mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed ${heroStep}`} style={heroDelay(3)}>
-            Lanavix texts back every missed call in <span className="text-foreground font-medium">60 seconds</span>, gets you 5-star reviews after every job, and finds new leads in your area. All running in the background while you're on the job.
-          </p>
-          <div className={`mt-9 flex flex-wrap items-center justify-center gap-3 ${heroStep}`} style={heroDelay(4)}>
-            <Link to="/audit">
-              <Button size="lg" className="h-12 px-7 text-[15px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20">
-                Get my free business audit <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <a href="#how-it-works">
-              <Button size="lg" variant="outline" className="h-12 px-7 text-[15px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                See how it works
-              </Button>
-            </a>
-          </div>
-          <p className={`mt-4 text-xs text-muted-foreground ${heroStep}`} style={heroDelay(5)}>Free audit &middot; No credit card &middot; Takes 60 seconds</p>
+      {/* HERO — dark/glass exploration. Scoped to .hero-dark; the rest of
+          the page below is still the light system until this is approved. */}
+      <section className="hero-dark relative overflow-hidden">
+        {/* Animated gradient mesh: three independently-drifting blurred
+            blobs. Frozen entirely under reduced motion (see styles.css). */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="hd-mesh-blob hd-mesh-blob-a" style={{ top: '-10%', left: '-5%', width: 560, height: 560, background: 'var(--hd-primary)', opacity: 0.35 }} />
+          <div className="hd-mesh-blob hd-mesh-blob-b" style={{ top: '10%', right: '-10%', width: 480, height: 480, background: 'var(--hd-primary-2)', opacity: 0.28 }} />
+          <div className="hd-mesh-blob hd-mesh-blob-c" style={{ bottom: '-15%', left: '30%', width: 520, height: 520, background: '#a855f7', opacity: 0.2 }} />
+        </div>
 
-          <div className={`mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-10 max-w-2xl mx-auto border-t border-border pt-10 ${heroStep}`} style={heroDelay(6)}>
-            {[
-              { val: '<60s', label: 'To text back missed calls' },
-              { val: '3 tools', label: 'That pay for themselves fast' },
-              { val: '$0', label: 'Setup fee, ever' },
-              { val: '30-day', label: 'Money-back guarantee' },
-            ].map((s) => (
-              <div key={s.val}>
-                <div className="text-xl sm:text-2xl font-semibold tracking-tight">{s.val}</div>
-                <div className="text-xs text-muted-foreground mt-1 leading-snug">{s.label}</div>
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-24 sm:py-28 lg:py-32 grid lg:grid-cols-2 gap-16 items-center">
+          {/* Text column */}
+          <div className="text-center lg:text-left">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-md px-4 py-1.5 mb-8 ${heroStep}`}
+              style={heroDelay(0)}
+            >
+              <span className="text-xs font-medium tracking-wide text-[var(--hd-muted)]">
+                Built for HVAC, plumbing, roofing &amp; the trades
+              </span>
+            </div>
+            <h1
+              className={`font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08] text-balance text-[var(--hd-fg)] ${heroStep}`}
+              style={heroDelay(1)}
+            >
+              Small service businesses lose{' '}
+              <span className="bg-gradient-to-r from-[var(--hd-primary)] to-[var(--hd-primary-2)] bg-clip-text text-transparent">
+                $126,000 a year
+              </span>{' '}
+              to missed calls
+            </h1>
+            <p className={`mt-3 text-xs text-[var(--hd-muted)]/70 ${heroStep}`} style={heroDelay(2)}>
+              Source: ServiceTitan analysis of 50,000+ contractor phone lines
+            </p>
+            <p className={`mt-6 text-lg text-[var(--hd-muted)] max-w-xl mx-auto lg:mx-0 leading-relaxed ${heroStep}`} style={heroDelay(3)}>
+              Lanavix texts back every missed call in <span className="text-[var(--hd-fg)] font-medium">60 seconds</span>, gets you 5-star reviews after every job, and finds new leads in your area. All running in the background while you're on the job.
+            </p>
+            <div className={`mt-9 flex flex-wrap items-center justify-center lg:justify-start gap-3 ${heroStep}`} style={heroDelay(4)}>
+              <div ref={magneticPrimary.ref} style={magneticPrimary.style} onMouseMove={magneticPrimary.onMouseMove} onMouseLeave={magneticPrimary.onMouseLeave}>
+                <Link to="/audit">
+                  <Button size="lg" className="h-12 px-7 text-[15px] font-semibold bg-[var(--hd-primary)] hover:bg-[var(--hd-primary)]/90 text-white shadow-lg shadow-[var(--hd-primary)]/25">
+                    Get my free business audit <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
-            ))}
+              <div ref={magneticSecondary.ref} style={magneticSecondary.style} onMouseMove={magneticSecondary.onMouseMove} onMouseLeave={magneticSecondary.onMouseLeave}>
+                <a href="#how-it-works">
+                  <Button size="lg" variant="outline" className="h-12 px-7 text-[15px] font-semibold bg-[var(--hd-glass)] backdrop-blur-md border-[var(--hd-border)] text-[var(--hd-fg)] hover:bg-[var(--hd-glass-strong)]">
+                    See how it works
+                  </Button>
+                </a>
+              </div>
+            </div>
+            <p className={`mt-4 text-xs text-[var(--hd-muted)] ${heroStep}`} style={heroDelay(5)}>Free audit &middot; No credit card &middot; Takes 60 seconds</p>
+
+            <div className={`mt-14 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto lg:mx-0 ${heroStep}`} style={heroDelay(6)}>
+              {[
+                { val: '<60s', label: 'To text back missed calls' },
+                { val: '3 tools', label: 'That pay for themselves fast' },
+                { val: '$0', label: 'Setup fee, ever' },
+                { val: '30-day', label: 'Money-back guarantee' },
+              ].map((s) => (
+                <div key={s.val} className="rounded-lg border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-md px-3 py-2.5">
+                  <div className="text-lg font-semibold tracking-tight text-[var(--hd-fg)]">{s.val}</div>
+                  <div className="text-[11px] text-[var(--hd-muted)] mt-0.5 leading-snug">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mockup column — dense product screenshot, cursor tilt + glow,
+              scroll parallax at a different rate than the text column. */}
+          <div className={`relative ${heroStep}`} style={heroDelay(2)}>
+            <div
+              ref={chipFar.ref}
+              className="hidden sm:flex absolute -top-6 -left-6 z-20 items-center gap-2 rounded-full border border-[var(--hd-border)] bg-[var(--hd-glass-strong)] backdrop-blur-md px-3.5 py-2 shadow-lg shadow-black/20"
+              style={{ transform: `translateY(${chipFar.offset}px)` }}
+            >
+              <Star className="h-3.5 w-3.5 text-amber-300 fill-amber-300" />
+              <span className="text-xs font-medium text-[var(--hd-fg)]">4.9 from 200+ jobs</span>
+            </div>
+            <div
+              ref={chipNear.ref}
+              className="hidden sm:flex absolute -bottom-5 -right-4 z-20 items-center gap-2 rounded-full border border-[var(--hd-border)] bg-[var(--hd-glass-strong)] backdrop-blur-md px-3.5 py-2 shadow-lg shadow-black/20"
+              style={{ transform: `translateY(${chipNear.offset}px)` }}
+            >
+              <Clock className="h-3.5 w-3.5 text-[var(--hd-primary-2)]" />
+              <span className="text-xs font-medium text-[var(--hd-fg)]">47s avg response</span>
+            </div>
+
+            <div
+              ref={mockup.ref}
+              onMouseMove={mockup.onMouseMove}
+              onMouseLeave={mockup.onMouseLeave}
+              style={mockup.style}
+              className="relative rounded-2xl border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-2xl shadow-2xl shadow-black/40 p-5 overflow-hidden"
+            >
+              <div
+                className="pointer-events-none absolute inset-0 opacity-70"
+                style={{ background: 'radial-gradient(400px circle at var(--mx) var(--my), rgba(99,102,241,0.18), transparent 70%)' }}
+              />
+              <div className="relative">
+                <div className="flex items-center gap-1.5 mb-4">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+                  <span className="ml-3 text-[11px] text-[var(--hd-muted)] font-medium">Missed Call Text-Back</span>
+                  <span className="ml-auto flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Live
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {[
+                    { label: 'Response time', val: '47s' },
+                    { label: 'Booked today', val: '6' },
+                    { label: 'Recovered', val: '$2,340' },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded-lg border border-[var(--hd-border)] bg-white/[0.03] px-3 py-2.5">
+                      <div className="text-sm font-bold text-[var(--hd-fg)]">{s.val}</div>
+                      <div className="text-[10px] text-[var(--hd-muted)] mt-0.5">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-300 mb-2 flex items-center justify-between">
+                  <span>Missed call &middot; (571) 555-0182</span>
+                  <span className="text-[10px] text-red-300/70">0:00</span>
+                </div>
+                <div className="flex gap-2 mb-2">
+                  <div className="h-6 w-6 rounded-full bg-[var(--hd-primary)]/20 flex items-center justify-center text-[10px] font-bold text-[var(--hd-primary-2)] shrink-0">AI</div>
+                  <div className="rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-[var(--hd-fg)]/90 flex-1">
+                    "Hi! This is Peak HVAC, sorry we missed you. What do you need help with?"
+                  </div>
+                </div>
+                <div className="flex gap-2 mb-3 justify-end">
+                  <div className="rounded-lg bg-[var(--hd-primary)]/15 border border-[var(--hd-primary)]/25 px-3 py-2 text-xs text-[var(--hd-fg)]/90 max-w-[85%]">
+                    "AC not cooling, can you come tomorrow?"
+                  </div>
+                  <div className="h-6 w-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-[var(--hd-muted)] shrink-0">S</div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+                  <span className="text-xs font-semibold text-emerald-400">Job booked</span>
+                  <span className="text-xs font-bold text-emerald-400">$380</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -166,6 +166,81 @@
     transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
+  /* The browser's View Transitions API (wired up via the router's
+     defaultViewTransition option) runs its own animation timeline outside
+     the transition/animation properties above, so it needs its own
+     explicit opt-out here or route changes would still cross-fade. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/*
+ * Hero v2 exploration — dark, glassy, Linear/Raycast/Framer-territory.
+ * Scoped to its own class rather than :root: the rest of the homepage is
+ * still the light system from the previous pass, so this stays local
+ * until the hero itself is approved and the dark system rolls out
+ * everywhere. Not reused anywhere else yet.
+ */
+.hero-dark {
+  --hd-bg: #08090b;
+  --hd-fg: #f5f6f7;
+  --hd-muted: #9096a3;
+  --hd-border: rgba(255, 255, 255, 0.09);
+  --hd-glass: rgba(255, 255, 255, 0.05);
+  --hd-glass-strong: rgba(255, 255, 255, 0.08);
+  --hd-primary: #6366f1;
+  --hd-primary-2: #22d3ee;
+  background: var(--hd-bg);
+  color: var(--hd-fg);
+}
+
+/* A spring/overshoot curve for entrances — a flat ease-out settles, this
+   one settles past the target and eases back, reading as physical rather
+   than animated. */
+@utility ease-spring {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes hd-blur-in {
+  from { opacity: 0; filter: blur(10px); transform: translateY(14px); }
+  to { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+.hd-blur-in {
+  animation: hd-blur-in 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes hd-mesh-a {
+  0%, 100% { transform: translate(-8%, -6%) scale(1); }
+  50% { transform: translate(10%, 8%) scale(1.2); }
+}
+@keyframes hd-mesh-b {
+  0%, 100% { transform: translate(6%, 10%) scale(1.05); }
+  50% { transform: translate(-10%, -4%) scale(0.9); }
+}
+@keyframes hd-mesh-c {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  50% { transform: translate(-6%, 12%) scale(1.15); }
+}
+.hd-mesh-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  will-change: transform;
+}
+.hd-mesh-blob-a { animation: hd-mesh-a 22s ease-in-out infinite; }
+.hd-mesh-blob-b { animation: hd-mesh-b 26s ease-in-out infinite; }
+.hd-mesh-blob-c { animation: hd-mesh-c 30s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hd-mesh-blob-a, .hd-mesh-blob-b, .hd-mesh-blob-c { animation: none !important; }
+  .hd-blur-in { animation: hd-blur-in-reduced 0.01ms both; }
+}
+@keyframes hd-blur-in-reduced {
+  from { opacity: 1; filter: blur(0); transform: none; }
+  to { opacity: 1; filter: blur(0); transform: none; }
 }
 
 /* Card hover lift — the one micro-interaction cards get: a small rise and

@@ -73,6 +73,11 @@ export const getRouter = () => {
     // Let TanStack Query own freshness instead of router's preload cache.
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultErrorComponent,
+    // Smooth cross-fade between routes via the browser View Transitions API.
+    // No-ops in browsers that don't support it. The reduced-motion collapse
+    // for this lives in styles.css (::view-transition-* rules), since this
+    // option only turns the feature on, it doesn't control its motion.
+    defaultViewTransition: true,
   });
 
   return router;
