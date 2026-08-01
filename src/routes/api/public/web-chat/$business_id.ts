@@ -21,6 +21,32 @@ const CORS = {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Whatever actually went wrong server-side (a bad embed snippet, a lapsed
+// subscription, a database hiccup), the anonymous visitor on the other end
+// gets the same generic line - they have no use for "Invalid business_id"
+// or a plan-upgrade message meant for the contractor. Real detail still
+// goes to console.error for us, and to the business's own activity feed
+// when we know which business it is.
+const WIDGET_GENERIC_ERROR = "Sorry, something went wrong. Please try again in a moment.";
+
+/**
+ * Best-effort note in the business's own activity feed so a lapsed plan or
+ * broken embed doesn't fail silently from their side - they'd otherwise
+ * have no way to know their website's chat widget stopped responding.
+ * Never lets a failure here affect the reply already sent to the visitor.
+ */
+async function notifyBusinessWidgetIssue(businessId: string, reason: string) {
+  try {
+    await supabaseAdmin.from("activity_log").insert({
+      user_id: businessId,
+      type: "web_chat_widget_issue",
+      summary: `Your website chat widget couldn't reply to a visitor: ${reason}`,
+    });
+  } catch (err) {
+    console.error("[web-chat] failed to log widget issue", err);
+  }
+}
+
 // A real browser loading the widget script on the contractor's own site
 // always sends Origin on this cross-origin POST. A non-browser client
 // hitting the endpoint directly (curl, a scraper, another business's
@@ -65,7 +91,8 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
         try {
           const businessId = params.business_id;
           if (!businessId || !UUID_RE.test(businessId)) {
-            return Response.json({ error: "Invalid business_id" }, { status: 400, headers: CORS });
+            console.error("[web-chat GET] invalid business_id in embed", businessId);
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 400, headers: CORS });
           }
 
           const { data: profile } = await supabaseAdmin
@@ -75,7 +102,8 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
             .maybeSingle();
 
           if (!profile) {
-            return Response.json({ error: "Business not found" }, { status: 404, headers: CORS });
+            console.error("[web-chat GET] no business found for id", businessId);
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 404, headers: CORS });
           }
 
           const businessName = profile.business_name || "our business";
@@ -88,27 +116,28 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
           );
         } catch (err) {
           console.error("[web-chat GET]", err);
-          return Response.json({ error: "Internal server error" }, { status: 500, headers: CORS });
+          return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 500, headers: CORS });
         }
       },
       POST: async ({ request, params }) => {
         try {
           const businessId = params.business_id;
           if (!businessId || !UUID_RE.test(businessId)) {
-            return Response.json({ error: "Invalid business_id" }, { status: 400, headers: CORS });
+            console.error("[web-chat POST] invalid business_id in embed", businessId);
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 400, headers: CORS });
           }
 
           let body: { sessionId?: unknown; message?: unknown };
           try {
             body = await request.json();
           } catch {
-            return Response.json({ error: "Invalid request body" }, { status: 400, headers: CORS });
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 400, headers: CORS });
           }
 
           const sessionId = typeof body.sessionId === "string" ? body.sessionId.trim() : "";
           const messageBody = typeof body.message === "string" ? body.message.trim() : "";
           if (!sessionId || sessionId.length > MAX_SESSION_ID_LENGTH) {
-            return Response.json({ error: "Invalid session" }, { status: 400, headers: CORS });
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 400, headers: CORS });
           }
           if (!messageBody || messageBody.length > MAX_MESSAGE_LENGTH) {
             return Response.json(
@@ -151,19 +180,24 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
             .maybeSingle();
 
           if (!profile) {
-            return Response.json({ error: "Business not found" }, { status: 404, headers: CORS });
+            console.error("[web-chat POST] no business found for id", businessId);
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 404, headers: CORS });
           }
 
           // Layer 5: soft Origin check against the business's confirmed website.
           if (originMismatchesConfirmedWebsite(request, profile.website)) {
-            return Response.json({ error: "Forbidden" }, { status: 403, headers: CORS });
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 403, headers: CORS });
           }
 
           // Layer 4: plan gating - same feature bucket as SMS Missed-Call
-          // Text-Back, same requirement (an active paid plan).
+          // Text-Back, same requirement (an active paid plan). quota.reason
+          // is written for the contractor ("Subscribe to..."), never for
+          // the anonymous visitor on their website - it goes to the
+          // business's own activity feed instead.
           const quota = await checkWebChatQuota(businessId);
           if (!quota.allowed) {
-            return Response.json({ error: quota.reason }, { status: 403, headers: CORS });
+            await notifyBusinessWidgetIssue(businessId, quota.reason || "plan not active");
+            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 403, headers: CORS });
           }
 
           // Layer 2: per-business hourly cap, independent of the per-IP one
@@ -199,7 +233,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
             if (createErr || !created) {
               console.error("[web-chat] failed to create conversation", createErr);
               return Response.json(
-                { error: "Internal server error" },
+                { error: WIDGET_GENERIC_ERROR },
                 { status: 500, headers: CORS },
               );
             }
@@ -323,7 +357,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
           return Response.json({ reply: aiReply }, { headers: CORS });
         } catch (err) {
           console.error("[web-chat]", err);
-          return Response.json({ error: "Internal server error" }, { status: 500, headers: CORS });
+          return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 500, headers: CORS });
         }
       },
     },
