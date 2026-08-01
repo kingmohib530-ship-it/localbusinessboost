@@ -17,6 +17,31 @@ const PIPELINE_COLUMNS: { status: string; label: string }[] = [
 
 const STATUS_OPTIONS = ["new", "contacted", "responded", "qualified", "scheduled", "nurture", "dead"];
 
+const STATUS_LABELS: Record<string, string> = {
+  new: "New",
+  contacted: "Contacted",
+  responded: "Responded",
+  qualified: "Qualified",
+  scheduled: "Scheduled",
+  nurture: "Nurture",
+  dead: "Dead",
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+  sms: "Text",
+  email: "Email",
+  voicemail_drop: "Voicemail drop",
+  linkedin: "LinkedIn",
+};
+
+const SEQUENCE_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  sending: "Sending",
+  sent: "Sent",
+  responded: "Responded",
+  failed: "Failed",
+};
+
 interface LeadProfile {
   id: string;
   business_name: string;
@@ -348,7 +373,7 @@ export default function LeadGenerator() {
 
                       <select value={lead.status} onChange={(e) => updateStatus(lead.id, e.target.value)}
                         style={{ width: "100%", padding: "6px 8px", fontSize: 12, border: "1.5px solid var(--border)", borderRadius: 8, background: "var(--input)", color: "var(--foreground)", marginBottom: 8, fontFamily: "inherit" }}>
-                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
                       </select>
 
                       <div style={{ display: "flex", gap: 6 }}>
@@ -395,7 +420,7 @@ export default function LeadGenerator() {
               <div key={lead.id} onClick={() => setDetailLead(lead)}
                 style={{ ...cardStyle, padding: "8px 12px", cursor: "pointer", opacity: 0.7 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)" }}>{lead.business_name}</span>
-                <span style={{ fontSize: 11, color: "var(--muted-foreground)", marginLeft: 8 }}>{lead.status}</span>
+                <span style={{ fontSize: 11, color: "var(--muted-foreground)", marginLeft: 8 }}>{STATUS_LABELS[lead.status] || lead.status}</span>
               </div>
             ))}
           </div>
@@ -460,7 +485,7 @@ export default function LeadGenerator() {
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>Sequence</div>
               {(sequences[detailLead.id] || []).map((s) => (
                 <div key={s.id} style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 6, padding: "8px 10px", background: "var(--elevated)", borderRadius: 8 }}>
-                  <div style={{ fontWeight: 700, color: "var(--foreground)" }}>Step {s.step_number} · {s.channel} · {s.status}</div>
+                  <div style={{ fontWeight: 700, color: "var(--foreground)" }}>Step {s.step_number} · {CHANNEL_LABELS[s.channel] || s.channel} · {SEQUENCE_STATUS_LABELS[s.status] || s.status}</div>
                   <div>{s.message_template}</div>
                 </div>
               ))}

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, FileText, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/lib/admin";
+import { DOCUMENT_TYPE_LABELS } from "@/lib/verificationDocumentTypes";
 import { GlowPanel } from "@/components/GlowPanel";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
@@ -272,7 +273,7 @@ function VerificationReviewPage() {
               <div key={doc.id} className="glass-dark" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 10, marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
                   <FileText size={14} color="var(--primary)" />
-                  <span style={{ color: "var(--foreground)", fontWeight: 600 }}>{doc.document_type.replace(/_/g, " ")}</span>
+                  <span style={{ color: "var(--foreground)", fontWeight: 600 }}>{DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type.replace(/_/g, " ")}</span>
                   <button onClick={() => viewDocument(doc)} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>
                     <ExternalLink size={12} /> View
                   </button>

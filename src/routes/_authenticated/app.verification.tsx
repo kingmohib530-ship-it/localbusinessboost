@@ -4,6 +4,7 @@ import { BadgeCheck, Upload, Trash2, CheckCircle2, Clock, ShieldCheck } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { DOCUMENT_TYPES } from "@/lib/verificationDocumentTypes";
 
 export const Route = createFileRoute("/_authenticated/app/verification")({
   component: VerificationPage,
@@ -14,16 +15,6 @@ const PRICE_UNITS: { value: string; label: string }[] = [
   { value: "per_job", label: "Per job" },
   { value: "per_hour", label: "Per hour" },
   { value: "per_sqft", label: "Per sq ft" },
-];
-
-const DOCUMENT_TYPES: { value: string; label: string; required: boolean }[] = [
-  { value: "business_license", label: "Business license", required: true },
-  { value: "insurance_certificate", label: "Certificate of insurance", required: true },
-  { value: "photo_id", label: "Photo ID", required: true },
-  { value: "business_card", label: "Business card", required: false },
-  { value: "website_screenshot", label: "Website screenshot", required: false },
-  { value: "utility_bill", label: "Utility bill (proof of address)", required: false },
-  { value: "other", label: "Other supporting document", required: false },
 ];
 
 interface VerificationDocRow {

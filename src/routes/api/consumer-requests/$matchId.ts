@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendExternalEmail } from "@/lib/email.server";
+import { SERVICE_TYPE_LABELS, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -163,7 +164,7 @@ export const Route = createFileRoute("/api/consumer-requests/$matchId")({
               await sendExternalEmail(
                 consumerContact.email,
                 `${businessProfile?.business_name || "A business"} accepted your request`,
-                `Good news - ${businessProfile?.business_name || "a business"} on Lanavix Network accepted your ${fullRequest.service_type} request and will be in touch.${contactLine}`,
+                `Good news - ${businessProfile?.business_name || "a business"} on Lanavix Network accepted your ${SERVICE_TYPE_LABELS[fullRequest.service_type as ServiceTypeKey] || "service"} request and will be in touch.${contactLine}`,
               );
             }
           }
