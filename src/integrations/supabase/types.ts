@@ -702,7 +702,10 @@ export type Database = {
           subscription_status: string | null
           subscription_tier: string | null
           team_size: string | null
+          twilio_account_sid: string | null
+          twilio_auth_token_secret_id: string | null
           twilio_phone_number: string | null
+          twilio_verified_at: string | null
           updated_at: string | null
           verification_notes: string | null
           verification_reviewed_at: string | null
@@ -747,7 +750,10 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           team_size?: string | null
+          twilio_account_sid?: string | null
+          twilio_auth_token_secret_id?: string | null
           twilio_phone_number?: string | null
+          twilio_verified_at?: string | null
           updated_at?: string | null
           verification_notes?: string | null
           verification_reviewed_at?: string | null
@@ -792,7 +798,10 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           team_size?: string | null
+          twilio_account_sid?: string | null
+          twilio_auth_token_secret_id?: string | null
           twilio_phone_number?: string | null
+          twilio_verified_at?: string | null
           updated_at?: string | null
           verification_notes?: string | null
           verification_reviewed_at?: string | null
@@ -887,6 +896,30 @@ export type Database = {
         }
         Relationships: []
       }
+      unmatched_twilio_webhooks: {
+        Row: {
+          from_number: string
+          id: string
+          received_at: string
+          route: string
+          to_number: string
+        }
+        Insert: {
+          from_number: string
+          id?: string
+          received_at?: string
+          route: string
+          to_number: string
+        }
+        Update: {
+          from_number?: string
+          id?: string
+          received_at?: string
+          route?: string
+          to_number?: string
+        }
+        Relationships: []
+      }
       verification_documents: {
         Row: {
           admin_notes: string | null
@@ -948,6 +981,31 @@ export type Database = {
           p_window_seconds: number
         }
         Returns: boolean
+      }
+      get_business_twilio_by_number: {
+        Args: { p_phone_number: string }
+        Returns: {
+          account_sid: string
+          auth_token: string
+          user_id: string
+        }[]
+      }
+      get_business_twilio_credentials: {
+        Args: { p_user_id: string }
+        Returns: {
+          account_sid: string
+          auth_token: string
+          phone_number: string
+        }[]
+      }
+      set_business_twilio_credentials: {
+        Args: {
+          p_account_sid: string
+          p_auth_token: string
+          p_phone_number: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
