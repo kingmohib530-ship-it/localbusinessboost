@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { verifyTwilioRequest } from "@/lib/twilio.server";
+import { verifyPlatformTwilioRequest } from "@/lib/twilio.server";
 import {
   ESTIMATED_VALUE_MAP,
   SERVICE_TYPE_TO_INDUSTRY,
@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
         try {
           const rawBody = await request.text();
 
-          const isValid = await verifyTwilioRequest(request, rawBody);
+          const isValid = await verifyPlatformTwilioRequest(request, rawBody);
           if (!isValid) {
             console.warn("[consumer-inbound] invalid Twilio signature");
             return new Response("Forbidden", { status: 403 });

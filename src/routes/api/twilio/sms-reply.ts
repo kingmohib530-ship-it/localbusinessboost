@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { verifyTwilioRequest } from "@/lib/twilio.server";
+import { verifyTwilioRequestWithToken } from "@/lib/twilio.server";
+import { findBusinessByTwilioNumber } from "@/lib/twilioCredentials.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 import { loadBusinessContext, buildReceptionistSystemPrompt, generateReceptionistReply, detectBooking, deriveUrgency } from "@/lib/aiReceptionist.server";
@@ -26,19 +27,15 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
       POST: async ({ request }) => {
         try {
           const rawBody = await request.text();
-
-          const isValid = await verifyTwilioRequest(request, rawBody);
-          if (!isValid) {
-            console.warn("[sms-reply] invalid Twilio signature");
-            return new Response("Forbidden", { status: 403 });
-          }
-
           const params = new URLSearchParams(rawBody);
           const from = params.get("From") || "";
+          const to = params.get("To") || "";
           const messageBody = params.get("Body") || "";
 
-          // Cap by caller phone — each inbound message triggers a billed
-          // Anthropic call, so this is the cost-abuse backstop.
+          // Cap by caller phone before any lookup or write, since each
+          // inbound message triggers a billed Anthropic call (the
+          // cost-abuse backstop), and this also bounds the business lookup
+          // below regardless of whether "To" matches a real business.
           const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
             "check_anon_rate_limit",
             {
@@ -56,11 +53,36 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.");
           }
 
-          // Find the most recent sms-channel conversation with this number
+          // Which business owns the number this reply landed on. This also
+          // gives us that business's own Auth Token to verify the
+          // signature with, since each business now brings their own
+          // Twilio account rather than sharing one platform-wide number.
+          const business = await findBusinessByTwilioNumber(to);
+          if (!business) {
+            await supabaseAdmin.from("unmatched_twilio_webhooks").insert({
+              route: "sms-reply",
+              to_number: to,
+              from_number: from,
+            });
+            return FALLBACK_TWIML("Thanks! We'll be in touch shortly.");
+          }
+
+          const isValid = await verifyTwilioRequestWithToken(request, rawBody, business.authToken);
+          if (!isValid) {
+            console.warn("[sms-reply] invalid Twilio signature");
+            return new Response("Forbidden", { status: 403 });
+          }
+
+          // Find the most recent sms-channel conversation with this
+          // customer, scoped to the business that owns the number the
+          // reply landed on (not just by customer phone number alone),
+          // since the same customer could have texted a different
+          // Lanavix business at some point.
           const { data: conversation } = await supabaseAdmin
             .from("conversations")
             .select("*, profiles(business_name, industry, business_hours, escalation_rules)")
             .eq("channel", "sms")
+            .eq("user_id", business.userId)
             .eq("customer_identifier", from)
             .order("started_at", { ascending: false })
             .limit(1)

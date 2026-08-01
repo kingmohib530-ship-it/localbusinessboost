@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { loadBusinessTwilioCredentials } from "@/lib/twilioCredentials.server";
 import type { Json } from "@/integrations/supabase/types";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -91,23 +92,24 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
             if (!lead.phone) {
               return Response.json({ error: "This lead has no phone number on file" }, { status: 400 });
             }
-            const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-            const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-            const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-            if (!twilioSid || !twilioToken || !twilioFrom) {
-              return Response.json({ error: "Twilio is not configured" }, { status: 500 });
+            const credentials = await loadBusinessTwilioCredentials(user.id);
+            if (!credentials) {
+              return Response.json(
+                { error: "Connect your Twilio account in Receptionist Setup before sending outreach." },
+                { status: 400 },
+              );
             }
 
             const twilioRes = await fetch(
-              `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
+              `https://api.twilio.com/2010-04-01/Accounts/${credentials.accountSid}/Messages.json`,
               {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/x-www-form-urlencoded",
-                  Authorization: `Basic ${btoa(`${twilioSid}:${twilioToken}`)}`,
+                  Authorization: `Basic ${btoa(`${credentials.accountSid}:${credentials.authToken}`)}`,
                 },
                 body: new URLSearchParams({
-                  From: twilioFrom,
+                  From: credentials.phoneNumber,
                   To: lead.phone,
                   Body: step.message_template,
                 }).toString(),

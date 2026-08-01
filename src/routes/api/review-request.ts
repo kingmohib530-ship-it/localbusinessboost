@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { loadBusinessTwilioCredentials } from "@/lib/twilioCredentials.server";
 import { checkReviewRequestQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -81,36 +82,33 @@ export const Route = createFileRoute("/api/review-request")({
           const jobStr = jobDescription ? ` on the ${jobDescription}` : "";
           const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏${businessFooter()}`;
 
-          // Send via Twilio if configured
-          const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-          const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-          const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-
-          if (twilioSid && twilioToken && twilioFrom) {
-            const twilioRes = await fetch(
-              `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                  Authorization: `Basic ${btoa(`${twilioSid}:${twilioToken}`)}`,
-                },
-                body: new URLSearchParams({
-                  From: twilioFrom,
-                  To: customerPhone,
-                  Body: message,
-                }).toString(),
-              },
-            );
-
-            if (!twilioRes.ok) {
-              const err = await twilioRes.text();
-              return Response.json({ error: `Twilio error: ${err}` }, { status: 500 });
-            }
-          } else {
+          // Send via the business's own connected Twilio account
+          const credentials = await loadBusinessTwilioCredentials(user.id);
+          if (!credentials) {
             return Response.json({
-              error: "Twilio not connected. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to Vercel environment variables."
+              error: "Connect your Twilio account in Receptionist Setup before sending review requests."
             }, { status: 400 });
+          }
+
+          const twilioRes = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${credentials.accountSid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: `Basic ${btoa(`${credentials.accountSid}:${credentials.authToken}`)}`,
+              },
+              body: new URLSearchParams({
+                From: credentials.phoneNumber,
+                To: customerPhone,
+                Body: message,
+              }).toString(),
+            },
+          );
+
+          if (!twilioRes.ok) {
+            const err = await twilioRes.text();
+            return Response.json({ error: `Twilio error: ${err}` }, { status: 500 });
           }
 
           // Save to database, attributed to the actual authenticated caller

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { verifyTwilioRequest } from "@/lib/twilio.server";
+import { verifyTwilioRequestWithToken } from "@/lib/twilio.server";
+import { findBusinessByTwilioNumber } from "@/lib/twilioCredentials.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 const EMPTY_TWIML = new Response(
@@ -14,13 +15,6 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
       POST: async ({ request }) => {
         try {
           const rawBody = await request.text();
-
-          const isValid = await verifyTwilioRequest(request, rawBody);
-          if (!isValid) {
-            console.warn("[missed-call] invalid Twilio signature");
-            return new Response("Forbidden", { status: 403 });
-          }
-
           const params = new URLSearchParams(rawBody);
           const callerPhone = params.get("From") || "";
           const calledNumber = params.get("To") || "";
@@ -31,8 +25,9 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
             return EMPTY_TWIML;
           }
 
-          // Cap by caller phone number so one forged/looping caller can't
-          // trigger unlimited outbound SMS + AI spend.
+          // Cap by caller phone number before doing any lookup or write -
+          // this bounds abuse from a forged/looping caller regardless of
+          // whether their "To" number matches a real business.
           const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
             "check_anon_rate_limit",
             {
@@ -50,12 +45,31 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
             return EMPTY_TWIML;
           }
 
-          // Match the business that actually owns the called number —
-          // not just whichever profile happens to be first in the table.
+          // Which business owns the number this call landed on. Each
+          // business now brings their own Twilio account, so this also
+          // gives us the specific Auth Token needed to verify the
+          // signature below - Twilio signs with the Auth Token of
+          // whichever Twilio account owns the called number.
+          const business = await findBusinessByTwilioNumber(calledNumber);
+          if (!business) {
+            await supabaseAdmin.from("unmatched_twilio_webhooks").insert({
+              route: "missed-call",
+              to_number: calledNumber,
+              from_number: callerPhone,
+            });
+            return EMPTY_TWIML;
+          }
+
+          const isValid = await verifyTwilioRequestWithToken(request, rawBody, business.authToken);
+          if (!isValid) {
+            console.warn("[missed-call] invalid Twilio signature");
+            return new Response("Forbidden", { status: 403 });
+          }
+
           const { data: profile } = await supabaseAdmin
             .from("profiles")
             .select("id, business_name, industry, greeting_message")
-            .eq("twilio_phone_number", calledNumber)
+            .eq("id", business.userId)
             .maybeSingle();
 
           if (!profile) {
@@ -76,16 +90,11 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
             .select()
             .single();
 
-          // Send auto-text via Twilio
-          const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-          const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-          const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-
           const [quota, hourlyOk] = conversation
             ? await Promise.all([checkSmsQuota(profile.id), checkSmsHourlyRateLimit(profile.id)])
             : [{ allowed: false }, { allowed: false }];
 
-          if (twilioSid && twilioToken && twilioFrom && conversation && quota.allowed && hourlyOk.allowed) {
+          if (conversation && quota.allowed && hourlyOk.allowed) {
             const businessName = profile.business_name || "the team";
             const service = profile.industry || "our services";
 
@@ -94,15 +103,15 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
               `Hi! This is ${businessName}. Sorry we missed your call — we're on a job right now. We'd love to help you with ${service}. What do you need? Reply here and we'll get back to you ASAP.`;
 
             const twilioRes = await fetch(
-              `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
+              `https://api.twilio.com/2010-04-01/Accounts/${business.accountSid}/Messages.json`,
               {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/x-www-form-urlencoded",
-                  Authorization: `Basic ${btoa(`${twilioSid}:${twilioToken}`)}`,
+                  Authorization: `Basic ${btoa(`${business.accountSid}:${business.authToken}`)}`,
                 },
                 body: new URLSearchParams({
-                  From: twilioFrom,
+                  From: calledNumber,
                   To: callerPhone,
                   Body: autoMessage,
                 }).toString(),

@@ -41,15 +41,23 @@ async function computeTwilioSignature(
 }
 
 /**
- * Verifies a Twilio webhook request. `rawBody` must be the exact
- * `application/x-www-form-urlencoded` body Twilio sent (parsed once,
- * passed in here to avoid re-reading the request stream).
+ * Verifies a Twilio webhook request against a specific Auth Token.
+ * `rawBody` must be the exact `application/x-www-form-urlencoded` body
+ * Twilio sent (parsed once, passed in here to avoid re-reading the request
+ * stream).
+ *
+ * Every business-owned webhook (missed calls, SMS replies, lead-generator
+ * replies) must look up which business owns the "To" number first and pass
+ * in THAT business's own Auth Token - Twilio signs each request with the
+ * Auth Token of whichever Twilio account owns the number the webhook is
+ * configured on, and each business now brings their own Twilio account
+ * rather than sharing one platform-wide number.
  */
-export async function verifyTwilioRequest(
+export async function verifyTwilioRequestWithToken(
   request: Request,
   rawBody: string,
+  authToken: string,
 ): Promise<boolean> {
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
   const signature = request.headers.get("x-twilio-signature");
   if (!authToken || !signature) return false;
 
@@ -60,4 +68,18 @@ export async function verifyTwilioRequest(
 
   const expected = await computeTwilioSignature(authToken, request.url, params);
   return timingSafeEqualStr(expected, signature);
+}
+
+/**
+ * Verifies a webhook against Lanavix's own platform Twilio account. Only
+ * for the consumer marketplace inbound number (consumer-inbound.ts) -
+ * that number belongs to Lanavix itself, not to any individual business.
+ */
+export async function verifyPlatformTwilioRequest(
+  request: Request,
+  rawBody: string,
+): Promise<boolean> {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) return false;
+  return verifyTwilioRequestWithToken(request, rawBody, authToken);
 }
