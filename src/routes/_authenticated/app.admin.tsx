@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { Lock, Users, Target, Star, DollarSign, Database, Rocket, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/lib/admin";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   component: AdminDashboard,
@@ -39,6 +42,8 @@ function AdminDashboard() {
   const [totalAudits, setTotalAudits] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     if (!allowed) return;
@@ -94,7 +99,7 @@ function AdminDashboard() {
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
+      <div className={step} style={{ marginBottom: 32, ...delay(0) }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--destructive)", background: "var(--accent)", padding: "4px 12px", borderRadius: 20, marginBottom: 12, border: "1px solid var(--border)" }}>
           <Lock size={12} strokeWidth={2} /> Admin only
         </div>
@@ -113,19 +118,19 @@ function AdminDashboard() {
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 32 }}>
-        {stats.map(s => (
-          <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+        {stats.map((s, i) => (
+          <GlowPanel key={s.label} reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(i + 1) }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
               <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
             </div>
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{loading ? "—" : s.value}</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
-          </div>
+          </GlowPanel>
         ))}
       </div>
 
       {/* Users table */}
-      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
+      <div className={`${step} glass-dark`} style={{ borderRadius: 16, overflow: "hidden", ...delay(5) }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>All users ({users.length})</h2>
         </div>
@@ -187,12 +192,14 @@ function AdminDashboard() {
           { label: "Supabase dashboard", url: "https://supabase.com/dashboard/project/fnmmojfvxbdupzigcnyw", Icon: Database },
           { label: "Vercel deployments", url: "https://vercel.com/dashboard", Icon: Rocket },
           { label: "Anthropic usage", url: "https://console.anthropic.com/settings/billing", Icon: Bot },
-        ].map(l => (
-          <a key={l.label} href={l.url} target="_blank" rel="noreferrer"
-            style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "14px 16px", textDecoration: "none", display: "flex", alignItems: "center", gap: 10, color: "var(--foreground)", fontSize: 14, fontWeight: 500 }}>
-            <l.Icon size={18} color="var(--primary)" strokeWidth={1.75} />
-            {l.label}
-          </a>
+        ].map((l, i) => (
+          <GlowPanel key={l.label} reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-xl`} style={{ padding: "14px 16px", ...delay(i + 6) }}>
+            <a href={l.url} target="_blank" rel="noreferrer"
+              style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, color: "var(--foreground)", fontSize: 14, fontWeight: 500 }}>
+              <l.Icon size={18} color="var(--primary)" strokeWidth={1.75} />
+              {l.label}
+            </a>
+          </GlowPanel>
         ))}
       </div>
     </div>

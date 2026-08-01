@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PRICING_PLANS, type PlanId, SOLO_REVIEW_REQUEST_MONTHLY_CAP, SOLO_LEAD_BLAST_MONTHLY_CAP } from "@/lib/pricingPlans";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   component: Settings,
@@ -54,6 +55,7 @@ function Settings() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -156,15 +158,15 @@ function Settings() {
 
   return (
     <div className="p-8 space-y-6 max-w-3xl">
-      <div>
+      <div className={step} style={delay(0)}>
         <h1 className="text-3xl font-display font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1">Your workspace and account.</p>
       </div>
       {loading ? (
-        <Card className="p-6 text-center text-sm text-muted-foreground">Loading...</Card>
+        <Card className="p-6 text-center text-sm text-muted-foreground backdrop-blur-xl">Loading...</Card>
       ) : (
         <>
-          <Card className="p-6 space-y-3">
+          <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(1)}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs text-muted-foreground">Account</div>
@@ -178,7 +180,7 @@ function Settings() {
               </Button>
             )}
           </Card>
-          <Card className="p-6 space-y-3">
+          <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(2)}>
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Plan</h2>
               <Badge>{PRICING_PLANS[planId].name}</Badge>
@@ -210,7 +212,7 @@ function Settings() {
               <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
             </Button>
           </Card>
-          <Card className="p-6 space-y-3">
+          <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(3)}>
             <h2 className="font-semibold">Business facts</h2>
             <p className="text-sm text-muted-foreground">
               See what Lanavix knows about your business, and add or correct facts your AI receptionist can use.
@@ -222,7 +224,7 @@ function Settings() {
         </>
       )}
 
-      <Card className="p-6 space-y-3">
+      <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(4)}>
         <h2 className="font-semibold">Your data</h2>
         <p className="text-sm text-muted-foreground">
           Download a copy of everything Lanavix has stored for your account —
@@ -236,7 +238,7 @@ function Settings() {
         )}
       </Card>
 
-      <Card className="p-6 space-y-3 border-destructive/30">
+      <Card className={`p-6 space-y-3 border-destructive/30 backdrop-blur-xl ${step}`} style={delay(5)}>
         <h2 className="font-semibold text-destructive">Danger zone</h2>
         <p className="text-sm text-muted-foreground">
           Permanently delete your account and all associated data. This cannot be undone.
