@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { SERVICE_TYPE_LABELS, type ServiceTypeKey } from "@/lib/serviceTypes";
 import { toast } from "sonner";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/network")({
   component: NetworkPage,
@@ -50,6 +53,8 @@ function NetworkPage() {
   const [incomingPageIndex, setIncomingPageIndex] = useState(0);
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [acceptedContacts, setAcceptedContacts] = useState<Record<string, AcceptedContact>>({});
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     loadData();
@@ -194,7 +199,7 @@ function NetworkPage() {
         fontFamily: "Inter,-apple-system,sans-serif",
       }}
     >
-      <div style={{ marginBottom: 28 }}>
+      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
         <h1
           style={{
             fontSize: 26,
@@ -223,14 +228,7 @@ function NetworkPage() {
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}
       >
-        <div
-          style={{
-            background: "var(--card)",
-            border: "1.5px solid var(--border)",
-            borderRadius: 14,
-            padding: "16px 18px",
-          }}
-        >
+        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(1) }}>
           <div
             style={{
               width: 32,
@@ -251,15 +249,8 @@ function NetworkPage() {
           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>
             Consumer leads this month
           </div>
-        </div>
-        <div
-          style={{
-            background: "var(--card)",
-            border: "1.5px solid var(--border)",
-            borderRadius: 14,
-            padding: "16px 18px",
-          }}
-        >
+        </GlowPanel>
+        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(2) }}>
           <div
             style={{
               width: 32,
@@ -280,16 +271,16 @@ function NetworkPage() {
           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>
             Kept (not cancelled / no-show)
           </div>
-        </div>
+        </GlowPanel>
       </div>
 
       <div
+        className={`${step} glass-dark`}
         style={{
-          background: "var(--card)",
-          border: "1.5px solid var(--border)",
           borderRadius: 16,
           padding: 24,
           marginBottom: 16,
+          ...delay(3),
         }}
       >
         <div
@@ -328,12 +319,12 @@ function NetworkPage() {
       </div>
 
       <div
+        className={`${step} glass-dark`}
         style={{
-          background: "var(--card)",
-          border: "1.5px solid var(--border)",
           borderRadius: 16,
           padding: 24,
           marginBottom: 16,
+          ...delay(4),
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
@@ -379,7 +370,8 @@ function NetworkPage() {
               return (
                 <div
                   key={row.id}
-                  style={{ padding: "12px 14px", background: "var(--muted)", borderRadius: 10 }}
+                  className="glass-dark"
+                  style={{ padding: "12px 14px", borderRadius: 10 }}
                 >
                   <div
                     style={{
@@ -488,11 +480,11 @@ function NetworkPage() {
       </div>
 
       <div
+        className={`${step} glass-dark`}
         style={{
-          background: "var(--card)",
-          border: "1.5px solid var(--border)",
           borderRadius: 16,
           padding: 24,
+          ...delay(5),
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>

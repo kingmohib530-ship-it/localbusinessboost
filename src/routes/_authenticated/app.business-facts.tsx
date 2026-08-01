@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Brain, Globe, MapPin, Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 
 export const Route = createFileRoute("/_authenticated/app/business-facts")({
   component: BusinessFactsPage,
@@ -102,6 +103,7 @@ function BusinessFactsPage() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     loadProfile();
@@ -360,7 +362,7 @@ function BusinessFactsPage() {
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 900, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div style={{ marginBottom: 28 }}>
+      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>
           What Lanavix knows about your business
         </h1>
@@ -372,7 +374,7 @@ function BusinessFactsPage() {
       {profileError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{profileError}</p>}
 
       {/* Sources */}
-      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+      <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, marginBottom: 16, ...delay(1) }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Sources</div>
         <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 18, lineHeight: 1.5 }}>
           Sync now checks your website and Google listing on demand — this isn't live and automatic yet, so click Sync
@@ -446,7 +448,7 @@ function BusinessFactsPage() {
             {googleCandidates.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
                 {googleCandidates.map((c) => (
-                  <div key={c.placeId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "10px 12px", background: "var(--muted)", borderRadius: 10 }}>
+                  <div key={c.placeId} className="glass-dark" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "10px 12px", borderRadius: 10 }}>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{c.name}</div>
                       {c.address && <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{c.address}</div>}
@@ -465,7 +467,7 @@ function BusinessFactsPage() {
       </div>
 
       {/* Add a fact manually */}
-      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+      <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, marginBottom: 16, ...delay(2) }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 12 }}>Add a fact</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <select value={newFactType} onChange={(e) => setNewFactType(e.target.value as FactType)} className="lv-input" style={{ ...inputStyle, flex: "0 0 160px" }}>
@@ -489,7 +491,7 @@ function BusinessFactsPage() {
 
       {/* Pending review */}
       {(pendingLoading || pendingFacts.length > 0) && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, marginBottom: 16, ...delay(3) }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Needs your review</div>
           <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 14 }}>
             These came from a sync and conflict with something already on file — approve the correct one, reject the rest.
@@ -500,7 +502,7 @@ function BusinessFactsPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {pendingFacts.map((fact) => (
-                <div key={fact.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 14px", background: "var(--muted)", borderRadius: 10, flexWrap: "wrap" }}>
+                <div key={fact.id} className="glass-dark" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 14px", borderRadius: 10, flexWrap: "wrap" }}>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--primary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 }}>
                       {FACT_TYPE_LABELS[fact.fact_type]} · {SOURCE_LABELS[fact.source]}
@@ -533,7 +535,7 @@ function BusinessFactsPage() {
       )}
 
       {/* Active facts, grouped by source */}
-      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
+      <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, ...delay(4) }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Active facts</div>
         <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 14 }}>
           Everything here is live and available to Missed-Call Text-Back right now.
@@ -562,7 +564,7 @@ function BusinessFactsPage() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {groupedActive.get(source)!.map((fact) => (
-                    <div key={fact.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, flexWrap: "wrap" }}>
+                    <div key={fact.id} className="glass-dark" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 14px", borderRadius: 10, flexWrap: "wrap" }}>
                       {editingId === fact.id ? (
                         <>
                           <input
