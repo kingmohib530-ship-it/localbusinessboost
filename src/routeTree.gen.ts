@@ -32,6 +32,7 @@ import { Route as CheckoutStartRouteImport } from './routes/checkout.start'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
+import { Route as ApiTwilioSettingsRouteImport } from './routes/api/twilio-settings'
 import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
 import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
 import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
@@ -185,6 +186,11 @@ const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
 const ApiWorkflowRoute = ApiWorkflowRouteImport.update({
   id: '/api/workflow',
   path: '/api/workflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioSettingsRoute = ApiTwilioSettingsRouteImport.update({
+  id: '/api/twilio-settings',
+  path: '/api/twilio-settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSaveAutomationRoute = ApiSaveAutomationRouteImport.update({
@@ -433,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
+  '/api/twilio-settings': typeof ApiTwilioSettingsRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -495,6 +502,7 @@ export interface FileRoutesByTo {
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
+  '/api/twilio-settings': typeof ApiTwilioSettingsRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -561,6 +569,7 @@ export interface FileRoutesById {
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
+  '/api/twilio-settings': typeof ApiTwilioSettingsRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
+    | '/api/twilio-settings'
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
@@ -688,6 +698,7 @@ export interface FileRouteTypes {
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
+    | '/api/twilio-settings'
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
@@ -753,6 +764,7 @@ export interface FileRouteTypes {
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
+    | '/api/twilio-settings'
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
@@ -818,6 +830,7 @@ export interface RootRouteChildren {
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
+  ApiTwilioSettingsRoute: typeof ApiTwilioSettingsRoute
   ApiWorkflowRoute: typeof ApiWorkflowRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   CheckoutStartRoute: typeof CheckoutStartRoute
@@ -1001,6 +1014,13 @@ declare module '@tanstack/react-router' {
       path: '/api/workflow'
       fullPath: '/api/workflow'
       preLoaderRoute: typeof ApiWorkflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio-settings': {
+      id: '/api/twilio-settings'
+      path: '/api/twilio-settings'
+      fullPath: '/api/twilio-settings'
+      preLoaderRoute: typeof ApiTwilioSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/save-automation': {
@@ -1426,6 +1446,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
+  ApiTwilioSettingsRoute: ApiTwilioSettingsRoute,
   ApiWorkflowRoute: ApiWorkflowRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   CheckoutStartRoute: CheckoutStartRoute,
