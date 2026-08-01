@@ -300,7 +300,10 @@ function VerificationPage() {
           <Field label="Insurance policy number">
             <TextInput value={profile.insurance_policy_number ?? ""} onChange={(v) => updateField("insurance_policy_number", v || null)} />
           </Field>
-          <Field label="EIN (optional)">
+          <Field
+            label="EIN (optional)"
+            hint="Your business's federal tax ID number, like a Social Security number but for a business. Skip this if you don't have one, for example if you're a sole proprietor using your own SSN with the IRS."
+          >
             <TextInput value={profile.ein_number ?? ""} onChange={(v) => updateField("ein_number", v || null)} placeholder="12-3456789" />
           </Field>
           <Field label="Business address">
@@ -505,10 +508,11 @@ function DocStatusBadge({ status }: { status: string }) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>{label}</label>
+      {hint && <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: "0 0 6px" }}>{hint}</p>}
       {children}
     </div>
   );
