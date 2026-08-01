@@ -12,6 +12,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
   component: CalendarPage,
@@ -91,6 +94,8 @@ function CalendarPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     loadAppointments(0);
@@ -278,7 +283,7 @@ function CalendarPage() {
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+      <div className={step} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12, ...delay(0) }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>Calendar</h1>
           <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Appointments booked manually and through inbound texts.</p>
@@ -290,32 +295,32 @@ function CalendarPage() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}>
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(1) }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
             <CalendarIcon size={16} color="var(--primary)" strokeWidth={1.75} />
           </div>
           <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{monthCount}</div>
           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>Appointments this month</div>
-        </div>
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+        </GlowPanel>
+        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(2) }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
             <DollarSign size={16} color="var(--primary)" strokeWidth={1.75} />
           </div>
           <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{formatMoney(monthTotal)}</div>
           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>Estimated value this month</div>
-        </div>
+        </GlowPanel>
       </div>
 
       {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       {loading && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+        <div className="glass-dark" style={{ borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
           Loading...
         </div>
       )}
 
       {!loading && appointments.length === 0 && !error && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(3) }}>
           <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
             <CalendarIcon size={26} color="var(--primary)" strokeWidth={1.75} />
           </div>
@@ -341,8 +346,9 @@ function CalendarPage() {
               .map((appt) => {
                 const s = STATUS_STYLES[appt.status];
                 return (
-                  <div key={appt.id} onClick={() => openEdit(appt)}
-                    style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <GlowPanel key={appt.id} reducedMotion={reducedMotion} onClick={() => openEdit(appt)}
+                    className="glass-dark hover-lift-dark rounded-2xl"
+                    style={{ padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                         <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{appt.customer_name}</span>
@@ -354,7 +360,7 @@ function CalendarPage() {
                       </div>
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{formatMoney(appt.estimated_value)}</div>
-                  </div>
+                  </GlowPanel>
                 );
               })}
           </div>
@@ -376,7 +382,8 @@ function CalendarPage() {
           style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 20 }}
         >
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: "var(--card)", borderRadius: 20, padding: 28, maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            className="glass-dark"
+            style={{ borderRadius: 20, padding: 28, maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>
                 {modal.mode === "create" ? "Add Appointment" : "Appointment details"}

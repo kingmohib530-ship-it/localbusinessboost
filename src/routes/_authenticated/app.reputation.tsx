@@ -4,6 +4,9 @@ import { Send, Star, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StarRatingInput } from "@/components/StarRatingInput";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/reputation")({
   component: ReputationPage,
@@ -61,6 +64,8 @@ function ReputationPage() {
   const [generating, setGenerating] = useState(false);
   const [aiResponse, setAiResponse] = useState("");
   const [genError, setGenError] = useState("");
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     loadStats();
@@ -239,7 +244,7 @@ function ReputationPage() {
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
 
-      <div style={{ marginBottom: 28 }}>
+      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
             Reputation
@@ -269,23 +274,23 @@ function ReputationPage() {
               { label: "Reviews received", value: stats.reviewed, Icon: Star },
               { label: "Responses written", value: stats.responses, Icon: PenLine },
               { label: "Avg star rating", value: stats.avgRating, Icon: Star },
-            ].map(s => (
-              <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+            ].map((s, i) => (
+              <GlowPanel key={s.label} reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(i + 1) }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                   <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
-              </div>
+              </GlowPanel>
             ))}
           </div>
 
           {loading ? (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+            <div className="glass-dark" style={{ borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
               Loading...
             </div>
           ) : requests.length === 0 && responses.length === 0 ? (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
+            <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(5) }}>
               <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                 <Star size={26} color="var(--primary)" strokeWidth={1.75} />
               </div>
@@ -301,7 +306,7 @@ function ReputationPage() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {/* Recent requests */}
-              <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20 }}>
+              <div className="glass-dark" style={{ borderRadius: 16, padding: 20 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Recent requests</div>
                 {requests.map(r => (
                   <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
@@ -328,7 +333,7 @@ function ReputationPage() {
               </div>
 
               {/* Recent responses */}
-              <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20 }}>
+              <div className="glass-dark" style={{ borderRadius: 16, padding: 20 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Responses written</div>
                 {responses.map(r => (
                   <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
@@ -358,8 +363,8 @@ function ReputationPage() {
 
       {/* Send Request tab */}
       {tab === "request" && (
-        <div style={{ maxWidth: 520 }}>
-          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28 }}>
+        <div className="hd-blur-in" style={{ maxWidth: 520 }}>
+          <div className="glass-dark" style={{ borderRadius: 20, padding: 28 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Send a review request</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
               We'll text your customer a friendly message with a direct link to leave you a Google review.
@@ -407,9 +412,9 @@ function ReputationPage() {
       {tab === "respond" && (() => {
         const isCrewPlus = subscriptionTier === "crew" || subscriptionTier === "agency";
         return (
-        <div style={{ maxWidth: 680 }}>
+        <div className="hd-blur-in" style={{ maxWidth: 680 }}>
           {!isCrewPlus && (
-            <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+            <div className="glass-dark" style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>The AI review response writer is a Crew feature</div>
                 <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to Crew or Agency to generate responses automatically.</div>
@@ -419,7 +424,7 @@ function ReputationPage() {
               </Link>
             </div>
           )}
-          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28, opacity: isCrewPlus ? 1 : 0.5, pointerEvents: isCrewPlus ? "auto" : "none" }}>
+          <div className="glass-dark" style={{ borderRadius: 20, padding: 28, opacity: isCrewPlus ? 1 : 0.5, pointerEvents: isCrewPlus ? "auto" : "none" }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Write a review response</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
               Paste any review and get a professional, personalized response in seconds.
@@ -452,7 +457,7 @@ function ReputationPage() {
             </button>
 
             {aiResponse && (
-              <div style={{ background: "var(--elevated)", border: "1.5px solid var(--border)", borderRadius: 12, padding: 16 }}>
+              <div className="glass-dark hd-blur-in" style={{ borderRadius: 12, padding: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Response</div>
                   <button onClick={copyResponse}
