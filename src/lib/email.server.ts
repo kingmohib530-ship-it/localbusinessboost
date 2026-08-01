@@ -13,10 +13,12 @@ async function sendEmail(opts: { to: string; subject: string; text: string; html
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.log(`[email] RESEND_API_KEY not configured — would have sent "${opts.subject}" to ${opts.to}`);
+    console.log("[email] RESEND_API_KEY not configured — email not sent");
     return;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -31,12 +33,15 @@ async function sendEmail(opts: { to: string; subject: string; text: string; html
         text: opts.text,
         ...(opts.html ? { html: opts.html } : {}),
       }),
+      signal: controller.signal,
     });
     if (!res.ok) {
       console.error("[email] Resend API error", await res.text());
     }
   } catch (e) {
     console.error("[email] failed to send", e);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

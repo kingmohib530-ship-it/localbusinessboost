@@ -13,6 +13,7 @@
  */
 
 import { createMondayItem, createMondayUpdate, updateMondayItem } from "./monday.server";
+import { fetchSafeExternal, isSafeExternalUrl } from "./ssrfGuard.server";
 
 export interface GooglePlaceLead {
   businessName: string;
@@ -187,18 +188,18 @@ export async function assessWebsite(url: string | null): Promise<WebsiteAssessme
   if (!url) {
     return { hasWebsite: false, quality: "none", socialMedia: {} };
   }
+  if (!isSafeExternalUrl(url)) {
+    return { hasWebsite: true, quality: "broken", socialMedia: {} };
+  }
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, { signal: controller.signal, redirect: "follow" });
-    clearTimeout(timeout);
+    const { res, text } = await fetchSafeExternal(url, { timeoutMs: 6000, maxBytes: 200_000 });
 
     if (!res.ok) {
       return { hasWebsite: true, quality: "broken", socialMedia: {} };
     }
 
-    const html = (await res.text()).slice(0, 200_000);
+    const html = text;
     const hasViewport = /<meta[^>]+name=["']viewport["']/i.test(html);
 
     const socialMedia: WebsiteAssessment["socialMedia"] = {};
@@ -398,7 +399,7 @@ export async function syncLeadStatusToMonday(
   priority: string,
 ): Promise<void> {
   try {
-    await updateMondayItem(Number(mondayItemId), {
+    await updateMondayItem(mondayItemId, {
       color_mm40t58z: { label: PRIORITY_LABEL[priority] || "Warm" },
     });
     await createMondayUpdate(mondayItemId, `Status changed to: ${status}`);
@@ -535,6 +536,9 @@ Return ONLY one word, exactly one of: interested, not_interested, needs_time, as
 
   const result = await res.json();
   const text: string = (result.content?.[0]?.text || "").trim().toLowerCase();
-  const match = VALID_CLASSIFICATIONS.find((c) => text.includes(c));
+  // Exact match only — a substring check would let "not_interested" match
+  // "interested" first (since the shorter word is a substring of the
+  // longer one), misclassifying a decline as a lead who said yes.
+  const match = VALID_CLASSIFICATIONS.find((c) => text === c);
   return match || "asked_question";
 }

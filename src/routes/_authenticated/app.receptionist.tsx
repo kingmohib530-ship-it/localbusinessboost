@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/receptionist")({
   component: ReceptionistPage,
@@ -25,6 +28,7 @@ interface Message {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  received:    { bg: "var(--muted)", color: "var(--muted-foreground)", label: "Text not sent" },
   texted:      { bg: "var(--accent)", color: "var(--primary)", label: "Texted" },
   replied:     { bg: "var(--accent)", color: "var(--accent-2)", label: "Replied" },
   booked:      { bg: "var(--accent)", color: "var(--accent-2)", label: "Booked ✓" },
@@ -33,8 +37,14 @@ const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }
 
 const TEST_CALLER_PHONE = "+15555550100";
 
+const PAGE_SIZE = 20;
+
 function ReceptionistPage() {
   const [calls, setCalls] = useState<MissedCall[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [callStats, setCallStats] = useState({ total: 0, texted: 0, replied: 0 });
   const [selected, setSelected] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,10 +66,27 @@ function ReceptionistPage() {
   const [testingReceptionist, setTestingReceptionist] = useState(false);
 
   useEffect(() => {
-    loadCalls();
+    loadCalls(0);
+    loadCallStats();
     loadProfile();
     loadAppointmentsBooked();
   }, []);
+
+  /**
+   * Independent of the paginated call list below - "texted"/"replied" need
+   * accurate all-time counts regardless of how many pages have been loaded.
+   * Counts use head:true, a real SQL COUNT rather than a row fetch.
+   */
+  async function loadCallStats() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const [total, texted, replied] = await Promise.all([
+      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id).neq("status", "no_response"),
+      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("status", ["replied", "booked"]),
+    ]);
+    setCallStats({ total: total.count ?? 0, texted: texted.count ?? 0, replied: replied.count ?? 0 });
+  }
 
   async function loadProfile() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -107,22 +134,27 @@ function ReceptionistPage() {
     setSavingConfig(false);
   }
 
-  async function loadCalls() {
-    setLoading(true);
+  async function loadCalls(page: number) {
+    if (page === 0) setLoading(true); else setLoadingMore(true);
     setLoadError("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
+    if (!user) { setLoading(false); setLoadingMore(false); return; }
+    const from = page * PAGE_SIZE;
     const { data, error } = await supabase
       .from("missed_calls")
       .select("*")
       .eq("user_id", user.id)
-      .order("called_at", { ascending: false });
+      .order("called_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
     if (error) {
       console.error("[receptionist] failed to load calls", error);
       setLoadError("Couldn't load your calls. Please refresh the page.");
     }
-    setCalls(data || []);
+    const rows = data || [];
+    setCalls((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setHasMore(rows.length === PAGE_SIZE);
     setLoading(false);
+    setLoadingMore(false);
   }
 
   async function loadAppointmentsBooked() {
@@ -157,7 +189,7 @@ function ReceptionistPage() {
 
     const message =
       greetingMessage.trim() ||
-      "Hi! Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP 👇";
+      "Hi! Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP.";
 
     const { data: missedCall, error } = await supabase
       .from("missed_calls")
@@ -179,7 +211,9 @@ function ReceptionistPage() {
         direction: "outbound",
         message,
       });
-      await loadCalls();
+      setPageIndex(0);
+      await loadCalls(0);
+      loadCallStats();
       setTab("calls");
       loadMessages(missedCall.id);
     } else {
@@ -190,20 +224,22 @@ function ReceptionistPage() {
   }
 
   const stats = {
-    total: calls.length,
-    texted: calls.filter(c => c.status !== "no_response").length,
-    replied: calls.filter(c => ["replied", "booked"].includes(c.status)).length,
+    total: callStats.total,
+    texted: callStats.texted,
+    replied: callStats.replied,
     booked: appointmentsBooked,
   };
 
   const selectedCall = calls.find(c => c.id === selected);
   const connected = !!twilioNumber;
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
+      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, flexWrap: "wrap", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
@@ -243,7 +279,7 @@ function ReceptionistPage() {
       {/* Setup tab */}
       {tab === "setup" && (
         <div style={{ maxWidth: 620 }}>
-          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 28, marginBottom: 16 }}>
+          <div className="glass-dark" style={{ borderRadius: 20, padding: 28, marginBottom: 16 }}>
             <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>How it works</h2>
             <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 20, lineHeight: 1.6 }}>
               When someone calls your business and you don't pick up, Lanavix automatically sends them a personalized text within 60 seconds and handles the conversation — qualifying the lead, answering questions, and booking appointments — so you wake up to booked jobs.
@@ -264,14 +300,14 @@ function ReceptionistPage() {
             ))}
           </div>
 
-          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Your Twilio number</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
               Enter the Twilio number Lanavix sends and receives texts on for your business. This is how missed calls get matched to your account.
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <input value={twilioNumber} onChange={e => setTwilioNumber(e.target.value)} placeholder="+15555550100"
-                style={{ flex: 1, padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none" }} />
+                className="lv-input" style={{ flex: 1, padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit" }} />
               <button onClick={saveTwilioNumber} disabled={savingNumber}
                 style={{ padding: "10px 20px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: savingNumber ? "not-allowed" : "pointer", opacity: savingNumber ? 0.7 : 1 }}>
                 {savingNumber ? "Saving..." : "Save"}
@@ -280,7 +316,7 @@ function ReceptionistPage() {
             {numberMsg && <div style={{ fontSize: 12, color: numberSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{numberMsg}</div>}
           </div>
 
-          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Configuration</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16, lineHeight: 1.5 }}>
               Greeting message is sent verbatim as your auto-text when a call is missed. Business hours and escalation rules are saved to your business profile for reference.
@@ -289,21 +325,21 @@ function ReceptionistPage() {
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Business hours</label>
               <input value={businessHours} onChange={e => setBusinessHours(e.target.value)} placeholder="Mon–Fri 8am–6pm, Sat 9am–1pm"
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Greeting message</label>
               <textarea value={greetingMessage} onChange={e => setGreetingMessage(e.target.value)} rows={3}
-                placeholder={`Hi! This is [Your Business]. Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP 👇`}
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+                placeholder={`Hi! This is [Your Business]. Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP.`}
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Escalation rules</label>
               <textarea value={escalationRules} onChange={e => setEscalationRules(e.target.value)} rows={3}
                 placeholder="e.g. If the customer mentions a gas leak or flooding, tell them to call 911 / call us directly at [phone]."
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }} />
             </div>
 
             <button onClick={saveConfig} disabled={savingConfig}
@@ -313,7 +349,7 @@ function ReceptionistPage() {
             {configMsg && <div style={{ fontSize: 12, color: configSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{configMsg}</div>}
           </div>
 
-          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Environment variables needed</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14 }}>Add these to Vercel → Environment Variables</div>
             {["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"].map(v => (
@@ -342,27 +378,27 @@ function ReceptionistPage() {
               { label: "Auto-texted", value: stats.texted, Icon: MessageSquare },
               { label: "Conversations handled", value: stats.replied, Icon: Reply },
               { label: "Appointments booked", value: stats.booked, Icon: CheckCircle2 },
-            ].map(s => (
-              <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+            ].map((s, i) => (
+              <GlowPanel key={s.label} reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(i + 1) }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                   <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
-              </div>
+              </GlowPanel>
             ))}
           </div>
 
           {/* Loading state */}
           {loading && (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+            <div className="glass-dark" style={{ borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
               Loading...
             </div>
           )}
 
           {/* Empty state */}
           {!loading && calls.length === 0 && (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
+            <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(5) }}>
               <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                 <PhoneOff size={26} color="var(--primary)" strokeWidth={1.75} />
               </div>
@@ -383,8 +419,9 @@ function ReceptionistPage() {
                 {calls.map(call => {
                   const s = STATUS_COLORS[call.status] || STATUS_COLORS.texted;
                   return (
-                    <div key={call.id} onClick={() => loadMessages(call.id)}
-                      style={{ background: "var(--card)", border: `1.5px solid ${selected === call.id ? "var(--primary)" : "var(--border)"}`, borderRadius: 14, padding: "14px 18px", cursor: "pointer" }}>
+                    <GlowPanel key={call.id} reducedMotion={reducedMotion} onClick={() => loadMessages(call.id)}
+                      className="glass-dark hover-lift-dark rounded-2xl"
+                      style={{ border: `1.5px solid ${selected === call.id ? "var(--primary)" : "var(--border)"}`, padding: "14px 18px", cursor: "pointer" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                         <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{call.caller_name || call.caller_phone}</span>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: s.bg, color: s.color }}>{s.label}</span>
@@ -394,13 +431,21 @@ function ReceptionistPage() {
                         {new Date(call.called_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </div>
                       {call.notes && <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 6 }}>{call.notes}</div>}
-                    </div>
+                    </GlowPanel>
                   );
                 })}
+                {hasMore && (
+                  <button
+                    onClick={() => { const next = pageIndex + 1; setPageIndex(next); loadCalls(next); }}
+                    disabled={loadingMore}
+                    style={{ alignSelf: "center", marginTop: 4, padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    {loadingMore ? "Loading..." : "Load more"}
+                  </button>
+                )}
               </div>
 
               {selected && selectedCall && (
-                <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", height: "fit-content", maxHeight: 500 }}>
+                <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", height: "fit-content", maxHeight: 500 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{selectedCall.caller_name || selectedCall.caller_phone}</div>

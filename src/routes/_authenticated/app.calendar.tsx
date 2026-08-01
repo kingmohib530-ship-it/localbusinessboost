@@ -12,6 +12,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
   component: CalendarPage,
@@ -75,17 +78,29 @@ const EMPTY_FORM = {
   status: "pending" as Appointment["status"],
 };
 
+const PAGE_SIZE = 20;
+
 function CalendarPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
   const [error, setError] = useState("");
+  const [monthCount, setMonthCount] = useState(0);
+  const [monthTotal, setMonthTotal] = useState(0);
   const [modal, setModal] = useState<ModalState>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
-  useEffect(() => { loadAppointments(); }, []);
+  useEffect(() => {
+    loadAppointments(0);
+    loadMonthStats();
+  }, []);
 
   async function authHeader() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -94,19 +109,48 @@ function CalendarPage() {
     return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   }
 
-  async function loadAppointments() {
-    setLoading(true);
+  /**
+   * Independent of the paginated list below - these tiles need an accurate
+   * total for the current calendar month regardless of how many pages of
+   * the full history the user has loaded so far.
+   */
+  async function loadMonthStats() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("estimated_value")
+      .eq("user_id", user.id)
+      .gte("scheduled_at", monthStart)
+      .lt("scheduled_at", monthEnd);
+    if (error) {
+      console.error("[calendar] failed to load month stats", error);
+      return;
+    }
+    const rows = data ?? [];
+    setMonthCount(rows.length);
+    setMonthTotal(rows.reduce((sum, r) => sum + (r.estimated_value || 0), 0));
+  }
+
+  async function loadAppointments(page: number) {
+    if (page === 0) setLoading(true); else setLoadingMore(true);
     setError("");
     try {
       const headers = await authHeader();
-      const res = await fetch("/api/appointments", { headers });
+      const res = await fetch(`/api/appointments?page=${page}`, { headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load appointments");
-      setAppointments(data.appointments ?? []);
+      const rows = data.appointments ?? [];
+      setAppointments((prev) => (page === 0 ? rows : [...prev, ...rows]));
+      setHasMore(!!data.hasMore);
     } catch (err: any) {
       setError(err.message || "Failed to load appointments.");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
@@ -187,7 +231,9 @@ function CalendarPage() {
       }
 
       setModal(null);
-      loadAppointments();
+      setPageIndex(0);
+      loadAppointments(0);
+      loadMonthStats();
     } catch (err: any) {
       setFormError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -205,22 +251,15 @@ function CalendarPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete appointment");
       setModal(null);
-      loadAppointments();
+      setPageIndex(0);
+      loadAppointments(0);
+      loadMonthStats();
     } catch (err: any) {
       setFormError(err.message || "Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
   }
-
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const thisMonthAppointments = appointments.filter((a) => {
-    const t = new Date(a.scheduled_at);
-    return t >= monthStart && t < monthEnd;
-  });
-  const monthTotal = thisMonthAppointments.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
 
   const groups = new Map<string, Appointment[]>();
   for (const a of appointments) {
@@ -239,13 +278,12 @@ function CalendarPage() {
     color: "var(--foreground)",
     background: "var(--input)",
     fontFamily: "inherit",
-    outline: "none",
     boxSizing: "border-box" as const,
   };
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+      <div className={step} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12, ...delay(0) }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>Calendar</h1>
           <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Appointments booked manually and through inbound texts.</p>
@@ -257,32 +295,32 @@ function CalendarPage() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}>
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(1) }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
             <CalendarIcon size={16} color="var(--primary)" strokeWidth={1.75} />
           </div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{thisMonthAppointments.length}</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{monthCount}</div>
           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>Appointments this month</div>
-        </div>
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+        </GlowPanel>
+        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(2) }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
             <DollarSign size={16} color="var(--primary)" strokeWidth={1.75} />
           </div>
           <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{formatMoney(monthTotal)}</div>
           <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>Estimated value this month</div>
-        </div>
+        </GlowPanel>
       </div>
 
       {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       {loading && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
+        <div className="glass-dark" style={{ borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
           Loading...
         </div>
       )}
 
       {!loading && appointments.length === 0 && !error && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "48px 32px", textAlign: "center" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(3) }}>
           <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
             <CalendarIcon size={26} color="var(--primary)" strokeWidth={1.75} />
           </div>
@@ -308,8 +346,9 @@ function CalendarPage() {
               .map((appt) => {
                 const s = STATUS_STYLES[appt.status];
                 return (
-                  <div key={appt.id} onClick={() => openEdit(appt)}
-                    style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <GlowPanel key={appt.id} reducedMotion={reducedMotion} onClick={() => openEdit(appt)}
+                    className="glass-dark hover-lift-dark rounded-2xl"
+                    style={{ padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                         <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{appt.customer_name}</span>
@@ -321,12 +360,21 @@ function CalendarPage() {
                       </div>
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{formatMoney(appt.estimated_value)}</div>
-                  </div>
+                  </GlowPanel>
                 );
               })}
           </div>
         </div>
       ))}
+
+      {hasMore && (
+        <button
+          onClick={() => { const next = pageIndex + 1; setPageIndex(next); loadAppointments(next); }}
+          disabled={loadingMore}
+          style={{ display: "block", margin: "0 auto", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          {loadingMore ? "Loading..." : "Load more"}
+        </button>
+      )}
 
       {modal && (
         <div
@@ -334,7 +382,8 @@ function CalendarPage() {
           style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 20 }}
         >
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: "var(--card)", borderRadius: 20, padding: 28, maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            className="glass-dark"
+            style={{ borderRadius: 20, padding: 28, maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>
                 {modal.mode === "create" ? "Add Appointment" : "Appointment details"}
@@ -347,16 +396,16 @@ function CalendarPage() {
             {modal.mode === "create" && (
               <>
                 <Field label="Customer name *">
-                  <input style={inputStyle} value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="e.g. John Smith" />
+                  <input className="lv-input" style={inputStyle} value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="e.g. John Smith" />
                 </Field>
                 <Field label="Phone">
-                  <input style={inputStyle} value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} placeholder="e.g. 404-555-0100" />
+                  <input className="lv-input" style={inputStyle} value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} placeholder="e.g. 404-555-0100" />
                 </Field>
                 <Field label="Email">
-                  <input style={inputStyle} value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} placeholder="e.g. john@example.com" />
+                  <input className="lv-input" style={inputStyle} value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} placeholder="e.g. john@example.com" />
                 </Field>
                 <Field label="Service type *">
-                  <input style={inputStyle} value={form.service_type} onChange={(e) => setForm({ ...form, service_type: e.target.value })} placeholder="e.g. HVAC repair" />
+                  <input className="lv-input" style={inputStyle} value={form.service_type} onChange={(e) => setForm({ ...form, service_type: e.target.value })} placeholder="e.g. HVAC repair" />
                 </Field>
               </>
             )}
@@ -371,7 +420,7 @@ function CalendarPage() {
                   </div>
                 </div>
                 <Field label="Status">
-                  <select style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Appointment["status"] })}>
+                  <select className="lv-input" style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Appointment["status"] })}>
                     {(["pending", "confirmed", "completed", "cancelled", "no_show"] as const).map((s) => (
                       <option key={s} value={s}>{STATUS_STYLES[s].label}</option>
                     ))}
@@ -381,13 +430,13 @@ function CalendarPage() {
             )}
 
             <Field label="Date and time *">
-              <input type="datetime-local" style={inputStyle} value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
+              <input type="datetime-local" className="lv-input" style={inputStyle} value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
             </Field>
             <Field label="Estimated value ($)">
-              <input type="number" min={0} step={1} style={inputStyle} value={form.estimated_value} onChange={(e) => setForm({ ...form, estimated_value: e.target.value })} placeholder="e.g. 450" />
+              <input type="number" min={0} step={1} className="lv-input" style={inputStyle} value={form.estimated_value} onChange={(e) => setForm({ ...form, estimated_value: e.target.value })} placeholder="e.g. 450" />
             </Field>
             <Field label="Notes">
-              <textarea style={{ ...inputStyle, resize: "vertical" as const }} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
+              <textarea className="lv-input" style={{ ...inputStyle, resize: "vertical" as const }} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
             </Field>
 
             {formError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{formError}</p>}

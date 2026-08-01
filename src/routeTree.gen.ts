@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as RequestRouteImport } from './routes/request'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -23,8 +24,10 @@ import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as ConsumerAuthenticatedRouteRouteImport } from './routes/_consumerAuthenticated/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RequestAuthRouteImport } from './routes/request.auth'
 import { Route as CheckoutStartRouteImport } from './routes/checkout.start'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -32,6 +35,7 @@ import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
 import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
 import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
 import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
+import { Route as ApiConsumerRequestsRouteImport } from './routes/api/consumer-requests'
 import { Route as ApiCompetitorIntelRouteImport } from './routes/api/competitor-intel'
 import { Route as ApiBookingPlanRouteImport } from './routes/api/booking-plan'
 import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
@@ -44,18 +48,24 @@ import { Route as ApiPublicContactRouteImport } from './routes/api/public/contac
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiConsumerRequestsMatchIdRouteImport } from './routes/api/consumer-requests/$matchId'
+import { Route as ApiBusinessFactsSyncWebsiteRouteImport } from './routes/api/business-facts/sync-website'
+import { Route as ApiBusinessFactsSyncGoogleRouteImport } from './routes/api/business-facts/sync-google'
+import { Route as ApiBusinessFactsSearchGooglePlacesRouteImport } from './routes/api/business-facts/search-google-places'
 import { Route as ApiAppointmentsIdRouteImport } from './routes/api/appointments/$id'
 import { Route as ApiAdminVerificationReviewRouteImport } from './routes/api/admin/verification-review'
 import { Route as ApiAdminUpdateScoresRouteImport } from './routes/api/admin/update-scores'
 import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/admin/update-pricing-index'
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
+import { Route as ConsumerAuthenticatedRequestNewRouteImport } from './routes/_consumerAuthenticated/request.new'
 import { Route as AuthenticatedAppVerificationRouteImport } from './routes/_authenticated/app.verification'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
 import { Route as AuthenticatedAppNetworkRouteImport } from './routes/_authenticated/app.network'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
+import { Route as AuthenticatedAppBusinessFactsRouteImport } from './routes/_authenticated/app.business-facts'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -70,6 +80,11 @@ const TermsRoute = TermsRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequestRoute = RequestRouteImport.update({
+  id: '/request',
+  path: '/request',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RefundRoute = RefundRouteImport.update({
@@ -132,6 +147,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsumerAuthenticatedRouteRoute =
+  ConsumerAuthenticatedRouteRouteImport.update({
+    id: '/_consumerAuthenticated',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -140,6 +160,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const RequestAuthRoute = RequestAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => RequestRoute,
 } as any)
 const CheckoutStartRoute = CheckoutStartRouteImport.update({
   id: '/checkout/start',
@@ -174,6 +199,11 @@ const ApiReviewResponseRoute = ApiReviewResponseRouteImport.update({
 const ApiReviewRequestRoute = ApiReviewRequestRouteImport.update({
   id: '/api/review-request',
   path: '/api/review-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConsumerRequestsRoute = ApiConsumerRequestsRouteImport.update({
+  id: '/api/consumer-requests',
+  path: '/api/consumer-requests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCompetitorIntelRoute = ApiCompetitorIntelRouteImport.update({
@@ -240,6 +270,30 @@ const ApiLeadGeneratorExecuteStepRoute =
     path: '/api/lead-generator/execute-step',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiConsumerRequestsMatchIdRoute =
+  ApiConsumerRequestsMatchIdRouteImport.update({
+    id: '/$matchId',
+    path: '/$matchId',
+    getParentRoute: () => ApiConsumerRequestsRoute,
+  } as any)
+const ApiBusinessFactsSyncWebsiteRoute =
+  ApiBusinessFactsSyncWebsiteRouteImport.update({
+    id: '/api/business-facts/sync-website',
+    path: '/api/business-facts/sync-website',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBusinessFactsSyncGoogleRoute =
+  ApiBusinessFactsSyncGoogleRouteImport.update({
+    id: '/api/business-facts/sync-google',
+    path: '/api/business-facts/sync-google',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBusinessFactsSearchGooglePlacesRoute =
+  ApiBusinessFactsSearchGooglePlacesRouteImport.update({
+    id: '/api/business-facts/search-google-places',
+    path: '/api/business-facts/search-google-places',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -272,6 +326,12 @@ const ApiAccountDeleteRoute = ApiAccountDeleteRouteImport.update({
   path: '/api/account/delete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsumerAuthenticatedRequestNewRoute =
+  ConsumerAuthenticatedRequestNewRouteImport.update({
+    id: '/request/new',
+    path: '/request/new',
+    getParentRoute: () => ConsumerAuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppVerificationRoute =
   AuthenticatedAppVerificationRouteImport.update({
     id: '/verification',
@@ -305,6 +365,12 @@ const AuthenticatedAppCalendarRoute =
   AuthenticatedAppCalendarRouteImport.update({
     id: '/calendar',
     path: '/calendar',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppBusinessFactsRoute =
+  AuthenticatedAppBusinessFactsRouteImport.update({
+    id: '/business-facts',
+    path: '/business-facts',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppAgentsRoute = AuthenticatedAppAgentsRouteImport.update({
@@ -350,12 +416,14 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/request': typeof RequestRouteWithChildren
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -363,20 +431,27 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
+  '/request/auth': typeof RequestAuthRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
+  '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
+  '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -403,11 +478,13 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/request': typeof RequestRouteWithChildren
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -415,20 +492,27 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
+  '/request/auth': typeof RequestAuthRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
+  '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
+  '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -445,6 +529,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_consumerAuthenticated': typeof ConsumerAuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRouteWithChildren
@@ -457,12 +542,14 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
+  '/request': typeof RequestRouteWithChildren
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -470,20 +557,27 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
+  '/request/auth': typeof RequestAuthRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/_authenticated/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/network': typeof AuthenticatedAppNetworkRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/_consumerAuthenticated/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
   '/api/admin/update-pricing-index': typeof ApiAdminUpdatePricingIndexRoute
   '/api/admin/update-scores': typeof ApiAdminUpdateScoresRoute
   '/api/admin/verification-review': typeof ApiAdminVerificationReviewRoute
   '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
+  '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
+  '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -512,12 +606,14 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/request'
     | '/signup'
     | '/terms'
     | '/app'
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/consumer-requests'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -525,20 +621,27 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
+    | '/request/auth'
     | '/app/admin'
     | '/app/agents'
+    | '/app/business-facts'
     | '/app/calendar'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
+    | '/request/new'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
+    | '/api/business-facts/search-google-places'
+    | '/api/business-facts/sync-google'
+    | '/api/business-facts/sync-website'
+    | '/api/consumer-requests/$matchId'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -565,11 +668,13 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/request'
     | '/signup'
     | '/terms'
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/consumer-requests'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -577,20 +682,27 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
+    | '/request/auth'
     | '/app/admin'
     | '/app/agents'
+    | '/app/business-facts'
     | '/app/calendar'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
+    | '/request/new'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
+    | '/api/business-facts/search-google-places'
+    | '/api/business-facts/sync-google'
+    | '/api/business-facts/sync-website'
+    | '/api/consumer-requests/$matchId'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -606,6 +718,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_consumerAuthenticated'
     | '/about'
     | '/audit'
     | '/auth'
@@ -618,12 +731,14 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/refund'
+    | '/request'
     | '/signup'
     | '/terms'
     | '/_authenticated/app'
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/consumer-requests'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -631,20 +746,27 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
+    | '/request/auth'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/agents'
+    | '/_authenticated/app/business-facts'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/network'
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/verification'
+    | '/_consumerAuthenticated/request/new'
     | '/api/account/delete'
     | '/api/account/export'
     | '/api/admin/update-pricing-index'
     | '/api/admin/update-scores'
     | '/api/admin/verification-review'
     | '/api/appointments/$id'
+    | '/api/business-facts/search-google-places'
+    | '/api/business-facts/sync-google'
+    | '/api/business-facts/sync-website'
+    | '/api/consumer-requests/$matchId'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -661,6 +783,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ConsumerAuthenticatedRouteRoute: typeof ConsumerAuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuditRoute: typeof AuditRoute
   AuthRoute: typeof AuthRouteWithChildren
@@ -673,11 +796,13 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
+  RequestRoute: typeof RequestRouteWithChildren
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
   ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
+  ApiConsumerRequestsRoute: typeof ApiConsumerRequestsRouteWithChildren
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
@@ -689,6 +814,9 @@ export interface RootRouteChildren {
   ApiAdminUpdatePricingIndexRoute: typeof ApiAdminUpdatePricingIndexRoute
   ApiAdminUpdateScoresRoute: typeof ApiAdminUpdateScoresRoute
   ApiAdminVerificationReviewRoute: typeof ApiAdminVerificationReviewRoute
+  ApiBusinessFactsSearchGooglePlacesRoute: typeof ApiBusinessFactsSearchGooglePlacesRoute
+  ApiBusinessFactsSyncGoogleRoute: typeof ApiBusinessFactsSyncGoogleRoute
+  ApiBusinessFactsSyncWebsiteRoute: typeof ApiBusinessFactsSyncWebsiteRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
@@ -714,6 +842,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/request': {
+      id: '/request'
+      path: '/request'
+      fullPath: '/request'
+      preLoaderRoute: typeof RequestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/refund': {
@@ -800,6 +935,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_consumerAuthenticated': {
+      id: '/_consumerAuthenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ConsumerAuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -813,6 +955,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/request/auth': {
+      id: '/request/auth'
+      path: '/auth'
+      fullPath: '/request/auth'
+      preLoaderRoute: typeof RequestAuthRouteImport
+      parentRoute: typeof RequestRoute
     }
     '/checkout/start': {
       id: '/checkout/start'
@@ -861,6 +1010,13 @@ declare module '@tanstack/react-router' {
       path: '/api/review-request'
       fullPath: '/api/review-request'
       preLoaderRoute: typeof ApiReviewRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/consumer-requests': {
+      id: '/api/consumer-requests'
+      path: '/api/consumer-requests'
+      fullPath: '/api/consumer-requests'
+      preLoaderRoute: typeof ApiConsumerRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/competitor-intel': {
@@ -947,6 +1103,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/consumer-requests/$matchId': {
+      id: '/api/consumer-requests/$matchId'
+      path: '/$matchId'
+      fullPath: '/api/consumer-requests/$matchId'
+      preLoaderRoute: typeof ApiConsumerRequestsMatchIdRouteImport
+      parentRoute: typeof ApiConsumerRequestsRoute
+    }
+    '/api/business-facts/sync-website': {
+      id: '/api/business-facts/sync-website'
+      path: '/api/business-facts/sync-website'
+      fullPath: '/api/business-facts/sync-website'
+      preLoaderRoute: typeof ApiBusinessFactsSyncWebsiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/business-facts/sync-google': {
+      id: '/api/business-facts/sync-google'
+      path: '/api/business-facts/sync-google'
+      fullPath: '/api/business-facts/sync-google'
+      preLoaderRoute: typeof ApiBusinessFactsSyncGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/business-facts/search-google-places': {
+      id: '/api/business-facts/search-google-places'
+      path: '/api/business-facts/search-google-places'
+      fullPath: '/api/business-facts/search-google-places'
+      preLoaderRoute: typeof ApiBusinessFactsSearchGooglePlacesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/appointments/$id': {
       id: '/api/appointments/$id'
       path: '/$id'
@@ -989,6 +1173,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAccountDeleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_consumerAuthenticated/request/new': {
+      id: '/_consumerAuthenticated/request/new'
+      path: '/request/new'
+      fullPath: '/request/new'
+      preLoaderRoute: typeof ConsumerAuthenticatedRequestNewRouteImport
+      parentRoute: typeof ConsumerAuthenticatedRouteRoute
+    }
     '/_authenticated/app/verification': {
       id: '/_authenticated/app/verification'
       path: '/verification'
@@ -1029,6 +1220,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/app/calendar'
       preLoaderRoute: typeof AuthenticatedAppCalendarRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/business-facts': {
+      id: '/_authenticated/app/business-facts'
+      path: '/business-facts'
+      fullPath: '/app/business-facts'
+      preLoaderRoute: typeof AuthenticatedAppBusinessFactsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/agents': {
@@ -1086,6 +1284,7 @@ const AuthenticatedAppAdminRouteWithChildren =
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
+  AuthenticatedAppBusinessFactsRoute: typeof AuthenticatedAppBusinessFactsRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppNetworkRoute: typeof AuthenticatedAppNetworkRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
@@ -1098,6 +1297,7 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
+  AuthenticatedAppBusinessFactsRoute: AuthenticatedAppBusinessFactsRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppNetworkRoute: AuthenticatedAppNetworkRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
@@ -1121,6 +1321,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ConsumerAuthenticatedRouteRouteChildren {
+  ConsumerAuthenticatedRequestNewRoute: typeof ConsumerAuthenticatedRequestNewRoute
+}
+
+const ConsumerAuthenticatedRouteRouteChildren: ConsumerAuthenticatedRouteRouteChildren =
+  {
+    ConsumerAuthenticatedRequestNewRoute: ConsumerAuthenticatedRequestNewRoute,
+  }
+
+const ConsumerAuthenticatedRouteRouteWithChildren =
+  ConsumerAuthenticatedRouteRoute._addFileChildren(
+    ConsumerAuthenticatedRouteRouteChildren,
+  )
+
 interface AuthRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
 }
@@ -1130,6 +1344,17 @@ const AuthRouteChildren: AuthRouteChildren = {
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
+interface RequestRouteChildren {
+  RequestAuthRoute: typeof RequestAuthRoute
+}
+
+const RequestRouteChildren: RequestRouteChildren = {
+  RequestAuthRoute: RequestAuthRoute,
+}
+
+const RequestRouteWithChildren =
+  RequestRoute._addFileChildren(RequestRouteChildren)
 
 interface ApiAppointmentsRouteChildren {
   ApiAppointmentsIdRoute: typeof ApiAppointmentsIdRoute
@@ -1143,9 +1368,21 @@ const ApiAppointmentsRouteWithChildren = ApiAppointmentsRoute._addFileChildren(
   ApiAppointmentsRouteChildren,
 )
 
+interface ApiConsumerRequestsRouteChildren {
+  ApiConsumerRequestsMatchIdRoute: typeof ApiConsumerRequestsMatchIdRoute
+}
+
+const ApiConsumerRequestsRouteChildren: ApiConsumerRequestsRouteChildren = {
+  ApiConsumerRequestsMatchIdRoute: ApiConsumerRequestsMatchIdRoute,
+}
+
+const ApiConsumerRequestsRouteWithChildren =
+  ApiConsumerRequestsRoute._addFileChildren(ApiConsumerRequestsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ConsumerAuthenticatedRouteRoute: ConsumerAuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuditRoute: AuditRoute,
   AuthRoute: AuthRouteWithChildren,
@@ -1158,11 +1395,13 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,
+  RequestRoute: RequestRouteWithChildren,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
   ApiBookingPlanRoute: ApiBookingPlanRoute,
   ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
+  ApiConsumerRequestsRoute: ApiConsumerRequestsRouteWithChildren,
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
@@ -1174,6 +1413,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminUpdatePricingIndexRoute: ApiAdminUpdatePricingIndexRoute,
   ApiAdminUpdateScoresRoute: ApiAdminUpdateScoresRoute,
   ApiAdminVerificationReviewRoute: ApiAdminVerificationReviewRoute,
+  ApiBusinessFactsSearchGooglePlacesRoute:
+    ApiBusinessFactsSearchGooglePlacesRoute,
+  ApiBusinessFactsSyncGoogleRoute: ApiBusinessFactsSyncGoogleRoute,
+  ApiBusinessFactsSyncWebsiteRoute: ApiBusinessFactsSyncWebsiteRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,

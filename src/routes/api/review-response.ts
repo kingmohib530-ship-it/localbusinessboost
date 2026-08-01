@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logActivity } from "@/lib/activityLog.server";
+import { checkCrewFeatureQuota } from "@/lib/planLimits.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -51,6 +52,12 @@ export const Route = createFileRoute("/api/review-response")({
           }
           if (!allowed) {
             return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
+          }
+
+          // ===== Plan gate: AI review response writer is Crew/Agency =====
+          const quota = await checkCrewFeatureQuota(user.id);
+          if (!quota.allowed) {
+            return Response.json({ error: quota.reason }, { status: 402 });
           }
 
           const { reviewText, reviewerName, starRating } = await request.json();
@@ -132,6 +139,20 @@ Write only the response text, nothing else.`;
 
           const data = await res.json();
           const aiResponse = data.content?.[0]?.text?.trim() || "";
+
+          // Persist the generated response so it shows up in the "Responses
+          // written" history on the Reputation page — this used to only
+          // return the text to the caller and never actually save it.
+          const { error: insertErr } = await supabaseAdmin.from("review_responses").insert({
+            user_id: user.id,
+            review_text: safeReviewText,
+            reviewer_name: safeReviewerName || null,
+            star_rating: rating,
+            ai_response: aiResponse,
+          });
+          if (insertErr) {
+            console.error("[review-response] failed to save response to history", insertErr);
+          }
 
           await logActivity(
             user.id,

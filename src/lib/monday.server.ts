@@ -16,15 +16,25 @@ async function mondayRequest<T>(query: string, variables?: Record<string, unknow
     throw new Error("MONDAY_LEAD_BOARD_ID is not configured");
   }
 
-  const response = await fetch(MONDAY_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": apiKey,
-      "API-Version": "2024-01",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  let response: Response;
+  try {
+    response = await fetch(MONDAY_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": apiKey,
+        "API-Version": "2026-07",
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    throw new Error(`Monday.com API request failed: ${e instanceof Error ? e.message : "unknown error"}`);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     throw new Error(`Monday.com API error: ${response.status} ${response.statusText}`);
@@ -51,12 +61,14 @@ async function mondayRequest<T>(query: string, variables?: Record<string, unknow
  * Create a new item (row) in the configured Monday.com board.
  * @param name        The item name (row title).
  * @param columnValues Optional column values as a JSON object, e.g. { status: { label: "New" }, email: { email: "x@y.com" } }.
- * @returns The created item's numeric id.
+ * @returns The created item's id. Kept as a string throughout - Monday's
+ * item ids are GraphQL ID values and can exceed Number.MAX_SAFE_INTEGER,
+ * so converting to a JS number risks silently losing precision.
  */
 export async function createMondayItem(
   name: string,
   columnValues?: Record<string, unknown>
-): Promise<number> {
+): Promise<string> {
   const boardId = process.env.MONDAY_LEAD_BOARD_ID!;
   const columnValuesJson = columnValues ? JSON.stringify(columnValues) : "{}";
 
@@ -74,20 +86,20 @@ export async function createMondayItem(
     columnValues: columnValuesJson,
   };
 
-  const data = await mondayRequest<{ create_item: { id: number } }>(query, variables);
+  const data = await mondayRequest<{ create_item: { id: string } }>(query, variables);
   return data.create_item.id;
 }
 
 /**
  * Update column values on an existing Monday.com item.
- * @param itemId       The numeric item id to update.
+ * @param itemId       The item id to update.
  * @param columnValues Column values as a JSON object.
- * @returns The updated item's numeric id.
+ * @returns The updated item's id (see createMondayItem's note on why this stays a string).
  */
 export async function updateMondayItem(
-  itemId: number,
+  itemId: string,
   columnValues: Record<string, unknown>
-): Promise<number> {
+): Promise<string> {
   const boardId = process.env.MONDAY_LEAD_BOARD_ID!;
   const columnValuesJson = JSON.stringify(columnValues);
 
@@ -101,12 +113,12 @@ export async function updateMondayItem(
 
   const variables = {
     boardId,
-    itemId: String(itemId),
+    itemId,
     columnValues: columnValuesJson,
   };
 
   const data = await mondayRequest<{
-    change_multiple_column_values: { id: number };
+    change_multiple_column_values: { id: string };
   }>(query, variables);
   return data.change_multiple_column_values.id;
 }
@@ -124,5 +136,5 @@ export async function createMondayUpdate(itemId: string, body: string): Promise<
       }
     }
   `;
-  await mondayRequest<{ create_update: { id: number } }>(query, { itemId, body });
+  await mondayRequest<{ create_update: { id: string } }>(query, { itemId, body });
 }

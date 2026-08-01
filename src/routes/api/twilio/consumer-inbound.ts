@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioRequest } from "@/lib/twilio.server";
+import {
+  ESTIMATED_VALUE_MAP,
+  SERVICE_TYPE_TO_INDUSTRY,
+  type ServiceTypeKey,
+} from "@/lib/serviceTypes";
 
 const CONSUMER_FOOTER = "\n\nPowered by Lanavix Local";
 
@@ -12,52 +17,6 @@ const TWIML = (message: string) =>
     `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapeXml(message)}</Message></Response>`,
     { headers: { "Content-Type": "text/xml" } },
   );
-
-// Same fixed service-type set and pricing map as the Phase 2 inbound-SMS
-// booking flow (sms-reply.ts) — duplicated here rather than imported so
-// this file stands alone, per "add new files only."
-const SERVICE_TYPE_KEYS = [
-  "hvac_tuneup",
-  "hvac_repair",
-  "hvac_install",
-  "plumbing",
-  "plumbing_emergency",
-  "roofing",
-  "electrical",
-  "cleaning",
-  "landscaping",
-  "pest_control",
-] as const;
-type ServiceTypeKey = (typeof SERVICE_TYPE_KEYS)[number];
-
-const ESTIMATED_VALUE_MAP: Record<ServiceTypeKey | "default", number> = {
-  hvac_tuneup: 150,
-  hvac_repair: 450,
-  hvac_install: 3500,
-  plumbing: 400,
-  plumbing_emergency: 650,
-  roofing: 1200,
-  electrical: 350,
-  cleaning: 200,
-  landscaping: 300,
-  pest_control: 250,
-  default: 400,
-};
-
-// Maps a service-type key to the free-text `industry` values businesses
-// pick during onboarding (see src/lib/auditApi.ts's Industry type).
-const SERVICE_TYPE_TO_INDUSTRY: Record<ServiceTypeKey, string> = {
-  hvac_tuneup: "HVAC",
-  hvac_repair: "HVAC",
-  hvac_install: "HVAC",
-  plumbing: "Plumbing",
-  plumbing_emergency: "Plumbing",
-  roofing: "Roofing",
-  electrical: "Electrician",
-  cleaning: "Cleaning",
-  landscaping: "Landscaping",
-  pest_control: "Pest Control",
-};
 
 function deriveUrgency(scheduledMs: number): "emergency" | "same_day" | "this_week" | "scheduled" {
   const hoursOut = (scheduledMs - Date.now()) / (1000 * 60 * 60);

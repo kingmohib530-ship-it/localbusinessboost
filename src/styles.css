@@ -38,48 +38,58 @@
   --color-ink-foreground: var(--ink-foreground);
   --color-ink-muted: var(--ink-muted);
   --color-ink-border: var(--ink-border);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --font-display: 'Inter', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-/* Lanavix — premium, restrained light theme for a trades/contractor audience. */
+/*
+ * Lanavix — clean, confident product design (Apple/Linear/Stripe/Notion
+ * territory): a light neutral ground, pure-white cards, one electric-blue
+ * accent doing all the "look here" work. No gradients, no glassmorphism —
+ * simplicity is the point, not a placeholder for more decoration later.
+ */
 :root {
-  --radius: 0.625rem;
-  /* warm paper white */
-  --background: #FBFAF8;
-  /* near-black ink */
-  --foreground: #14171C;
-  --surface: #F4F3EF;
-  /* cards sit on white */
+  --radius: 1rem; /* 16px base -> rounded-lg is 16px, rounded-xl is 20px: the card corner range this system asks for */
+  --background: #FAFAFA;
+  --foreground: #111111;
+  --surface: #F3F4F6;
   --card: #FFFFFF;
-  --card-foreground: #14171C;
+  --card-foreground: #111111;
   --elevated: #FFFFFF;
   --popover: #FFFFFF;
-  --popover-foreground: #14171C;
-  /* deep forest green */
-  --primary: #1F6F54;
+  --popover-foreground: #111111;
+  /* electric blue — the one accent, used for actions and focus, not decoration */
+  --primary: #2563EB;
   --primary-foreground: #FFFFFF;
-  /* muted secondary green, used sparingly */
-  --accent-2: #2F8A6A;
-  --secondary: #F1F0EC;
-  --secondary-foreground: #14171C;
-  --muted: #F1F0EC;
-  --muted-foreground: #62666D;
-  /* soft green tint for hover/highlight backgrounds */
-  --accent: #E8F2EC;
-  --accent-foreground: #14171C;
-  --destructive: #C4362A;
+  /* kept as an alias of the one accent so dashboard status colors and
+     untouched pages (not part of this pass) still resolve to something
+     real instead of breaking */
+  --accent-2: #2563EB;
+  --secondary: #F3F4F6;
+  --secondary-foreground: #111111;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  /* faint blue-tinted hover background, not the brand accent itself */
+  --accent: #EFF6FF;
+  --accent-foreground: #111111;
+  --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #E4E2DC;
-  --input: #E4E2DC;
-  --ring: #1F6F54;
-  --success: #1F6F54;
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #2563EB;
+  --success: #059669;
+  --warning: #D97706;
+  --warning-foreground: #FFFFFF;
 
-  /* Dark "ink" sections used for hero / high-contrast bands only */
-  --ink: #0E1116;
-  --ink-foreground: #F6F5F1;
-  --ink-muted: #9BA1A9;
-  --ink-border: rgba(255,255,255,0.12);
+  /* Kept only for pages this pass doesn't touch (auth/chat logo tiles,
+     dashboard inline styles reading var(--ink)-family tokens directly) */
+  --ink: #111111;
+  --ink-foreground: #FAFAFA;
+  --ink-muted: #9CA3AF;
+  --ink-border: rgba(255, 255, 255, 0.12);
 }
 
 @layer base {
@@ -92,13 +102,20 @@
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+  /* Plain links (nav, footer, in-page anchors) have no focus style of
+     their own, so without this they'd fall back to each browser's own
+     default outline instead of the accent ring the rest of the app uses. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 @utility text-balance { text-wrap: balance; }
 
-/* Solid ink-navy mark, no rainbow gradient */
+/* Solid brand-blue mark, no rainbow gradient */
 @utility gradient-primary {
-  background-color: var(--ink);
+  background-color: var(--primary);
 }
 @utility gradient-text {
   color: var(--color-primary);
@@ -110,8 +127,8 @@
   border: 1px solid var(--color-border);
 }
 @utility glow-primary {
-  box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 8%, transparent),
-              0 8px 24px -12px color-mix(in oklab, var(--ink) 25%, transparent);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--primary) 8%, transparent),
+              0 8px 24px -12px color-mix(in oklab, var(--primary) 25%, transparent);
 }
 @utility hairline { border: 1px solid var(--border); }
 @utility section-ink {
@@ -138,3 +155,191 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-up { animation: zy-fade-up .6s cubic-bezier(.2,.7,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  /* The browser's View Transitions API (wired up via the router's
+     defaultViewTransition option) runs its own animation timeline outside
+     the transition/animation properties above, so it needs its own
+     explicit opt-out here or route changes would still cross-fade. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/*
+ * Hero v2 exploration — dark, glassy, Linear/Raycast/Framer-territory.
+ * Scoped to its own class rather than :root: the rest of the homepage is
+ * now approved and rolled out to the whole homepage — .page-dark sits on
+ * the page's outer wrapper so every section, the nav, and the cookie
+ * banner (when rendered on this route) can read the same tokens. Other
+ * routes (pricing, about, the dashboard) don't wrap themselves in this
+ * class, so they're untouched and keep the light system.
+ */
+.page-dark {
+  --hd-bg: #08090b;
+  --hd-surface: #0d0f13;
+  --hd-fg: #f5f6f7;
+  --hd-muted: #9096a3;
+  --hd-border: rgba(255, 255, 255, 0.09);
+  --hd-glass: rgba(255, 255, 255, 0.05);
+  --hd-glass-strong: rgba(255, 255, 255, 0.08);
+  --hd-primary: #6366f1;
+  --hd-primary-2: #22d3ee;
+  background: var(--hd-bg);
+  color: var(--hd-fg);
+}
+
+/* Shorthand for the glass-panel look used across every card on the dark
+   homepage, so we're not repeating the same three arbitrary-value
+   classes on every card in index.tsx. */
+@utility glass-dark {
+  background: var(--hd-glass);
+  border: 1px solid var(--hd-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* A spring/overshoot curve for entrances — a flat ease-out settles, this
+   one settles past the target and eases back, reading as physical rather
+   than animated. */
+@utility ease-spring {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes hd-blur-in {
+  from { opacity: 0; filter: blur(10px); transform: translateY(14px); }
+  to { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+.hd-blur-in {
+  animation: hd-blur-in 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes hd-mesh-a {
+  0%, 100% { transform: translate(-8%, -6%) scale(1); }
+  50% { transform: translate(10%, 8%) scale(1.2); }
+}
+@keyframes hd-mesh-b {
+  0%, 100% { transform: translate(6%, 10%) scale(1.05); }
+  50% { transform: translate(-10%, -4%) scale(0.9); }
+}
+@keyframes hd-mesh-c {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  50% { transform: translate(-6%, 12%) scale(1.15); }
+}
+.hd-mesh-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  will-change: transform;
+}
+.hd-mesh-blob-a { animation: hd-mesh-a 22s ease-in-out infinite; }
+.hd-mesh-blob-b { animation: hd-mesh-b 26s ease-in-out infinite; }
+.hd-mesh-blob-c { animation: hd-mesh-c 30s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hd-mesh-blob-a, .hd-mesh-blob-b, .hd-mesh-blob-c { animation: none !important; }
+  .hd-blur-in { animation: hd-blur-in-reduced 0.01ms both; }
+}
+@keyframes hd-blur-in-reduced {
+  from { opacity: 1; filter: blur(0); transform: none; }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+
+/* Card hover lift — the one micro-interaction cards get: a small rise and
+   a softer, larger shadow. Skipped entirely under reduced motion via the
+   transition-duration override above, so it becomes a plain instant
+   shadow swap instead of a moving card for anyone who's asked for that. */
+@utility hover-lift {
+  transition: transform 0.2s cubic-bezier(.2,.7,.2,1), box-shadow 0.2s cubic-bezier(.2,.7,.2,1), border-color 0.2s ease;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px -16px rgba(17, 17, 17, 0.16);
+  }
+}
+
+/* Same lift, but a plain dark drop-shadow would be invisible against the
+   dark homepage's own background, so this one lifts into a soft violet
+   glow instead and brightens the glass border to match. */
+@utility hover-lift-dark {
+  transition: transform 0.2s cubic-bezier(.2,.7,.2,1), box-shadow 0.2s cubic-bezier(.2,.7,.2,1), border-color 0.2s ease;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px -12px rgba(99, 102, 241, 0.28), 0 4px 18px -6px rgba(0, 0, 0, 0.45);
+    border-color: rgba(99, 102, 241, 0.35);
+  }
+}
+
+/*
+ * Authenticated dashboard: same dark/glass system as the homepage, but
+ * scoped so it drops onto the app shell without rewriting every page's
+ * inline styles. Every app.*.tsx page already reads --card/--foreground/
+ * --border/--muted-foreground/--accent/--primary/etc. directly via inline
+ * style={{...}} objects (the codebase's established dashboard pattern,
+ * distinct from the marketing site's Tailwind classes), so redefining those
+ * SAME token names here means every existing inline style automatically
+ * renders dark the moment the shell wraps in .app-dark, no per-page style
+ * object needs touching for color alone. The --hd-* aliases underneath let
+ * the glass-dark/hover-lift-dark/hd-blur-in/hd-mesh-blob utilities already
+ * built for the homepage work here unchanged too.
+ */
+.app-dark {
+  --background: #08090b;
+  --surface: #0d0f13;
+  --elevated: #12141a;
+  --card: rgba(255, 255, 255, 0.05);
+  --card-foreground: #f5f6f7;
+  --foreground: #f5f6f7;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #9096a3;
+  --accent: rgba(99, 102, 241, 0.14);
+  --accent-foreground: #f5f6f7;
+  --accent-2: #22d3ee;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #f5f6f7;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.05);
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --warning-foreground: #08090b;
+
+  --hd-bg: var(--background);
+  --hd-surface: var(--surface);
+  --hd-fg: var(--foreground);
+  --hd-muted: var(--muted-foreground);
+  --hd-border: var(--border);
+  --hd-glass: var(--card);
+  --hd-glass-strong: rgba(255, 255, 255, 0.08);
+  --hd-primary: var(--primary);
+  --hd-primary-2: var(--accent-2);
+
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Shared focus ring for the dashboard's inline-style inputs (app.*.tsx),
+   which set outline:none inline with nothing replacing it. An inline
+   style always beats a stylesheet rule for the same property, so the
+   base outline:none has to live here too, not just the :focus-visible
+   override, or the inline style would just win back the removed ring. */
+.lv-input {
+  outline: none;
+}
+.lv-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}

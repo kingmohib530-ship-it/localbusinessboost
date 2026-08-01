@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioRequest } from "@/lib/twilio.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
+import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 function businessFooter(): string {
   const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
@@ -17,34 +18,6 @@ const FALLBACK_TWIML = (message: string, includeFooter = true) =>
     `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}${includeFooter ? businessFooter() : ""}</Message></Response>`,
     { headers: { "Content-Type": "text/xml" } },
   );
-
-const SERVICE_TYPE_KEYS = [
-  "hvac_tuneup",
-  "hvac_repair",
-  "hvac_install",
-  "plumbing",
-  "plumbing_emergency",
-  "roofing",
-  "electrical",
-  "cleaning",
-  "landscaping",
-  "pest_control",
-] as const;
-type ServiceTypeKey = (typeof SERVICE_TYPE_KEYS)[number];
-
-const ESTIMATED_VALUE_MAP: Record<ServiceTypeKey | "default", number> = {
-  hvac_tuneup: 150,
-  hvac_repair: 450,
-  hvac_install: 3500,
-  plumbing: 400,
-  plumbing_emergency: 650,
-  roofing: 1200,
-  electrical: 350,
-  cleaning: 200,
-  landscaping: 300,
-  pest_control: 250,
-  default: 400,
-};
 
 function deriveUrgency(scheduledMs: number): "emergency" | "same_day" | "this_week" | "scheduled" {
   const hoursOut = (scheduledMs - Date.now()) / (1000 * 60 * 60);
@@ -220,6 +193,20 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             const businessName = (missedCall as any).profiles?.business_name || "our business";
             const service = (missedCall as any).profiles?.industry || "our services";
 
+            // Single query, scoped by the indexed user_id column, capped so
+            // prompt size stays bounded even for a business with a large
+            // fact list - this is the AI's real "memory" of the business.
+            const { data: facts } = missedCall.user_id
+              ? await supabaseAdmin
+                  .from("business_facts")
+                  .select("fact_type, fact_text")
+                  .eq("user_id", missedCall.user_id)
+                  .eq("status", "active")
+                  .limit(40)
+              : { data: [] as { fact_type: string; fact_text: string }[] };
+
+            const knownFacts = (facts || []).map((f) => `- (${f.fact_type}) ${f.fact_text}`).join("\n");
+
             const res = await fetch("https://api.anthropic.com/v1/messages", {
               method: "POST",
               headers: {
@@ -238,7 +225,8 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
 5. Be warm, professional, and helpful
 6. If they want to book, ask "What days/times work best for you this week?"
 7. If they seem booked, update with "Great! We'll confirm with you shortly."
-Never make up prices. Never promise specific times. Keep it simple.`,
+${knownFacts ? `\nKnown facts about this business (real and confirmed - use them when they answer the customer's question):\n${knownFacts}\n\nFor anything NOT covered by the facts above, never make up a price or promise a specific time - stay general and offer to follow up.` : "Never make up prices. Never promise specific times."}
+Keep it simple.`,
                 messages: conversationHistory,
               }),
             });

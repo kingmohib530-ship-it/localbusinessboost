@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, FileText, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/lib/admin";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/admin/verification-review")({
   component: VerificationReviewPage,
@@ -58,6 +61,8 @@ function VerificationReviewPage() {
   const [actionMsg, setActionMsg] = useState("");
   const [actionOk, setActionOk] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     if (!allowed) return;
@@ -161,15 +166,17 @@ function VerificationReviewPage() {
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1180, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-        <ShieldCheck size={24} color="var(--primary)" strokeWidth={1.75} />
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
-          Verification review
-        </h1>
+      <div className={step} style={delay(0)}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <ShieldCheck size={24} color="var(--primary)" strokeWidth={1.75} />
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
+            Verification review
+          </h1>
+        </div>
+        <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 20 }}>
+          Review submitted business details and documents, then approve, reject, or request more info.
+        </p>
       </div>
-      <p style={{ fontSize: 14, color: "var(--muted-foreground)", marginBottom: 20 }}>
-        Review submitted business details and documents, then approve, reject, or request more info.
-      </p>
 
       {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{loadError}</p>}
 
@@ -193,12 +200,12 @@ function VerificationReviewPage() {
       <div style={{ display: "grid", gridTemplateColumns: selected ? "380px 1fr" : "1fr", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {loading && (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: 24, textAlign: "center", fontSize: 13, color: "var(--muted-foreground)" }}>
+            <div className="glass-dark" style={{ borderRadius: 14, padding: 24, textAlign: "center", fontSize: 13, color: "var(--muted-foreground)" }}>
               Loading...
             </div>
           )}
           {!loading && filtered.length === 0 && (
-            <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "40px 24px", textAlign: "center" }}>
+            <div className={`${step} glass-dark`} style={{ borderRadius: 14, padding: "40px 24px", textAlign: "center", ...delay(1) }}>
               <div style={{ width: 48, height: 48, borderRadius: 12, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
                 <ShieldCheck size={22} color="var(--primary)" strokeWidth={1.75} />
               </div>
@@ -209,12 +216,14 @@ function VerificationReviewPage() {
             </div>
           )}
           {filtered.map((p) => (
-            <div
+            <GlowPanel
               key={p.id}
+              reducedMotion={reducedMotion}
               onClick={() => { setSelectedId(p.id); setNotes(p.verification_notes || ""); setActionMsg(""); }}
+              className="glass-dark hover-lift-dark rounded-2xl"
               style={{
-                background: "var(--card)", border: `1.5px solid ${selectedId === p.id ? "var(--primary)" : "var(--border)"}`,
-                borderRadius: 14, padding: "14px 18px", cursor: "pointer",
+                border: `1.5px solid ${selectedId === p.id ? "var(--primary)" : "var(--border)"}`,
+                padding: "14px 18px", cursor: "pointer",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -229,12 +238,12 @@ function VerificationReviewPage() {
                   Submitted {new Date(p.verification_submitted_at).toLocaleDateString()}
                 </div>
               )}
-            </div>
+            </GlowPanel>
           ))}
         </div>
 
         {selected && (
-          <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
+          <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 24 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
               <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{selected.business_name || "Unnamed business"}</h2>
               <StatusBadge status={selected.verification_status} />
@@ -260,7 +269,7 @@ function VerificationReviewPage() {
               <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16 }}>No documents uploaded.</p>
             )}
             {selectedDocs.map((doc) => (
-              <div key={doc.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "var(--card)", borderRadius: 10, marginBottom: 8 }}>
+              <div key={doc.id} className="glass-dark" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 10, marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
                   <FileText size={14} color="var(--primary)" />
                   <span style={{ color: "var(--foreground)", fontWeight: 600 }}>{doc.document_type.replace(/_/g, " ")}</span>
@@ -289,7 +298,7 @@ function VerificationReviewPage() {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 placeholder="e.g. Please upload a clearer photo of your insurance certificate."
-                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical" }}
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }}
               />
             </div>
 

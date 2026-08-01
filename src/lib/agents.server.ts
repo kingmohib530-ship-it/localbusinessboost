@@ -505,7 +505,7 @@ export type AtlasLead = {
   industry?: string;
 };
 
-export type MondaySyncItem = { name: string; itemId?: number; error?: string };
+export type MondaySyncItem = { name: string; itemId?: string; error?: string };
 export type MondaySyncSummary = {
   synced: number;
   total: number;
@@ -566,7 +566,7 @@ export type ForgeNextAction = {
 
 export type ForgeMondayStatus = {
   saved: boolean;
-  itemId?: number;
+  itemId?: string;
   note?: string;
   error?: string;
 };

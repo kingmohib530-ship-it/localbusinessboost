@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
+const PAGE_SIZE = 20;
 
 async function authenticate(request: Request) {
   const authHeader = request.headers.get("authorization") || "";
@@ -65,6 +66,8 @@ export const Route = createFileRoute("/api/appointments")({
         const url = new URL(request.url);
         const start = url.searchParams.get("start");
         const end = url.searchParams.get("end");
+        const pageParam = Number(url.searchParams.get("page") ?? "0");
+        const page = Number.isInteger(pageParam) && pageParam >= 0 ? pageParam : 0;
 
         if (start && isNaN(Date.parse(start))) {
           return Response.json({ error: "Invalid 'start' date" }, { status: 400 });
@@ -73,11 +76,13 @@ export const Route = createFileRoute("/api/appointments")({
           return Response.json({ error: "Invalid 'end' date" }, { status: 400 });
         }
 
+        const from = page * PAGE_SIZE;
         let query = supabaseAdmin
           .from("appointments")
           .select("*")
           .eq("user_id", user.id)
-          .order("scheduled_at", { ascending: true });
+          .order("scheduled_at", { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
 
         if (start) query = query.gte("scheduled_at", new Date(start).toISOString());
         if (end) query = query.lte("scheduled_at", new Date(end).toISOString());
@@ -88,7 +93,8 @@ export const Route = createFileRoute("/api/appointments")({
           return Response.json({ error: "Failed to load appointments" }, { status: 500 });
         }
 
-        return Response.json({ appointments: data ?? [] });
+        const appointments = data ?? [];
+        return Response.json({ appointments, hasMore: appointments.length === PAGE_SIZE });
       },
 
       POST: async ({ request }) => {

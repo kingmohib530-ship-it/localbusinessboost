@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { BadgeCheck, Upload, Trash2, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 
 export const Route = createFileRoute("/_authenticated/app/verification")({
   component: VerificationPage,
@@ -67,6 +68,7 @@ function VerificationPage() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const { step: revealStep, delay: revealDelay } = useMountReveal();
 
   useEffect(() => { load(); }, []);
 
@@ -254,7 +256,7 @@ function VerificationPage() {
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 760, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div style={{ marginBottom: 24 }}>
+      <div className={revealStep} style={{ marginBottom: 24, ...revealDelay(0) }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <BadgeCheck size={24} color="var(--primary)" strokeWidth={1.75} />
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
@@ -265,7 +267,7 @@ function VerificationPage() {
           Verified businesses get a trust badge and access to the consumer marketplace.
         </p>
         {profile.verification_notes && (
-          <div style={{ marginTop: 12, padding: "10px 14px", background: "var(--accent)", borderRadius: 10, fontSize: 13, color: "var(--foreground)" }}>
+          <div className="glass-dark" style={{ marginTop: 12, padding: "10px 14px", borderRadius: 10, fontSize: 13, color: "var(--foreground)" }}>
             <strong>Note from our team:</strong> {profile.verification_notes}
           </div>
         )}
@@ -282,7 +284,7 @@ function VerificationPage() {
       </div>
 
       {step === 0 && (
-        <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 16 }}>Business details</h2>
           <Field label="License number">
             <TextInput value={profile.license_number ?? ""} onChange={(v) => updateField("license_number", v || null)} placeholder="e.g. C-45678" />
@@ -315,7 +317,7 @@ function VerificationPage() {
             <select
               value={profile.team_size ?? ""}
               onChange={(e) => updateField("team_size", e.target.value || null)}
-              style={selectStyle}
+              className="lv-input" style={selectStyle}
             >
               <option value="">Select…</option>
               {TEAM_SIZES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -330,7 +332,7 @@ function VerificationPage() {
       )}
 
       {step === 1 && (
-        <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Verification documents</h2>
           <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16 }}>
             Business license, insurance, and photo ID are required. Files are stored privately and only visible to you and the Lanavix review team.
@@ -364,7 +366,7 @@ function VerificationPage() {
                   </label>
                 </div>
                 {existing.map((doc) => (
-                  <div key={doc.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "var(--muted-foreground)", padding: "6px 10px", background: "var(--card)", borderRadius: 8, marginBottom: 6 }}>
+                  <div key={doc.id} className="glass-dark" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "var(--muted-foreground)", padding: "6px 10px", borderRadius: 8, marginBottom: 6 }}>
                     <span>{doc.file_name || "Uploaded file"}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <DocStatusBadge status={doc.status} />
@@ -381,7 +383,7 @@ function VerificationPage() {
       )}
 
       {step === 2 && (
-        <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 16 }}>Pricing & marketplace</h2>
           <Field label="Typical price range — low ($)">
             <TextInput
@@ -396,7 +398,7 @@ function VerificationPage() {
             />
           </Field>
           <Field label="Price unit">
-            <select value={profile.price_unit} onChange={(e) => updateField("price_unit", e.target.value)} style={selectStyle}>
+            <select value={profile.price_unit} onChange={(e) => updateField("price_unit", e.target.value)} className="lv-input" style={selectStyle}>
               {PRICE_UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
             </select>
           </Field>
@@ -414,7 +416,7 @@ function VerificationPage() {
       )}
 
       {step === 3 && (
-        <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 16 }}>Review & submit</h2>
           <SummaryRow label="Business" value={profile.business_name || "—"} />
           <SummaryRow label="License" value={profile.license_number ? `${profile.license_number} (${profile.license_state || "—"})` : "Not provided"} />
@@ -424,7 +426,7 @@ function VerificationPage() {
           <SummaryRow label="Documents uploaded" value={`${docs.length} file${docs.length === 1 ? "" : "s"}`} />
 
           {requiredMissing.length > 0 && (
-            <div style={{ marginTop: 12, padding: "10px 14px", background: "var(--muted)", borderRadius: 10, fontSize: 13, color: "var(--foreground)" }}>
+            <div className="glass-dark" style={{ marginTop: 12, padding: "10px 14px", borderRadius: 10, fontSize: 13, color: "var(--foreground)" }}>
               Missing required document{requiredMissing.length > 1 ? "s" : ""}: {requiredMissing.map((d) => d.label).join(", ")}.
               You can still submit, but review may be delayed until these are provided.
             </div>
@@ -468,7 +470,7 @@ function VerificationPage() {
 function StatusScreen({ icon, title, body, notes, good }: { icon: React.ReactNode; title: string; body: string; notes: string | null; good?: boolean }) {
   return (
     <div style={{ padding: "24px 32px", maxWidth: 620, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "40px 32px", textAlign: "center" }}>
+      <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: "40px 32px", textAlign: "center" }}>
         <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           {icon}
         </div>
@@ -517,14 +519,15 @@ function TextInput({ value, onChange, placeholder, maxLength }: { value: string;
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       maxLength={maxLength}
-      style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
+      className="lv-input"
+      style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }}
     />
   );
 }
 
 const selectStyle: React.CSSProperties = {
   width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14,
-  color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+  color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box",
 };
 
 function ToggleField({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {

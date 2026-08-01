@@ -118,6 +118,102 @@ interface RawAudit {
   };
 }
 
+const VALID_EFFORTS = new Set(["quick", "medium", "strategic"]);
+const VALID_IMPACTS = new Set(["high", "medium", "low"]);
+const VALID_GRADES = new Set(["Excellent", "Good", "Fair", "Needs work", "Critical"]);
+const CATEGORY_KEYS = ["visibility", "reputation", "leadCapture", "conversion"] as const;
+
+function isValidFix(x: unknown): x is AuditFix {
+  if (!x || typeof x !== "object") return false;
+  const f = x as Partial<AuditFix>;
+  return (
+    typeof f.text === "string" &&
+    f.text.length > 0 &&
+    typeof f.effort === "string" &&
+    VALID_EFFORTS.has(f.effort) &&
+    typeof f.impact === "string" &&
+    VALID_IMPACTS.has(f.impact)
+  );
+}
+
+function isValidRawCategory(x: unknown): x is RawCategory {
+  if (!x || typeof x !== "object") return false;
+  const c = x as Partial<RawCategory>;
+  return (
+    typeof c.score === "number" &&
+    c.score >= 0 &&
+    c.score <= 100 &&
+    typeof c.headline === "string" &&
+    c.headline.length > 0 &&
+    Array.isArray(c.fixes) &&
+    c.fixes.length === 3 &&
+    c.fixes.every(isValidFix)
+  );
+}
+
+/** Guards against the AI returning a malformed shape (missing field, wrong type) before it's trusted and graded. */
+function isValidRawAudit(x: unknown): x is RawAudit {
+  if (!x || typeof x !== "object") return false;
+  const a = x as Partial<RawAudit> & { categories?: Record<string, unknown> };
+  return (
+    typeof a.overallScore === "number" &&
+    a.overallScore >= 0 &&
+    a.overallScore <= 100 &&
+    typeof a.executiveSummary === "string" &&
+    a.executiveSummary.length > 0 &&
+    typeof a.revenueOpportunity === "string" &&
+    a.revenueOpportunity.length > 0 &&
+    typeof a.revenueOpportunityDetail === "string" &&
+    a.revenueOpportunityDetail.length > 0 &&
+    typeof a.topWin === "string" &&
+    a.topWin.length > 0 &&
+    !!a.categories &&
+    typeof a.categories === "object" &&
+    CATEGORY_KEYS.every((k) => isValidRawCategory(a.categories![k]))
+  );
+}
+
+function isValidAuditCategory(x: unknown): x is AuditCategory {
+  if (!x || typeof x !== "object") return false;
+  const c = x as Partial<AuditCategory>;
+  return (
+    typeof c.score === "number" &&
+    c.score >= 0 &&
+    c.score <= 100 &&
+    typeof c.grade === "string" &&
+    VALID_GRADES.has(c.grade) &&
+    typeof c.headline === "string" &&
+    c.headline.length > 0 &&
+    Array.isArray(c.fixes) &&
+    c.fixes.length === 3 &&
+    c.fixes.every(isValidFix)
+  );
+}
+
+/** Guards saveAuditLead's client-supplied result — a client could otherwise submit any fabricated score/copy to be stored and emailed. */
+function isValidAuditResult(x: unknown): x is AuditResult {
+  if (!x || typeof x !== "object") return false;
+  const r = x as Partial<AuditResult> & { categories?: Record<string, unknown> };
+  return (
+    typeof r.businessName === "string" &&
+    r.businessName.length > 0 &&
+    typeof r.industry === "string" &&
+    r.industry.length > 0 &&
+    typeof r.overallScore === "number" &&
+    r.overallScore >= 0 &&
+    r.overallScore <= 100 &&
+    typeof r.overallGrade === "string" &&
+    VALID_GRADES.has(r.overallGrade) &&
+    typeof r.executiveSummary === "string" &&
+    typeof r.revenueOpportunity === "string" &&
+    typeof r.revenueOpportunityDetail === "string" &&
+    typeof r.topWin === "string" &&
+    !!r.categories &&
+    typeof r.categories === "object" &&
+    CATEGORY_KEYS.every((k) => isValidAuditCategory(r.categories![k]))
+  );
+}
+
 function addGrades(raw: RawAudit, input: AuditInput, technicalCheck: WebsiteTechnicalCheck): AuditResult {
   const withGrade = (c: RawCategory): AuditCategory => ({ ...c, grade: GRADE(c.score) });
   return {
@@ -220,11 +316,14 @@ const auditServerFn = createServerFn({ method: "POST" })
     const match = clean.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("Audit returned invalid JSON. Please try again.");
 
-    let parsed: RawAudit;
+    let parsed: unknown;
     try {
-      parsed = JSON.parse(match[0]) as RawAudit;
+      parsed = JSON.parse(match[0]);
     } catch {
       throw new Error("Audit returned invalid JSON. Please try again.");
+    }
+    if (!isValidRawAudit(parsed)) {
+      throw new Error("Audit returned an unexpected shape. Please try again.");
     }
 
     return addGrades(parsed, data, technicalCheck);
@@ -241,6 +340,15 @@ export interface AuditLeadInput {
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function renderAuditReportEmail(result: AuditResult): { subject: string; text: string; html: string } {
@@ -271,24 +379,27 @@ ${textSections}
 
 — Lanavix (https://www.lanavix.com)`;
 
+  // Every value below traces back to either the AI's audit output or the
+  // client-supplied result object saveAuditLead validates — none of it is
+  // safe to drop straight into HTML, so it's escaped before interpolation.
   const htmlSections = cats.map(([key, cat]) => {
-    const fixes = cat.fixes.map((f) => `<li style="margin-bottom:8px;">${f.text}</li>`).join("");
-    return `<h3 style="margin:24px 0 4px;color:#0F172A;">${catLabel[key] || key} — ${cat.score}/100 (${cat.grade})</h3>
-<p style="color:#475569;font-style:italic;margin:0 0 8px;">${cat.headline}</p>
+    const fixes = cat.fixes.map((f) => `<li style="margin-bottom:8px;">${escapeHtml(f.text)}</li>`).join("");
+    return `<h3 style="margin:24px 0 4px;color:#0F172A;">${escapeHtml(catLabel[key] || key)} — ${cat.score}/100 (${escapeHtml(cat.grade)})</h3>
+<p style="color:#475569;font-style:italic;margin:0 0 8px;">${escapeHtml(cat.headline)}</p>
 <ol style="color:#0F172A;padding-left:20px;margin:0;">${fixes}</ol>`;
   }).join("");
 
   const html = `<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;color:#0F172A;">
 <h1 style="font-size:22px;margin-bottom:4px;">Your Lanavix Business Audit</h1>
-<p style="color:#475569;margin-top:0;">${result.businessName}</p>
-<p style="font-size:32px;font-weight:800;margin:16px 0 0;">${result.overallScore}/100 <span style="font-size:16px;font-weight:600;color:#475569;">(${result.overallGrade})</span></p>
-<p style="color:#475569;">${result.executiveSummary}</p>
+<p style="color:#475569;margin-top:0;">${escapeHtml(result.businessName)}</p>
+<p style="font-size:32px;font-weight:800;margin:16px 0 0;">${result.overallScore}/100 <span style="font-size:16px;font-weight:600;color:#475569;">(${escapeHtml(result.overallGrade)})</span></p>
+<p style="color:#475569;">${escapeHtml(result.executiveSummary)}</p>
 <div style="background:#ECFDF5;border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:16px;margin:16px 0;">
-  <strong>Revenue opportunity: ${result.revenueOpportunity}</strong>
-  <p style="margin:4px 0 0;color:#047857;">${result.revenueOpportunityDetail}</p>
+  <strong>Revenue opportunity: ${escapeHtml(result.revenueOpportunity)}</strong>
+  <p style="margin:4px 0 0;color:#047857;">${escapeHtml(result.revenueOpportunityDetail)}</p>
 </div>
 <div style="background:#EEF2FF;border-radius:12px;padding:16px;margin:16px 0;">
-  <strong>Top win:</strong> ${result.topWin}
+  <strong>Top win:</strong> ${escapeHtml(result.topWin)}
 </div>
 ${htmlSections}
 <p style="margin-top:32px;color:#94A3B8;font-size:13px;">— Lanavix · <a href="https://www.lanavix.com">lanavix.com</a></p>
@@ -303,10 +414,10 @@ const saveAuditLeadServerFn = createServerFn({ method: "POST" })
     if (!d.email || typeof d.email !== "string" || !isValidEmail(d.email)) {
       throw new Error("A valid email address is required");
     }
-    if (!d.result || typeof d.result !== "object") {
-      throw new Error("Missing audit result");
+    if (!d.result || !isValidAuditResult(d.result)) {
+      throw new Error("Invalid audit result");
     }
-    return { email: d.email, result: d.result as AuditResult };
+    return { email: d.email, result: d.result };
   })
   .handler(async ({ data }) => {
     const ip =

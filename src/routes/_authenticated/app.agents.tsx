@@ -1,9 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, type CSSProperties } from "react";
 import { Target, Star, Calendar, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LeadGenerator from "@/components/LeadGenerator";
+import { StarRatingInput } from "@/components/StarRatingInput";
 import { toast } from "sonner";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/agents")({
   component: AgentsHub,
@@ -104,6 +108,20 @@ const STEPS_BY_CAMPAIGN: Record<string, string[]> = {
   ],
 };
 
+function CrewUpgradeBanner({ feature }: { feature: string }) {
+  return (
+    <div className="glass-dark" style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>{feature} is a Crew feature</div>
+        <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to Crew or Agency to unlock it.</div>
+      </div>
+      <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+        Upgrade now →
+      </Link>
+    </div>
+  );
+}
+
 const inputStyle: CSSProperties = {
   width: "100%",
   padding: "10px 14px",
@@ -113,7 +131,6 @@ const inputStyle: CSSProperties = {
   fontFamily: "inherit",
   color: "var(--foreground)",
   background: "var(--input)",
-  outline: "none",
   boxSizing: "border-box",
 };
 
@@ -131,21 +148,27 @@ function AgentsHub() {
   const [reviewResponse, setReviewResponse] = useState<string | null>(null);
 
   const [bookingPlan, setBookingPlan] = useState<BookingPlanResult | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       supabase
         .from("profiles")
-        .select("industry, city")
+        .select("industry, city, subscription_tier")
         .eq("id", user.id)
         .single()
         .then(({ data }) => {
           if (data?.industry) setIndustry(data.industry);
           if (data?.city) setCity(data.city);
+          setSubscriptionTier(data?.subscription_tier ?? null);
         });
     });
   }, []);
+
+  const isCrewPlus = subscriptionTier === "crew" || subscriptionTier === "agency";
 
   const campaign = CAMPAIGNS.find((c) => c.id === selected);
   const steps = STEPS_BY_CAMPAIGN[selected ?? ""] ?? [];
@@ -303,7 +326,7 @@ function AgentsHub() {
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div style={{ marginBottom: 28 }}>
+      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>Campaigns</h1>
         <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Pick a campaign type and run it end-to-end.</p>
       </div>
@@ -311,9 +334,10 @@ function AgentsHub() {
       {/* Grid */}
       {!selected && !running && !hasResult && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
-          {CAMPAIGNS.map(c => (
-            <div key={c.id} onClick={() => c.active && setSelected(c.id)}
-              style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, cursor: c.active ? "pointer" : "default", opacity: c.active ? 1 : 0.55, position: "relative" }}>
+          {CAMPAIGNS.map((c, i) => (
+            <GlowPanel key={c.id} reducedMotion={reducedMotion} onClick={() => c.active && setSelected(c.id)}
+              className={`${step} glass-dark hover-lift-dark rounded-2xl`}
+              style={{ padding: 22, cursor: c.active ? "pointer" : "default", opacity: c.active ? 1 : 0.55, ...delay(i + 1) }}>
               {!c.active && <div style={{ position: "absolute", top: 12, right: 12, fontSize: 11, fontWeight: 600, background: "var(--secondary)", color: "var(--muted-foreground)", padding: "2px 8px", borderRadius: 4 }}>Coming soon</div>}
               <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
                 <c.Icon size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -322,7 +346,7 @@ function AgentsHub() {
               <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5, marginBottom: 12 }}>{c.desc}</div>
               <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: c.active ? 12 : 0 }}>{c.time}</div>
               {c.active && <div style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)" }}>Run this campaign →</div>}
-            </div>
+            </GlowPanel>
           ))}
         </div>
       )}
@@ -337,8 +361,9 @@ function AgentsHub() {
 
       {/* Form: Competitor Intelligence */}
       {selected === "competitor-intel" && !running && !hasResult && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          {!isCrewPlus && <CrewUpgradeBanner feature="Competitor Intelligence" />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Search size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -349,17 +374,17 @@ function AgentsHub() {
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
             <input value={industry} onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           <div style={{ marginBottom: 22 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
             <input value={city} onChange={e => setCity(e.target.value)}
               placeholder="e.g. Atlanta GA, Dallas TX..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runCampaign}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={runCampaign} disabled={!isCrewPlus}
+            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
             Run Competitor Intelligence →
           </button>
           <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~20 seconds</p>
@@ -368,8 +393,9 @@ function AgentsHub() {
 
       {/* Form: Booking Follow-Up Plan */}
       {selected === "booking-booster" && !running && !hasResult && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          {!isCrewPlus && <CrewUpgradeBanner feature="Booking Follow-Up Plan" />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Calendar size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -380,17 +406,17 @@ function AgentsHub() {
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
             <input value={industry} onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           <div style={{ marginBottom: 22 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
             <input value={city} onChange={e => setCity(e.target.value)}
               placeholder="e.g. Atlanta GA, Dallas TX..."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runCampaign}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={runCampaign} disabled={!isCrewPlus}
+            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
             Run Booking Follow-Up Plan →
           </button>
           <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~30 seconds</p>
@@ -399,8 +425,9 @@ function AgentsHub() {
 
       {/* Form: Review Response */}
       {selected === "review-recovery" && !running && !hasResult && (
-        <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
+          {!isCrewPlus && <CrewUpgradeBanner feature="Review Response" />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Star size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -409,29 +436,24 @@ function AgentsHub() {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Star rating</label>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[1, 2, 3, 4, 5].map(n => (
-                <span key={n} onClick={() => setStarRating(n)}
-                  style={{ fontSize: 24, cursor: "pointer", color: n <= starRating ? "var(--primary)" : "var(--border)" }}>★</span>
-              ))}
-            </div>
+            <StarRatingInput rating={starRating} onChange={setStarRating} size={24} />
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Reviewer name</label>
             <input value={reviewerName} onChange={e => setReviewerName(e.target.value)}
               placeholder="e.g. Sarah M."
-              style={inputStyle} />
+              className="lv-input" style={inputStyle} />
           </div>
           <div style={{ marginBottom: 22 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Review text *</label>
             <textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
               placeholder="Paste the review here..."
               rows={4}
-              style={{ ...inputStyle, resize: "vertical" }} />
+              className="lv-input" style={{ ...inputStyle, resize: "vertical" }} />
           </div>
           {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runReviewRecovery}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={runReviewRecovery} disabled={!isCrewPlus}
+            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
             Run Review Response →
           </button>
           <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~10 seconds</p>
@@ -440,7 +462,7 @@ function AgentsHub() {
 
       {/* Loading */}
       {running && (
-        <div style={{ background: "var(--elevated)", border: "1px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 520 }}>
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
           <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--primary)", marginBottom: 8 }}>Running campaign</div>
           <div style={{ fontSize: 19, fontWeight: 700, color: "var(--foreground)", marginBottom: 24 }}>
             {selected === "review-recovery"
@@ -464,7 +486,7 @@ function AgentsHub() {
 
       {/* Results: Competitor Intelligence */}
       {competitorResult && !running && (
-        <div>
+        <div className="hd-blur-in">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>Market analysis for {industry} in {city}</h2>
@@ -481,7 +503,7 @@ function AgentsHub() {
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Competitor archetypes</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
             {competitorResult.competitors.map((c, i) => (
-              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 20px" }}>
+              <div key={i} className="glass-dark" style={{ borderRadius: 14, padding: "16px 20px" }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>{c.name}</div>
                 <p style={{ fontSize: 13, color: "var(--accent-2)", margin: "0 0 4px" }}><strong>Strength:</strong> {c.strength}</p>
                 <p style={{ fontSize: 13, color: "var(--destructive)", margin: 0 }}><strong>Weakness:</strong> {c.weakness}</p>
@@ -499,7 +521,7 @@ function AgentsHub() {
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Sharp insights</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {competitorResult.insights.map((n, i) => (
-              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--muted-foreground)" }}>{n}</div>
+              <div key={i} className="glass-dark" style={{ borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--muted-foreground)" }}>{n}</div>
             ))}
           </div>
         </div>
@@ -507,7 +529,7 @@ function AgentsHub() {
 
       {/* Results: Review Response */}
       {reviewResponse && !running && (
-        <div style={{ maxWidth: 680 }}>
+        <div className="hd-blur-in" style={{ maxWidth: 680 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>Response ready</h2>
@@ -518,7 +540,7 @@ function AgentsHub() {
               <button onClick={() => { setReviewResponse(null); setSelected(null); setReviewText(""); setReviewerName(""); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
             </div>
           </div>
-          <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "18px 20px" }}>
+          <div className="glass-dark" style={{ borderRadius: 14, padding: "18px 20px" }}>
             <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.6, margin: 0 }}>{reviewResponse}</p>
           </div>
         </div>
@@ -526,7 +548,7 @@ function AgentsHub() {
 
       {/* Results: Booking Follow-Up Plan */}
       {bookingPlan && !running && (
-        <div style={{ maxWidth: 760 }}>
+        <div className="hd-blur-in" style={{ maxWidth: 760 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>Booking plan for {industry} in {city}</h2>
@@ -558,7 +580,7 @@ function AgentsHub() {
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Follow-up flow</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
             {bookingPlan.steps.map((s, i) => (
-              <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "14px 18px", display: "flex", gap: 12 }}>
+              <div key={i} className="glass-dark" style={{ borderRadius: 14, padding: "14px 18px", display: "flex", gap: 12 }}>
                 <span style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--accent)", color: "var(--primary)", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 3 }}>{s.action}</div>
@@ -573,7 +595,7 @@ function AgentsHub() {
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Email templates</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
                 {bookingPlan.emailTemplates.map((t, i) => (
-                  <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "14px 18px" }}>
+                  <div key={i} className="glass-dark" style={{ borderRadius: 14, padding: "14px 18px" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>{t.name}</div>
                     <div style={{ fontSize: 13, color: "var(--primary)", marginBottom: 6 }}>Subject: {t.subject}</div>
                     <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, whiteSpace: "pre-wrap" }}>{t.body}</p>
@@ -588,7 +610,7 @@ function AgentsHub() {
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>SMS templates</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
                 {bookingPlan.smsTemplates.map((t, i) => (
-                  <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>
+                  <div key={i} className="glass-dark" style={{ borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>
                     <strong style={{ color: "var(--foreground)" }}>{t.name}:</strong> <span style={{ color: "var(--muted-foreground)" }}>{t.body}</span>
                   </div>
                 ))}
@@ -601,7 +623,7 @@ function AgentsHub() {
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Week 1 action plan</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
                 {bookingPlan.nextActions.map((a, i) => (
-                  <div key={i} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 14px" }}>
+                  <div key={i} className="glass-dark" style={{ borderRadius: 10, padding: "10px 14px" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>
                       {a.title}
                       {a.eta && <span style={{ fontWeight: 500, color: "var(--muted-foreground)" }}> · {a.eta}</span>}

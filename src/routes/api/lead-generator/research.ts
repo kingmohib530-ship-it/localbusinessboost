@@ -209,12 +209,17 @@ export const Route = createFileRoute("/api/lead-generator/research")({
             }),
           );
 
-          await logActivity(
+          const logged = await logActivity(
             user.id,
             "lead_generator_research",
             `Researched ${inserted.length} leads in ${city} (${industry})`,
             { industry, city, leadCount: inserted.length },
           );
+          if (!logged) {
+            console.error(
+              `[lead-generator/research] quota-tracking log failed for user=${user.id} — this run won't count against their Solo monthly cap`,
+            );
+          }
 
           return Response.json({ leads: inserted, count: inserted.length });
         } catch (err) {

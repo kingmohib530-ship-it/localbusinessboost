@@ -98,3 +98,12 @@ export const PRICING_PLANS: Record<PlanId, PricingPlanConfig> = {
 
 /** Marketed/purchasable plans in display order — excludes "starter". */
 export const PAID_PLAN_IDS: PlanId[] = ["solo", "crew", "agency"];
+
+/**
+ * Solo-tier monthly caps, matching the feature list above. Shared between
+ * planLimits.server.ts (which enforces them) and any client page that
+ * shows a subscriber their usage against them, so the two can't drift
+ * apart. Crew and Agency have no cap on either feature.
+ */
+export const SOLO_REVIEW_REQUEST_MONTHLY_CAP = 100;
+export const SOLO_LEAD_BLAST_MONTHLY_CAP = 5;

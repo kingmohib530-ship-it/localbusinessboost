@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { DollarSign, Calendar, Star, Target, TrendingUp, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { GlowPanel } from "@/components/GlowPanel";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: TodayDashboard,
@@ -80,9 +83,15 @@ const QUICK_WINS = [
   },
 ];
 
+const ACTIVITY_PAGE_SIZE = 20;
+
 function TodayDashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [activityLoadingMore, setActivityLoadingMore] = useState(false);
+  const [activityHasMore, setActivityHasMore] = useState(false);
+  const [activityPageIndex, setActivityPageIndex] = useState(0);
+  const [outboundLeadsSent, setOutboundLeadsSent] = useState(0);
   const [missedCalls, setMissedCalls] = useState<MissedCallRow[]>([]);
   const [conversations, setConversations] = useState<SmsConversationRow[]>([]);
   const [reviewResponses, setReviewResponses] = useState<ReviewResponseRow[]>([]);
@@ -96,9 +105,10 @@ function TodayDashboard() {
         setError("");
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        const monthStartIso = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
         const [
           { data: profileData },
-          { data: activityData },
+          { data: leadBlastData },
           { data: missedCallData },
           { data: conversationData },
           { data: reviewResponseData },
@@ -109,12 +119,16 @@ function TodayDashboard() {
             .select("full_name, business_name, industry, subscription_tier, verification_status")
             .eq("id", user.id)
             .single(),
+          // Scoped to this calendar month and this activity type specifically,
+          // rather than deriving from the paginated "recent activity" list
+          // below - that list only ever holds whatever page the user has
+          // loaded, which isn't a safe source for a stat tile.
           supabase
             .from("activity_log")
-            .select("id, type, summary, metadata, created_at")
+            .select("metadata")
             .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(50),
+            .eq("type", "lead_blast")
+            .gte("created_at", monthStartIso),
           supabase
             .from("missed_calls")
             .select("status, called_at")
@@ -135,7 +149,10 @@ function TodayDashboard() {
             .neq("status", "cancelled"),
         ]);
         setProfile(profileData);
-        setActivity((activityData as ActivityRow[]) ?? []);
+        const leadBlastRows = (leadBlastData as Array<{ metadata: Record<string, unknown> | null }>) ?? [];
+        setOutboundLeadsSent(
+          leadBlastRows.reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0),
+        );
         setMissedCalls((missedCallData as MissedCallRow[]) ?? []);
         setConversations((conversationData as SmsConversationRow[]) ?? []);
         setReviewResponses((reviewResponseData as ReviewResponseRow[]) ?? []);
@@ -148,7 +165,31 @@ function TodayDashboard() {
       }
     }
     loadDashboard();
+    loadActivity(0);
   }, []);
+
+  async function loadActivity(page: number) {
+    if (page > 0) setActivityLoadingMore(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setActivityLoadingMore(false); return; }
+    const from = page * ACTIVITY_PAGE_SIZE;
+    const { data, error: activityError } = await supabase
+      .from("activity_log")
+      .select("id, type, summary, metadata, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range(from, from + ACTIVITY_PAGE_SIZE - 1);
+    if (activityError) {
+      console.error("[dashboard] failed to load activity", activityError);
+    }
+    const rows = (data as ActivityRow[]) ?? [];
+    setActivity((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setActivityHasMore(rows.length === ACTIVITY_PAGE_SIZE);
+    setActivityLoadingMore(false);
+  }
+
+  const reducedMotion = usePrefersReducedMotion();
+  const { step, delay } = useMountReveal();
 
   const name = profile?.business_name || profile?.full_name || null;
   const isFree = !profile?.subscription_tier || profile?.subscription_tier === "starter";
@@ -169,9 +210,6 @@ function TodayDashboard() {
   const avgStars = ratedReviews.length > 0
     ? (ratedReviews.reduce((sum, r) => sum + (r.star_rating ?? 0), 0) / ratedReviews.length).toFixed(1)
     : null;
-
-  const leadBlastThisMonth = activity.filter((a) => a.type === "lead_blast" && inThisMonth(a.created_at));
-  const outboundLeadsSent = leadBlastThisMonth.reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0);
 
   const conversationsThisMonth = conversations.filter((c) => inThisMonth(c.sent_at));
   const conversationsHandled = new Set(
@@ -221,7 +259,7 @@ function TodayDashboard() {
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter, -apple-system, sans-serif" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
+      <div className={step} style={{ marginBottom: 32, ...delay(0) }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>
           {loading ? "Loading..." : name ? `Welcome back, ${name}` : "Welcome to Lanavix"}
         </h1>
@@ -234,7 +272,7 @@ function TodayDashboard() {
 
       {/* Upgrade banner for free users */}
       {isFree && !loading && (
-        <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>You don't have an active plan yet</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to unlock the receptionist, review automation, and Local Lead Blast.</div>
@@ -247,7 +285,7 @@ function TodayDashboard() {
 
       {/* Verification banner */}
       {!loading && profile?.verification_status === "unverified" && (
-        <div style={{ background: "var(--accent)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Get verified</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Earn a trust badge and unlock the consumer marketplace — takes about 5 minutes.</div>
@@ -258,7 +296,7 @@ function TodayDashboard() {
         </div>
       )}
       {!loading && profile?.verification_status === "pending" && (
-        <div style={{ background: "var(--elevated)", borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, border: "1px solid var(--border)" }}>
+        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Verification in review</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>We're reviewing your documents — usually within 1–2 business days.</div>
@@ -268,23 +306,33 @@ function TodayDashboard() {
 
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 32 }}>
-        {stats.map((s) => (
-          <div key={s.label} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+        {stats.map((s, i) => (
+          <GlowPanel
+            key={s.label}
+            reducedMotion={reducedMotion}
+            className={`${step} glass-dark hover-lift-dark rounded-2xl`}
+            style={{ padding: "16px 18px", ...delay(i + 2) }}
+          >
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
               <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
             </div>
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{loading ? "—" : s.value}</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
             {s.note && <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 2 }}>{s.note}</div>}
-          </div>
+          </GlowPanel>
         ))}
       </div>
 
       {/* Quick wins */}
-      <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Quick wins — pick one to start</h2>
+      <h2 className={step} style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14, ...delay(8) }}>Quick wins — pick one to start</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
-        {QUICK_WINS.map((w) => (
-          <div key={w.title} style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 22, display: "flex", flexDirection: "column", gap: 10 }}>
+        {QUICK_WINS.map((w, i) => (
+          <GlowPanel
+            key={w.title}
+            reducedMotion={reducedMotion}
+            className={`${step} glass-dark hover-lift-dark rounded-2xl`}
+            style={{ padding: 22, display: "flex", flexDirection: "column", gap: 10, ...delay(i + 9) }}
+          >
             <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <w.Icon size={18} color="var(--primary)" strokeWidth={1.75} />
             </div>
@@ -295,12 +343,12 @@ function TodayDashboard() {
             <Link to={w.href} style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)", textDecoration: "none", marginTop: "auto" }}>
               {w.action}
             </Link>
-          </div>
+          </GlowPanel>
         ))}
       </div>
 
       {/* Recent activity */}
-      <div style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 24 }}>
+      <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, ...delay(12) }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Recent activity</h2>
         {loading && (
           <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Loading...</p>
@@ -310,12 +358,20 @@ function TodayDashboard() {
         )}
         {activity.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            {activity.slice(0, 8).map((a) => (
+            {activity.map((a) => (
               <div key={a.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
                 <span style={{ color: "var(--foreground)" }}>{a.summary}</span>
                 <span style={{ color: "var(--muted-foreground)", whiteSpace: "nowrap" }}>{timeAgo(a.created_at)}</span>
               </div>
             ))}
+            {activityHasMore && (
+              <button
+                onClick={() => { const next = activityPageIndex + 1; setActivityPageIndex(next); loadActivity(next); }}
+                disabled={activityLoadingMore}
+                style={{ display: "block", margin: "12px auto 0", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                {activityLoadingMore ? "Loading..." : "Load more"}
+              </button>
+            )}
           </div>
         )}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

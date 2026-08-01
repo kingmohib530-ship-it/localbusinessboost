@@ -56,7 +56,8 @@ function isHttpsUrl(value: string): string | null {
 function isSupabaseUrl(value: string): string | null {
   const urlError = isHttpsUrl(value);
   if (urlError) return urlError;
-  return value.includes(".supabase.co") ? null : "must be a *.supabase.co URL";
+  const hostname = new URL(value).hostname.toLowerCase();
+  return hostname.endsWith(".supabase.co") ? null : "must be a *.supabase.co URL";
 }
 
 function minLength(n: number) {
@@ -310,6 +311,7 @@ export function isIntegrationReady(category: EnvCategory): boolean {
   return ENV_VARS.filter((v) => v.category === category).every((def) => {
     const value = process.env[def.name];
     if (!value) return !def.required;
+    if (!def.required) return true; // present but optional — an invalid value here shouldn't block readiness
     return !def.validate?.(value);
   });
 }

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PRICING_PLANS, type PlanId } from "@/lib/pricingPlans";
+import { PRICING_PLANS, type PlanId, SOLO_REVIEW_REQUEST_MONTHLY_CAP, SOLO_LEAD_BLAST_MONTHLY_CAP } from "@/lib/pricingPlans";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   component: Settings,
@@ -18,12 +19,35 @@ const VERIFICATION_LABELS: Record<string, string> = {
   elite: "Verified Elite",
 };
 
+function UsageBar({ label, used, cap }: { label: string; used: number; cap: number }) {
+  const pct = Math.min(100, Math.round((used / cap) * 100));
+  const nearCap = used >= cap;
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={nearCap ? "text-destructive font-medium" : "text-foreground"}>
+          {used}/{cap} this month
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className={nearCap ? "h-full bg-destructive" : "h-full bg-primary"}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function Settings() {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [planId, setPlanId] = useState<PlanId>("starter");
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [verificationStatus, setVerificationStatus] = useState<string>("unverified");
+  const [reviewRequestsThisMonth, setReviewRequestsThisMonth] = useState(0);
+  const [leadBlastRunsThisMonth, setLeadBlastRunsThisMonth] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -31,6 +55,7 @@ function Settings() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -47,6 +72,20 @@ function Settings() {
       setSubscriptionStatus(profile?.subscription_status ?? null);
       setVerificationStatus(profile?.verification_status || "unverified");
       setLoading(false);
+
+      // Only Solo has caps worth showing usage against — Crew/Agency are
+      // unlimited on both, so skip the count queries for every other tier.
+      if (profile?.subscription_tier === "solo") {
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+        const [reviewRequests, leadBlastRuns] = await Promise.all([
+          supabase.from("review_requests").select("id", { count: "exact", head: true })
+            .eq("user_id", data.user.id).gte("sent_at", monthStart),
+          supabase.from("activity_log").select("id", { count: "exact", head: true })
+            .eq("user_id", data.user.id).eq("type", "lead_generator_research").gte("created_at", monthStart),
+        ]);
+        setReviewRequestsThisMonth(reviewRequests.count ?? 0);
+        setLeadBlastRunsThisMonth(leadBlastRuns.count ?? 0);
+      }
     });
   }, []);
 
@@ -119,15 +158,15 @@ function Settings() {
 
   return (
     <div className="p-8 space-y-6 max-w-3xl">
-      <div>
+      <div className={step} style={delay(0)}>
         <h1 className="text-3xl font-display font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1">Your workspace and account.</p>
       </div>
       {loading ? (
-        <Card className="p-6 text-center text-sm text-muted-foreground">Loading...</Card>
+        <Card className="p-6 text-center text-sm text-muted-foreground backdrop-blur-xl">Loading...</Card>
       ) : (
         <>
-          <Card className="p-6 space-y-3">
+          <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(1)}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs text-muted-foreground">Account</div>
@@ -141,7 +180,7 @@ function Settings() {
               </Button>
             )}
           </Card>
-          <Card className="p-6 space-y-3">
+          <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(2)}>
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Plan</h2>
               <Badge>{PRICING_PLANS[planId].name}</Badge>
@@ -155,14 +194,37 @@ function Settings() {
                     ? "Your last payment failed — update your billing details to avoid losing access."
                     : `You're subscribed to ${PRICING_PLANS[planId].name} ($${PRICING_PLANS[planId].price}/mo).`}
             </p>
+            {planId === "solo" && !loading && (
+              <div className="space-y-3 pt-1">
+                <UsageBar
+                  label="Review request texts"
+                  used={reviewRequestsThisMonth}
+                  cap={SOLO_REVIEW_REQUEST_MONTHLY_CAP}
+                />
+                <UsageBar
+                  label="Local Lead Blast runs"
+                  used={leadBlastRunsThisMonth}
+                  cap={SOLO_LEAD_BLAST_MONTHLY_CAP}
+                />
+              </div>
+            )}
             <Button asChild variant="outline" size="sm">
               <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
+            </Button>
+          </Card>
+          <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(3)}>
+            <h2 className="font-semibold">Business facts</h2>
+            <p className="text-sm text-muted-foreground">
+              See what Lanavix knows about your business, and add or correct facts your AI receptionist can use.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/app/business-facts">What Lanavix knows →</Link>
             </Button>
           </Card>
         </>
       )}
 
-      <Card className="p-6 space-y-3">
+      <Card className={`p-6 space-y-3 backdrop-blur-xl hover-lift-dark ${step}`} style={delay(4)}>
         <h2 className="font-semibold">Your data</h2>
         <p className="text-sm text-muted-foreground">
           Download a copy of everything Lanavix has stored for your account —
@@ -176,7 +238,7 @@ function Settings() {
         )}
       </Card>
 
-      <Card className="p-6 space-y-3 border-destructive/30">
+      <Card className={`p-6 space-y-3 border-destructive/30 backdrop-blur-xl ${step}`} style={delay(5)}>
         <h2 className="font-semibold text-destructive">Danger zone</h2>
         <p className="text-sm text-muted-foreground">
           Permanently delete your account and all associated data. This cannot be undone.
