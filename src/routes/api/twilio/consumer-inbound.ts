@@ -158,6 +158,49 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
             message: messageBody,
           });
 
+          // The booking confirmation tells consumers to reply CANCEL, so
+          // this has to actually work rather than fall through to the AI
+          // qualification flow (which has no notion of an existing
+          // booking). Only cancellation is handled here, not a full
+          // interactive reschedule - offering a new time back to the
+          // business would need its own conversation flow, a deliberately
+          // separate feature rather than something to fold in silently here.
+          if (/^cancel$/i.test(messageBody.trim())) {
+            const { data: activeAppt } = await supabaseAdmin
+              .from("appointments")
+              .select("id, user_id, service_type")
+              .eq("customer_phone", from)
+              .eq("source", "consumer_marketplace")
+              .eq("status", "confirmed")
+              .order("scheduled_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            let cancelMessage: string;
+            if (activeAppt) {
+              await supabaseAdmin.from("appointments").update({ status: "cancelled" }).eq("id", activeAppt.id);
+              await supabaseAdmin.from("activity_log").insert({
+                user_id: activeAppt.user_id,
+                type: "consumer_marketplace_cancellation",
+                summary: `Consumer cancelled their ${activeAppt.service_type} booking`,
+                metadata: { appointmentId: activeAppt.id },
+              });
+              cancelMessage = "Your appointment has been cancelled. Text us again anytime you need service.";
+            } else {
+              cancelMessage = "You don't have an active booking to cancel. Let us know if you need something else!";
+            }
+
+            await supabaseAdmin.from("consumer_marketplace_messages").insert({
+              caller_phone: from,
+              direction: "outbound",
+              message: cancelMessage,
+              user_id: activeAppt?.user_id ?? null,
+              appointment_id: activeAppt?.id ?? null,
+            });
+
+            return TWIML(`${cancelMessage}${CONSUMER_FOOTER}`);
+          }
+
           const conversationHistory = [
             ...(history || []).map((m: { direction: string; message: string }) => ({
               role: m.direction === "outbound" ? "assistant" : "user",
@@ -238,7 +281,7 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
                   const businessName = match.business_name || "Your local pro";
                   const callClause = match.twilio_phone_number ? ` or call ${match.twilio_phone_number}` : "";
                   const ratingClause = match.lanavix_score >= TOP_RATING_THRESHOLD ? " This business has a top Lanavix rating." : "";
-                  finalMessage = `Booked! ${businessName} will see you on ${dateStr} at ${timeStr}. Reply CANCEL to reschedule${callClause}.${ratingClause}`;
+                  finalMessage = `Booked! ${businessName} will see you on ${dateStr} at ${timeStr}. Reply CANCEL to cancel${callClause}.${ratingClause}`;
 
                   await supabaseAdmin.from("activity_log").insert({
                     user_id: match.id,
