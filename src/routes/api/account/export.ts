@@ -44,32 +44,17 @@ export const Route = createFileRoute("/api/account/export")({
           // ===== Gather everything tied to this user =====
           const [
             profileRes,
-            businessesRes,
             missedCallsRes,
             reviewRequestsRes,
             reviewResponsesRes,
             smsConversationsRes,
           ] = await Promise.all([
             supabaseAdmin.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-            supabaseAdmin.from("businesses").select("*").eq("owner_id", user.id),
             supabaseAdmin.from("missed_calls").select("*").eq("user_id", user.id),
             supabaseAdmin.from("review_requests").select("*").eq("user_id", user.id),
             supabaseAdmin.from("review_responses").select("*").eq("user_id", user.id),
             supabaseAdmin.from("sms_conversations").select("*").eq("user_id", user.id),
           ]);
-
-          const businessIds = (businessesRes.data || []).map((b: any) => b.id);
-
-          let leads: any[] = [];
-          let chatbotSettings: any[] = [];
-          if (businessIds.length > 0) {
-            const [leadsRes, chatbotRes] = await Promise.all([
-              supabaseAdmin.from("leads").select("*").in("business_id", businessIds),
-              supabaseAdmin.from("chatbot_settings").select("*").in("business_id", businessIds),
-            ]);
-            leads = leadsRes.data || [];
-            chatbotSettings = chatbotRes.data || [];
-          }
 
           const exportBundle = {
             exported_at: new Date().toISOString(),
@@ -79,9 +64,6 @@ export const Route = createFileRoute("/api/account/export")({
               created_at: user.created_at,
             },
             profile: profileRes.data || null,
-            businesses: businessesRes.data || [],
-            leads,
-            chatbot_settings: chatbotSettings,
             missed_calls: missedCallsRes.data || [],
             review_requests: reviewRequestsRes.data || [],
             review_responses: reviewResponsesRes.data || [],

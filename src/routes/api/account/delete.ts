@@ -54,9 +54,9 @@ export const Route = createFileRoute("/api/account/delete")({
           }
 
           // ===== Delete the auth user. =====
-          // All related rows (profile, businesses, leads, chatbot_settings,
-          // missed_calls, review_requests, review_responses, sms_conversations,
-          // rate_limits) cascade automatically via ON DELETE CASCADE foreign keys.
+          // All related rows (profile, missed_calls, review_requests,
+          // review_responses, sms_conversations, rate_limits) cascade
+          // automatically via ON DELETE CASCADE foreign keys.
           const { error: deleteErr } = await supabaseAdmin.auth.admin.deleteUser(
             user.id
           );

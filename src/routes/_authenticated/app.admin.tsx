@@ -57,7 +57,7 @@ function AdminDashboard() {
 
       // Load auth users via admin — fallback to profiles only
       // We'll join what we can from profiles + use created_at trick
-      const { data: leads, error: leadsError } = await supabase.from("leads").select("id");
+      const { data: leads, error: leadsError } = await supabase.from("lead_profiles").select("id");
       const { data: reviews, error: reviewsError } = await supabase.from("review_requests").select("id");
 
       if (profilesError || leadsError || reviewsError) {

@@ -179,83 +179,6 @@ export type Database = {
         }
         Relationships: []
       }
-      businesses: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          id: string
-          industry: string | null
-          name: string
-          owner_id: string | null
-          phone: string | null
-          website: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          industry?: string | null
-          name: string
-          owner_id?: string | null
-          phone?: string | null
-          website?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          industry?: string | null
-          name?: string
-          owner_id?: string | null
-          phone?: string | null
-          website?: string | null
-        }
-        Relationships: []
-      }
-      chatbot_settings: {
-        Row: {
-          booking_link: string | null
-          business_id: string | null
-          created_at: string | null
-          faq: string | null
-          id: string
-          offers: string | null
-          pricing: string | null
-          services: string | null
-          welcome_message: string | null
-        }
-        Insert: {
-          booking_link?: string | null
-          business_id?: string | null
-          created_at?: string | null
-          faq?: string | null
-          id?: string
-          offers?: string | null
-          pricing?: string | null
-          services?: string | null
-          welcome_message?: string | null
-        }
-        Update: {
-          booking_link?: string | null
-          business_id?: string | null
-          created_at?: string | null
-          faq?: string | null
-          id?: string
-          offers?: string | null
-          pricing?: string | null
-          services?: string | null
-          welcome_message?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chatbot_settings_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       consumer_profiles: {
         Row: {
           city: string | null
@@ -577,47 +500,6 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "lead_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      leads: {
-        Row: {
-          business_id: string | null
-          created_at: string | null
-          email: string | null
-          id: string
-          message: string | null
-          name: string | null
-          phone: string | null
-          source: string | null
-        }
-        Insert: {
-          business_id?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          message?: string | null
-          name?: string | null
-          phone?: string | null
-          source?: string | null
-        }
-        Update: {
-          business_id?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          message?: string | null
-          name?: string | null
-          phone?: string | null
-          source?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "leads_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
