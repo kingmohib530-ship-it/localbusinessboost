@@ -91,6 +91,7 @@ function TodayDashboard() {
   const [activityLoadingMore, setActivityLoadingMore] = useState(false);
   const [activityHasMore, setActivityHasMore] = useState(false);
   const [activityPageIndex, setActivityPageIndex] = useState(0);
+  const [activityError, setActivityError] = useState("");
   const [outboundLeadsSent, setOutboundLeadsSent] = useState(0);
   const [conversationRows, setConversationRows] = useState<ConversationRow[]>([]);
   const [conversationMessages, setConversationMessages] = useState<ConversationMessageRow[]>([]);
@@ -107,12 +108,12 @@ function TodayDashboard() {
         if (!user) return;
         const monthStartIso = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
         const [
-          { data: profileData },
-          { data: leadBlastData },
-          { data: conversationRowData },
-          { data: conversationMessageData },
-          { data: reviewResponseData },
-          { data: appointmentRevenueData },
+          { data: profileData, error: profileErr },
+          { data: leadBlastData, error: leadBlastErr },
+          { data: conversationRowData, error: conversationErr },
+          { data: conversationMessageData, error: conversationMessageErr },
+          { data: reviewResponseData, error: reviewResponseErr },
+          { data: appointmentRevenueData, error: appointmentErr },
         ] = await Promise.all([
           supabase
             .from("profiles")
@@ -148,6 +149,11 @@ function TodayDashboard() {
             .eq("source", "inbound_sms")
             .neq("status", "cancelled"),
         ]);
+        const firstErr = profileErr || leadBlastErr || conversationErr || conversationMessageErr || reviewResponseErr || appointmentErr;
+        if (firstErr) {
+          console.error("[dashboard] failed to load one or more dashboard queries", firstErr);
+          setError("Couldn't load some of your dashboard data. Please refresh the page.");
+        }
         setProfile(profileData);
         const leadBlastRows = (leadBlastData as Array<{ metadata: Record<string, unknown> | null }>) ?? [];
         setOutboundLeadsSent(
@@ -170,17 +176,19 @@ function TodayDashboard() {
 
   async function loadActivity(page: number) {
     if (page > 0) setActivityLoadingMore(true);
+    setActivityError("");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setActivityLoadingMore(false); return; }
     const from = page * ACTIVITY_PAGE_SIZE;
-    const { data, error: activityError } = await supabase
+    const { data, error: loadErr } = await supabase
       .from("activity_log")
       .select("id, type, summary, metadata, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .range(from, from + ACTIVITY_PAGE_SIZE - 1);
-    if (activityError) {
-      console.error("[dashboard] failed to load activity", activityError);
+    if (loadErr) {
+      console.error("[dashboard] failed to load activity", loadErr);
+      setActivityError("Couldn't load recent activity. Please refresh the page.");
     }
     const rows = (data as ActivityRow[]) ?? [];
     setActivity((prev) => (page === 0 ? rows : [...prev, ...rows]));
@@ -353,7 +361,10 @@ function TodayDashboard() {
         {loading && (
           <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Loading...</p>
         )}
-        {!loading && activity.length === 0 && (
+        {activityError && (
+          <p style={{ fontSize: 13, color: "var(--destructive)", marginBottom: 20 }}>{activityError}</p>
+        )}
+        {!loading && !activityError && activity.length === 0 && (
           <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
         )}
         {activity.length > 0 && (

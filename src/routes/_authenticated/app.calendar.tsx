@@ -128,6 +128,7 @@ function CalendarPage() {
       .lt("scheduled_at", monthEnd);
     if (error) {
       console.error("[calendar] failed to load month stats", error);
+      setError("Couldn't load this month's totals. Please refresh the page.");
       return;
     }
     const rows = data ?? [];

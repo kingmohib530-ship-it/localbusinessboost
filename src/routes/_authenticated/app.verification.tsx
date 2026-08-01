@@ -189,8 +189,19 @@ function VerificationPage() {
   }
 
   async function handleDeleteDoc(doc: VerificationDocRow) {
-    await supabase.storage.from("verification-docs").remove([doc.storage_path]);
-    await supabase.from("verification_documents").delete().eq("id", doc.id);
+    setErrorMsg("");
+    const { error: storageError } = await supabase.storage.from("verification-docs").remove([doc.storage_path]);
+    if (storageError) {
+      console.error("[verification] failed to delete file from storage", storageError);
+      setErrorMsg("Could not delete this document, please try again.");
+      return;
+    }
+    const { error: deleteError } = await supabase.from("verification_documents").delete().eq("id", doc.id);
+    if (deleteError) {
+      console.error("[verification] failed to delete document record", deleteError);
+      setErrorMsg("Could not delete this document, please try again.");
+      return;
+    }
     setDocs((d) => d.filter((x) => x.id !== doc.id));
   }
 
