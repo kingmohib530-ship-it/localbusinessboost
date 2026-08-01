@@ -118,20 +118,22 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
             if (!twilioRes.ok) {
               sendError = await twilioRes.text();
             }
-          } else if (step.channel === "email") {
+          } else {
             // sendExternalEmail (email.server.ts) now exists for transactional
             // mail (audit reports, contact form), but cold outbound lead
-            // sequences are a different call — deliverability/compliance
+            // sequences are a different call - deliverability/compliance
             // (CAN-SPAM, sender reputation) needs a deliberate decision
-            // before this sends real email, so it still just logs.
-            console.log(`[lead-generator/execute-step] would send email to ${lead.email ?? "(no email on file)"}: ${step.message_template}`);
+            // before this sends real email. voicemail_drop and linkedin have
+            // no integration at all. None of the three can actually send
+            // yet, so the step is left unsent rather than logged and marked
+            // "sent" as if it went out.
+            sendError = `${step.channel} outreach isn't wired up to send yet.`;
           }
-          // voicemail_drop / linkedin: no integration exists; treated as a
-          // no-op send below, same honesty principle as the email branch.
 
           if (sendError) {
             await supabaseAdmin.from("lead_sequences").update({ status: "failed" }).eq("id", step_id);
-            return Response.json({ error: `Failed to send: ${sendError}` }, { status: 502 });
+            const status = step.channel === "sms" ? 502 : 501;
+            return Response.json({ error: step.channel === "sms" ? `Failed to send: ${sendError}` : sendError }, { status });
           }
 
           const now = new Date().toISOString();
