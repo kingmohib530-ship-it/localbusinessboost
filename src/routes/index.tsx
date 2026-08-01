@@ -559,6 +559,8 @@ function HomePage() {
                   ))}
                 </div>
 
+                <p className="text-[var(--hd-muted)] text-[10px] mb-2">Illustrative example, not a real business or conversation</p>
+
                 <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-300 mb-2 flex items-center justify-between">
                   <span>Missed call &middot; (571) 555-0182</span>
                   <span className="text-[10px] text-red-300/70">0:00</span>
@@ -660,6 +662,7 @@ function HomePage() {
                 { label: 'Recovered', val: '$2,340' },
               ]}
             >
+              <p className="text-[var(--hd-muted)] text-[10px] mb-2">Illustrative example, not a real business or conversation</p>
               <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-300 mb-2 flex items-center justify-between">
                 <span>Missed call &middot; (571) 555-0182</span>
                 <span className="text-[10px] text-red-300/70">0:00</span>
