@@ -47,6 +47,7 @@ function ReputationPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [markingReviewedId, setMarkingReviewedId] = useState<string | null>(null);
 
   // Request form
@@ -78,8 +79,9 @@ function ReputationPage() {
   async function loadPlan() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from("profiles").select("subscription_tier").eq("id", user.id).maybeSingle();
+    const { data } = await supabase.from("profiles").select("subscription_tier, subscription_status").eq("id", user.id).maybeSingle();
     setSubscriptionTier(data?.subscription_tier ?? null);
+    setSubscriptionStatus(data?.subscription_status ?? null);
   }
 
   /**
@@ -407,9 +409,24 @@ function ReputationPage() {
       )}
 
       {/* Send Request tab */}
-      {tab === "request" && (
+      {tab === "request" && (() => {
+        const isPaidActive =
+          ["solo", "crew", "agency"].includes(subscriptionTier || "") &&
+          ["active", "trialing", "past_due"].includes(subscriptionStatus || "");
+        return (
         <div className="hd-blur-in" style={{ maxWidth: 520 }}>
-          <div className="glass-dark" style={{ borderRadius: 20, padding: 28 }}>
+          {!isPaidActive && (
+            <div className="glass-dark" style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Review request texts are a paid feature</div>
+                <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to Solo, Crew, or Agency to start sending them.</div>
+              </div>
+              <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+                Upgrade now →
+              </Link>
+            </div>
+          )}
+          <div className="glass-dark" style={{ borderRadius: 20, padding: 28, opacity: isPaidActive ? 1 : 0.5, pointerEvents: isPaidActive ? "auto" : "none" }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Send a review request</div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
               We'll text your customer a friendly message with a direct link to leave you a Google review.
@@ -444,14 +461,15 @@ function ReputationPage() {
               <div style={{ fontSize: 13, color: sendOk ? "var(--accent-2)" : "var(--destructive)", marginBottom: 14 }}>{sendMsg}</div>
             )}
 
-            <button onClick={sendRequest} disabled={sending}
+            <button onClick={sendRequest} disabled={sending || !isPaidActive}
               style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: sending ? "not-allowed" : "pointer", opacity: sending ? 0.7 : 1, fontFamily: "inherit" }}>
               {sending ? "Sending..." : "Send review request →"}
             </button>
             <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>Requires Twilio to be connected</p>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Write Response tab */}
       {tab === "respond" && (() => {
