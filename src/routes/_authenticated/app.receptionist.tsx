@@ -35,8 +35,6 @@ const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }
   no_response: { bg: "var(--muted)", color: "var(--muted-foreground)", label: "No response" },
 };
 
-const TEST_CALLER_PHONE = "+15555550100";
-
 const PAGE_SIZE = 20;
 
 function ReceptionistPage() {
@@ -66,7 +64,9 @@ function ReceptionistPage() {
   const [configMsg, setConfigMsg] = useState("");
   const [configSaveOk, setConfigSaveOk] = useState(false);
 
-  const [testingReceptionist, setTestingReceptionist] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewResult, setPreviewResult] = useState<{ sampleMessage: string; reply: string } | null>(null);
+  const [previewError, setPreviewError] = useState("");
 
   useEffect(() => {
     loadConversations(0);
@@ -203,49 +203,37 @@ function ReceptionistPage() {
     setMessages(data || []);
   }
 
-  async function testReceptionist() {
-    setTestingReceptionist(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("Please sign in again and retry.");
-      setTestingReceptionist(false);
-      return;
-    }
-
-    const message =
-      greetingMessage.trim() ||
-      "Hi! Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP.";
-
-    const { data: conversation, error } = await supabase
-      .from("conversations")
-      .insert({
-        user_id: user.id,
-        channel: "sms",
-        customer_identifier: TEST_CALLER_PHONE,
-        customer_name: "Test Call",
-        status: "texted",
-        notes: "Simulated by \"Test your receptionist\" — no real call was placed.",
-      })
-      .select()
-      .single();
-
-    if (!error && conversation) {
-      await supabase.from("conversation_messages").insert({
-        conversation_id: conversation.id,
-        user_id: user.id,
-        direction: "outbound",
-        message,
+  // Runs a real Anthropic call through the same prompt sms-reply.ts uses,
+  // so a contractor can see what their AI receptionist would actually say
+  // given their current settings and known facts. This is a preview, not
+  // a real call or text - nothing is written to conversations, so it
+  // never inflates the real call stats above.
+  async function previewReceptionist() {
+    setPreviewing(true);
+    setPreviewError("");
+    setPreviewResult(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        setPreviewError("Please sign in again and retry.");
+        return;
+      }
+      const res = await fetch("/api/receptionist-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
-      setPageIndex(0);
-      await loadConversations(0);
-      loadCallStats();
-      setTab("calls");
-      loadMessages(conversation.id);
-    } else {
-      console.error("[receptionist] test call failed", error);
-      toast.error("Couldn't send the test message. Please try again.");
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setPreviewError(data.error || "Couldn't generate a preview right now. Please try again.");
+        return;
+      }
+      setPreviewResult({ sampleMessage: data.sampleMessage, reply: data.reply });
+    } catch {
+      setPreviewError("Couldn't generate a preview right now. Please try again.");
+    } finally {
+      setPreviewing(false);
     }
-    setTestingReceptionist(false);
   }
 
   const stats = {
@@ -281,10 +269,11 @@ function ReceptionistPage() {
             </span>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={testReceptionist} disabled={testingReceptionist}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: "var(--card)", color: "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: testingReceptionist ? "not-allowed" : "pointer", opacity: testingReceptionist ? 0.7 : 1 }}>
+            <button onClick={previewReceptionist} disabled={previewing}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: "var(--card)", color: "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: previewing ? "not-allowed" : "pointer", opacity: previewing ? 0.7 : 1 }}
+              title="See a sample AI reply based on your current settings - this doesn't place a real call or text">
               <Wand2 size={14} />
-              {testingReceptionist ? "Sending test..." : "Test your receptionist"}
+              {previewing ? "Generating preview..." : "Preview AI reply"}
             </button>
             <button onClick={() => setTab("calls")} style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === "calls" ? "var(--primary)" : "var(--card)", color: tab === "calls" ? "var(--primary-foreground)" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Calls
@@ -300,6 +289,30 @@ function ReceptionistPage() {
       </div>
 
       {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{loadError}</p>}
+
+      {previewError && (
+        <div className="glass-dark" style={{ borderRadius: 12, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "var(--destructive)" }}>
+          {previewError}
+        </div>
+      )}
+
+      {previewResult && (
+        <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 20, marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>AI reply preview</div>
+            <button onClick={() => setPreviewResult(null)} style={{ fontSize: 12, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer" }}>
+              Dismiss
+            </button>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-foreground)", marginBottom: 4 }}>Sample customer text</div>
+          <div style={{ fontSize: 13, color: "var(--foreground)", marginBottom: 12, padding: "8px 12px", background: "var(--muted)", borderRadius: 8 }}>{previewResult.sampleMessage}</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-foreground)", marginBottom: 4 }}>Your AI receptionist would reply</div>
+          <div style={{ fontSize: 13, color: "var(--foreground)", padding: "8px 12px", background: "var(--accent)", borderRadius: 8 }}>{previewResult.reply}</div>
+          <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 10 }}>
+            This is a preview only - no call was placed and no text was sent.
+          </div>
+        </div>
+      )}
 
       {/* Setup tab */}
       {tab === "setup" && (
@@ -441,7 +454,7 @@ function ReceptionistPage() {
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>No missed calls yet</h3>
               <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 380, margin: "0 auto 24px", lineHeight: 1.6 }}>
-                Once you connect Twilio, every missed call will appear here with the full conversation thread. Or try "Test your receptionist" above to see it in action right now.
+                Once you connect Twilio, every missed call will appear here with the full conversation thread. Or click "Preview AI reply" above to see a sample response right now.
               </p>
               <button onClick={() => setTab("setup")} style={{ padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                 View setup instructions →

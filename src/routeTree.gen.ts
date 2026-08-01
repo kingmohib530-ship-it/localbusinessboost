@@ -36,6 +36,7 @@ import { Route as ApiTwilioSettingsRouteImport } from './routes/api/twilio-setti
 import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
 import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
 import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
+import { Route as ApiReceptionistPreviewRouteImport } from './routes/api/receptionist-preview'
 import { Route as ApiConsumerRequestsRouteImport } from './routes/api/consumer-requests'
 import { Route as ApiCompetitorIntelRouteImport } from './routes/api/competitor-intel'
 import { Route as ApiBookingPlanRouteImport } from './routes/api/booking-plan'
@@ -207,6 +208,11 @@ const ApiReviewResponseRoute = ApiReviewResponseRouteImport.update({
 const ApiReviewRequestRoute = ApiReviewRequestRouteImport.update({
   id: '/api/review-request',
   path: '/api/review-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReceptionistPreviewRoute = ApiReceptionistPreviewRouteImport.update({
+  id: '/api/receptionist-preview',
+  path: '/api/receptionist-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiConsumerRequestsRoute = ApiConsumerRequestsRouteImport.update({
@@ -442,6 +448,7 @@ export interface FileRoutesByFullPath {
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
   '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
+  '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -506,6 +513,7 @@ export interface FileRoutesByTo {
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
   '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
+  '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -574,6 +582,7 @@ export interface FileRoutesById {
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
   '/api/consumer-requests': typeof ApiConsumerRequestsRouteWithChildren
+  '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
@@ -641,6 +650,7 @@ export interface FileRouteTypes {
     | '/api/booking-plan'
     | '/api/competitor-intel'
     | '/api/consumer-requests'
+    | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -705,6 +715,7 @@ export interface FileRouteTypes {
     | '/api/booking-plan'
     | '/api/competitor-intel'
     | '/api/consumer-requests'
+    | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -772,6 +783,7 @@ export interface FileRouteTypes {
     | '/api/booking-plan'
     | '/api/competitor-intel'
     | '/api/consumer-requests'
+    | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
@@ -839,6 +851,7 @@ export interface RootRouteChildren {
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
   ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
   ApiConsumerRequestsRoute: typeof ApiConsumerRequestsRouteWithChildren
+  ApiReceptionistPreviewRoute: typeof ApiReceptionistPreviewRoute
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
@@ -1055,6 +1068,13 @@ declare module '@tanstack/react-router' {
       path: '/api/review-request'
       fullPath: '/api/review-request'
       preLoaderRoute: typeof ApiReviewRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/receptionist-preview': {
+      id: '/api/receptionist-preview'
+      path: '/api/receptionist-preview'
+      fullPath: '/api/receptionist-preview'
+      preLoaderRoute: typeof ApiReceptionistPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/consumer-requests': {
@@ -1463,6 +1483,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBookingPlanRoute: ApiBookingPlanRoute,
   ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
   ApiConsumerRequestsRoute: ApiConsumerRequestsRouteWithChildren,
+  ApiReceptionistPreviewRoute: ApiReceptionistPreviewRoute,
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
