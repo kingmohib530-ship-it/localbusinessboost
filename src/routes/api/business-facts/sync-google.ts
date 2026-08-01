@@ -100,8 +100,7 @@ export const Route = createFileRoute("/api/business-facts/sync-google")({
           return Response.json({ synced, pendingReview, skipped });
         } catch (err) {
           console.error("[business-facts/sync-google]", err);
-          const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
-          return Response.json({ error: message }, { status: 502 });
+          return Response.json({ error: "Something went wrong. Please try again." }, { status: 502 });
         }
       },
     },

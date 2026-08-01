@@ -273,7 +273,8 @@ export async function upsertSyncedFact(
     .eq("status", "active");
 
   if (error) {
-    throw new Error(`Failed to check existing facts: ${error.message}`);
+    console.error("[businessFacts] failed to check existing facts", error);
+    throw new Error("Failed to check existing facts.");
   }
 
   if (existing.some((f) => f.fact_text === factText)) {
@@ -290,7 +291,8 @@ export async function upsertSyncedFact(
     status,
   });
   if (insertError) {
-    throw new Error(`Failed to save fact: ${insertError.message}`);
+    console.error("[businessFacts] failed to save fact", insertError);
+    throw new Error("Failed to save fact.");
   }
 
   return status;

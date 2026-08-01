@@ -72,8 +72,7 @@ export const Route = createFileRoute("/api/booking-plan")({
           return Response.json(result);
         } catch (err) {
           console.error("[api/booking-plan] error", err);
-          const message = err instanceof Error ? err.message : "Internal server error";
-          return Response.json({ error: message }, { status: 500 });
+          return Response.json({ error: "Internal server error" }, { status: 500 });
         }
       },
     },

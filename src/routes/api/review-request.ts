@@ -107,8 +107,9 @@ export const Route = createFileRoute("/api/review-request")({
           );
 
           if (!twilioRes.ok) {
-            const err = await twilioRes.text();
-            return Response.json({ error: `Twilio error: ${err}` }, { status: 500 });
+            const twilioErr = await twilioRes.text();
+            console.error("[review-request] Twilio send failed", twilioErr);
+            return Response.json({ error: "Failed to send the review request. Please try again." }, { status: 500 });
           }
 
           // Save to database, attributed to the actual authenticated caller
@@ -124,7 +125,7 @@ export const Route = createFileRoute("/api/review-request")({
           return Response.json({ success: true, message: "Review request sent!" });
         } catch (err) {
           console.error("[review-request]", err);
-          return Response.json({ error: String(err) }, { status: 500 });
+          return Response.json({ error: "Internal server error" }, { status: 500 });
         }
       },
     },
