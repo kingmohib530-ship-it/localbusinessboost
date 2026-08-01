@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 
 const STORAGE_KEY = "lanavix:cookie_consent";
+const DARK_PATHS = ["/", "/pricing", "/about", "/terms", "/privacy", "/refund", "/cookies", "/faq"];
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
@@ -13,11 +14,7 @@ export function CookieConsentBanner() {
   // custom properties) is what actually makes this render correctly on
   // both dark surfaces, not just by coincidence on one of them.
   const { pathname } = useLocation();
-  const dark =
-    pathname === "/" ||
-    pathname === "/pricing" ||
-    pathname === "/about" ||
-    pathname.startsWith("/app");
+  const dark = DARK_PATHS.includes(pathname) || pathname.startsWith("/app");
 
   useEffect(() => {
     try {

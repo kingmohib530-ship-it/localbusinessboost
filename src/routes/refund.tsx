@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { pageMeta } from "@/lib/seo";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 
 export const Route = createFileRoute("/refund")({
   head: () => ({
@@ -38,25 +39,33 @@ const SECTIONS = [
 ];
 
 function RefundPage() {
+  const { step, delay } = useMountReveal();
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <SiteNav />
-      <div className="max-w-3xl mx-auto px-6 py-16 flex-1 w-full">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight mb-2">Refund Policy</h1>
-        <p className="text-muted-foreground mb-12">Last updated: June 2026</p>
+    <div className="page-dark min-h-screen flex flex-col">
+      <SiteNav variant="dark" />
+      <div className={`max-w-3xl mx-auto px-6 py-16 flex-1 w-full ${step}`} style={delay(0)}>
+        <h1 className="font-display text-4xl font-extrabold tracking-tight mb-2 text-[var(--hd-fg)]">
+          Refund Policy
+        </h1>
+        <p className="text-[var(--hd-muted)] mb-12">Last updated: June 2026</p>
 
         {SECTIONS.map((section) => (
           <div key={section.title} className="mb-9">
-            <h2 className="text-lg font-bold mb-2.5">{section.title}</h2>
-            <p className="text-foreground/80 leading-relaxed text-[15px]">{section.body}</p>
+            <h2 className="text-lg font-bold mb-2.5 text-[var(--hd-fg)]">{section.title}</h2>
+            <p className="text-[var(--hd-muted)] leading-relaxed text-[15px]">{section.body}</p>
           </div>
         ))}
 
-        <p className="text-sm text-muted-foreground mt-4">
-          See also our <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>.
+        <p className="text-sm text-[var(--hd-muted)] mt-4">
+          See also our{" "}
+          <Link to="/terms" className="text-[var(--hd-primary-2)] hover:underline">
+            Terms of Service
+          </Link>
+          .
         </p>
       </div>
-      <SiteFooter />
+      <SiteFooter variant="dark" />
     </div>
   );
 }
