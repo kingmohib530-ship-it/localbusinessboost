@@ -59,6 +59,7 @@ import { Route as ApiAdminUpdatePricingIndexRouteImport } from './routes/api/adm
 import { Route as ApiAccountExportRouteImport } from './routes/api/account/export'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
 import { Route as ConsumerAuthenticatedRequestNewRouteImport } from './routes/_consumerAuthenticated/request.new'
+import { Route as AuthenticatedAppWebChatRouteImport } from './routes/_authenticated/app.web-chat'
 import { Route as AuthenticatedAppVerificationRouteImport } from './routes/_authenticated/app.verification'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
@@ -332,6 +333,11 @@ const ConsumerAuthenticatedRequestNewRoute =
     path: '/request/new',
     getParentRoute: () => ConsumerAuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAppWebChatRoute = AuthenticatedAppWebChatRouteImport.update({
+  id: '/web-chat',
+  path: '/web-chat',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppVerificationRoute =
   AuthenticatedAppVerificationRouteImport.update({
     id: '/verification',
@@ -441,6 +447,7 @@ export interface FileRoutesByFullPath {
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/app/web-chat': typeof AuthenticatedAppWebChatRoute
   '/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
@@ -502,6 +509,7 @@ export interface FileRoutesByTo {
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/app/web-chat': typeof AuthenticatedAppWebChatRoute
   '/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
@@ -567,6 +575,7 @@ export interface FileRoutesById {
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/verification': typeof AuthenticatedAppVerificationRoute
+  '/_authenticated/app/web-chat': typeof AuthenticatedAppWebChatRoute
   '/_consumerAuthenticated/request/new': typeof ConsumerAuthenticatedRequestNewRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
   '/api/account/export': typeof ApiAccountExportRoute
@@ -631,6 +640,7 @@ export interface FileRouteTypes {
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
+    | '/app/web-chat'
     | '/request/new'
     | '/api/account/delete'
     | '/api/account/export'
@@ -692,6 +702,7 @@ export interface FileRouteTypes {
     | '/app/reputation'
     | '/app/settings'
     | '/app/verification'
+    | '/app/web-chat'
     | '/request/new'
     | '/api/account/delete'
     | '/api/account/export'
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/verification'
+    | '/_authenticated/app/web-chat'
     | '/_consumerAuthenticated/request/new'
     | '/api/account/delete'
     | '/api/account/export'
@@ -1180,6 +1192,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsumerAuthenticatedRequestNewRouteImport
       parentRoute: typeof ConsumerAuthenticatedRouteRoute
     }
+    '/_authenticated/app/web-chat': {
+      id: '/_authenticated/app/web-chat'
+      path: '/web-chat'
+      fullPath: '/app/web-chat'
+      preLoaderRoute: typeof AuthenticatedAppWebChatRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/verification': {
       id: '/_authenticated/app/verification'
       path: '/verification'
@@ -1291,6 +1310,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppVerificationRoute: typeof AuthenticatedAppVerificationRoute
+  AuthenticatedAppWebChatRoute: typeof AuthenticatedAppWebChatRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -1304,6 +1324,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppVerificationRoute: AuthenticatedAppVerificationRoute,
+  AuthenticatedAppWebChatRoute: AuthenticatedAppWebChatRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 

@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  LayoutDashboard, Phone, Target, Calendar, Star, Users, Brain, Settings, LogOut,
+  LayoutDashboard, Phone, MessageCircle, Target, Calendar, Star, Users, Brain, Settings, LogOut,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,14 @@ export const Route = createFileRoute("/_authenticated/app")({
 });
 
 const nav: {
-  to: "/app" | "/app/receptionist" | "/app/agents" | "/app/calendar" | "/app/reputation" | "/app/network" | "/app/business-facts" | "/app/settings" | null;
+  to: "/app" | "/app/receptionist" | "/app/web-chat" | "/app/agents" | "/app/calendar" | "/app/reputation" | "/app/network" | "/app/business-facts" | "/app/settings" | null;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
 }[] = [
   { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/app/receptionist", label: "Receptionist", icon: Phone },
+  { to: "/app/web-chat", label: "Web Chat", icon: MessageCircle },
   { to: "/app/agents", label: "Campaigns", icon: Target },
   { to: "/app/calendar", label: "Calendar", icon: Calendar },
   { to: "/app/reputation", label: "Reputation", icon: Star },
