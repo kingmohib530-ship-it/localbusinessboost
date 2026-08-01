@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 
 const STORAGE_KEY = "lanavix:cookie_consent";
+const DARK_PATHS = ["/", "/pricing", "/about", "/terms", "/privacy", "/refund", "/cookies", "/faq"];
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
@@ -13,7 +14,7 @@ export function CookieConsentBanner() {
   // custom properties) is what actually makes this render correctly on
   // both dark surfaces, not just by coincidence on one of them.
   const { pathname } = useLocation();
-  const dark = pathname === "/" || pathname.startsWith("/app");
+  const dark = DARK_PATHS.includes(pathname) || pathname.startsWith("/app");
 
   useEffect(() => {
     try {
@@ -41,14 +42,23 @@ export function CookieConsentBanner() {
       }`}
     >
       <div className="max-w-5xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-        <p className={`text-sm text-center sm:text-left flex-1 ${dark ? "text-[#9096a3]" : "text-muted-foreground"}`}>
+        <p
+          className={`text-sm text-center sm:text-left flex-1 ${dark ? "text-[#9096a3]" : "text-muted-foreground"}`}
+        >
           We use essential cookies only (login, preferences). No tracking or ads.{" "}
-          <Link to="/cookies" className={`underline transition-colors ${dark ? "hover:text-[#f5f6f7]" : "hover:text-foreground"}`}>Learn more</Link>
+          <Link
+            to="/cookies"
+            className={`underline transition-colors ${dark ? "hover:text-[#f5f6f7]" : "hover:text-foreground"}`}
+          >
+            Learn more
+          </Link>
         </p>
         <button
           onClick={dismiss}
           className={`shrink-0 rounded-lg text-sm font-semibold px-5 py-2 transition-colors ${
-            dark ? "bg-[#6366f1] text-white hover:bg-[#6366f1]/90" : "bg-primary text-primary-foreground hover:bg-primary/90"
+            dark
+              ? "bg-[#6366f1] text-white hover:bg-[#6366f1]/90"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
         >
           Got it
