@@ -319,7 +319,7 @@ function ReceptionistPage() {
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Configuration</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 16, lineHeight: 1.5 }}>
-              Greeting message is sent verbatim as your auto-text when a call is missed. Business hours and escalation rules are saved to your business profile for reference.
+              Greeting message is sent verbatim as your auto-text when a call is missed. Business hours and escalation rules are given to the AI receptionist so it can follow them in the conversation that follows.
             </div>
 
             <div style={{ marginBottom: 14 }}>
