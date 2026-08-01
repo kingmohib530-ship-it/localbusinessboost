@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Lock, Users, Target, Star, DollarSign, Database, Rocket, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -202,6 +202,10 @@ function AdminDashboard() {
           </GlowPanel>
         ))}
       </div>
+
+      {/* app.admin.verification-review.tsx is a child route of this one in the
+          file-based router, so it only renders here, through this Outlet. */}
+      <Outlet />
     </div>
   );
 }
