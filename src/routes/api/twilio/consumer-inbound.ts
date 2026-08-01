@@ -7,7 +7,7 @@ import {
   type ServiceTypeKey,
 } from "@/lib/serviceTypes";
 
-const CONSUMER_FOOTER = "\n\nPowered by Lanavix Local";
+const CONSUMER_FOOTER = "\n\nPowered by Lanavix Network";
 
 const escapeXml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -58,7 +58,7 @@ async function runQualification(
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
         max_tokens: 350,
-        system: `You are Lanavix Local, a friendly SMS assistant that matches consumers to local home-service businesses. You are texting directly with a consumer (not a business).
+        system: `You are Lanavix Network, a friendly SMS assistant that matches consumers to local home-service businesses. You are texting directly with a consumer (not a business).
 
 Current date/time (UTC): ${now.toISOString()} (${now.toLocaleDateString("en-US", { weekday: "long" })}).
 

@@ -726,12 +726,12 @@ function HomePage() {
             </div>
           </div>
 
-          {/* Feature 3 — Local Lead Blast */}
+          {/* Feature 3 - Lead Generator */}
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             <div>
               <Target className="h-7 w-7 text-[var(--hd-primary-2)] mb-5" />
               <p className="text-[var(--hd-primary-2)] font-semibold text-xs uppercase tracking-widest mb-3">New leads in your area, in under a minute</p>
-              <h3 className="font-display text-2xl font-bold mb-4 text-[var(--hd-fg)]">Local Lead Blast</h3>
+              <h3 className="font-display text-2xl font-bold mb-4 text-[var(--hd-fg)]">Lead Generator</h3>
               <p className="text-[var(--hd-muted)] leading-relaxed mb-5">
                 Tell us your trade and city. Our AI finds 30 real local businesses that need your service, with the owner's name, phone number, and a personalized opening line ready to send.
               </p>
@@ -741,7 +741,7 @@ function HomePage() {
             </div>
             <FeatureMockup
               reducedMotion={reducedMotion}
-              label="Local Lead Blast"
+              label="Lead Generator"
               stats={[
                 { label: 'Leads found', val: '30' },
                 { label: 'Verified numbers', val: '30/30' },

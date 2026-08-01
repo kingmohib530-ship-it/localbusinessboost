@@ -212,7 +212,7 @@ function NetworkPage() {
           Network
         </h1>
         <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
-          Leads from consumers who text the Lanavix Local marketplace number.
+          Leads from consumers who text the Lanavix Network marketplace number.
         </p>
       </div>
 
@@ -299,7 +299,7 @@ function NetworkPage() {
               Accept consumer marketplace leads
             </div>
             <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
-              When on, consumers who text Lanavix Local looking for your service in your city can be
+              When on, consumers who text Lanavix Network looking for your service in your city can be
               matched and booked directly onto your calendar.
             </div>
           </div>

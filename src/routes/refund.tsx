@@ -18,7 +18,7 @@ export const Route = createFileRoute("/refund")({
 const SECTIONS = [
   {
     title: "1. 30-Day Money-Back Guarantee",
-    body: `If you do not recover at least one job worth more than your monthly fee within 30 days of your first paid month, contact us at moh@lanavix.com for a full refund. This guarantee applies to your first month only and requires that you actively use the platform's core features (Missed Call Text-Back, Reputation Autopilot, or Local Lead Blast) during that period.`,
+    body: `If you do not recover at least one job worth more than your monthly fee within 30 days of your first paid month, contact us at moh@lanavix.com for a full refund. This guarantee applies to your first month only and requires that you actively use the platform's core features (Missed Call Text-Back, Reputation Autopilot, or Lead Generator) during that period.`,
   },
   {
     title: "2. How to Request a Refund",

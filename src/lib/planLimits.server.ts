@@ -214,7 +214,7 @@ export async function checkLeadGeneratorQuota(userId: string): Promise<QuotaResu
     return {
       allowed: false,
       reason:
-        "Local Lead Blast isn't available without an active plan. Subscribe to Solo or higher to unlock it.",
+        "Lead Generator isn't available without an active plan. Subscribe to Solo or higher to unlock it.",
     };
   }
   if (tier !== "solo") return { allowed: true };
@@ -233,7 +233,7 @@ export async function checkLeadGeneratorQuota(userId: string): Promise<QuotaResu
   if (!allowed) {
     return {
       allowed: false,
-      reason: `Solo plan is capped at ${SOLO_LEAD_BLAST_MONTHLY_CAP} Local Lead Blast runs/month. Upgrade to Crew for unlimited runs.`,
+      reason: `Solo plan is capped at ${SOLO_LEAD_BLAST_MONTHLY_CAP} Lead Generator runs/month. Upgrade to Crew for unlimited runs.`,
     };
   }
   return { allowed: true };

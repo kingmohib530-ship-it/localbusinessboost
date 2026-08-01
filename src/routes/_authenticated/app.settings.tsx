@@ -187,7 +187,7 @@ function Settings() {
             </div>
             <p className="text-sm text-muted-foreground">
               {planId === "starter"
-                ? "You don't have an active plan yet. Subscribe to Solo, Crew, or Agency to unlock the receptionist, review automation, and Local Lead Blast."
+                ? "You don't have an active plan yet. Subscribe to Solo, Crew, or Agency to unlock the receptionist, review automation, and Lead Generator."
                 : subscriptionStatus === "trialing"
                   ? `You're in your free trial of ${PRICING_PLANS[planId].name}.`
                   : subscriptionStatus === "past_due"
@@ -202,7 +202,7 @@ function Settings() {
                   cap={SOLO_REVIEW_REQUEST_MONTHLY_CAP}
                 />
                 <UsageBar
-                  label="Local Lead Blast runs"
+                  label="Lead Generator runs"
                   used={leadBlastRunsThisMonth}
                   cap={SOLO_LEAD_BLAST_MONTHLY_CAP}
                 />

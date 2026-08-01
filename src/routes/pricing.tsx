@@ -206,7 +206,7 @@ function PricingPage() {
                 {[
                   ["Missed Call Text-Back", "Unlimited", "Unlimited", "Unlimited"],
                   ["Review request texts / month", "100", "Unlimited", "Unlimited"],
-                  ["Local Lead Blast runs / month", "5", "Unlimited", "Unlimited"],
+                  ["Lead Generator runs / month", "5", "Unlimited", "Unlimited"],
                   ["AI review response writer", "—", "✓", "✓"],
                   ["Competitor ranking tracker", "—", "✓", "✓"],
                   ["Automated follow-up sequences", "—", "✓", "✓"],

@@ -23,7 +23,7 @@ const SECTIONS = [
   },
   {
     title: "2. Description of Service",
-    body: `Lanavix provides an AI-powered business automation platform for local service businesses. Features include Missed Call Text-Back (automated SMS replies to missed calls), Reputation Autopilot (automated review request SMS), Local Lead Blast (AI-generated local business leads), and a Free Business Audit tool.`,
+    body: `Lanavix provides an AI-powered business automation platform for local service businesses. Features include Missed Call Text-Back (automated SMS replies to missed calls), Reputation Autopilot (automated review request SMS), Lead Generator (AI-generated local business leads), and a Free Business Audit tool.`,
   },
   {
     title: "3. Eligibility",

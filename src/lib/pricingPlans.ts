@@ -52,7 +52,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlanConfig> = {
     features: [
       "Missed Call Text-Back (unlimited)",
       "Review request texts (100/mo)",
-      "Local Lead Blast (5 runs/mo)",
+      "Lead Generator (5 runs/mo)",
       "Email support",
     ],
     featured: false,
@@ -67,7 +67,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlanConfig> = {
     features: [
       "Everything in Solo",
       "Unlimited review request texts",
-      "Unlimited Local Lead Blast",
+      "Unlimited Lead Generator",
       "AI review response writer",
       "Competitor ranking tracker",
       "Automated follow-up sequences",

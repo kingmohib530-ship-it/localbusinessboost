@@ -275,7 +275,7 @@ function TodayDashboard() {
         <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>You don't have an active plan yet</div>
-            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to unlock the receptionist, review automation, and Local Lead Blast.</div>
+            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to unlock the receptionist, review automation, and Lead Generator.</div>
           </div>
           <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
             Upgrade now →
