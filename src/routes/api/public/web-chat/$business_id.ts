@@ -11,11 +11,11 @@ import {
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 // Embeddable on any contractor's own website, so this has to be reachable
-// cross-origin from wherever they host it — same reasoning the old (now
+// cross-origin from wherever they host it - same reasoning the old (now
 // removed) chatbot config endpoint used.
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -26,8 +26,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // hitting the endpoint directly (curl, a scraper, another business's
 // script pointed at someone else's business_id) either omits it or sends
 // something that doesn't match the confirmed website on file. Soft check,
-// not a hard identity boundary — profiles.website is user-supplied and
-// Origin is spoofable by anything that isn't a real browser — but it costs
+// not a hard identity boundary - profiles.website is user-supplied and
+// Origin is spoofable by anything that isn't a real browser - but it costs
 // nothing and filters out the least sophisticated abuse. Only enforced
 // when the business has actually confirmed a website; nothing to compare
 // against otherwise.
@@ -53,6 +53,44 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
+      // Lets the widget show a personalized greeting the moment it opens,
+      // before the visitor types anything - same proactive-greeting
+      // behavior missed-call.ts already gives SMS. business_name and
+      // greeting_message are already shown publicly on the business's own
+      // site, so nothing sensitive is exposed here. Not plan-gated: if a
+      // subscription lapses, the widget should still open, and POST already
+      // returns a clear "subscribe to continue" message instead of silently
+      // hiding the whole widget.
+      GET: async ({ params }) => {
+        try {
+          const businessId = params.business_id;
+          if (!businessId || !UUID_RE.test(businessId)) {
+            return Response.json({ error: "Invalid business_id" }, { status: 400, headers: CORS });
+          }
+
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("business_name, greeting_message")
+            .eq("id", businessId)
+            .maybeSingle();
+
+          if (!profile) {
+            return Response.json({ error: "Business not found" }, { status: 404, headers: CORS });
+          }
+
+          const businessName = profile.business_name || "our business";
+          return Response.json(
+            {
+              businessName,
+              greeting: profile.greeting_message || `Hi! Welcome to ${businessName}. How can we help?`,
+            },
+            { headers: CORS },
+          );
+        } catch (err) {
+          console.error("[web-chat GET]", err);
+          return Response.json({ error: "Internal server error" }, { status: 500, headers: CORS });
+        }
+      },
       POST: async ({ request, params }) => {
         try {
           const businessId = params.business_id;

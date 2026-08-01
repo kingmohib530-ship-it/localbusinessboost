@@ -71,8 +71,8 @@ export async function loadBusinessContext(
  */
 function messageLengthRule(channel: ReceptionistChannel): string {
   return channel === "sms"
-    ? "Keep messages SHORT (under 2 sentences) — this is SMS"
-    : "Keep messages concise (2-3 sentences at most) — this is a website chat widget, not email";
+    ? "Keep messages SHORT (under 2 sentences) - this is SMS"
+    : "Keep messages concise (2-3 sentences at most) - this is a website chat widget, not email";
 }
 
 export function buildReceptionistSystemPrompt(
@@ -139,7 +139,7 @@ export interface BookingExtraction {
  * Best-effort structured extraction over the conversation so far: did the
  * customer and AI just agree on a specific time? This is a second,
  * conservative AI call (only acts on high-confidence, valid-future results
- * — the caller's job, not this function's) — never throws, since a failed
+ * - the caller's job, not this function's) - never throws, since a failed
  * extraction must not break the customer-facing reply that already went
  * out.
  */
@@ -173,7 +173,7 @@ Return ONLY valid JSON, no markdown, no commentary, matching exactly this shape:
 }
 
 Rules:
-- bookingConfirmed is true ONLY if both a specific day/time AND the type of work are clearly agreed in the conversation — not just requested or discussed.
+- bookingConfirmed is true ONLY if both a specific day/time AND the type of work are clearly agreed in the conversation - not just requested or discussed.
 - Resolve relative dates ("tomorrow", "next Tuesday", "Friday morning") against the current date/time above. If no specific time of day was given, use a reasonable business hour (e.g. 9:00 or 14:00 local-agnostic UTC).
 - serviceType must be your best match from the fixed list above, or "other" if it doesn't fit any category, or null if unclear.
 - customerName is the customer's name ONLY if it was actually stated somewhere in the conversation; otherwise null. Never invent one.

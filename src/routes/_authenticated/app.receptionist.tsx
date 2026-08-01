@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2, Wand2 } from "lucide-react";
+import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2, Wand2, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GlowPanel } from "@/components/GlowPanel";
@@ -64,6 +64,8 @@ function ReceptionistPage() {
   const [configSaveOk, setConfigSaveOk] = useState(false);
 
   const [testingReceptionist, setTestingReceptionist] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [embedCopied, setEmbedCopied] = useState(false);
 
   useEffect(() => {
     loadConversations(0);
@@ -91,6 +93,7 @@ function ReceptionistPage() {
   async function loadProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    setUserId(user.id);
     const { data } = await supabase
       .from("profiles")
       .select("twilio_phone_number, business_hours, greeting_message, escalation_rules")
@@ -100,6 +103,20 @@ function ReceptionistPage() {
     setBusinessHours(data?.business_hours || "");
     setGreetingMessage(data?.greeting_message || "");
     setEscalationRules(data?.escalation_rules || "");
+  }
+
+  const embedSnippet = userId
+    ? `<script src="${window.location.origin}/lanavix-widget.js" data-business="${userId}" async></script>`
+    : "";
+
+  async function copyEmbedSnippet() {
+    try {
+      await navigator.clipboard.writeText(embedSnippet);
+      setEmbedCopied(true);
+      setTimeout(() => setEmbedCopied(false), 2000);
+    } catch {
+      toast.error("Couldn't copy - please select and copy the code manually.");
+    }
   }
 
   async function saveTwilioNumber() {
@@ -347,6 +364,22 @@ function ReceptionistPage() {
               {savingConfig ? "Saving..." : "Save configuration"}
             </button>
             {configMsg && <div style={{ fontSize: 12, color: configSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{configMsg}</div>}
+          </div>
+
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Website chat widget</div>
+            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
+              Paste this snippet into your website's HTML (just before the closing &lt;/body&gt; tag) to add the same AI receptionist as a chat bubble on your site. It uses the same greeting, business hours, and escalation rules configured above, and shows up in your Calls list alongside your texts.
+            </div>
+            <div style={{ position: "relative" }}>
+              <pre style={{ margin: 0, padding: "12px 44px 12px 14px", background: "var(--muted)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12, fontFamily: "monospace", color: "var(--foreground)", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                {embedSnippet || "Loading..."}
+              </pre>
+              <button onClick={copyEmbedSnippet} disabled={!embedSnippet} aria-label="Copy embed code"
+                style={{ position: "absolute", top: 8, right: 8, padding: 6, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6, cursor: embedSnippet ? "pointer" : "not-allowed", display: "flex" }}>
+                {embedCopied ? <Check size={14} color="var(--accent-2)" /> : <Copy size={14} color="var(--muted-foreground)" />}
+              </button>
+            </div>
           </div>
 
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24 }}>
