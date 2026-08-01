@@ -26,13 +26,13 @@ interface ActivityRow {
   created_at: string;
 }
 
-interface MissedCallRow {
+interface ConversationRow {
   status: string | null;
-  called_at: string | null;
+  started_at: string | null;
 }
 
-interface SmsConversationRow {
-  missed_call_id: string | null;
+interface ConversationMessageRow {
+  conversation_id: string | null;
   sent_at: string | null;
 }
 
@@ -92,8 +92,8 @@ function TodayDashboard() {
   const [activityHasMore, setActivityHasMore] = useState(false);
   const [activityPageIndex, setActivityPageIndex] = useState(0);
   const [outboundLeadsSent, setOutboundLeadsSent] = useState(0);
-  const [missedCalls, setMissedCalls] = useState<MissedCallRow[]>([]);
-  const [conversations, setConversations] = useState<SmsConversationRow[]>([]);
+  const [conversationRows, setConversationRows] = useState<ConversationRow[]>([]);
+  const [conversationMessages, setConversationMessages] = useState<ConversationMessageRow[]>([]);
   const [reviewResponses, setReviewResponses] = useState<ReviewResponseRow[]>([]);
   const [revenueAppointments, setRevenueAppointments] = useState<AppointmentRevenueRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,8 +109,8 @@ function TodayDashboard() {
         const [
           { data: profileData },
           { data: leadBlastData },
-          { data: missedCallData },
-          { data: conversationData },
+          { data: conversationRowData },
+          { data: conversationMessageData },
           { data: reviewResponseData },
           { data: appointmentRevenueData },
         ] = await Promise.all([
@@ -130,12 +130,12 @@ function TodayDashboard() {
             .eq("type", "lead_blast")
             .gte("created_at", monthStartIso),
           supabase
-            .from("missed_calls")
-            .select("status, called_at")
+            .from("conversations")
+            .select("status, started_at")
             .eq("user_id", user.id),
           supabase
-            .from("sms_conversations")
-            .select("missed_call_id, sent_at")
+            .from("conversation_messages")
+            .select("conversation_id, sent_at")
             .eq("user_id", user.id),
           supabase
             .from("review_responses")
@@ -153,8 +153,8 @@ function TodayDashboard() {
         setOutboundLeadsSent(
           leadBlastRows.reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0),
         );
-        setMissedCalls((missedCallData as MissedCallRow[]) ?? []);
-        setConversations((conversationData as SmsConversationRow[]) ?? []);
+        setConversationRows((conversationRowData as ConversationRow[]) ?? []);
+        setConversationMessages((conversationMessageData as ConversationMessageRow[]) ?? []);
         setReviewResponses((reviewResponseData as ReviewResponseRow[]) ?? []);
         setRevenueAppointments((appointmentRevenueData as AppointmentRevenueRow[]) ?? []);
       } catch (e) {
@@ -197,11 +197,11 @@ function TodayDashboard() {
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const inThisMonth = (iso: string | null) => !!iso && new Date(iso) >= monthStart;
 
-  const missedCallsThisMonth = missedCalls.filter((c) => inThisMonth(c.called_at));
-  const appointmentsBooked = missedCallsThisMonth.filter((c) => c.status === "booked").length;
-  const respondedCount = missedCallsThisMonth.filter((c) => c.status === "replied" || c.status === "booked").length;
-  const responseRate = missedCallsThisMonth.length > 0
-    ? Math.round((respondedCount / missedCallsThisMonth.length) * 100)
+  const conversationsThisMonthByStatus = conversationRows.filter((c) => inThisMonth(c.started_at));
+  const appointmentsBooked = conversationsThisMonthByStatus.filter((c) => c.status === "booked").length;
+  const respondedCount = conversationsThisMonthByStatus.filter((c) => c.status === "replied" || c.status === "booked").length;
+  const responseRate = conversationsThisMonthByStatus.length > 0
+    ? Math.round((respondedCount / conversationsThisMonthByStatus.length) * 100)
     : null;
 
   const reviewsThisMonth = reviewResponses.filter((r) => inThisMonth(r.created_at));
@@ -211,9 +211,9 @@ function TodayDashboard() {
     ? (ratedReviews.reduce((sum, r) => sum + (r.star_rating ?? 0), 0) / ratedReviews.length).toFixed(1)
     : null;
 
-  const conversationsThisMonth = conversations.filter((c) => inThisMonth(c.sent_at));
+  const messagesThisMonth = conversationMessages.filter((c) => inThisMonth(c.sent_at));
   const conversationsHandled = new Set(
-    conversationsThisMonth.map((c) => c.missed_call_id).filter((id): id is string => !!id)
+    messagesThisMonth.map((c) => c.conversation_id).filter((id): id is string => !!id)
   ).size;
 
   const revenueThisMonth = revenueAppointments

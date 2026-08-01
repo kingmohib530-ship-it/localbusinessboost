@@ -179,6 +179,44 @@ export type Database = {
         }
         Relationships: []
       }
+      consumer_marketplace_messages: {
+        Row: {
+          appointment_id: string | null
+          caller_phone: string
+          direction: string
+          id: string
+          message: string
+          sent_at: string
+          user_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          caller_phone: string
+          direction: string
+          id?: string
+          message: string
+          sent_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          caller_phone?: string
+          direction?: string
+          id?: string
+          message?: string
+          sent_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumer_marketplace_messages_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consumer_profiles: {
         Row: {
           city: string | null
@@ -349,6 +387,90 @@ export type Database = {
           source_channel?: string | null
           time_to_book_minutes?: number | null
           urgency_level?: string | null
+        }
+        Relationships: []
+      }
+      conversation_messages: {
+        Row: {
+          appointment_id: string | null
+          conversation_id: string
+          direction: string
+          id: string
+          message: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          conversation_id: string
+          direction: string
+          id?: string
+          message: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string | null
+          conversation_id?: string
+          direction?: string
+          id?: string
+          message?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          channel: string
+          created_at: string
+          customer_identifier: string
+          customer_name: string | null
+          id: string
+          last_message_at: string | null
+          notes: string | null
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          customer_identifier: string
+          customer_name?: string | null
+          id?: string
+          last_message_at?: string | null
+          notes?: string | null
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          customer_identifier?: string
+          customer_name?: string | null
+          id?: string
+          last_message_at?: string | null
+          notes?: string | null
+          started_at?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -540,39 +662,6 @@ export type Database = {
           service_type?: string
           supply_score?: number | null
           zip_code?: string
-        }
-        Relationships: []
-      }
-      missed_calls: {
-        Row: {
-          called_at: string | null
-          caller_name: string | null
-          caller_phone: string
-          created_at: string | null
-          id: string
-          notes: string | null
-          status: string | null
-          user_id: string | null
-        }
-        Insert: {
-          called_at?: string | null
-          caller_name?: string | null
-          caller_phone: string
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          called_at?: string | null
-          caller_name?: string | null
-          caller_phone?: string
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          status?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
@@ -797,54 +886,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      sms_conversations: {
-        Row: {
-          appointment_id: string | null
-          caller_phone: string
-          direction: string
-          id: string
-          message: string
-          missed_call_id: string | null
-          sent_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          appointment_id?: string | null
-          caller_phone: string
-          direction: string
-          id?: string
-          message: string
-          missed_call_id?: string | null
-          sent_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          appointment_id?: string | null
-          caller_phone?: string
-          direction?: string
-          id?: string
-          message?: string
-          missed_call_id?: string | null
-          sent_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sms_conversations_appointment_id_fkey"
-            columns: ["appointment_id"]
-            isOneToOne: false
-            referencedRelation: "appointments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sms_conversations_missed_call_id_fkey"
-            columns: ["missed_call_id"]
-            isOneToOne: false
-            referencedRelation: "missed_calls"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       verification_documents: {
         Row: {

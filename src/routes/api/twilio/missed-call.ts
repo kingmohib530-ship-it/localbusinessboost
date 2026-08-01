@@ -62,13 +62,15 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
             return EMPTY_TWIML;
           }
 
-          // Save the missed call as "received" — only flipped to "texted"
-          // once Twilio actually confirms the send was accepted, below.
-          const { data: missedCall } = await supabaseAdmin
-            .from("missed_calls")
+          // Save the call as a new conversation, status "received" — only
+          // flipped to "texted" once Twilio actually confirms the send was
+          // accepted, below.
+          const { data: conversation } = await supabaseAdmin
+            .from("conversations")
             .insert({
               user_id: profile.id,
-              caller_phone: callerPhone,
+              channel: "sms",
+              customer_identifier: callerPhone,
               status: "received",
             })
             .select()
@@ -79,11 +81,11 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
           const twilioToken = process.env.TWILIO_AUTH_TOKEN;
           const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
 
-          const [quota, hourlyOk] = missedCall
+          const [quota, hourlyOk] = conversation
             ? await Promise.all([checkSmsQuota(profile.id), checkSmsHourlyRateLimit(profile.id)])
             : [{ allowed: false }, { allowed: false }];
 
-          if (twilioSid && twilioToken && twilioFrom && missedCall && quota.allowed && hourlyOk.allowed) {
+          if (twilioSid && twilioToken && twilioFrom && conversation && quota.allowed && hourlyOk.allowed) {
             const businessName = profile.business_name || "the team";
             const service = profile.industry || "our services";
 
@@ -108,14 +110,18 @@ export const Route = createFileRoute("/api/twilio/missed-call")({
             );
 
             if (twilioRes.ok) {
+              const now = new Date().toISOString();
               await Promise.all([
-                supabaseAdmin.from("missed_calls").update({ status: "texted" }).eq("id", missedCall.id),
-                supabaseAdmin.from("sms_conversations").insert({
-                  missed_call_id: missedCall.id,
+                supabaseAdmin
+                  .from("conversations")
+                  .update({ status: "texted", last_message_at: now })
+                  .eq("id", conversation.id),
+                supabaseAdmin.from("conversation_messages").insert({
+                  conversation_id: conversation.id,
                   user_id: profile.id,
-                  caller_phone: callerPhone,
                   direction: "outbound",
                   message: autoMessage,
+                  sent_at: now,
                 }),
               ]);
             } else {

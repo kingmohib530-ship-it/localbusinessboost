@@ -141,18 +141,18 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
             return TWIML(`Too many messages right now — please try again in a bit.${CONSUMER_FOOTER}`);
           }
 
-          // Consumer-marketplace threads always have missed_call_id = null,
-          // which cleanly distinguishes them from business-side (missed
-          // call text-back) threads even if the same phone number happens
-          // to also be a customer of some business elsewhere in the system.
+          // Consumer-marketplace threads have their own dedicated table,
+          // separate from the business-side (missed-call text-back)
+          // conversations table - this is a platform-wide matching flow,
+          // not yet tied to any one business, so it doesn't fit the
+          // per-business conversations model at all.
           const { data: history } = await supabaseAdmin
-            .from("sms_conversations")
+            .from("consumer_marketplace_messages")
             .select("direction, message, sent_at")
             .eq("caller_phone", from)
-            .is("missed_call_id", null)
             .order("sent_at", { ascending: true });
 
-          await supabaseAdmin.from("sms_conversations").insert({
+          await supabaseAdmin.from("consumer_marketplace_messages").insert({
             caller_phone: from,
             direction: "inbound",
             message: messageBody,
@@ -268,7 +268,7 @@ export const Route = createFileRoute("/api/twilio/consumer-inbound")({
             }
           }
 
-          await supabaseAdmin.from("sms_conversations").insert({
+          await supabaseAdmin.from("consumer_marketplace_messages").insert({
             caller_phone: from,
             direction: "outbound",
             message: finalMessage,

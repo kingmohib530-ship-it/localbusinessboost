@@ -44,16 +44,16 @@ export const Route = createFileRoute("/api/account/export")({
           // ===== Gather everything tied to this user =====
           const [
             profileRes,
-            missedCallsRes,
+            conversationsRes,
             reviewRequestsRes,
             reviewResponsesRes,
-            smsConversationsRes,
+            conversationMessagesRes,
           ] = await Promise.all([
             supabaseAdmin.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-            supabaseAdmin.from("missed_calls").select("*").eq("user_id", user.id),
+            supabaseAdmin.from("conversations").select("*").eq("user_id", user.id),
             supabaseAdmin.from("review_requests").select("*").eq("user_id", user.id),
             supabaseAdmin.from("review_responses").select("*").eq("user_id", user.id),
-            supabaseAdmin.from("sms_conversations").select("*").eq("user_id", user.id),
+            supabaseAdmin.from("conversation_messages").select("*").eq("user_id", user.id),
           ]);
 
           const exportBundle = {
@@ -64,10 +64,10 @@ export const Route = createFileRoute("/api/account/export")({
               created_at: user.created_at,
             },
             profile: profileRes.data || null,
-            missed_calls: missedCallsRes.data || [],
+            conversations: conversationsRes.data || [],
             review_requests: reviewRequestsRes.data || [],
             review_responses: reviewResponsesRes.data || [],
-            sms_conversations: smsConversationsRes.data || [],
+            conversation_messages: conversationMessagesRes.data || [],
           };
 
           return new Response(JSON.stringify(exportBundle, null, 2), {

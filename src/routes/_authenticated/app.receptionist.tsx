@@ -11,11 +11,11 @@ export const Route = createFileRoute("/_authenticated/app/receptionist")({
   component: ReceptionistPage,
 });
 
-interface MissedCall {
+interface Conversation {
   id: string;
-  caller_phone: string;
-  caller_name: string | null;
-  called_at: string;
+  customer_identifier: string;
+  customer_name: string | null;
+  started_at: string;
   status: string;
   notes: string | null;
 }
@@ -40,7 +40,7 @@ const TEST_CALLER_PHONE = "+15555550100";
 const PAGE_SIZE = 20;
 
 function ReceptionistPage() {
-  const [calls, setCalls] = useState<MissedCall[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
@@ -66,24 +66,24 @@ function ReceptionistPage() {
   const [testingReceptionist, setTestingReceptionist] = useState(false);
 
   useEffect(() => {
-    loadCalls(0);
+    loadConversations(0);
     loadCallStats();
     loadProfile();
     loadAppointmentsBooked();
   }, []);
 
   /**
-   * Independent of the paginated call list below - "texted"/"replied" need
-   * accurate all-time counts regardless of how many pages have been loaded.
-   * Counts use head:true, a real SQL COUNT rather than a row fetch.
+   * Independent of the paginated conversation list below - "texted"/"replied"
+   * need accurate all-time counts regardless of how many pages have been
+   * loaded. Counts use head:true, a real SQL COUNT rather than a row fetch.
    */
   async function loadCallStats() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const [total, texted, replied] = await Promise.all([
-      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id).neq("status", "no_response"),
-      supabase.from("missed_calls").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("status", ["replied", "booked"]),
+      supabase.from("conversations").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("conversations").select("id", { count: "exact", head: true }).eq("user_id", user.id).neq("status", "no_response"),
+      supabase.from("conversations").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("status", ["replied", "booked"]),
     ]);
     setCallStats({ total: total.count ?? 0, texted: texted.count ?? 0, replied: replied.count ?? 0 });
   }
@@ -134,24 +134,24 @@ function ReceptionistPage() {
     setSavingConfig(false);
   }
 
-  async function loadCalls(page: number) {
+  async function loadConversations(page: number) {
     if (page === 0) setLoading(true); else setLoadingMore(true);
     setLoadError("");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); setLoadingMore(false); return; }
     const from = page * PAGE_SIZE;
     const { data, error } = await supabase
-      .from("missed_calls")
+      .from("conversations")
       .select("*")
       .eq("user_id", user.id)
-      .order("called_at", { ascending: false })
+      .order("started_at", { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
     if (error) {
-      console.error("[receptionist] failed to load calls", error);
+      console.error("[receptionist] failed to load conversations", error);
       setLoadError("Couldn't load your calls. Please refresh the page.");
     }
     const rows = data || [];
-    setCalls((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setConversations((prev) => (page === 0 ? rows : [...prev, ...rows]));
     setHasMore(rows.length === PAGE_SIZE);
     setLoading(false);
     setLoadingMore(false);
@@ -168,12 +168,12 @@ function ReceptionistPage() {
     setAppointmentsBooked(count || 0);
   }
 
-  async function loadMessages(callId: string) {
-    setSelected(callId);
+  async function loadMessages(conversationId: string) {
+    setSelected(conversationId);
     const { data } = await supabase
-      .from("sms_conversations")
+      .from("conversation_messages")
       .select("*")
-      .eq("missed_call_id", callId)
+      .eq("conversation_id", conversationId)
       .order("sent_at", { ascending: true });
     setMessages(data || []);
   }
@@ -191,31 +191,31 @@ function ReceptionistPage() {
       greetingMessage.trim() ||
       "Hi! Sorry we missed your call — we're on a job right now. What do you need? Reply here and we'll get back to you ASAP.";
 
-    const { data: missedCall, error } = await supabase
-      .from("missed_calls")
+    const { data: conversation, error } = await supabase
+      .from("conversations")
       .insert({
         user_id: user.id,
-        caller_phone: TEST_CALLER_PHONE,
-        caller_name: "Test Call",
+        channel: "sms",
+        customer_identifier: TEST_CALLER_PHONE,
+        customer_name: "Test Call",
         status: "texted",
         notes: "Simulated by \"Test your receptionist\" — no real call was placed.",
       })
       .select()
       .single();
 
-    if (!error && missedCall) {
-      await supabase.from("sms_conversations").insert({
-        missed_call_id: missedCall.id,
+    if (!error && conversation) {
+      await supabase.from("conversation_messages").insert({
+        conversation_id: conversation.id,
         user_id: user.id,
-        caller_phone: TEST_CALLER_PHONE,
         direction: "outbound",
         message,
       });
       setPageIndex(0);
-      await loadCalls(0);
+      await loadConversations(0);
       loadCallStats();
       setTab("calls");
-      loadMessages(missedCall.id);
+      loadMessages(conversation.id);
     } else {
       console.error("[receptionist] test call failed", error);
       toast.error("Couldn't send the test message. Please try again.");
@@ -230,7 +230,7 @@ function ReceptionistPage() {
     booked: appointmentsBooked,
   };
 
-  const selectedCall = calls.find(c => c.id === selected);
+  const selectedConversation = conversations.find(c => c.id === selected);
   const connected = !!twilioNumber;
   const reducedMotion = usePrefersReducedMotion();
   const { step, delay } = useMountReveal();
@@ -397,7 +397,7 @@ function ReceptionistPage() {
           )}
 
           {/* Empty state */}
-          {!loading && calls.length === 0 && (
+          {!loading && conversations.length === 0 && (
             <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(5) }}>
               <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                 <PhoneOff size={26} color="var(--primary)" strokeWidth={1.75} />
@@ -412,31 +412,31 @@ function ReceptionistPage() {
             </div>
           )}
 
-          {/* Call list + conversation */}
-          {calls.length > 0 && (
+          {/* Conversation list + thread */}
+          {conversations.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: selected ? "1fr 1fr" : "1fr", gap: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {calls.map(call => {
-                  const s = STATUS_COLORS[call.status] || STATUS_COLORS.texted;
+                {conversations.map(conversation => {
+                  const s = STATUS_COLORS[conversation.status] || STATUS_COLORS.texted;
                   return (
-                    <GlowPanel key={call.id} reducedMotion={reducedMotion} onClick={() => loadMessages(call.id)}
+                    <GlowPanel key={conversation.id} reducedMotion={reducedMotion} onClick={() => loadMessages(conversation.id)}
                       className="glass-dark hover-lift-dark rounded-2xl"
-                      style={{ border: `1.5px solid ${selected === call.id ? "var(--primary)" : "var(--border)"}`, padding: "14px 18px", cursor: "pointer" }}>
+                      style={{ border: `1.5px solid ${selected === conversation.id ? "var(--primary)" : "var(--border)"}`, padding: "14px 18px", cursor: "pointer" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{call.caller_name || call.caller_phone}</span>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{conversation.customer_name || conversation.customer_identifier}</span>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: s.bg, color: s.color }}>{s.label}</span>
                       </div>
                       <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
-                        {call.caller_name && <span style={{ marginRight: 8 }}>{call.caller_phone}</span>}
-                        {new Date(call.called_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                        {conversation.customer_name && <span style={{ marginRight: 8 }}>{conversation.customer_identifier}</span>}
+                        {new Date(conversation.started_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </div>
-                      {call.notes && <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 6 }}>{call.notes}</div>}
+                      {conversation.notes && <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 6 }}>{conversation.notes}</div>}
                     </GlowPanel>
                   );
                 })}
                 {hasMore && (
                   <button
-                    onClick={() => { const next = pageIndex + 1; setPageIndex(next); loadCalls(next); }}
+                    onClick={() => { const next = pageIndex + 1; setPageIndex(next); loadConversations(next); }}
                     disabled={loadingMore}
                     style={{ alignSelf: "center", marginTop: 4, padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                     {loadingMore ? "Loading..." : "Load more"}
@@ -444,11 +444,11 @@ function ReceptionistPage() {
                 )}
               </div>
 
-              {selected && selectedCall && (
+              {selected && selectedConversation && (
                 <div className="glass-dark hd-blur-in" style={{ borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", height: "fit-content", maxHeight: 500 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{selectedCall.caller_name || selectedCall.caller_phone}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{selectedConversation.customer_name || selectedConversation.customer_identifier}</div>
                       <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>SMS conversation</div>
                     </div>
                     <button onClick={() => setSelected(null)} style={{ fontSize: 18, background: "none", border: "none", cursor: "pointer", color: "var(--muted-foreground)" }}>×</button>

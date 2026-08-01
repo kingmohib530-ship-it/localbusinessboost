@@ -27,18 +27,17 @@ export const Route = createFileRoute("/api/admin/update-scores")({
         try {
           const [
             { data: profiles, error: profilesErr },
-            { data: missedCalls },
+            { data: conversations },
             { data: outboundReplies },
             { data: appointments },
             { data: reviews },
           ] = await Promise.all([
             supabaseAdmin.from("profiles").select("id"),
-            supabaseAdmin.from("missed_calls").select("id, user_id, called_at"),
+            supabaseAdmin.from("conversations").select("id, user_id, started_at"),
             supabaseAdmin
-              .from("sms_conversations")
-              .select("missed_call_id, sent_at")
+              .from("conversation_messages")
+              .select("conversation_id, sent_at")
               .eq("direction", "outbound")
-              .not("missed_call_id", "is", null)
               .order("sent_at", { ascending: true }),
             supabaseAdmin.from("appointments").select("user_id, status"),
             supabaseAdmin.from("review_responses").select("user_id, star_rating, created_at"),
@@ -49,25 +48,25 @@ export const Route = createFileRoute("/api/admin/update-scores")({
             return Response.json({ error: "Failed to load profiles" }, { status: 500 });
           }
 
-          // First outbound reply per missed_call_id (earliest, since the
+          // First outbound reply per conversation (earliest, since the
           // query above is already ordered ascending).
-          const firstReplyByMissedCall = new Map<string, string>();
+          const firstReplyByConversation = new Map<string, string>();
           for (const r of outboundReplies ?? []) {
-            if (r.missed_call_id && r.sent_at && !firstReplyByMissedCall.has(r.missed_call_id)) {
-              firstReplyByMissedCall.set(r.missed_call_id, r.sent_at);
+            if (r.conversation_id && r.sent_at && !firstReplyByConversation.has(r.conversation_id)) {
+              firstReplyByConversation.set(r.conversation_id, r.sent_at);
             }
           }
 
           // response_speed_avg_minutes per business
           const responseMinutesByUser = new Map<string, number[]>();
-          for (const mc of missedCalls ?? []) {
-            if (!mc.user_id || !mc.called_at) continue;
-            const firstReply = firstReplyByMissedCall.get(mc.id);
+          for (const conv of conversations ?? []) {
+            if (!conv.user_id || !conv.started_at) continue;
+            const firstReply = firstReplyByConversation.get(conv.id);
             if (!firstReply) continue;
-            const minutes = (new Date(firstReply).getTime() - new Date(mc.called_at).getTime()) / 60000;
+            const minutes = (new Date(firstReply).getTime() - new Date(conv.started_at).getTime()) / 60000;
             if (minutes < 0) continue;
-            if (!responseMinutesByUser.has(mc.user_id)) responseMinutesByUser.set(mc.user_id, []);
-            responseMinutesByUser.get(mc.user_id)!.push(minutes);
+            if (!responseMinutesByUser.has(conv.user_id)) responseMinutesByUser.set(conv.user_id, []);
+            responseMinutesByUser.get(conv.user_id)!.push(minutes);
           }
 
           // booking_completion_rate per business

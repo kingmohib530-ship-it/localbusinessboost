@@ -130,39 +130,42 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.");
           }
 
-          // Find the most recent missed call from this number
-          const { data: missedCall } = await supabaseAdmin
-            .from("missed_calls")
+          // Find the most recent sms-channel conversation with this number
+          const { data: conversation } = await supabaseAdmin
+            .from("conversations")
             .select("*, profiles(business_name, industry)")
-            .eq("caller_phone", from)
-            .order("called_at", { ascending: false })
+            .eq("channel", "sms")
+            .eq("customer_identifier", from)
+            .order("started_at", { ascending: false })
             .limit(1)
             .single();
 
-          if (!missedCall) {
+          if (!conversation) {
             return FALLBACK_TWIML("Thanks for reaching out! We'll be in touch shortly.");
           }
 
+          const now = new Date().toISOString();
+
           // Save inbound message
-          await supabaseAdmin.from("sms_conversations").insert({
-            missed_call_id: missedCall.id,
-            user_id: missedCall.user_id,
-            caller_phone: from,
+          await supabaseAdmin.from("conversation_messages").insert({
+            conversation_id: conversation.id,
+            user_id: conversation.user_id,
             direction: "inbound",
             message: messageBody,
+            sent_at: now,
           });
 
           // Update status to replied
           await supabaseAdmin
-            .from("missed_calls")
-            .update({ status: "replied" })
-            .eq("id", missedCall.id);
+            .from("conversations")
+            .update({ status: "replied", last_message_at: now })
+            .eq("id", conversation.id);
 
           // Get conversation history
           const { data: history } = await supabaseAdmin
-            .from("sms_conversations")
+            .from("conversation_messages")
             .select("direction, message")
-            .eq("missed_call_id", missedCall.id)
+            .eq("conversation_id", conversation.id)
             .order("sent_at", { ascending: true });
 
           const isFirstReply = !(history || []).some((m) => m.direction === "outbound");
@@ -170,10 +173,10 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
           // Starter plan's SMS/month cap, plus a flat per-hour abuse ceiling
           // that applies on every plan — skip the AI reply (and its
           // billable Anthropic call) once either limit is hit.
-          if (missedCall.user_id) {
+          if (conversation.user_id) {
             const [quota, hourlyOk] = await Promise.all([
-              checkSmsQuota(missedCall.user_id),
-              checkSmsHourlyRateLimit(missedCall.user_id),
+              checkSmsQuota(conversation.user_id),
+              checkSmsHourlyRateLimit(conversation.user_id),
             ]);
             if (!quota.allowed || !hourlyOk.allowed) {
               return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.", isFirstReply);
@@ -190,17 +193,17 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
           }));
 
           if (apiKey) {
-            const businessName = (missedCall as any).profiles?.business_name || "our business";
-            const service = (missedCall as any).profiles?.industry || "our services";
+            const businessName = (conversation as any).profiles?.business_name || "our business";
+            const service = (conversation as any).profiles?.industry || "our services";
 
             // Single query, scoped by the indexed user_id column, capped so
             // prompt size stays bounded even for a business with a large
             // fact list - this is the AI's real "memory" of the business.
-            const { data: facts } = missedCall.user_id
+            const { data: facts } = conversation.user_id
               ? await supabaseAdmin
                   .from("business_facts")
                   .select("fact_type, fact_text")
-                  .eq("user_id", missedCall.user_id)
+                  .eq("user_id", conversation.user_id)
                   .eq("status", "active")
                   .limit(40)
               : { data: [] as { fact_type: string; fact_text: string }[] };
@@ -239,16 +242,20 @@ Keep it simple.`,
 
           // Save AI reply
           const { data: savedReply } = await supabaseAdmin
-            .from("sms_conversations")
+            .from("conversation_messages")
             .insert({
-              missed_call_id: missedCall.id,
-              user_id: missedCall.user_id,
-              caller_phone: from,
+              conversation_id: conversation.id,
+              user_id: conversation.user_id,
               direction: "outbound",
               message: aiReply,
             })
             .select()
             .single();
+
+          await supabaseAdmin
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("id", conversation.id);
 
           // Best-effort: did this exchange just confirm a booking? Never lets
           // a failure here affect the SMS reply already built above.
@@ -264,7 +271,7 @@ Keep it simple.`,
                 extraction?.bookingConfirmed &&
                 extraction.confidence === "high" &&
                 isFuture &&
-                missedCall.user_id
+                conversation.user_id
               ) {
                 const serviceKey: ServiceTypeKey | "other" =
                   extraction.serviceType && extraction.serviceType !== null
@@ -278,7 +285,7 @@ Keep it simple.`,
                 const { data: appointment, error: apptErr } = await supabaseAdmin
                   .from("appointments")
                   .insert({
-                    user_id: missedCall.user_id,
+                    user_id: conversation.user_id,
                     customer_name: extraction.customerName || from,
                     customer_phone: from,
                     service_type: serviceKey,
@@ -294,7 +301,7 @@ Keep it simple.`,
                   console.error("[sms-reply] failed to create appointment", apptErr);
                 } else if (appointment && savedReply) {
                   await supabaseAdmin
-                    .from("sms_conversations")
+                    .from("conversation_messages")
                     .update({ appointment_id: appointment.id })
                     .eq("id", savedReply.id);
 
@@ -302,9 +309,9 @@ Keep it simple.`,
                   // location_zip stays null — nothing in this app captures a
                   // ZIP code anywhere (profiles.city and the consumer flow
                   // both only ever collect free-text city).
-                  const firstContactMs = missedCall.called_at ? new Date(missedCall.called_at).getTime() : Date.now();
+                  const firstContactMs = conversation.started_at ? new Date(conversation.started_at).getTime() : Date.now();
                   await supabaseAdmin.from("conversation_intelligence").insert({
-                    business_id: missedCall.user_id,
+                    business_id: conversation.user_id,
                     consumer_phone: from,
                     service_type: serviceKey,
                     location_zip: null,
