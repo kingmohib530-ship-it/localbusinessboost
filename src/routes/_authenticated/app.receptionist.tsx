@@ -50,10 +50,13 @@ function ReceptionistPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [tab, setTab] = useState<"calls" | "setup">("calls");
-  const [twilioNumber, setTwilioNumber] = useState("");
-  const [savingNumber, setSavingNumber] = useState(false);
-  const [numberMsg, setNumberMsg] = useState("");
-  const [numberSaveOk, setNumberSaveOk] = useState(false);
+  const [accountSid, setAccountSid] = useState("");
+  const [authToken, setAuthToken] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [twilioVerifiedAt, setTwilioVerifiedAt] = useState<string | null>(null);
+  const [savingTwilio, setSavingTwilio] = useState(false);
+  const [twilioMsg, setTwilioMsg] = useState("");
+  const [twilioSaveOk, setTwilioSaveOk] = useState(false);
   const [appointmentsBooked, setAppointmentsBooked] = useState(0);
 
   const [businessHours, setBusinessHours] = useState("");
@@ -93,27 +96,48 @@ function ReceptionistPage() {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("twilio_phone_number, business_hours, greeting_message, escalation_rules")
+      .select("twilio_account_sid, twilio_phone_number, twilio_verified_at, business_hours, greeting_message, escalation_rules")
       .eq("id", user.id)
       .single();
-    setTwilioNumber(data?.twilio_phone_number || "");
+    setAccountSid(data?.twilio_account_sid || "");
+    setPhoneNumber(data?.twilio_phone_number || "");
+    setTwilioVerifiedAt(data?.twilio_verified_at || null);
     setBusinessHours(data?.business_hours || "");
     setGreetingMessage(data?.greeting_message || "");
     setEscalationRules(data?.escalation_rules || "");
   }
 
-  async function saveTwilioNumber() {
-    setSavingNumber(true);
-    setNumberMsg("");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSavingNumber(false); return; }
-    const { error } = await supabase
-      .from("profiles")
-      .update({ twilio_phone_number: twilioNumber.trim() || null })
-      .eq("id", user.id);
-    setNumberSaveOk(!error);
-    setNumberMsg(error ? "Could not save — that number may already be linked to another account." : "Saved!");
-    setSavingNumber(false);
+  async function connectTwilio() {
+    setSavingTwilio(true);
+    setTwilioMsg("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setSavingTwilio(false);
+      setTwilioSaveOk(false);
+      setTwilioMsg("Please sign in again and retry.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/twilio-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ accountSid: accountSid.trim(), authToken: authToken.trim(), phoneNumber: phoneNumber.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTwilioSaveOk(true);
+        setTwilioMsg("Connected! Your calls and texts now send from your own Twilio number.");
+        setAuthToken("");
+        loadProfile();
+      } else {
+        setTwilioSaveOk(false);
+        setTwilioMsg(data.error || "Could not connect. Please check your details and try again.");
+      }
+    } catch {
+      setTwilioSaveOk(false);
+      setTwilioMsg("Network error. Please try again.");
+    }
+    setSavingTwilio(false);
   }
 
   async function saveConfig() {
@@ -232,7 +256,7 @@ function ReceptionistPage() {
   };
 
   const selectedConversation = conversations.find(c => c.id === selected);
-  const connected = !!twilioNumber;
+  const connected = !!twilioVerifiedAt;
   const reducedMotion = usePrefersReducedMotion();
   const { step, delay } = useMountReveal();
 
@@ -287,8 +311,8 @@ function ReceptionistPage() {
             </p>
             {[
               { step: "1", title: "Get a Twilio number", desc: "Sign up at twilio.com (free trial). Buy a local phone number for your area — costs ~$1/month." },
-              { step: "2", title: "Forward your calls", desc: "Set up call forwarding on your existing business phone to your Twilio number. Takes 2 minutes." },
-              { step: "3", title: "Add your Twilio credentials", desc: "Paste your Account SID and Auth Token into Vercel environment variables." },
+              { step: "2", title: "Point your number at Lanavix", desc: "In your Twilio console, set your number's Voice and SMS webhook URLs to the ones shown below. If you'd rather keep your existing business number, forward calls from it to your new Twilio number too." },
+              { step: "3", title: "Connect your Twilio account", desc: "Paste your Account SID, Auth Token, and phone number below, and we'll confirm it works right away." },
               { step: "4", title: "Configure your auto-reply", desc: "Set your business hours, greeting message, and escalation rules below. Lanavix handles the rest." },
             ].map(s => (
               <div key={s.step} style={{ display: "flex", gap: 14, marginBottom: 18 }}>
@@ -302,19 +326,48 @@ function ReceptionistPage() {
           </div>
 
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Your Twilio number</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Webhook URLs to paste into Twilio</div>
             <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
-              Enter the Twilio number Lanavix sends and receives texts on for your business. This is how missed calls get matched to your account.
+              On your Twilio number's configuration page, set these as the Voice and SMS webhook URLs.
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input value={twilioNumber} onChange={e => setTwilioNumber(e.target.value)} placeholder="+15555550100"
-                className="lv-input" style={{ flex: 1, padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit" }} />
-              <button onClick={saveTwilioNumber} disabled={savingNumber}
-                style={{ padding: "10px 20px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: savingNumber ? "not-allowed" : "pointer", opacity: savingNumber ? 0.7 : 1 }}>
-                {savingNumber ? "Saving..." : "Save"}
-              </button>
+            <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px", marginBottom: 8, wordBreak: "break-all" }}>
+              Voice: https://lanavix.com/api/twilio/missed-call
             </div>
-            {numberMsg && <div style={{ fontSize: 12, color: numberSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{numberMsg}</div>}
+            <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px", wordBreak: "break-all" }}>
+              SMS: https://lanavix.com/api/twilio/sms-reply
+            </div>
+          </div>
+
+          <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Connect your Twilio account</div>
+            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
+              Your own Twilio account, so calls and texts send from your business's own number. Find your Account SID and Auth Token on your Twilio console's dashboard. We confirm your details with Twilio before saving them, and your Auth Token is encrypted, so once saved it's never shown again, only replaced.
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Account SID</label>
+              <input value={accountSid} onChange={e => setAccountSid(e.target.value)} placeholder="AC..."
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Auth Token</label>
+              <input value={authToken} onChange={e => setAuthToken(e.target.value)} type="password"
+                placeholder={connected ? "•••••••• (saved, enter a new one to replace it)" : "Your Twilio Auth Token"}
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Phone number</label>
+              <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+15555550100"
+                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
+            </div>
+
+            <button onClick={connectTwilio} disabled={savingTwilio}
+              style={{ padding: "10px 20px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: savingTwilio ? "not-allowed" : "pointer", opacity: savingTwilio ? 0.7 : 1 }}>
+              {savingTwilio ? "Connecting..." : connected ? "Update connection" : "Connect Twilio"}
+            </button>
+            {twilioMsg && <div style={{ fontSize: 12, color: twilioSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{twilioMsg}</div>}
           </div>
 
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
@@ -348,23 +401,6 @@ function ReceptionistPage() {
               {savingConfig ? "Saving..." : "Save configuration"}
             </button>
             {configMsg && <div style={{ fontSize: 12, color: configSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{configMsg}</div>}
-          </div>
-
-          <div className="glass-dark" style={{ borderRadius: 16, padding: 24 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Environment variables needed</div>
-            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14 }}>Add these to Vercel → Environment Variables</div>
-            {["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"].map(v => (
-              <div key={v} style={{ fontFamily: "monospace", fontSize: 12, color: "var(--primary)", background: "var(--accent)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", marginBottom: 8 }}>{v}</div>
-            ))}
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Twilio webhook URLs to configure</div>
-              <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px", marginBottom: 8 }}>
-                Voice: https://lanavix.com/api/twilio/missed-call
-              </div>
-              <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px" }}>
-                SMS: https://lanavix.com/api/twilio/sms-reply
-              </div>
-            </div>
           </div>
         </div>
       )}
