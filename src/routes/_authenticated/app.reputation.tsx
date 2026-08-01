@@ -47,6 +47,7 @@ function ReputationPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
+  const [markingReviewedId, setMarkingReviewedId] = useState<string | null>(null);
 
   // Request form
   const [custName, setCustName] = useState("");
@@ -241,6 +242,42 @@ function ReputationPage() {
     toast.success("Response copied to clipboard!");
   }
 
+  // No Google review-fetching integration exists in this codebase (the
+  // Places sync only pulls business facts, not individual reviews), so
+  // marking a request as reviewed is a manual confirmation the contractor
+  // makes themselves once a customer actually leaves one.
+  async function markReviewed(id: string) {
+    setMarkingReviewedId(id);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        toast.error("Please sign in again and retry.");
+        return;
+      }
+      const res = await fetch(`/api/review-requests/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "reviewed" }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || "Couldn't mark this as reviewed. Please try again.");
+        return;
+      }
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "reviewed" } : r)));
+      loadStats();
+      toast.success("Marked as reviewed!");
+    } catch {
+      toast.error("Couldn't mark this as reviewed. Please try again.");
+    } finally {
+      setMarkingReviewedId(null);
+    }
+  }
+
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
 
@@ -314,11 +351,19 @@ function ReputationPage() {
                       <div style={{ fontSize: 14, fontWeight: 600, color: "var(--foreground)" }}>{r.customer_name || r.customer_phone}</div>
                       <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{new Date(r.sent_at).toLocaleDateString()}{r.job_description ? ` · ${r.job_description}` : ""}</div>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                      background: "var(--accent)",
-                      color: r.status === "reviewed" ? "var(--accent-2)" : "var(--primary)" }}>
-                      {r.status === "reviewed" ? "Reviewed ✓" : "Sent"}
-                    </span>
+                    {r.status === "reviewed" ? (
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "var(--accent)", color: "var(--accent-2)" }}>
+                        Reviewed ✓
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => markReviewed(r.id)}
+                        disabled={markingReviewedId === r.id}
+                        style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "var(--accent)", color: "var(--primary)", border: "none", cursor: markingReviewedId === r.id ? "not-allowed" : "pointer", opacity: markingReviewedId === r.id ? 0.6 : 1 }}
+                        title="Mark this request as reviewed once the customer leaves a review">
+                        {markingReviewedId === r.id ? "Saving..." : "Mark reviewed"}
+                      </button>
+                    )}
                   </div>
                 ))}
                 {requests.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No requests yet</p>}

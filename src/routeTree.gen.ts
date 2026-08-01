@@ -45,6 +45,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as ApiTwilioSmsReplyRouteImport } from './routes/api/twilio/sms-reply'
 import { Route as ApiTwilioMissedCallRouteImport } from './routes/api/twilio/missed-call'
 import { Route as ApiTwilioConsumerInboundRouteImport } from './routes/api/twilio/consumer-inbound'
+import { Route as ApiReviewRequestsIdRouteImport } from './routes/api/review-requests/$id'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
@@ -254,6 +255,11 @@ const ApiTwilioConsumerInboundRoute =
     path: '/api/twilio/consumer-inbound',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiReviewRequestsIdRoute = ApiReviewRequestsIdRouteImport.update({
+  id: '/api/review-requests/$id',
+  path: '/api/review-requests/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
@@ -470,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
@@ -533,6 +540,7 @@ export interface FileRoutesByTo {
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
@@ -600,6 +608,7 @@ export interface FileRoutesById {
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
   '/api/twilio/consumer-inbound': typeof ApiTwilioConsumerInboundRoute
   '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
   '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
@@ -666,6 +675,7 @@ export interface FileRouteTypes {
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
     | '/api/public/contact'
+    | '/api/review-requests/$id'
     | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
@@ -729,6 +739,7 @@ export interface FileRouteTypes {
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
     | '/api/public/contact'
+    | '/api/review-requests/$id'
     | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
@@ -795,6 +806,7 @@ export interface FileRouteTypes {
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
     | '/api/public/contact'
+    | '/api/review-requests/$id'
     | '/api/twilio/consumer-inbound'
     | '/api/twilio/missed-call'
     | '/api/twilio/sms-reply'
@@ -846,6 +858,7 @@ export interface RootRouteChildren {
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
+  ApiReviewRequestsIdRoute: typeof ApiReviewRequestsIdRoute
   ApiTwilioConsumerInboundRoute: typeof ApiTwilioConsumerInboundRoute
   ApiTwilioMissedCallRoute: typeof ApiTwilioMissedCallRoute
   ApiTwilioSmsReplyRoute: typeof ApiTwilioSmsReplyRoute
@@ -1105,6 +1118,13 @@ declare module '@tanstack/react-router' {
       path: '/api/twilio/consumer-inbound'
       fullPath: '/api/twilio/consumer-inbound'
       preLoaderRoute: typeof ApiTwilioConsumerInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/review-requests/$id': {
+      id: '/api/review-requests/$id'
+      path: '/api/review-requests/$id'
+      fullPath: '/api/review-requests/$id'
+      preLoaderRoute: typeof ApiReviewRequestsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/contact': {
@@ -1463,6 +1483,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
+  ApiReviewRequestsIdRoute: ApiReviewRequestsIdRoute,
   ApiTwilioConsumerInboundRoute: ApiTwilioConsumerInboundRoute,
   ApiTwilioMissedCallRoute: ApiTwilioMissedCallRoute,
   ApiTwilioSmsReplyRoute: ApiTwilioSmsReplyRoute,
