@@ -68,6 +68,7 @@ import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppBusinessFactsRouteImport } from './routes/_authenticated/app.business-facts'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
+import { Route as ApiPublicWebChatBusiness_idRouteImport } from './routes/api/public/web-chat/$business_id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppAdminVerificationReviewRouteImport } from './routes/_authenticated/app.admin.verification-review'
 
@@ -382,6 +383,12 @@ const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const ApiPublicWebChatBusiness_idRoute =
+  ApiPublicWebChatBusiness_idRouteImport.update({
+    id: '/api/public/web-chat/$business_id',
+    path: '/api/public/web-chat/$business_id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -455,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -515,6 +523,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -579,6 +588,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -642,6 +652,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
+    | '/api/public/web-chat/$business_id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -702,6 +713,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
+    | '/api/public/web-chat/$business_id'
   id:
     | '__root__'
     | '/'
@@ -765,6 +777,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/_authenticated/app/admin/verification-review'
     | '/api/public/payments/webhook'
+    | '/api/public/web-chat/$business_id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -812,6 +825,7 @@ export interface RootRouteChildren {
   ApiTwilioMissedCallRoute: typeof ApiTwilioMissedCallRoute
   ApiTwilioSmsReplyRoute: typeof ApiTwilioSmsReplyRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicWebChatBusiness_idRoute: typeof ApiPublicWebChatBusiness_idRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1229,6 +1243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/public/web-chat/$business_id': {
+      id: '/api/public/web-chat/$business_id'
+      path: '/api/public/web-chat/$business_id'
+      fullPath: '/api/public/web-chat/$business_id'
+      preLoaderRoute: typeof ApiPublicWebChatBusiness_idRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -1404,6 +1425,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTwilioMissedCallRoute: ApiTwilioMissedCallRoute,
   ApiTwilioSmsReplyRoute: ApiTwilioSmsReplyRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicWebChatBusiness_idRoute: ApiPublicWebChatBusiness_idRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

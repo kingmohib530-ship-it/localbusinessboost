@@ -10,6 +10,17 @@ import { type ServiceTypeKey } from "@/lib/serviceTypes";
 
 export type ReceptionistChannel = "sms" | "web_chat";
 
+/** How far out a confirmed appointment is, for conversation_intelligence's urgency_level. */
+export function deriveUrgency(
+  scheduledMs: number,
+): "emergency" | "same_day" | "this_week" | "scheduled" {
+  const hoursOut = (scheduledMs - Date.now()) / (1000 * 60 * 60);
+  if (hoursOut < 6) return "emergency";
+  if (hoursOut < 24) return "same_day";
+  if (hoursOut < 24 * 7) return "this_week";
+  return "scheduled";
+}
+
 export interface BusinessProfile {
   business_name: string | null;
   industry: string | null;
@@ -64,7 +75,10 @@ function messageLengthRule(channel: ReceptionistChannel): string {
     : "Keep messages concise (2-3 sentences at most) — this is a website chat widget, not email";
 }
 
-export function buildReceptionistSystemPrompt(context: BusinessContext, channel: ReceptionistChannel): string {
+export function buildReceptionistSystemPrompt(
+  context: BusinessContext,
+  channel: ReceptionistChannel,
+): string {
   return `You are the friendly AI receptionist for ${context.businessName}, a ${context.service} business. Your job is to:
 1. Understand what the customer needs
 2. Answer basic questions about services

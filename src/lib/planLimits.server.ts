@@ -8,7 +8,11 @@
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { PAID_PLAN_IDS, SOLO_REVIEW_REQUEST_MONTHLY_CAP, SOLO_LEAD_BLAST_MONTHLY_CAP } from "./pricingPlans";
+import {
+  PAID_PLAN_IDS,
+  SOLO_REVIEW_REQUEST_MONTHLY_CAP,
+  SOLO_LEAD_BLAST_MONTHLY_CAP,
+} from "./pricingPlans";
 
 // Pure abuse/cost-control ceiling, independent of plan tier — even an
 // unlimited-SMS paid plan shouldn't be able to blow through hundreds of
@@ -17,6 +21,13 @@ import { PAID_PLAN_IDS, SOLO_REVIEW_REQUEST_MONTHLY_CAP, SOLO_LEAD_BLAST_MONTHLY
 // differentiate plans, not to catch abuse.
 const SMS_HOURLY_ABUSE_CAP = 50;
 const SMS_HOURLY_WINDOW_SECONDS = 3600;
+
+// The web-chat widget is public and embeddable anywhere, a materially
+// different attack surface than SMS (no carrier cost, no phone number to
+// rate-limit by, no Twilio signature to verify) — so it gets its own,
+// tighter hourly ceiling per business rather than sharing SMS's cap.
+const WEB_CHAT_HOURLY_ABUSE_CAP = 100;
+const WEB_CHAT_HOURLY_WINDOW_SECONDS = 3600;
 
 interface QuotaResult {
   allowed: boolean;
@@ -114,7 +125,52 @@ export async function checkSmsHourlyRateLimit(userId: string): Promise<QuotaResu
     return { allowed: false, reason: "Service temporarily unavailable. Please try again shortly." };
   }
   if (!allowed) {
-    return { allowed: false, reason: "Too many messages sent in the last hour. Please try again shortly." };
+    return {
+      allowed: false,
+      reason: "Too many messages sent in the last hour. Please try again shortly.",
+    };
+  }
+  return { allowed: true };
+}
+
+/**
+ * The website chat widget is the same "AI receptionist" feature as
+ * Missed-Call Text-Back, just a second channel into it — gated identically:
+ * unlimited on every paid plan, no access at all on an inactive/no-plan
+ * account.
+ */
+export async function checkWebChatQuota(userId: string): Promise<QuotaResult> {
+  const { isPaidActive } = await getPlan(userId);
+  if (isPaidActive) return { allowed: true };
+  return {
+    allowed: false,
+    reason: "Subscribe to Solo, Crew, or Agency to unlock the website chat widget.",
+  };
+}
+
+/**
+ * Flat per-business, per-hour ceiling for the public web-chat endpoint.
+ * Separate cap from SMS's — this is a public, embeddable-anywhere surface
+ * with no carrier cost and no signature verification to lean on, so it
+ * needs its own abuse backstop independent of plan tier.
+ */
+export async function checkWebChatHourlyRateLimit(userId: string): Promise<QuotaResult> {
+  const { data: allowed, error } = await supabaseAdmin.rpc("check_rate_limit", {
+    p_user_id: userId,
+    p_route: "web-chat-hourly",
+    p_max_requests: WEB_CHAT_HOURLY_ABUSE_CAP,
+    p_window_seconds: WEB_CHAT_HOURLY_WINDOW_SECONDS,
+  });
+  if (error) {
+    console.error("[planLimits] web chat hourly rate limit check failed", error);
+    // Fail closed, same reasoning as the SMS hourly cap above.
+    return { allowed: false, reason: "Service temporarily unavailable. Please try again shortly." };
+  }
+  if (!allowed) {
+    return {
+      allowed: false,
+      reason: "Too many messages sent in the last hour. Please try again shortly.",
+    };
   }
   return { allowed: true };
 }
@@ -157,7 +213,8 @@ export async function checkLeadGeneratorQuota(userId: string): Promise<QuotaResu
   if (!isPaidActive) {
     return {
       allowed: false,
-      reason: "Local Lead Blast isn't available without an active plan. Subscribe to Solo or higher to unlock it.",
+      reason:
+        "Local Lead Blast isn't available without an active plan. Subscribe to Solo or higher to unlock it.",
     };
   }
   if (tier !== "solo") return { allowed: true };

@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyTwilioRequest } from "@/lib/twilio.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
-import { loadBusinessContext, buildReceptionistSystemPrompt, generateReceptionistReply, detectBooking } from "@/lib/aiReceptionist.server";
+import { loadBusinessContext, buildReceptionistSystemPrompt, generateReceptionistReply, detectBooking, deriveUrgency } from "@/lib/aiReceptionist.server";
 
 function businessFooter(): string {
   const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
@@ -19,14 +19,6 @@ const FALLBACK_TWIML = (message: string, includeFooter = true) =>
     `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}${includeFooter ? businessFooter() : ""}</Message></Response>`,
     { headers: { "Content-Type": "text/xml" } },
   );
-
-function deriveUrgency(scheduledMs: number): "emergency" | "same_day" | "this_week" | "scheduled" {
-  const hoursOut = (scheduledMs - Date.now()) / (1000 * 60 * 60);
-  if (hoursOut < 6) return "emergency";
-  if (hoursOut < 24) return "same_day";
-  if (hoursOut < 24 * 7) return "this_week";
-  return "scheduled";
-}
 
 export const Route = createFileRoute("/api/twilio/sms-reply")({
   server: {
