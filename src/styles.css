@@ -102,6 +102,16 @@
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+  /* .page-dark's own background only covers the page once its wrapper div
+     has painted, so body's light default is briefly the true base color on
+     every dark route (home, pricing, about, legal), visible as a flash of
+     white during a fast scroll jump. Matching body's background here for
+     exactly those routes closes the gap instead of relying on the wrapper
+     always covering it in time. Other routes (auth, dashboard, checkout)
+     don't use .page-dark, so they keep the light default untouched. */
+  body:has(.page-dark) {
+    background-color: #08090b;
+  }
   /* Plain links (nav, footer, in-page anchors) have no focus style of
      their own, so without this they'd fall back to each browser's own
      default outline instead of the accent ring the rest of the app uses. */
