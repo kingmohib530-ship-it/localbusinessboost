@@ -127,6 +127,67 @@ export async function generateReceptionistReply(
   }
 }
 
+export interface QuoteExtraction {
+  quoteGiven: boolean;
+  serviceType: ServiceTypeKey | "other" | null;
+  quotedPrice: number | null;
+  confidence: "high" | "low";
+}
+
+/**
+ * Best-effort structured extraction: did the business just state a real
+ * price or estimate for a specific service? Same conservative pattern as
+ * detectBooking (a second AI call, high-confidence-only, never throws) -
+ * used to decide whether to start the Day 1/5/14 follow-up sequence for a
+ * quote that didn't turn into a booking.
+ */
+export async function detectQuote(
+  apiKey: string,
+  conversationHistory: { role: string; content: string }[],
+): Promise<QuoteExtraction | null> {
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-5",
+        max_tokens: 250,
+        system: `You analyze a conversation between a home-services business and a customer to detect whether the business just stated a real price or estimate for a specific service.
+
+Return ONLY valid JSON, no markdown, no commentary, matching exactly this shape:
+{
+  "quoteGiven": boolean,
+  "serviceType": one of "hvac_tuneup", "hvac_repair", "hvac_install", "plumbing", "plumbing_emergency", "roofing", "electrical", "cleaning", "landscaping", "pest_control", "other", or null,
+  "quotedPrice": integer (whole dollars) or null,
+  "confidence": "high" or "low"
+}
+
+Rules:
+- quoteGiven is true ONLY if the business side of the conversation stated an actual number or price tied to a specific service - not just the customer asking about cost, and not just general talk about pricing.
+- quotedPrice is the exact number the business stated, and ONLY that number. If the business gave a range ("$200 to $400") or a vague answer ("depends on the job"), set quotedPrice to null - never average a range or estimate a figure yourself. It is only ever a number that was literally said.
+- serviceType must be your best match from the fixed list above, or "other" if it doesn't fit any category, or null if unclear.
+- confidence is "high" only when a specific service and a specific number were both clearly stated. Use "low" for anything vague, a range, or tentative.
+- If no price was ever stated, return quoteGiven: false, serviceType: null, quotedPrice: null, confidence: "low".`,
+        messages: conversationHistory,
+      }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text: string = data.content?.[0]?.text ?? "";
+    const parsed = JSON.parse(text);
+    if (typeof parsed?.quoteGiven !== "boolean") return null;
+    return parsed as QuoteExtraction;
+  } catch (err) {
+    console.error("[aiReceptionist] quote detection failed", err);
+    return null;
+  }
+}
+
 export interface BookingExtraction {
   bookingConfirmed: boolean;
   customerName: string | null;
