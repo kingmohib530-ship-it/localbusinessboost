@@ -27,6 +27,27 @@ interface Message {
   sent_at: string;
 }
 
+interface FollowUpStep {
+  id: string;
+  day_offset: number;
+  status: string;
+}
+
+interface FollowUp {
+  id: string;
+  service_type: string | null;
+  quoted_price: number | null;
+  steps: FollowUpStep[];
+}
+
+const FOLLOW_UP_STEP_LABELS: Record<string, string> = {
+  pending: "pending",
+  sent: "sent ✓",
+  skipped: "skipped",
+  cancelled: "cancelled",
+  failed: "failed",
+};
+
 const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
   received:    { bg: "var(--muted)", color: "var(--muted-foreground)", label: "Text not sent" },
   texted:      { bg: "var(--accent)", color: "var(--primary)", label: "Texted" },
@@ -67,6 +88,8 @@ function ReceptionistPage() {
   const [previewing, setPreviewing] = useState(false);
   const [previewResult, setPreviewResult] = useState<{ sampleMessage: string; reply: string } | null>(null);
   const [previewError, setPreviewError] = useState("");
+
+  const [followUps, setFollowUps] = useState<Record<string, FollowUp>>({});
 
   useEffect(() => {
     loadConversations(0);
@@ -180,6 +203,54 @@ function ReceptionistPage() {
     setHasMore(rows.length === PAGE_SIZE);
     setLoading(false);
     setLoadingMore(false);
+    loadFollowUps(rows.map((r) => r.id));
+  }
+
+  // Active quote follow-ups for whichever conversations are on screen -
+  // only active ones need a visible indicator, since booked/cancelled/
+  // completed sequences have nothing left for the contractor to act on.
+  async function loadFollowUps(conversationIds: string[]) {
+    if (conversationIds.length === 0) return;
+    const { data } = await supabase
+      .from("quote_follow_ups")
+      .select("id, conversation_id, service_type, quoted_price, quote_follow_up_steps(id, day_offset, status)")
+      .in("conversation_id", conversationIds)
+      .eq("status", "active");
+    const map: Record<string, FollowUp> = {};
+    for (const row of data || []) {
+      map[row.conversation_id] = {
+        id: row.id,
+        service_type: row.service_type,
+        quoted_price: row.quoted_price,
+        steps: (row.quote_follow_up_steps || []) as FollowUpStep[],
+      };
+    }
+    setFollowUps((prev) => ({ ...prev, ...map }));
+  }
+
+  async function stopFollowUp(conversationId: string) {
+    const followUp = followUps[conversationId];
+    if (!followUp) return;
+    const { error } = await supabase
+      .from("quote_follow_ups")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", followUp.id)
+      .eq("status", "active");
+    if (error) {
+      toast.error("Couldn't stop the follow-up. Please try again.");
+      return;
+    }
+    await supabase
+      .from("quote_follow_up_steps")
+      .update({ status: "cancelled" })
+      .eq("follow_up_id", followUp.id)
+      .eq("status", "pending");
+    setFollowUps((prev) => {
+      const next = { ...prev };
+      delete next[conversationId];
+      return next;
+    });
+    toast.success("Follow-up stopped.");
   }
 
   async function loadAppointmentsBooked() {
@@ -481,6 +552,21 @@ function ReceptionistPage() {
                         {new Date(conversation.started_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </div>
                       {conversation.notes && <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 6 }}>{conversation.notes}</div>}
+                      {followUps[conversation.id] && (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+                          <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                            Follow-up: {[1, 5, 14].map((day) => {
+                              const found = followUps[conversation.id].steps.find((s) => s.day_offset === day);
+                              const label = found ? FOLLOW_UP_STEP_LABELS[found.status] || found.status : "pending";
+                              return `Day ${day} ${label}`;
+                            }).join(" · ")}
+                          </span>
+                          <button onClick={(e) => { e.stopPropagation(); stopFollowUp(conversation.id); }}
+                            style={{ fontSize: 11, fontWeight: 600, color: "var(--destructive)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                            Stop following up
+                          </button>
+                        </div>
+                      )}
                     </GlowPanel>
                   );
                 })}
