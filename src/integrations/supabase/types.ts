@@ -812,6 +812,91 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_follow_up_steps: {
+        Row: {
+          created_at: string
+          day_offset: number
+          follow_up_id: string
+          id: string
+          scheduled_for: string
+          sent_at: string | null
+          sent_message: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          day_offset: number
+          follow_up_id: string
+          id?: string
+          scheduled_for: string
+          sent_at?: string | null
+          sent_message?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          day_offset?: number
+          follow_up_id?: string
+          id?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          sent_message?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_follow_up_steps_follow_up_id_fkey"
+            columns: ["follow_up_id"]
+            isOneToOne: false
+            referencedRelation: "quote_follow_ups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_follow_ups: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          quoted_at: string
+          quoted_price: number | null
+          service_type: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          quoted_at?: string
+          quoted_price?: number | null
+          service_type?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          quoted_at?: string
+          quoted_price?: number | null
+          service_type?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_follow_ups_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           request_count: number
@@ -1133,9 +1218,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const
