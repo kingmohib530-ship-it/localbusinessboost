@@ -140,6 +140,13 @@ export const ENV_VARS: EnvVarDef[] = [
     description: "Consumer-marketplace Twilio number, shown in one line of SMS footer copy only. Cosmetic if unset.",
     validate: isE164Phone,
   },
+  {
+    name: "CRON_SECRET",
+    category: "core",
+    required: true,
+    description: "Shared secret Vercel Cron sends as a bearer token so /api/cron/* routes can tell a real scheduled run from an arbitrary request.",
+    validate: minLength(32),
+  },
 
   // auth — the client-side keys that actually drive sign-in/session in the
   // browser. This app uses Supabase Auth directly; there is no separate

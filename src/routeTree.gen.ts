@@ -51,6 +51,7 @@ import { Route as ApiPublicContactRouteImport } from './routes/api/public/contac
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiCronQuoteFollowUpsRouteImport } from './routes/api/cron/quote-follow-ups'
 import { Route as ApiConsumerRequestsMatchIdRouteImport } from './routes/api/consumer-requests/$matchId'
 import { Route as ApiBusinessFactsSyncWebsiteRouteImport } from './routes/api/business-facts/sync-website'
 import { Route as ApiBusinessFactsSyncGoogleRouteImport } from './routes/api/business-facts/sync-google'
@@ -289,6 +290,11 @@ const ApiLeadGeneratorExecuteStepRoute =
     path: '/api/lead-generator/execute-step',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCronQuoteFollowUpsRoute = ApiCronQuoteFollowUpsRouteImport.update({
+  id: '/api/cron/quote-follow-ups',
+  path: '/api/cron/quote-follow-ups',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiConsumerRequestsMatchIdRoute =
   ApiConsumerRequestsMatchIdRouteImport.update({
     id: '/$matchId',
@@ -479,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
+  '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -544,6 +551,7 @@ export interface FileRoutesByTo {
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
+  '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -613,6 +621,7 @@ export interface FileRoutesById {
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
+  '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -681,6 +690,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
     | '/api/consumer-requests/$matchId'
+    | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -746,6 +756,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
     | '/api/consumer-requests/$matchId'
+    | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -814,6 +825,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
     | '/api/consumer-requests/$matchId'
+    | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -867,6 +879,7 @@ export interface RootRouteChildren {
   ApiBusinessFactsSearchGooglePlacesRoute: typeof ApiBusinessFactsSearchGooglePlacesRoute
   ApiBusinessFactsSyncGoogleRoute: typeof ApiBusinessFactsSyncGoogleRoute
   ApiBusinessFactsSyncWebsiteRoute: typeof ApiBusinessFactsSyncWebsiteRoute
+  ApiCronQuoteFollowUpsRoute: typeof ApiCronQuoteFollowUpsRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
@@ -1173,6 +1186,13 @@ declare module '@tanstack/react-router' {
       path: '/api/lead-generator/execute-step'
       fullPath: '/api/lead-generator/execute-step'
       preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/quote-follow-ups': {
+      id: '/api/cron/quote-follow-ups'
+      path: '/api/cron/quote-follow-ups'
+      fullPath: '/api/cron/quote-follow-ups'
+      preLoaderRoute: typeof ApiCronQuoteFollowUpsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/consumer-requests/$matchId': {
@@ -1500,6 +1520,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiBusinessFactsSearchGooglePlacesRoute,
   ApiBusinessFactsSyncGoogleRoute: ApiBusinessFactsSyncGoogleRoute,
   ApiBusinessFactsSyncWebsiteRoute: ApiBusinessFactsSyncWebsiteRoute,
+  ApiCronQuoteFollowUpsRoute: ApiCronQuoteFollowUpsRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
