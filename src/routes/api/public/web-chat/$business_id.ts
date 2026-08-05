@@ -9,6 +9,7 @@ import {
   deriveUrgency,
 } from "@/lib/aiReceptionist.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
+import { cancelActiveQuoteFollowUp, maybeStartQuoteFollowUp } from "@/lib/quoteFollowUps.server";
 
 // Embeddable on any contractor's own website, so this has to be reachable
 // cross-origin from wherever they host it - same reasoning the old (now
@@ -292,9 +293,13 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
             .update({ status: "replied", last_message_at: new Date().toISOString() })
             .eq("id", conversationId);
 
-          // Best-effort: did this exchange just confirm a booking? Same
-          // conservative extraction sms-reply.ts uses, never lets a failure
-          // here affect the reply already built above.
+          // Best-effort: did this exchange just confirm a booking, or give a
+          // quote that didn't book? Same conservative extraction sms-reply.ts
+          // uses, never lets a failure here affect the reply already built
+          // above. Web-chat visitors have no phone number on file (only a
+          // random session id) unless they typed one into the chat, so a
+          // detected quote here is tracked for the dashboard but never gets
+          // scheduled Day 1/5/14 texts the way an SMS conversation's does.
           if (apiKey) {
             try {
               const fullHistory = [...conversationHistory, { role: "assistant", content: aiReply }];
@@ -304,8 +309,9 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
                 ? Date.parse(extraction.scheduledAt)
                 : NaN;
               const isFuture = !isNaN(scheduledMs) && scheduledMs > Date.now();
+              const bookingConfirmed = !!extraction?.bookingConfirmed && extraction.confidence === "high" && isFuture;
 
-              if (extraction?.bookingConfirmed && extraction.confidence === "high" && isFuture) {
+              if (bookingConfirmed && extraction) {
                 const serviceKey: ServiceTypeKey | "other" =
                   extraction.serviceType && extraction.serviceType !== null
                     ? extraction.serviceType
@@ -348,9 +354,25 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
                     ai_confidence_score: 0.85,
                   });
                 }
+
+                await cancelActiveQuoteFollowUp(conversationId);
+              } else {
+                const quote = await maybeStartQuoteFollowUp(apiKey, conversationId, businessId, fullHistory, false);
+                if (quote?.quoteGiven && quote.confidence === "high") {
+                  await supabaseAdmin.from("conversation_intelligence").insert({
+                    business_id: businessId,
+                    service_type: quote.serviceType,
+                    location_zip: null,
+                    price_mentioned: quote.quotedPrice,
+                    urgency_level: null,
+                    outcome: "quoted",
+                    source_channel: "web_chat",
+                    ai_confidence_score: 0.8,
+                  });
+                }
               }
             } catch (err) {
-              console.error("[web-chat] booking detection/creation error", err);
+              console.error("[web-chat] booking/quote detection error", err);
             }
           }
 

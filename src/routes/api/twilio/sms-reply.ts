@@ -5,6 +5,7 @@ import { findBusinessByTwilioNumber } from "@/lib/twilioCredentials.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 import { loadBusinessContext, buildReceptionistSystemPrompt, generateReceptionistReply, detectBooking, deriveUrgency } from "@/lib/aiReceptionist.server";
+import { cancelActiveQuoteFollowUp, maybeStartQuoteFollowUp } from "@/lib/quoteFollowUps.server";
 
 function businessFooter(): string {
   const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
@@ -164,8 +165,9 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             .update({ last_message_at: new Date().toISOString() })
             .eq("id", conversation.id);
 
-          // Best-effort: did this exchange just confirm a booking? Never lets
-          // a failure here affect the SMS reply already built above.
+          // Best-effort: did this exchange just confirm a booking, or give a
+          // quote that didn't book? Never lets a failure here affect the SMS
+          // reply already built above.
           if (apiKey) {
             try {
               const fullHistory = [...conversationHistory, { role: "assistant", content: aiReply }];
@@ -173,13 +175,10 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
 
               const scheduledMs = extraction?.scheduledAt ? Date.parse(extraction.scheduledAt) : NaN;
               const isFuture = !isNaN(scheduledMs) && scheduledMs > Date.now();
+              const bookingConfirmed =
+                !!extraction?.bookingConfirmed && extraction.confidence === "high" && isFuture && !!conversation.user_id;
 
-              if (
-                extraction?.bookingConfirmed &&
-                extraction.confidence === "high" &&
-                isFuture &&
-                conversation.user_id
-              ) {
+              if (bookingConfirmed && extraction) {
                 const serviceKey: ServiceTypeKey | "other" =
                   extraction.serviceType && extraction.serviceType !== null
                     ? extraction.serviceType
@@ -230,9 +229,34 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
                     ai_confidence_score: 0.85,
                   });
                 }
+
+                // Any quote follow-up sequence still waiting on this
+                // conversation is no longer relevant now that it's booked.
+                await cancelActiveQuoteFollowUp(conversation.id);
+              } else if (conversation.user_id) {
+                const quote = await maybeStartQuoteFollowUp(
+                  apiKey,
+                  conversation.id,
+                  conversation.user_id,
+                  fullHistory,
+                  true,
+                );
+                if (quote?.quoteGiven && quote.confidence === "high") {
+                  await supabaseAdmin.from("conversation_intelligence").insert({
+                    business_id: conversation.user_id,
+                    consumer_phone: from,
+                    service_type: quote.serviceType,
+                    location_zip: null,
+                    price_mentioned: quote.quotedPrice,
+                    urgency_level: null,
+                    outcome: "quoted",
+                    source_channel: "inbound_sms",
+                    ai_confidence_score: 0.8,
+                  });
+                }
               }
             } catch (err) {
-              console.error("[sms-reply] booking detection/creation error", err);
+              console.error("[sms-reply] booking/quote detection error", err);
             }
           }
 
