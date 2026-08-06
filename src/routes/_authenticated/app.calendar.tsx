@@ -217,12 +217,21 @@ function CalendarPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to create appointment");
       } else if (modal?.mode === "edit") {
+        // Only send scheduled_at when it actually moved - the backend
+        // rejects any scheduled_at that isn't in the future, which would
+        // otherwise block editing a past appointment (e.g. marking it
+        // Completed or adding notes after the job happened) even though
+        // its time isn't changing. Compare against the same minute-precision
+        // local value the form field was seeded with, not the full-precision
+        // original timestamp - otherwise leftover seconds/milliseconds on
+        // the original would make this look "changed" on every edit.
+        const scheduledChanged = form.scheduled_at !== toLocalInputValue(modal.appointment.scheduled_at);
         const res = await fetch(`/api/appointments/${modal.appointment.id}`, {
           method: "PATCH",
           headers,
           body: JSON.stringify({
             status: form.status,
-            scheduled_at: scheduledIso,
+            ...(scheduledChanged ? { scheduled_at: scheduledIso } : {}),
             notes: form.notes.trim() || null,
             estimated_value: form.estimated_value ? Number(form.estimated_value) : null,
           }),
