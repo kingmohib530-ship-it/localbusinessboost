@@ -5,6 +5,8 @@ import {
   MapPin,
   Globe,
   Phone,
+  Brain,
+  Plus,
   Sparkles,
   Check,
   ArrowRight,
@@ -14,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { GoogleListingConnect } from "@/components/GoogleListingConnect";
 import { WebsiteConnect } from "@/components/WebsiteConnect";
 import { TwilioConnect } from "@/components/TwilioConnect";
+import { AddFactForm } from "@/components/AddFactForm";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
@@ -32,13 +35,14 @@ const INDUSTRY_SUGGESTIONS = [
 
 type ConnectStatus = "pending" | "connected" | "skipped";
 
-type StepId = "identity" | "google" | "website" | "twilio" | "done";
+type StepId = "identity" | "google" | "website" | "twilio" | "facts" | "done";
 
 const STEPS: { id: StepId; label: string; Icon: typeof Building2 }[] = [
   { id: "identity", label: "Business", Icon: Building2 },
   { id: "google", label: "Google", Icon: MapPin },
   { id: "website", label: "Website", Icon: Globe },
   { id: "twilio", label: "Phone", Icon: Phone },
+  { id: "facts", label: "Facts", Icon: Brain },
   { id: "done", label: "Done", Icon: Sparkles },
 ];
 
@@ -59,6 +63,7 @@ function OnboardingPage() {
   const [googleStatus, setGoogleStatus] = useState<ConnectStatus>("pending");
   const [websiteStatus, setWebsiteStatus] = useState<ConnectStatus>("pending");
   const [twilioStatus, setTwilioStatus] = useState<ConnectStatus>("pending");
+  const [factsStatus, setFactsStatus] = useState<ConnectStatus>("pending");
 
   const [factCount, setFactCount] = useState(0);
 
@@ -75,24 +80,37 @@ function OnboardingPage() {
       setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from("profiles")
-      .select(
-        "industry, business_name, city, business_hours, google_place_id, website, twilio_verified_at",
-      )
-      .eq("id", user.id)
-      .maybeSingle();
+    const [{ data }, { count }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select(
+          "industry, business_name, city, business_hours, google_place_id, website, twilio_verified_at",
+        )
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("business_facts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "active"),
+    ]);
 
     setIndustry(data?.industry || "");
     setBusinessName(data?.business_name || "");
     setCity(data?.city || "");
     setBusinessHours(data?.business_hours || "");
+    setFactCount(count || 0);
 
     const hasIdentity = !!(data?.industry && data?.business_name && data?.city);
+    const hasFacts = (count || 0) > 0;
     setIdentityDone(hasIdentity);
     if (data?.google_place_id) setGoogleStatus("connected");
     if (data?.website) setWebsiteStatus("connected");
     if (data?.twilio_verified_at) setTwilioStatus("connected");
+    // Any real fact already on file - synced or typed in - satisfies this
+    // step's purpose, so it's marked done even if the wizard itself never
+    // walked through it.
+    if (hasFacts) setFactsStatus("connected");
 
     // Land on the first real gap, not always step 0 - a returning visitor
     // (refresh, or came back after finishing setup elsewhere) shouldn't
@@ -101,7 +119,8 @@ function OnboardingPage() {
     else if (!data?.google_place_id) setStepIndex(1);
     else if (!data?.website) setStepIndex(2);
     else if (!data?.twilio_verified_at) setStepIndex(3);
-    else setStepIndex(4);
+    else if (!hasFacts) setStepIndex(4);
+    else setStepIndex(5);
 
     setLoading(false);
   }
@@ -229,11 +248,13 @@ function OnboardingPage() {
               (s.id === "google" && googleStatus !== "pending") ||
               (s.id === "website" && websiteStatus !== "pending") ||
               (s.id === "twilio" && twilioStatus !== "pending") ||
-              (s.id === "done" && stepIndex === 4 && identityDone);
+              (s.id === "facts" && factsStatus !== "pending") ||
+              (s.id === "done" && i === stepIndex && identityDone);
             const skipped =
               (s.id === "google" && googleStatus === "skipped") ||
               (s.id === "website" && websiteStatus === "skipped") ||
-              (s.id === "twilio" && twilioStatus === "skipped");
+              (s.id === "twilio" && twilioStatus === "skipped") ||
+              (s.id === "facts" && factsStatus === "skipped");
             const active = i === stepIndex;
             return (
               <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -442,18 +463,48 @@ function OnboardingPage() {
                       onClick={() => {
                         setTwilioStatus("skipped");
                         goNext();
-                        loadFactCount();
                       }}
                     >
                       I'll connect this later
                     </SecondaryButton>
                   )}
-                  <PrimaryButton
-                    onClick={() => {
-                      goNext();
-                      loadFactCount();
-                    }}
-                  >
+                  <PrimaryButton onClick={goNext}>
+                    Continue <ArrowRight size={14} />
+                  </PrimaryButton>
+                </div>
+              </StepFooter>
+            </StepShell>
+          )}
+
+          {currentStep.id === "facts" && (
+            <StepShell
+              Icon={Brain}
+              title="A few more real answers"
+              subtitle="Sync doesn't always catch everything. Add the services, prices, or common questions you want your AI to get right every time - skip this and it'll still work, just with less to go on."
+            >
+              <FactsStep
+                factCount={factCount}
+                onFactAdded={() => {
+                  setFactsStatus("connected");
+                  loadFactCount();
+                }}
+              />
+              <StepFooter>
+                <SecondaryButton onClick={goBack}>
+                  <ArrowLeft size={14} /> Back
+                </SecondaryButton>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {factsStatus === "pending" && (
+                    <SecondaryButton
+                      onClick={() => {
+                        setFactsStatus("skipped");
+                        goNext();
+                      }}
+                    >
+                      I'll add these later
+                    </SecondaryButton>
+                  )}
+                  <PrimaryButton onClick={goNext}>
                     Continue <ArrowRight size={14} />
                   </PrimaryButton>
                 </div>
@@ -466,6 +517,7 @@ function OnboardingPage() {
               googleStatus={googleStatus}
               websiteStatus={websiteStatus}
               twilioStatus={twilioStatus}
+              factsStatus={factsStatus}
               factCount={factCount}
               onFinish={finish}
               exiting={exiting}
@@ -483,6 +535,7 @@ function DoneStep({
   googleStatus,
   websiteStatus,
   twilioStatus,
+  factsStatus,
   factCount,
   onFinish,
   exiting,
@@ -492,6 +545,7 @@ function DoneStep({
   googleStatus: ConnectStatus;
   websiteStatus: ConnectStatus;
   twilioStatus: ConnectStatus;
+  factsStatus: ConnectStatus;
   factCount: number;
   onFinish: () => void;
   exiting: boolean;
@@ -503,17 +557,17 @@ function DoneStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const connectedCount = [googleStatus, websiteStatus, twilioStatus].filter(
+  const connectedCount = [googleStatus, websiteStatus, twilioStatus, factsStatus].filter(
     (s) => s === "connected",
   ).length;
 
   return (
     <StepShell
       Icon={Sparkles}
-      title={connectedCount === 3 ? "You're set up" : `${connectedCount} of 3 connected`}
+      title={connectedCount === 4 ? "You're set up" : `${connectedCount} of 4 connected`}
       subtitle={
-        connectedCount === 3
-          ? "Google, your website, and Twilio are all connected. Your AI receptionist is working from real information now, not guesses."
+        connectedCount === 4
+          ? "Google, your website, Twilio, and your own facts are all in. Your AI receptionist is working from real information now, not guesses."
           : "The rest you can finish anytime from Business Facts or Receptionist Setup - nothing here is locked."
       }
     >
@@ -521,11 +575,12 @@ function DoneStep({
         <StatusRow label="Google Business listing" status={googleStatus} />
         <StatusRow label="Website" status={websiteStatus} />
         <StatusRow label="Twilio phone number" status={twilioStatus} />
+        <StatusRow label="Business facts" status={factsStatus} />
       </div>
       <p style={{ fontSize: 12, color: "var(--hd-muted)", marginTop: 10 }}>
         {factCount > 0
-          ? `${factCount} fact${factCount === 1 ? "" : "s"} synced so far - review or edit them anytime in Business Facts.`
-          : "No facts synced yet - that's fine, add them anytime in Business Facts."}
+          ? `${factCount} fact${factCount === 1 ? "" : "s"} on file - review or edit them anytime in Business Facts.`
+          : "No facts on file yet - that's fine, add them anytime in Business Facts."}
       </p>
       <StepFooter>
         <SecondaryButton onClick={onBack}>
@@ -561,6 +616,108 @@ function StatusRow({ label, status }: { label: string; status: ConnectStatus }) 
     >
       <span style={{ fontSize: 13, color: "var(--hd-fg)" }}>{label}</span>
       <span style={{ fontSize: 12, fontWeight: 600, color }}>{text}</span>
+    </div>
+  );
+}
+
+function FactsStep({ factCount, onFactAdded }: { factCount: number; onFactAdded: () => void }) {
+  return (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--hd-fg)", marginBottom: 8 }}>
+          Services and pricing
+        </div>
+        <AddFactForm fixedType="pricing" onAdded={onFactAdded} />
+      </div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--hd-fg)", marginBottom: 8 }}>
+          Common questions customers ask
+        </div>
+        <QAForm onAdded={onFactAdded} />
+      </div>
+      <p style={{ fontSize: 12, color: "var(--hd-muted)", marginTop: 16 }}>
+        {factCount > 0
+          ? `${factCount} fact${factCount === 1 ? "" : "s"} on file so far.`
+          : "Nothing on file yet - the AI will still answer, just more generally until you add something here."}
+      </p>
+    </div>
+  );
+}
+
+function QAForm({ onAdded }: { onAdded: () => void }) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState("");
+
+  async function add() {
+    if (!question.trim() || !answer.trim()) {
+      setError("Enter both a question and an answer.");
+      return;
+    }
+    setAdding(true);
+    setError("");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setAdding(false);
+      return;
+    }
+    const { error: insertError } = await supabase.from("business_facts").insert({
+      user_id: user.id,
+      fact_type: "faq",
+      fact_text: `Q: ${question.trim()}\nA: ${answer.trim()}`,
+      source: "setup_form",
+      status: "active",
+    });
+    setAdding(false);
+    if (insertError) {
+      setError("Could not save this question. Please try again.");
+      return;
+    }
+    setQuestion("");
+    setAnswer("");
+    onAdded();
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="e.g. Do you offer emergency service?"
+          style={inputStyle}
+        />
+        <input
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="e.g. Yes, 24/7, no extra charge on weekends"
+          style={inputStyle}
+        />
+        <button
+          onClick={add}
+          disabled={adding}
+          style={{
+            alignSelf: "flex-start",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "10px 18px",
+            background: "var(--hd-primary)",
+            color: "var(--primary-foreground)",
+            border: "none",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <Plus size={14} /> {adding ? "Adding..." : "Add question"}
+        </button>
+      </div>
+      {error && <p style={{ fontSize: 12, color: "var(--destructive)", marginTop: 8 }}>{error}</p>}
     </div>
   );
 }
