@@ -529,3 +529,38 @@ follow-ups and Coach earlier this session. Worth a real run-through
 after this deploys, especially the "returning visitor lands on their
 first real gap" logic in `onboarding.tsx`'s `load()`, which only static
 analysis has checked so far.
+
+## Onboarding wizard: facts step (services/pricing + FAQ)
+
+Added a sixth `business_facts.fact_type`, `'faq'`, for structured
+question/answer pairs. Checked first whether this was actually
+necessary: `loadBusinessContext()` in `aiReceptionist.server.ts`
+already folds every active fact into the AI receptionist's prompt as
+plain text regardless of type, so a Q&A pair would have worked fine
+even filed under `'general'`. This change is for data quality and the
+Business Facts review page, not to unlock AI behavior that didn't
+already exist. Deliberately left `'faq'` out of the website-sync
+extraction prompt's `validTypes` allowlist in `businessFacts.server.ts`
+- a Q&A pair should come from the owner writing one, not the model
+inferring a question from scraped page text, which would cut against
+this codebase's real-data-only principle for anything AI-touched.
+
+New step placed after Twilio, before Done - the alternative (right
+after business identity, before any sync attempt) would have asked for
+manual facts before the owner had a chance to see what sync already
+caught, working against the step's actual purpose of filling real
+gaps.
+
+`AddFactForm` was extracted from Business Facts' existing manual-entry
+block (same insert shape: `source: 'setup_form'`, `status: 'active'`,
+no conflict-checking - that only applies to the sync path) so the
+wizard reuses the exact same code path rather than a second
+implementation that could drift from it over time.
+
+Not exercised live, same sandbox limitation as the rest of this
+wizard: no way to complete a real Supabase Auth session here, so this
+was verified by code trace, `tsc`, and `eslint`, not a live
+click-through. Particularly worth confirming after deploy: that a
+returning visitor who already has active facts (from any source, not
+just this step) correctly resumes past the facts step per the updated
+`load()` logic.
