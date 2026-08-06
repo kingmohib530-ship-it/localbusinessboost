@@ -239,9 +239,13 @@ function ReputationPage() {
     }
   }
 
-  function copyResponse() {
-    navigator.clipboard.writeText(aiResponse);
-    toast.success("Response copied to clipboard!");
+  async function copyResponse() {
+    try {
+      await navigator.clipboard.writeText(aiResponse);
+      toast.success("Response copied to clipboard!");
+    } catch {
+      toast.error("Couldn't copy - please select and copy the text manually.");
+    }
   }
 
   // No Google review-fetching integration exists in this codebase (the

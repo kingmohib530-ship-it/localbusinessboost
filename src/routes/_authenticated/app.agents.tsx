@@ -274,7 +274,7 @@ function AgentsHub() {
     }
   }
 
-  function copyCompetitorIntel() {
+  async function copyCompetitorIntel() {
     if (!competitorResult) return;
     const lines: string[] = [];
     lines.push("COMPETITORS");
@@ -285,17 +285,25 @@ function AgentsHub() {
     competitorResult.opportunities.forEach((o, i) => lines.push(`${i + 1}. ${o}`));
     lines.push("", "INSIGHTS");
     competitorResult.insights.forEach((n, i) => lines.push(`${i + 1}. ${n}`));
-    navigator.clipboard.writeText(lines.join("\n"));
-    toast.success("Copied to clipboard!");
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      toast.success("Copied to clipboard!");
+    } catch {
+      toast.error("Couldn't copy - please select and copy the text manually.");
+    }
   }
 
-  function copyReviewResponse() {
+  async function copyReviewResponse() {
     if (!reviewResponse) return;
-    navigator.clipboard.writeText(reviewResponse);
-    toast.success("Response copied to clipboard!");
+    try {
+      await navigator.clipboard.writeText(reviewResponse);
+      toast.success("Response copied to clipboard!");
+    } catch {
+      toast.error("Couldn't copy - please select and copy the text manually.");
+    }
   }
 
-  function copyBookingPlan() {
+  async function copyBookingPlan() {
     if (!bookingPlan) return;
     const lines: string[] = [];
     lines.push(`TRIGGER\n${bookingPlan.trigger}`);
@@ -318,8 +326,12 @@ function AgentsHub() {
       lines.push("", "NEXT ACTIONS");
       bookingPlan.nextActions.forEach((a, i) => lines.push(`${i + 1}. ${a.title}${a.eta ? ` (${a.eta})` : ""}`));
     }
-    navigator.clipboard.writeText(lines.join("\n"));
-    toast.success("Plan copied to clipboard!");
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      toast.success("Plan copied to clipboard!");
+    } catch {
+      toast.error("Couldn't copy - please select and copy the text manually.");
+    }
   }
 
   const hasResult = !!competitorResult || !!reviewResponse || !!bookingPlan;
