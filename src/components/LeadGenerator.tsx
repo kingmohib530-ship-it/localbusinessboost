@@ -116,6 +116,13 @@ export default function LeadGenerator() {
   const [notesDraft, setNotesDraft] = useState("");
   const [runningStepFor, setRunningStepFor] = useState<string | null>(null);
 
+  // Keeps the notes draft in sync with whichever lead's drawer is open, so
+  // switching leads (or reopening one) never leaves stale text from a
+  // previous lead sitting in the field to be saved over it.
+  useEffect(() => {
+    setNotesDraft(detailLead?.notes || "");
+  }, [detailLead?.id]);
+
   const loadLeads = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -494,7 +501,7 @@ export default function LeadGenerator() {
             <div style={{ marginBottom: 18 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>Notes</div>
               <textarea
-                defaultValue={detailLead.notes || ""}
+                value={notesDraft}
                 onChange={(e) => setNotesDraft(e.target.value)}
                 onBlur={() => saveNotes(detailLead.id)}
                 rows={4}
