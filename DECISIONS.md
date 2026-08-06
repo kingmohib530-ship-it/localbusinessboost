@@ -458,3 +458,36 @@ destination and resolve to a real 200 page with `-L`.
 
 **No deploy performed** — per your standing instruction, built and
 verified locally only. Ready for you to deploy per DEPLOY.md.
+
+## AI Sales Follow-Up (quote_follow_ups) - verification scope
+
+Before merging this feature, tried to run a full end-to-end test against
+the real Vercel preview deployment: a live business account, a real
+inbound SMS webhook call carrying a specific price quote, and a real
+browser session on the dashboard. That deployment exists and is live
+(PR #3's Vercel bot comment confirms it), but this sandbox's network
+egress policy blocked both the Vercel preview host and Supabase's own API
+host outright, confirmed via the proxy's own status endpoint, not
+assumed, and confirmed twice more after two rounds of requested network
+settings changes with no change in the blocked-host list.
+
+Given that, verification instead ran entirely at the database layer
+against the live Supabase project, using a disposable test business
+created and fully deleted within the same session (nothing touching real
+users): schema correctness (`quoted_price`, `service_type`), the Day
+1/5/14 `scheduled_for` math against a real `quoted_at`, the one-active-
+follow-up-per-conversation unique constraint (triggered a real `23505` on
+a second insert), the RLS policies on both `quote_follow_ups` and
+`quote_follow_up_steps` (proved both the allow path for the real owner and
+the deny path for a different `auth.uid()`, on both reads and writes, not
+just the owner's happy path), and the booking-cancels-pending-steps
+cascade.
+
+**Not exercised**: the actual `detectQuote()`/`detectBooking()` Anthropic
+calls, the real `sms-reply.ts` HTTP handler, and the React dashboard UI in
+a live browser, none of these are reachable from this sandbox regardless
+of credentials, since the network path itself is closed, not just missing
+a key. The data layer this feature depends on is verified correct; the
+deployed route wiring and the AI extraction quality are not. A real text
+message sent to a live business number after this merges is the
+outstanding check.
