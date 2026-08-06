@@ -491,3 +491,41 @@ a key. The data layer this feature depends on is verified correct; the
 deployed route wiring and the AI extraction quality are not. A real text
 message sent to a live business number after this merges is the
 outstanding check.
+
+## Onboarding Wizard (/onboarding) - dead code, backfill, and scope
+
+`OnboardingWizard.tsx`/`onboarding.functions.ts` were deleted outright
+rather than resurrected: zero importers, referenced `profiles` columns
+that never existed (`business_type`, `primary_goal`, `service_area`,
+`onboarded_at`), filtered by `user_id` when the table's primary key is
+`id`, and the copy still said "Welcome to LUNAVX" from before the
+product was renamed. Deleting it dropped the `tsc` baseline from 16
+errors to 2, since most of the old baseline was this code's own type
+errors against those nonexistent columns.
+
+`profiles.onboarding_completed` already existed live (another case of
+the migrations-drift this repo already has - no local migration record
+for it) but no code read or wrote it, so every account defaulted to
+false. Backfilled it to true for accounts already showing real usage (a
+confirmed listing, a connection, a synced fact, an actual conversation)
+so the new wizard's gating only ever greets accounts that genuinely
+haven't done this yet. Of the 15 real accounts in the live project, only
+one qualified - the other 14 are inert test/QA accounts with no real
+business data, so seeing the wizard once on their next login is correct
+behavior, not a regression.
+
+The wizard reuses the exact same connect flows already built for
+Business Facts and Receptionist Setup (Google listing search/confirm/
+sync, website confirm/sync, Twilio verify-then-save), pulled into three
+shared components rather than duplicated, so there is exactly one
+working implementation of each, not two that can drift apart.
+
+**Not exercised live**: this sandbox has no way to complete a real
+Supabase Auth session or reach the deployed app, so the wizard's actual
+click-through (five real steps, a real Google Places search, a real
+Twilio verify call) was verified by code trace and `tsc`/`eslint`, not
+a live browser session - the same limitation documented for quote
+follow-ups and Coach earlier this session. Worth a real run-through
+after this deploys, especially the "returning visitor lands on their
+first real gap" logic in `onboarding.tsx`'s `load()`, which only static
+analysis has checked so far.
