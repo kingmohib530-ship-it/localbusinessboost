@@ -53,6 +53,7 @@ import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
 import { Route as ApiCronQuoteFollowUpsRouteImport } from './routes/api/cron/quote-follow-ups'
 import { Route as ApiConsumerRequestsMatchIdRouteImport } from './routes/api/consumer-requests/$matchId'
+import { Route as ApiCoachBriefRouteImport } from './routes/api/coach/brief'
 import { Route as ApiBusinessFactsSyncWebsiteRouteImport } from './routes/api/business-facts/sync-website'
 import { Route as ApiBusinessFactsSyncGoogleRouteImport } from './routes/api/business-facts/sync-google'
 import { Route as ApiBusinessFactsSearchGooglePlacesRouteImport } from './routes/api/business-facts/search-google-places'
@@ -301,6 +302,11 @@ const ApiConsumerRequestsMatchIdRoute =
     path: '/$matchId',
     getParentRoute: () => ApiConsumerRequestsRoute,
   } as any)
+const ApiCoachBriefRoute = ApiCoachBriefRouteImport.update({
+  id: '/api/coach/brief',
+  path: '/api/coach/brief',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBusinessFactsSyncWebsiteRoute =
   ApiBusinessFactsSyncWebsiteRouteImport.update({
     id: '/api/business-facts/sync-website',
@@ -484,6 +490,7 @@ export interface FileRoutesByFullPath {
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
@@ -550,6 +557,7 @@ export interface FileRoutesByTo {
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
@@ -620,6 +628,7 @@ export interface FileRoutesById {
   '/api/business-facts/search-google-places': typeof ApiBusinessFactsSearchGooglePlacesRoute
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
+  '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
@@ -689,6 +698,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/search-google-places'
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
+    | '/api/coach/brief'
     | '/api/consumer-requests/$matchId'
     | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
@@ -755,6 +765,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/search-google-places'
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
+    | '/api/coach/brief'
     | '/api/consumer-requests/$matchId'
     | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
@@ -824,6 +835,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/search-google-places'
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
+    | '/api/coach/brief'
     | '/api/consumer-requests/$matchId'
     | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
@@ -879,6 +891,7 @@ export interface RootRouteChildren {
   ApiBusinessFactsSearchGooglePlacesRoute: typeof ApiBusinessFactsSearchGooglePlacesRoute
   ApiBusinessFactsSyncGoogleRoute: typeof ApiBusinessFactsSyncGoogleRoute
   ApiBusinessFactsSyncWebsiteRoute: typeof ApiBusinessFactsSyncWebsiteRoute
+  ApiCoachBriefRoute: typeof ApiCoachBriefRoute
   ApiCronQuoteFollowUpsRoute: typeof ApiCronQuoteFollowUpsRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
@@ -1202,6 +1215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConsumerRequestsMatchIdRouteImport
       parentRoute: typeof ApiConsumerRequestsRoute
     }
+    '/api/coach/brief': {
+      id: '/api/coach/brief'
+      path: '/api/coach/brief'
+      fullPath: '/api/coach/brief'
+      preLoaderRoute: typeof ApiCoachBriefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/business-facts/sync-website': {
       id: '/api/business-facts/sync-website'
       path: '/api/business-facts/sync-website'
@@ -1520,6 +1540,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiBusinessFactsSearchGooglePlacesRoute,
   ApiBusinessFactsSyncGoogleRoute: ApiBusinessFactsSyncGoogleRoute,
   ApiBusinessFactsSyncWebsiteRoute: ApiBusinessFactsSyncWebsiteRoute,
+  ApiCoachBriefRoute: ApiCoachBriefRoute,
   ApiCronQuoteFollowUpsRoute: ApiCronQuoteFollowUpsRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
