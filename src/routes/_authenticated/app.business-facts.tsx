@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/app/business-facts")({
   component: BusinessFactsPage,
 });
 
-type FactType = "service" | "pricing" | "hours" | "service_area" | "general";
+type FactType = "service" | "pricing" | "hours" | "service_area" | "general" | "faq";
 type FactSource = "setup_form" | "google_synced" | "website_synced" | "auto_learned";
 
 interface BusinessFact {
@@ -28,6 +28,7 @@ const FACT_TYPE_LABELS: Record<FactType, string> = {
   hours: "Hours",
   service_area: "Service area",
   general: "General",
+  faq: "FAQ",
 };
 
 const SOURCE_LABELS: Record<FactSource, string> = {
