@@ -1,0 +1,13 @@
+-- The move-to-private-schema migration (20260702162245) revoked all
+-- privileges on private.is_admin() from public, anon, authenticated but
+-- never restored EXECUTE for authenticated - which the "Admins can view
+-- all profiles" RLS policy on public.profiles needs, since it calls this
+-- function directly in its USING clause. Postgres checks EXECUTE
+-- privilege on every function referenced in a policy's expression
+-- regardless of short-circuit evaluation, so without this grant every
+-- authenticated SELECT against public.profiles (and anything that
+-- subqueries profiles for an admin check, like verification_documents
+-- and unmatched_twilio_webhooks) failed with "permission denied for
+-- function is_admin". anon still gets nothing, matching the original
+-- intent - only authenticated needs this.
+grant execute on function private.is_admin() to authenticated;
