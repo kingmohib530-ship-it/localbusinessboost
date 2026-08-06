@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Brain, Globe, MapPin, Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { Brain, Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { WebsiteConnect } from "@/components/WebsiteConnect";
+import { GoogleListingConnect } from "@/components/GoogleListingConnect";
 
 export const Route = createFileRoute("/_authenticated/app/business-facts")({
   component: BusinessFactsPage,
@@ -18,12 +20,6 @@ interface BusinessFact {
   fact_text: string;
   source: FactSource;
   created_at: string;
-}
-
-interface GoogleCandidate {
-  placeId: string;
-  name: string;
-  address: string | null;
 }
 
 const FACT_TYPE_LABELS: Record<FactType, string> = {
@@ -58,30 +54,6 @@ const inputStyle: React.CSSProperties = {
 };
 
 function BusinessFactsPage() {
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileError, setProfileError] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [city, setCity] = useState("");
-
-  const [website, setWebsite] = useState("");
-  const [savingWebsite, setSavingWebsite] = useState(false);
-  const [websiteMsg, setWebsiteMsg] = useState("");
-  const [websiteMsgOk, setWebsiteMsgOk] = useState(true);
-  const [syncingWebsite, setSyncingWebsite] = useState(false);
-  const [syncWebsiteMsg, setSyncWebsiteMsg] = useState("");
-  const [syncWebsiteOk, setSyncWebsiteOk] = useState(true);
-
-  const [googlePlaceId, setGooglePlaceId] = useState<string | null>(null);
-  const [googlePlaceLabel, setGooglePlaceLabel] = useState<string | null>(null);
-  const [googleQuery, setGoogleQuery] = useState("");
-  const [searchingGoogle, setSearchingGoogle] = useState(false);
-  const [googleCandidates, setGoogleCandidates] = useState<GoogleCandidate[]>([]);
-  const [googleSearchError, setGoogleSearchError] = useState("");
-  const [confirmingPlaceId, setConfirmingPlaceId] = useState<string | null>(null);
-  const [syncingGoogle, setSyncingGoogle] = useState(false);
-  const [syncGoogleMsg, setSyncGoogleMsg] = useState("");
-  const [syncGoogleOk, setSyncGoogleOk] = useState(true);
-
   const [newFactType, setNewFactType] = useState<FactType>("service");
   const [newFactText, setNewFactText] = useState("");
   const [addingFact, setAddingFact] = useState(false);
@@ -106,7 +78,6 @@ function BusinessFactsPage() {
   const { step, delay } = useMountReveal();
 
   useEffect(() => {
-    loadProfile();
     loadActiveFacts(0);
     loadPendingFacts(0);
   }, []);
@@ -114,34 +85,6 @@ function BusinessFactsPage() {
   async function currentUserId(): Promise<string | null> {
     const { data: { user } } = await supabase.auth.getUser();
     return user?.id ?? null;
-  }
-
-  async function authHeader() {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    if (!token) throw new Error("Please sign in again and retry.");
-    return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
-  }
-
-  async function loadProfile() {
-    setProfileLoading(true);
-    setProfileError("");
-    const userId = await currentUserId();
-    if (!userId) { setProfileLoading(false); return; }
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("business_name, city, website, google_place_id")
-      .eq("id", userId)
-      .maybeSingle();
-    if (error) {
-      console.error("[business-facts] failed to load profile", error);
-      setProfileError("Couldn't load your business profile. Please refresh the page.");
-    }
-    setBusinessName(data?.business_name || "");
-    setCity(data?.city || "");
-    setWebsite(data?.website || "");
-    setGooglePlaceId(data?.google_place_id || null);
-    setProfileLoading(false);
   }
 
   async function loadActiveFacts(page: number) {
@@ -197,100 +140,6 @@ function BusinessFactsPage() {
     loadActiveFacts(0);
     setPendingPageIndex(0);
     loadPendingFacts(0);
-  }
-
-  async function saveWebsite() {
-    setSavingWebsite(true);
-    setWebsiteMsg("");
-    const userId = await currentUserId();
-    if (!userId) { setSavingWebsite(false); return; }
-    const { error } = await supabase.from("profiles").update({ website: website.trim() || null }).eq("id", userId);
-    setWebsiteMsgOk(!error);
-    setWebsiteMsg(error ? "Could not save — please try again." : "Saved!");
-    setSavingWebsite(false);
-  }
-
-  async function searchGoogle() {
-    setSearchingGoogle(true);
-    setGoogleSearchError("");
-    setGoogleCandidates([]);
-    try {
-      const headers = await authHeader();
-      const res = await fetch("/api/business-facts/search-google-places", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ query: googleQuery.trim() || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setGoogleSearchError(data.error || "Search failed. Please try again."); return; }
-      const candidates: GoogleCandidate[] = data.candidates || [];
-      setGoogleCandidates(candidates);
-      if (candidates.length === 0) setGoogleSearchError("No matching listings found — try a more specific search.");
-    } catch (err: any) {
-      setGoogleSearchError(err.message || "Network error. Please try again.");
-    } finally {
-      setSearchingGoogle(false);
-    }
-  }
-
-  async function confirmGooglePlace(candidate: GoogleCandidate) {
-    setConfirmingPlaceId(candidate.placeId);
-    const userId = await currentUserId();
-    if (!userId) { setConfirmingPlaceId(null); return; }
-    const { error } = await supabase.from("profiles").update({ google_place_id: candidate.placeId }).eq("id", userId);
-    if (error) {
-      toast.error("Could not confirm this listing. Please try again.");
-    } else {
-      setGooglePlaceId(candidate.placeId);
-      setGooglePlaceLabel(candidate.name);
-      setGoogleCandidates([]);
-      toast.success("Google listing confirmed!");
-    }
-    setConfirmingPlaceId(null);
-  }
-
-  async function runGoogleSync() {
-    setSyncingGoogle(true);
-    setSyncGoogleMsg("");
-    try {
-      const headers = await authHeader();
-      const res = await fetch("/api/business-facts/sync-google", { method: "POST", headers });
-      const data = await res.json();
-      if (!res.ok) { setSyncGoogleOk(false); setSyncGoogleMsg(data.error || "Sync failed. Please try again."); return; }
-      setSyncGoogleOk(true);
-      setSyncGoogleMsg(
-        data.message ||
-          `Synced ${data.synced} fact(s)${data.pendingReview ? `, ${data.pendingReview} waiting for your review` : ""}.`,
-      );
-      refreshFactLists();
-    } catch (err: any) {
-      setSyncGoogleOk(false);
-      setSyncGoogleMsg(err.message || "Network error. Please try again.");
-    } finally {
-      setSyncingGoogle(false);
-    }
-  }
-
-  async function runWebsiteSync() {
-    setSyncingWebsite(true);
-    setSyncWebsiteMsg("");
-    try {
-      const headers = await authHeader();
-      const res = await fetch("/api/business-facts/sync-website", { method: "POST", headers });
-      const data = await res.json();
-      if (!res.ok) { setSyncWebsiteOk(false); setSyncWebsiteMsg(data.error || "Sync failed. Please try again."); return; }
-      setSyncWebsiteOk(true);
-      setSyncWebsiteMsg(
-        data.message ||
-          `Synced ${data.synced} fact(s)${data.pendingReview ? `, ${data.pendingReview} waiting for your review` : ""}.`,
-      );
-      refreshFactLists();
-    } catch (err: any) {
-      setSyncWebsiteOk(false);
-      setSyncWebsiteMsg(err.message || "Network error. Please try again.");
-    } finally {
-      setSyncingWebsite(false);
-    }
   }
 
   async function addFact() {
@@ -371,8 +220,6 @@ function BusinessFactsPage() {
         </p>
       </div>
 
-      {profileError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{profileError}</p>}
-
       {/* Sources */}
       <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, marginBottom: 16, ...delay(1) }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Sources</div>
@@ -381,89 +228,11 @@ function BusinessFactsPage() {
           now whenever you've updated your prices, hours, or services.
         </p>
 
-        {/* Website */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <Globe size={15} color="var(--primary)" strokeWidth={1.75} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Website</span>
-        </div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-          <input
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            placeholder="https://yourbusiness.com"
-            className="lv-input" style={{ ...inputStyle, flex: "1 1 260px" }}
-            disabled={profileLoading}
-          />
-          <button onClick={saveWebsite} disabled={savingWebsite || profileLoading}
-            style={{ padding: "10px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-            {savingWebsite ? "Saving..." : "Confirm"}
-          </button>
-          <button onClick={runWebsiteSync} disabled={syncingWebsite || !website.trim()}
-            style={{ padding: "10px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: website.trim() ? "pointer" : "not-allowed", opacity: website.trim() ? 1 : 0.5 }}>
-            {syncingWebsite ? "Syncing..." : "Sync now"}
-          </button>
-        </div>
-        {websiteMsg && <p style={{ fontSize: 12, color: websiteMsgOk ? "var(--accent-2)" : "var(--destructive)", marginBottom: 4 }}>{websiteMsg}</p>}
-        {syncWebsiteMsg && <p style={{ fontSize: 12, color: syncWebsiteOk ? "var(--accent-2)" : "var(--destructive)", marginBottom: 4 }}>{syncWebsiteMsg}</p>}
+        <WebsiteConnect onSynced={refreshFactLists} />
 
         <div style={{ height: 1, background: "var(--border)", margin: "16px 0" }} />
 
-        {/* Google listing */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <MapPin size={15} color="var(--primary)" strokeWidth={1.75} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Google Business listing</span>
-        </div>
-
-        {googlePlaceId ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-            <span style={{ fontSize: 13, color: "var(--foreground)" }}>
-              {googlePlaceLabel ? `Confirmed: ${googlePlaceLabel}` : "Listing confirmed."}
-            </span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={runGoogleSync} disabled={syncingGoogle}
-                style={{ padding: "9px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                {syncingGoogle ? "Syncing..." : "Sync now"}
-              </button>
-              <button onClick={() => setGooglePlaceId(null)}
-                style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                Change
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-              <input
-                value={googleQuery}
-                onChange={(e) => setGoogleQuery(e.target.value)}
-                placeholder={businessName ? `${businessName}${city ? ` ${city}` : ""}` : "Your business name and city"}
-                className="lv-input" style={{ ...inputStyle, flex: "1 1 260px" }}
-              />
-              <button onClick={searchGoogle} disabled={searchingGoogle}
-                style={{ padding: "10px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                {searchingGoogle ? "Searching..." : "Find my listing"}
-              </button>
-            </div>
-            {googleSearchError && <p style={{ fontSize: 12, color: "var(--destructive)", marginBottom: 8 }}>{googleSearchError}</p>}
-            {googleCandidates.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
-                {googleCandidates.map((c) => (
-                  <div key={c.placeId} className="glass-dark" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "10px 12px", borderRadius: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{c.name}</div>
-                      {c.address && <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{c.address}</div>}
-                    </div>
-                    <button onClick={() => confirmGooglePlace(c)} disabled={confirmingPlaceId === c.placeId}
-                      style={{ padding: "7px 14px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
-                      {confirmingPlaceId === c.placeId ? "Confirming..." : "This is mine"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-        {syncGoogleMsg && <p style={{ fontSize: 12, color: syncGoogleOk ? "var(--accent-2)" : "var(--destructive)" }}>{syncGoogleMsg}</p>}
+        <GoogleListingConnect onSynced={refreshFactLists} />
       </div>
 
       {/* Add a fact manually */}
