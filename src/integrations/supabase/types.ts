@@ -474,6 +474,51 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_briefs: {
+        Row: {
+          brief_date: string
+          brief_payload: Json
+          created_at: string
+          delivery_method: string
+          delivery_status: string
+          dismissed_at: string | null
+          generated_at: string
+          id: string
+          opened_at: string | null
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brief_date: string
+          brief_payload: Json
+          created_at?: string
+          delivery_method: string
+          delivery_status?: string
+          dismissed_at?: string | null
+          generated_at?: string
+          id?: string
+          opened_at?: string | null
+          timezone: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brief_date?: string
+          brief_payload?: Json
+          created_at?: string
+          delivery_method?: string
+          delivery_status?: string
+          dismissed_at?: string | null
+          generated_at?: string
+          id?: string
+          opened_at?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lead_profiles: {
         Row: {
           address: string | null
@@ -676,6 +721,8 @@ export type Database = {
           city: string | null
           consumer_rating_avg: number | null
           created_at: string | null
+          daily_brief_channel: string
+          daily_brief_enabled: boolean
           ein_number: string | null
           emergency_hours: boolean
           escalation_rules: string | null
@@ -702,6 +749,7 @@ export type Database = {
           subscription_status: string | null
           subscription_tier: string | null
           team_size: string | null
+          timezone: string
           twilio_account_sid: string | null
           twilio_auth_token_secret_id: string | null
           twilio_phone_number: string | null
@@ -724,6 +772,8 @@ export type Database = {
           city?: string | null
           consumer_rating_avg?: number | null
           created_at?: string | null
+          daily_brief_channel?: string
+          daily_brief_enabled?: boolean
           ein_number?: string | null
           emergency_hours?: boolean
           escalation_rules?: string | null
@@ -750,6 +800,7 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           team_size?: string | null
+          timezone?: string
           twilio_account_sid?: string | null
           twilio_auth_token_secret_id?: string | null
           twilio_phone_number?: string | null
@@ -772,6 +823,8 @@ export type Database = {
           city?: string | null
           consumer_rating_avg?: number | null
           created_at?: string | null
+          daily_brief_channel?: string
+          daily_brief_enabled?: boolean
           ein_number?: string | null
           emergency_hours?: boolean
           escalation_rules?: string | null
@@ -798,6 +851,7 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           team_size?: string | null
+          timezone?: string
           twilio_account_sid?: string | null
           twilio_auth_token_secret_id?: string | null
           twilio_phone_number?: string | null
@@ -1218,3 +1272,9 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
