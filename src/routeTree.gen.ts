@@ -52,6 +52,7 @@ import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
 import { Route as ApiCronQuoteFollowUpsRouteImport } from './routes/api/cron/quote-follow-ups'
+import { Route as ApiCronDailyBriefRouteImport } from './routes/api/cron/daily-brief'
 import { Route as ApiConsumerRequestsMatchIdRouteImport } from './routes/api/consumer-requests/$matchId'
 import { Route as ApiCoachBriefRouteImport } from './routes/api/coach/brief'
 import { Route as ApiBusinessFactsSyncWebsiteRouteImport } from './routes/api/business-facts/sync-website'
@@ -297,6 +298,11 @@ const ApiCronQuoteFollowUpsRoute = ApiCronQuoteFollowUpsRouteImport.update({
   path: '/api/cron/quote-follow-ups',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronDailyBriefRoute = ApiCronDailyBriefRouteImport.update({
+  id: '/api/cron/daily-brief',
+  path: '/api/cron/daily-brief',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiConsumerRequestsMatchIdRoute =
   ApiConsumerRequestsMatchIdRouteImport.update({
     id: '/$matchId',
@@ -499,6 +505,7 @@ export interface FileRoutesByFullPath {
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
+  '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -567,6 +574,7 @@ export interface FileRoutesByTo {
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
+  '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -639,6 +647,7 @@ export interface FileRoutesById {
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
+  '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -710,6 +719,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-website'
     | '/api/coach/brief'
     | '/api/consumer-requests/$matchId'
+    | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -778,6 +788,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-website'
     | '/api/coach/brief'
     | '/api/consumer-requests/$matchId'
+    | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -849,6 +860,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-website'
     | '/api/coach/brief'
     | '/api/consumer-requests/$matchId'
+    | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -904,6 +916,7 @@ export interface RootRouteChildren {
   ApiBusinessFactsSyncGoogleRoute: typeof ApiBusinessFactsSyncGoogleRoute
   ApiBusinessFactsSyncWebsiteRoute: typeof ApiBusinessFactsSyncWebsiteRoute
   ApiCoachBriefRoute: typeof ApiCoachBriefRoute
+  ApiCronDailyBriefRoute: typeof ApiCronDailyBriefRoute
   ApiCronQuoteFollowUpsRoute: typeof ApiCronQuoteFollowUpsRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
@@ -1218,6 +1231,13 @@ declare module '@tanstack/react-router' {
       path: '/api/cron/quote-follow-ups'
       fullPath: '/api/cron/quote-follow-ups'
       preLoaderRoute: typeof ApiCronQuoteFollowUpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/daily-brief': {
+      id: '/api/cron/daily-brief'
+      path: '/api/cron/daily-brief'
+      fullPath: '/api/cron/daily-brief'
+      preLoaderRoute: typeof ApiCronDailyBriefRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/consumer-requests/$matchId': {
@@ -1562,6 +1582,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBusinessFactsSyncGoogleRoute: ApiBusinessFactsSyncGoogleRoute,
   ApiBusinessFactsSyncWebsiteRoute: ApiBusinessFactsSyncWebsiteRoute,
   ApiCoachBriefRoute: ApiCoachBriefRoute,
+  ApiCronDailyBriefRoute: ApiCronDailyBriefRoute,
   ApiCronQuoteFollowUpsRoute: ApiCronQuoteFollowUpsRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
