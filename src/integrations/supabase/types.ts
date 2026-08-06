@@ -738,6 +738,7 @@ export type Database = {
           license_number: string | null
           license_state: string | null
           onboarding_completed: boolean | null
+          owner_phone: string | null
           price_range_high: number | null
           price_range_low: number | null
           price_unit: string
@@ -789,6 +790,7 @@ export type Database = {
           license_number?: string | null
           license_state?: string | null
           onboarding_completed?: boolean | null
+          owner_phone?: string | null
           price_range_high?: number | null
           price_range_low?: number | null
           price_unit?: string
@@ -840,6 +842,7 @@ export type Database = {
           license_number?: string | null
           license_state?: string | null
           onboarding_completed?: boolean | null
+          owner_phone?: string | null
           price_range_high?: number | null
           price_range_low?: number | null
           price_unit?: string
