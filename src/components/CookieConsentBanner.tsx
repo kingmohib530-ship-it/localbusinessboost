@@ -37,15 +37,18 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      className={`fixed bottom-0 inset-x-0 z-[60] border-t backdrop-blur-md ${
-        dark ? "border-white/10 bg-[#08090b]/90" : "border-border bg-background/95 backdrop-blur-sm"
+      // A full-width bottom bar covered the homepage's primary CTA button
+      // on common viewport heights (it sits right at the fold). A compact
+      // corner card keeps the same content but clears that CTA - and any
+      // other bottom-of-viewport content - on both the marketing pages and
+      // the dashboard.
+      className={`fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-[60] rounded-2xl border shadow-lg backdrop-blur-md ${
+        dark ? "border-white/10 bg-[#08090b]/95" : "border-border bg-background/95"
       }`}
     >
-      <div className="max-w-5xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-        <p
-          className={`text-sm text-center sm:text-left flex-1 ${dark ? "text-[#9096a3]" : "text-muted-foreground"}`}
-        >
-          We use essential cookies only (login, preferences). No tracking or ads.{" "}
+      <div className="p-3 flex items-center gap-3">
+        <p className={`text-xs flex-1 ${dark ? "text-[#9096a3]" : "text-muted-foreground"}`}>
+          Essential cookies only. No tracking or ads.{" "}
           <Link
             to="/cookies"
             className={`underline transition-colors ${dark ? "hover:text-[#f5f6f7]" : "hover:text-foreground"}`}
@@ -55,7 +58,7 @@ export function CookieConsentBanner() {
         </p>
         <button
           onClick={dismiss}
-          className={`shrink-0 rounded-lg text-sm font-semibold px-5 py-2 transition-colors ${
+          className={`shrink-0 rounded-lg text-xs font-semibold px-4 py-1.5 transition-colors ${
             dark
               ? "bg-[#6366f1] text-white hover:bg-[#6366f1]/90"
               : "bg-primary text-primary-foreground hover:bg-primary/90"
