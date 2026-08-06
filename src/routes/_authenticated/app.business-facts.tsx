@@ -1,17 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Brain, Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { Brain, Pencil, Trash2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { WebsiteConnect } from "@/components/WebsiteConnect";
 import { GoogleListingConnect } from "@/components/GoogleListingConnect";
+import { AddFactForm, FACT_TYPE_LABELS, type FactType } from "@/components/AddFactForm";
 
 export const Route = createFileRoute("/_authenticated/app/business-facts")({
   component: BusinessFactsPage,
 });
 
-type FactType = "service" | "pricing" | "hours" | "service_area" | "general" | "faq";
 type FactSource = "setup_form" | "google_synced" | "website_synced" | "auto_learned";
 
 interface BusinessFact {
@@ -21,15 +21,6 @@ interface BusinessFact {
   source: FactSource;
   created_at: string;
 }
-
-const FACT_TYPE_LABELS: Record<FactType, string> = {
-  service: "Service",
-  pricing: "Pricing",
-  hours: "Hours",
-  service_area: "Service area",
-  general: "General",
-  faq: "FAQ",
-};
 
 const SOURCE_LABELS: Record<FactSource, string> = {
   setup_form: "Added by you",
@@ -55,11 +46,6 @@ const inputStyle: React.CSSProperties = {
 };
 
 function BusinessFactsPage() {
-  const [newFactType, setNewFactType] = useState<FactType>("service");
-  const [newFactText, setNewFactText] = useState("");
-  const [addingFact, setAddingFact] = useState(false);
-  const [addFactError, setAddFactError] = useState("");
-
   const [activeFacts, setActiveFacts] = useState<BusinessFact[]>([]);
   const [activeLoading, setActiveLoading] = useState(true);
   const [activeLoadingMore, setActiveLoadingMore] = useState(false);
@@ -143,28 +129,10 @@ function BusinessFactsPage() {
     loadPendingFacts(0);
   }
 
-  async function addFact() {
-    if (!newFactText.trim()) { setAddFactError("Enter a fact first."); return; }
-    setAddingFact(true);
-    setAddFactError("");
-    const userId = await currentUserId();
-    if (!userId) { setAddingFact(false); return; }
-    const { error } = await supabase.from("business_facts").insert({
-      user_id: userId,
-      fact_type: newFactType,
-      fact_text: newFactText.trim(),
-      source: "setup_form",
-      status: "active",
-    });
-    if (error) {
-      setAddFactError("Could not save this fact. Please try again.");
-    } else {
-      setNewFactText("");
-      toast.success("Fact added.");
-      setActivePageIndex(0);
-      loadActiveFacts(0);
-    }
-    setAddingFact(false);
+  function onFactAdded() {
+    toast.success("Fact added.");
+    setActivePageIndex(0);
+    loadActiveFacts(0);
   }
 
   async function approveFact(fact: BusinessFact) {
@@ -239,24 +207,7 @@ function BusinessFactsPage() {
       {/* Add a fact manually */}
       <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, marginBottom: 16, ...delay(2) }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 12 }}>Add a fact</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <select value={newFactType} onChange={(e) => setNewFactType(e.target.value as FactType)} className="lv-input" style={{ ...inputStyle, flex: "0 0 160px" }}>
-            {(Object.keys(FACT_TYPE_LABELS) as FactType[]).map((t) => (
-              <option key={t} value={t}>{FACT_TYPE_LABELS[t]}</option>
-            ))}
-          </select>
-          <input
-            value={newFactText}
-            onChange={(e) => setNewFactText(e.target.value)}
-            placeholder="e.g. Drain cleaning starts at $150"
-            className="lv-input" style={{ ...inputStyle, flex: "1 1 300px" }}
-          />
-          <button onClick={addFact} disabled={addingFact}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-            <Plus size={14} /> {addingFact ? "Adding..." : "Add"}
-          </button>
-        </div>
-        {addFactError && <p style={{ fontSize: 12, color: "var(--destructive)", marginTop: 8 }}>{addFactError}</p>}
+        <AddFactForm onAdded={onFactAdded} />
       </div>
 
       {/* Pending review */}
