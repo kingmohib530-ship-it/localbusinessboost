@@ -70,6 +70,7 @@ import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
 import { Route as AuthenticatedAppNetworkRouteImport } from './routes/_authenticated/app.network'
+import { Route as AuthenticatedAppCoachRouteImport } from './routes/_authenticated/app.coach'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppBusinessFactsRouteImport } from './routes/_authenticated/app.business-facts'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
@@ -397,6 +398,11 @@ const AuthenticatedAppNetworkRoute = AuthenticatedAppNetworkRouteImport.update({
   path: '/network',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppCoachRoute = AuthenticatedAppCoachRouteImport.update({
+  id: '/coach',
+  path: '/coach',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppCalendarRoute =
   AuthenticatedAppCalendarRouteImport.update({
     id: '/calendar',
@@ -474,6 +480,7 @@ export interface FileRoutesByFullPath {
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/app/coach': typeof AuthenticatedAppCoachRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
@@ -541,6 +548,7 @@ export interface FileRoutesByTo {
   '/app/agents': typeof AuthenticatedAppAgentsRoute
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/app/coach': typeof AuthenticatedAppCoachRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
@@ -612,6 +620,7 @@ export interface FileRoutesById {
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
   '/_authenticated/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/_authenticated/app/coach': typeof AuthenticatedAppCoachRoute
   '/_authenticated/app/network': typeof AuthenticatedAppNetworkRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
@@ -682,6 +691,7 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/business-facts'
     | '/app/calendar'
+    | '/app/coach'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
@@ -749,6 +759,7 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/business-facts'
     | '/app/calendar'
+    | '/app/coach'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
@@ -819,6 +830,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/agents'
     | '/_authenticated/app/business-facts'
     | '/_authenticated/app/calendar'
+    | '/_authenticated/app/coach'
     | '/_authenticated/app/network'
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
@@ -1334,6 +1346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppNetworkRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/coach': {
+      id: '/_authenticated/app/coach'
+      path: '/coach'
+      fullPath: '/app/coach'
+      preLoaderRoute: typeof AuthenticatedAppCoachRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/calendar': {
       id: '/_authenticated/app/calendar'
       path: '/calendar'
@@ -1405,6 +1424,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
   AuthenticatedAppBusinessFactsRoute: typeof AuthenticatedAppBusinessFactsRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
+  AuthenticatedAppCoachRoute: typeof AuthenticatedAppCoachRoute
   AuthenticatedAppNetworkRoute: typeof AuthenticatedAppNetworkRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
@@ -1419,6 +1439,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
   AuthenticatedAppBusinessFactsRoute: AuthenticatedAppBusinessFactsRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
+  AuthenticatedAppCoachRoute: AuthenticatedAppCoachRoute,
   AuthenticatedAppNetworkRoute: AuthenticatedAppNetworkRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,

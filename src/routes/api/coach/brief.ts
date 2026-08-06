@@ -46,7 +46,10 @@ export const Route = createFileRoute("/api/coach/brief")({
             .eq("id", user.id)
             .maybeSingle();
 
-          const cards = await generateDailyBriefCards(user.id, profile?.timezone || "America/New_York");
+          const cards = await generateDailyBriefCards(
+            user.id,
+            profile?.timezone || "America/New_York",
+          );
 
           return Response.json({ cards, generatedAt: new Date().toISOString() });
         } catch (err) {

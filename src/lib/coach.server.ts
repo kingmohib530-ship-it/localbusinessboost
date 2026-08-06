@@ -75,7 +75,9 @@ async function missedCallsCard(userId: string): Promise<CoachCard | null> {
 
   if (!data || data.length === 0) return null;
 
-  const oldestHours = Math.floor((Date.now() - new Date(data[0].started_at).getTime()) / (1000 * 60 * 60));
+  const oldestHours = Math.floor(
+    (Date.now() - new Date(data[0].started_at).getTime()) / (1000 * 60 * 60),
+  );
   const plural = data.length === 1 ? "call" : "calls";
   return {
     id: "missed_calls",
@@ -190,7 +192,9 @@ async function reviewAskCard(userId: string): Promise<CoachCard | null> {
   if (!completed || completed.length === 0) return null;
 
   const alreadyRequested = new Set((requested || []).map((r) => normalizePhone(r.customer_phone)));
-  const missing = completed.filter((a) => a.customer_phone && !alreadyRequested.has(normalizePhone(a.customer_phone)));
+  const missing = completed.filter(
+    (a) => a.customer_phone && !alreadyRequested.has(normalizePhone(a.customer_phone)),
+  );
   if (missing.length === 0) return null;
 
   const plural = missing.length === 1 ? "job" : "jobs";
@@ -224,7 +228,9 @@ async function networkRequestsCard(userId: string): Promise<CoachCard | null> {
   if (!data || data.length === 0) return null;
 
   const plural = data.length === 1 ? "request" : "requests";
-  const first = data[0] as unknown as { consumer_requests: { service_type: string; city: string } | null };
+  const first = data[0] as unknown as {
+    consumer_requests: { service_type: string; city: string } | null;
+  };
   const firstLabel = first.consumer_requests
     ? `${serviceLabel(first.consumer_requests.service_type) || first.consumer_requests.service_type} in ${first.consumer_requests.city}`
     : null;
@@ -249,7 +255,10 @@ async function networkRequestsCard(userId: string): Promise<CoachCard | null> {
  * sorted by count or severity - matches how the brief should read top to
  * bottom, not how urgent any single card happens to be today.
  */
-export async function generateDailyBriefCards(userId: string, timezone: string): Promise<CoachCard[]> {
+export async function generateDailyBriefCards(
+  userId: string,
+  timezone: string,
+): Promise<CoachCard[]> {
   const [missedCalls, estimates, schedule, reviewAsk, networkRequests] = await Promise.all([
     missedCallsCard(userId),
     estimatesCard(userId),
