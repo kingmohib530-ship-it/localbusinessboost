@@ -11,12 +11,11 @@
  *
  * Starter is free and has no Stripe product — nothing to create for it.
  *
- * This app's own Stripe calls route through the Lovable connector gateway
- * (see src/lib/stripe.server.ts) rather than calling api.stripe.com
- * directly, because the runtime environment enforces that. This script
- * uses the Stripe SDK directly against a real secret key instead, since
- * one-time product/price setup happens outside that runtime and needs a
- * key with product-write access the gateway doesn't expose.
+ * This app's own Stripe calls (src/lib/stripe.server.ts) also go straight
+ * to api.stripe.com with a real secret key — no gateway or proxy in
+ * between. This script uses the same approach directly against the
+ * Stripe SDK, since one-time product/price setup is a standalone script,
+ * not part of the app's request-handling runtime.
  */
 
 import Stripe from "stripe";
