@@ -73,7 +73,7 @@ session, re-verified now rather than re-built:
   daily ceilings.
 - **Secrets**: zero `process.env` references in any client (`.tsx`)
   file — confirmed by grep, not assumption. Only `VITE_SUPABASE_URL`,
-  `VITE_SUPABASE_PUBLISHABLE_KEY`, and `VITE_PAYMENTS_CLIENT_TOKEN` reach
+  `VITE_SUPABASE_PUBLISHABLE_KEY`, and `VITE_STRIPE_PUBLISHABLE_KEY` reach
   the client bundle, all three explicitly designed by their providers to
   be public (anon key works only through RLS; Stripe publishable key can
   only start a client-side checkout session). No hardcoded API keys,

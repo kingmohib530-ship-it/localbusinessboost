@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+import { createStripeClient } from "@/lib/stripe.server";
+import { PRICING_PLANS } from "@/lib/pricingPlans";
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -9,7 +10,6 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     quantity?: number;
     customerEmail?: string;
     returnUrl: string;
-    environment: StripeEnv;
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
     try {
@@ -24,12 +24,17 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     // SECURITY: userId is derived from the verified auth session, never from client input,
     // to prevent attackers attributing paid subscriptions to arbitrary user accounts.
     const userId = context.userId;
-    const stripe = createStripeClient(data.environment);
+    const stripe = createStripeClient();
 
     const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
     if (!prices.data.length) throw new Error("Price not found");
     const stripePrice = prices.data[0];
     const isRecurring = stripePrice.type === "recurring";
+
+    // Stamped into subscription metadata so the webhook can read the plan
+    // directly, instead of reverse-matching a Stripe price ID back to a
+    // plan name (see planFromMetadata in the webhook route).
+    const plan = Object.values(PRICING_PLANS).find((p) => p.priceLookupKey === data.priceId)?.id;
 
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: stripePrice.id, quantity: data.quantity || 1 }],
@@ -37,8 +42,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       ui_mode: "embedded_page",
       return_url: data.returnUrl,
       ...(data.customerEmail && { customer_email: data.customerEmail }),
-      metadata: { userId },
-      ...(isRecurring && { subscription_data: { metadata: { userId } } }),
+      metadata: { userId, ...(plan && { plan }) },
+      ...(isRecurring && { subscription_data: { metadata: { userId, ...(plan && { plan }) } } }),
     });
 
     return session.client_secret;

@@ -37,12 +37,9 @@ refuse to start rather than fail silently later.
 
 | Variable | What it does |
 |---|---|
-| `STRIPE_SANDBOX_API_KEY` | Stripe **test-mode** secret key (`sk_test_...`). |
-| `STRIPE_LIVE_API_KEY` | Stripe **live-mode** secret key (`sk_live_...`). |
-| `LOVABLE_API_KEY` | This app's Stripe calls route through the Lovable connector gateway (`connector-gateway.lovable.dev`), not `api.stripe.com` directly — this key authenticates to that gateway. Checkout will not work without it, even with a valid Stripe key. |
-| `PAYMENTS_SANDBOX_WEBHOOK_SECRET` | Stripe test-mode webhook signing secret (`whsec_...`). |
-| `PAYMENTS_LIVE_WEBHOOK_SECRET` | Stripe live-mode webhook signing secret (`whsec_...`). |
-| `VITE_PAYMENTS_CLIENT_TOKEN` | Stripe publishable key (`pk_test_...` / `pk_live_...`) for the embedded checkout UI. |
+| `STRIPE_SECRET_KEY` | Stripe secret key — standard or restricted, test or live (`sk_test_...` / `sk_live_...` / `rk_test_...` / `rk_live_...`). Calls `api.stripe.com` directly, no gateway indirection. |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`), from the endpoint registered in the Stripe dashboard. |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (`pk_test_...` / `pk_live_...`) for the embedded checkout UI. |
 
 All six are marked optional in `env.server.ts` (so a deploy isn't blocked on
 billing), but **checkout/subscriptions do not function without them** — see
@@ -115,14 +112,11 @@ Git** to confirm which branch is set to auto-deploy.
 
 ## 4. Manual steps after the first deploy
 
-1. **Stripe webhook** — in the Stripe Dashboard (test mode first, then live
-   mode), add an endpoint:
-   - Test: `https://<your-domain>/api/public/payments/webhook?env=sandbox`
-   - Live: `https://<your-domain>/api/public/payments/webhook?env=live`
+1. **Stripe webhook** — in the Stripe Dashboard, add an endpoint:
+   - `https://<your-domain>/api/public/payments/webhook`
    - Subscribe to: `customer.subscription.created`, `customer.subscription.updated`,
      `customer.subscription.deleted`.
-   - Copy the signing secret into `PAYMENTS_SANDBOX_WEBHOOK_SECRET` /
-     `PAYMENTS_LIVE_WEBHOOK_SECRET`.
+   - Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 2. **Twilio webhooks** — on your Twilio phone number's configuration page:
    - Voice, "A call comes in": `https://<your-domain>/api/twilio/missed-call`

@@ -564,3 +564,47 @@ click-through. Particularly worth confirming after deploy: that a
 returning visitor who already has active facts (from any source, not
 just this step) correctly resumes past the facts step per the updated
 `load()` logic.
+
+## Stripe: dropped the Lovable connector-gateway indirection
+
+A real Stripe key (`STRIPE_SECRET_KEY`, a restricted live key) and
+`VITE_STRIPE_PUBLISHABLE_KEY` were added directly to Vercel. Checking
+the existing billing code first turned up that it was never wired to
+those names at all - `stripe.server.ts` read `STRIPE_SANDBOX_API_KEY` /
+`STRIPE_LIVE_API_KEY` plus a `LOVABLE_API_KEY`, and routed every Stripe
+call through `https://connector-gateway.lovable.dev/stripe`, a proxy
+tied to a Lovable-platform connection, instead of `api.stripe.com`
+directly. That's dead architecture for an app that deploys to Vercel
+(see the "Deploy target is Vercel, not Cloudflare" note in
+`CLAUDE.md`) - the gateway was never going to be reachable in
+production the way this app actually ships. Setting the two new vars
+alone would have done nothing; checkout would still throw on the
+missing `LOVABLE_API_KEY`.
+
+Removed the gateway path entirely: `createStripeClient()` now does a
+plain `new Stripe(getEnv('STRIPE_SECRET_KEY'), ...)`, no custom
+`httpClient`, no sandbox/live env switch fed by two separate key vars.
+`verifyWebhook()` reads a single `STRIPE_WEBHOOK_SECRET` instead of a
+sandbox/live pair, and the webhook route dropped its `?env=` query
+param requirement. The client (`stripe.ts`) reads
+`VITE_STRIPE_PUBLISHABLE_KEY` instead of `VITE_PAYMENTS_CLIENT_TOKEN`.
+`env.server.ts` and `DEPLOY.md` were updated to match - the old var
+names don't exist anywhere in the code anymore.
+
+Also fixed a real bug found while tracing this: the webhook's
+`planFromPriceId()` matched Stripe price IDs against `lovable_external_id`
+metadata (a field only the old gateway ever set) or the raw Stripe
+price ID, neither of which would ever equal `solo_monthly` /
+`crew_monthly` / `agency_monthly`. Every real subscription would have
+silently synced as `starter`. Fixed by stamping `plan` directly into
+`subscription_data.metadata` (and top-level session metadata) at
+checkout-creation time in `payments.functions.ts`, derived from
+`PRICING_PLANS` rather than hardcoded twice, and reading it straight
+back in the webhook (`planFromMetadata()`) instead of reverse-matching
+a price ID.
+
+Scope not touched yet, on purpose: `scripts/setup-stripe-products.mjs`
+(creating the real Solo/Crew/Agency products) and registering the live
+webhook endpoint in the Stripe dashboard. Both come after this lands,
+confirmed with the account owner first since they create real,
+billable Stripe objects.

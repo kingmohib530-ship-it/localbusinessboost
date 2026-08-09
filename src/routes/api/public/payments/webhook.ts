@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
+import { verifyWebhook } from "@/lib/stripe.server";
 
-function planFromPriceId(priceId?: string): "starter" | "solo" | "crew" | "agency" {
-  if (priceId === "agency_monthly") return "agency";
-  if (priceId === "crew_monthly") return "crew";
-  if (priceId === "solo_monthly") return "solo";
+// The plan is stamped into subscription_data.metadata at checkout-session
+// creation time (see payments.functions.ts) — read it back directly here
+// rather than reverse-matching a Stripe price ID to a plan name, since a
+// price's own ID (e.g. price_1Abc...) never equals our lookup keys.
+function planFromMetadata(metadata?: Record<string, string>): "starter" | "solo" | "crew" | "agency" {
+  const plan = metadata?.plan;
+  if (plan === "agency" || plan === "crew" || plan === "solo") return plan;
   return "starter";
 }
 
@@ -16,13 +19,13 @@ function planFromPriceId(priceId?: string): "starter" | "solo" | "crew" | "agenc
 async function syncProfileSubscription(
   userId: string,
   subscriptionId: string | undefined,
-  priceId: string | undefined,
+  metadata: Record<string, string> | undefined,
   status: string,
   customerId: string,
   periodEnd: number | undefined,
 ) {
   const isActive = status === "active" || status === "trialing" || status === "past_due";
-  const plan = isActive ? planFromPriceId(priceId) : "starter";
+  const plan = isActive ? planFromMetadata(metadata) : "starter";
   const { error } = await supabaseAdmin
     .from("profiles")
     .update({
@@ -44,13 +47,12 @@ async function handleSubscriptionEvent(subscription: any, status: string) {
     return;
   }
   const item = subscription.items?.data?.[0];
-  const priceId = item?.price?.metadata?.lovable_external_id || item?.price?.id;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
-  await syncProfileSubscription(userId, subscription.id, priceId, status, subscription.customer, periodEnd);
+  await syncProfileSubscription(userId, subscription.id, subscription.metadata, status, subscription.customer, periodEnd);
 }
 
-async function handleWebhook(req: Request, env: StripeEnv) {
-  const event = await verifyWebhook(req, env);
+async function handleWebhook(req: Request) {
+  const event = await verifyWebhook(req);
   switch (event.type) {
     case "customer.subscription.created":
     case "customer.subscription.updated":
@@ -68,13 +70,8 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const rawEnv = new URL(request.url).searchParams.get("env");
-        if (rawEnv !== "sandbox" && rawEnv !== "live") {
-          console.error("Webhook invalid env:", rawEnv);
-          return Response.json({ received: true, ignored: "invalid env" });
-        }
         try {
-          await handleWebhook(request, rawEnv);
+          await handleWebhook(request);
           return Response.json({ received: true });
         } catch (e) {
           console.error("Webhook error:", e);
