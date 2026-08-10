@@ -608,3 +608,63 @@ Scope not touched yet, on purpose: `scripts/setup-stripe-products.mjs`
 webhook endpoint in the Stripe dashboard. Both come after this lands,
 confirmed with the account owner first since they create real,
 billable Stripe objects.
+
+## Consumer marketplace removed entirely
+
+Deliberate product decision, not a bug fix: Lanavix focuses entirely
+on contractors now, no consumer-facing surface. Removed both entry
+points that existed - the SMS marketplace (`consumer-inbound.ts`,
+which auto-matched and auto-booked a single business) and the
+web-based `/request` flow (`consumer_requests`/`consumer_request_matches`,
+fanned out to several businesses who had to accept) - along with
+everything that only existed to support them.
+
+Investigated before deleting anything, since two things needed a real
+answer rather than an assumption: whether `accept_consumer_leads` was
+used anywhere besides the Network page (it was - a second toggle in
+`app.verification.tsx`'s step 2, same purpose, still safe to remove),
+and whether `conversation_intelligence` (written to by the SMS
+marketplace with `source_channel: 'consumer_marketplace'`) was
+consumer-marketplace-only or shared - it's shared (`sms-reply.ts` and
+web-chat both write to it too), so the table stays and only the
+`'consumer_marketplace'` value was dropped from its check constraint,
+along with the same value on `appointments.source`.
+
+Database: dropped `consumer_profiles`, `consumer_requests`,
+`consumer_request_matches`, `consumer_marketplace_messages` (all four
+had zero rows live - this was a clean removal, not a data migration).
+Dropped `profiles.accept_consumer_leads`/`lanavix_score`/
+`response_speed_avg_minutes`/`booking_completion_rate`/
+`consumer_rating_avg` - confirmed by grep these were read nowhere else
+in the app. Reverted `handle_new_user()` to the simple, unconditional
+`profiles` insert every business signup already relied on before the
+consumer-account branch existed; the one call site that ever sent
+`account_type: 'consumer'` (`request.auth.tsx`) is deleted along with
+it, and `consumer_profiles` had zero rows, so there was no real
+consumer account to preserve.
+
+Also removed as a direct consequence, not left dangling: Coach's
+`networkRequestsCard()` (queried `consumer_request_matches` directly),
+the viral SMS footer's "Need another service? Text {number}" branch in
+`sms-reply.ts`/`review-request.ts` (was about to invite customers to
+text a webhook that no longer exists), `verifyPlatformTwilioRequest()`
+in `twilio.server.ts` (had exactly one caller), and
+`api/admin/update-scores.ts` (existed only to compute `lanavix_score`,
+already established as never wired to a scheduler like its sibling
+`update-pricing-index.ts`).
+
+`/app/network` had zero content unrelated to the consumer marketplace
+- header, stats, the accept-leads toggle, incoming requests, and a
+"Network Score coming soon" placeholder were all consumer-marketplace
+copy - so the whole page and its sidebar nav item were deleted rather
+than left empty. The verification flow's "you're verified" success
+screen used to link there and claim verification "unlocks consumer
+marketplace matching"; both were fixed to point at the dashboard
+instead and drop the now-false claim, since verification itself (the
+badge, the trust signal) is unrelated to the marketplace and stays.
+
+Left out of scope on purpose, flagged during investigation rather than
+silently expanded into: `api/admin/update-pricing-index.ts` and
+`market_pricing_index` are dead (never read/displayed anywhere) but
+not part of the consumer marketplace's own surface - a separate
+cleanup item for later, not this one.

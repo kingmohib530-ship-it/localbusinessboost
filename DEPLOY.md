@@ -31,7 +31,6 @@ refuse to start rather than fail silently later.
 | `RESEND_API_KEY` | Resend API key. Without it, the contact form and audit-report emails just log instead of sending. |
 | `RESEND_FROM_EMAIL` | Sender address for outbound email. Defaults to a Lanavix address if unset. |
 | `NOTIFICATION_EMAIL` | Where contact-form notifications go. Defaults to `moh@lanavix.com` if unset. |
-| `CONSUMER_TWILIO_PHONE_NUMBER` | Consumer-marketplace Twilio number, shown in one line of SMS footer copy. Cosmetic if unset. |
 
 ### Billing — required before checkout will actually work
 
@@ -121,9 +120,6 @@ Git** to confirm which branch is set to auto-deploy.
 2. **Twilio webhooks** — on your Twilio phone number's configuration page:
    - Voice, "A call comes in": `https://<your-domain>/api/twilio/missed-call`
    - Messaging, "A message comes in": `https://<your-domain>/api/twilio/sms-reply`
-   - If you're running the consumer marketplace on a second Twilio number
-     (`CONSUMER_TWILIO_PHONE_NUMBER`), point its messaging webhook at:
-     `https://<your-domain>/api/twilio/consumer-inbound`
 
 3. **Custom domain** — attach your production domain in Vercel project
    settings, and update `SITE_URL` in `src/lib/seo.ts` (currently

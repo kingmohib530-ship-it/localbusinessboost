@@ -179,142 +179,6 @@ export type Database = {
         }
         Relationships: []
       }
-      consumer_marketplace_messages: {
-        Row: {
-          appointment_id: string | null
-          caller_phone: string
-          direction: string
-          id: string
-          message: string
-          sent_at: string
-          user_id: string | null
-        }
-        Insert: {
-          appointment_id?: string | null
-          caller_phone: string
-          direction: string
-          id?: string
-          message: string
-          sent_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          appointment_id?: string | null
-          caller_phone?: string
-          direction?: string
-          id?: string
-          message?: string
-          sent_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consumer_marketplace_messages_appointment_id_fkey"
-            columns: ["appointment_id"]
-            isOneToOne: false
-            referencedRelation: "appointments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consumer_profiles: {
-        Row: {
-          city: string | null
-          created_at: string
-          full_name: string | null
-          id: string
-          phone: string | null
-          updated_at: string
-        }
-        Insert: {
-          city?: string | null
-          created_at?: string
-          full_name?: string | null
-          id: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          city?: string | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      consumer_request_matches: {
-        Row: {
-          created_at: string
-          id: string
-          request_id: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          request_id: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          request_id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consumer_request_matches_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "consumer_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consumer_requests: {
-        Row: {
-          accepted_user_id: string | null
-          city: string
-          created_at: string
-          description: string | null
-          id: string
-          service_type: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          accepted_user_id?: string | null
-          city: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          service_type: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          accepted_user_id?: string | null
-          city?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          service_type?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       contact_submissions: {
         Row: {
           business_name: string | null
@@ -712,14 +576,11 @@ export type Database = {
       }
       profiles: {
         Row: {
-          accept_consumer_leads: boolean
-          booking_completion_rate: number | null
           business_address: string | null
           business_hours: string | null
           business_name: string | null
           business_zip: string | null
           city: string | null
-          consumer_rating_avg: number | null
           created_at: string | null
           daily_brief_channel: string
           daily_brief_enabled: boolean
@@ -734,7 +595,6 @@ export type Database = {
           insurance_carrier: string | null
           insurance_policy_number: string | null
           is_admin: boolean
-          lanavix_score: number
           license_number: string | null
           license_state: string | null
           onboarding_completed: boolean | null
@@ -743,7 +603,6 @@ export type Database = {
           price_range_low: number | null
           price_unit: string
           quote_required: boolean
-          response_speed_avg_minutes: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_period_end: string | null
@@ -764,14 +623,11 @@ export type Database = {
           years_in_business: number | null
         }
         Insert: {
-          accept_consumer_leads?: boolean
-          booking_completion_rate?: number | null
           business_address?: string | null
           business_hours?: string | null
           business_name?: string | null
           business_zip?: string | null
           city?: string | null
-          consumer_rating_avg?: number | null
           created_at?: string | null
           daily_brief_channel?: string
           daily_brief_enabled?: boolean
@@ -786,7 +642,6 @@ export type Database = {
           insurance_carrier?: string | null
           insurance_policy_number?: string | null
           is_admin?: boolean
-          lanavix_score?: number
           license_number?: string | null
           license_state?: string | null
           onboarding_completed?: boolean | null
@@ -795,7 +650,6 @@ export type Database = {
           price_range_low?: number | null
           price_unit?: string
           quote_required?: boolean
-          response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null
@@ -816,14 +670,11 @@ export type Database = {
           years_in_business?: number | null
         }
         Update: {
-          accept_consumer_leads?: boolean
-          booking_completion_rate?: number | null
           business_address?: string | null
           business_hours?: string | null
           business_name?: string | null
           business_zip?: string | null
           city?: string | null
-          consumer_rating_avg?: number | null
           created_at?: string | null
           daily_brief_channel?: string
           daily_brief_enabled?: boolean
@@ -838,7 +689,6 @@ export type Database = {
           insurance_carrier?: string | null
           insurance_policy_number?: string | null
           is_admin?: boolean
-          lanavix_score?: number
           license_number?: string | null
           license_state?: string | null
           onboarding_completed?: boolean | null
@@ -847,7 +697,6 @@ export type Database = {
           price_range_low?: number | null
           price_unit?: string
           quote_required?: boolean
-          response_speed_avg_minutes?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_period_end?: string | null
@@ -1275,9 +1124,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const

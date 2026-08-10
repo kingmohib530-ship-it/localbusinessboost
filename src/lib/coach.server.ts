@@ -222,43 +222,6 @@ async function reviewAskCard(userId: string): Promise<CoachCard | null> {
 }
 
 /**
- * Consumer-marketplace matches waiting on this business to accept or
- * decline. Time-sensitive (first-accept-wins across matched businesses),
- * already surfaced in /app/network - this card is a pointer to it, not a
- * second copy of that feature.
- */
-async function networkRequestsCard(userId: string): Promise<CoachCard | null> {
-  const { data } = await supabaseAdmin
-    .from("consumer_request_matches")
-    .select("id, request_id, consumer_requests(service_type, city)")
-    .eq("user_id", userId)
-    .eq("status", "pending");
-
-  if (!data || data.length === 0) return null;
-
-  const plural = data.length === 1 ? "request" : "requests";
-  const first = data[0] as unknown as {
-    consumer_requests: { service_type: string; city: string } | null;
-  };
-  const firstLabel = first.consumer_requests
-    ? `${serviceLabel(first.consumer_requests.service_type) || first.consumer_requests.service_type} in ${first.consumer_requests.city}`
-    : null;
-
-  return {
-    id: "network_requests",
-    severity: "attention",
-    title: `${data.length} new customer ${plural}`,
-    detail:
-      data.length === 1 && firstLabel
-        ? `${firstLabel}. Other businesses can accept it first.`
-        : "Waiting on your response. Other businesses can accept them first.",
-    actionLabel: "Review requests",
-    actionHref: "/app/network",
-    count: data.length,
-  };
-}
-
-/**
  * Generates today's full card list for one business. Cards are returned
  * in a fixed, deliberate order (most time-sensitive first) rather than
  * sorted by count or severity - matches how the brief should read top to
@@ -268,15 +231,14 @@ export async function generateDailyBriefCards(
   userId: string,
   timezone: string,
 ): Promise<CoachCard[]> {
-  const [missedCalls, estimates, schedule, reviewAsk, networkRequests] = await Promise.all([
+  const [missedCalls, estimates, schedule, reviewAsk] = await Promise.all([
     missedCallsCard(userId),
     estimatesCard(userId),
     scheduleCard(userId, timezone),
     reviewAskCard(userId),
-    networkRequestsCard(userId),
   ]);
 
-  return [missedCalls, estimates, schedule, reviewAsk, networkRequests].filter(
+  return [missedCalls, estimates, schedule, reviewAsk].filter(
     (card): card is CoachCard => card !== null,
   );
 }

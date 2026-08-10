@@ -1,9 +1,6 @@
 // Shared service-type taxonomy for anything that books or matches a home-
-// service job: the SMS booking flow (sms-reply.ts), the SMS consumer
-// marketplace (consumer-inbound.ts), and the web-based consumer request
-// form. Previously duplicated between the first two files on purpose (an
-// earlier "add new files only" constraint) - promoted to one module now
-// that a third caller needs the exact same set.
+// service job. Used across the AI receptionist (sms-reply.ts), the Lead
+// Generator, and Business Facts.
 
 export const SERVICE_TYPE_KEYS = [
   "hvac_tuneup",

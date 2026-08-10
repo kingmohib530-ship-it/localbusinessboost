@@ -8,10 +8,7 @@ import { loadBusinessContext, buildReceptionistSystemPrompt, generateReceptionis
 import { cancelActiveQuoteFollowUp, maybeStartQuoteFollowUp } from "@/lib/quoteFollowUps.server";
 
 function businessFooter(): string {
-  const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
-  return consumerNumber
-    ? `\n\nManaged by Lanavix — Need another service? Text ${consumerNumber}`
-    : "\n\nManaged by Lanavix";
+  return "\n\nManaged by Lanavix";
 }
 
 // Only worth showing on the first reply in a conversation - repeating it on

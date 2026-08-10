@@ -134,13 +134,6 @@ export const ENV_VARS: EnvVarDef[] = [
     validate: isE164Phone,
   },
   {
-    name: "CONSUMER_TWILIO_PHONE_NUMBER",
-    category: "core",
-    required: false,
-    description: "Consumer-marketplace Twilio number, shown in one line of SMS footer copy only. Cosmetic if unset.",
-    validate: isE164Phone,
-  },
-  {
     name: "CRON_SECRET",
     category: "core",
     required: true,
