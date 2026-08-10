@@ -174,8 +174,17 @@ export default function LeadGenerator() {
     loadLeads();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      supabase.from("profiles").select("city").eq("id", user.id).single().then(({ data }) => {
+      supabase.from("profiles").select("city, industry").eq("id", user.id).single().then(({ data }) => {
         if (data?.city) setCity(data.city);
+        // profiles.industry is free text from onboarding (e.g. "Cleaning
+        // Services"), while this list is a fixed set of prospecting
+        // categories - only pre-fill on a real match, so a business with
+        // an industry outside this list keeps the current default instead
+        // of silently landing on an unrelated category.
+        const match = data?.industry
+          ? INDUSTRIES.find((i) => i.toLowerCase() === data.industry!.toLowerCase())
+          : null;
+        if (match) setIndustry(match);
       });
     });
   }, [loadLeads]);
