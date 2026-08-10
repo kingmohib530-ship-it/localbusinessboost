@@ -8,7 +8,6 @@ import {
   Target,
   Calendar,
   Star,
-  Users,
   Brain,
   Settings,
   LogOut,
@@ -30,7 +29,6 @@ const nav: {
     | "/app/agents"
     | "/app/calendar"
     | "/app/reputation"
-    | "/app/network"
     | "/app/business-facts"
     | "/app/settings"
     | null;
@@ -45,7 +43,6 @@ const nav: {
   { to: "/app/agents", label: "Campaigns", icon: Target },
   { to: "/app/calendar", label: "Calendar", icon: Calendar },
   { to: "/app/reputation", label: "Reputation", icon: Star },
-  { to: "/app/network", label: "Network", icon: Users },
   { to: "/app/business-facts", label: "Business Facts", icon: Brain },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];

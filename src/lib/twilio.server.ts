@@ -69,17 +69,3 @@ export async function verifyTwilioRequestWithToken(
   const expected = await computeTwilioSignature(authToken, request.url, params);
   return timingSafeEqualStr(expected, signature);
 }
-
-/**
- * Verifies a webhook against Lanavix's own platform Twilio account. Only
- * for the consumer marketplace inbound number (consumer-inbound.ts) -
- * that number belongs to Lanavix itself, not to any individual business.
- */
-export async function verifyPlatformTwilioRequest(
-  request: Request,
-  rawBody: string,
-): Promise<boolean> {
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  if (!authToken) return false;
-  return verifyTwilioRequestWithToken(request, rawBody, authToken);
-}

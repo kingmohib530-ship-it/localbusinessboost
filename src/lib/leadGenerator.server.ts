@@ -279,9 +279,8 @@ export function detectPainSignals(
  * Deterministic 0-100 score per the spec's weighting: pain severity 40%,
  * company size/revenue 20%, recency of activity 20%, review sentiment 20%.
  * Company size/revenue and recency (last Google Business post) have no
- * real accessible source here, so they contribute a neutral midpoint —
- * same convention as lanavix_score's NEUTRAL_SCORE for unmeasured
- * components — rather than a fabricated number.
+ * real accessible source here, so they contribute a neutral midpoint
+ * rather than a fabricated number.
  */
 export function computeLeadScore(painSignals: string[], googleRating: number | null): number {
   const NEUTRAL = 50;

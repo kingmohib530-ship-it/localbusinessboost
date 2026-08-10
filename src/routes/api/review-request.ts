@@ -8,10 +8,7 @@ const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
 
 function businessFooter(): string {
-  const consumerNumber = process.env.CONSUMER_TWILIO_PHONE_NUMBER;
-  return consumerNumber
-    ? `\n\nManaged by Lanavix — Need another service? Text ${consumerNumber}`
-    : "\n\nManaged by Lanavix";
+  return "\n\nManaged by Lanavix";
 }
 
 const RequestSchema = z.object({

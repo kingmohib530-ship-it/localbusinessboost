@@ -44,7 +44,6 @@ interface ProfileFields {
   price_range_high: number | null;
   price_unit: string;
   quote_required: boolean;
-  accept_consumer_leads: boolean;
 }
 
 const STEPS = ["Business details", "Documents", "Pricing", "Review & submit"];
@@ -73,7 +72,7 @@ function VerificationPage() {
       supabase
         .from("profiles")
         .select(
-          "business_name, verification_status, verification_notes, license_number, license_state, insurance_carrier, insurance_policy_number, ein_number, business_address, business_zip, years_in_business, team_size, emergency_hours, price_range_low, price_range_high, price_unit, quote_required, accept_consumer_leads"
+          "business_name, verification_status, verification_notes, license_number, license_state, insurance_carrier, insurance_policy_number, ein_number, business_address, business_zip, years_in_business, team_size, emergency_hours, price_range_low, price_range_high, price_unit, quote_required"
         )
         .eq("id", user.id)
         .single(),
@@ -114,7 +113,6 @@ function VerificationPage() {
         price_range_high: profile.price_range_high,
         price_unit: profile.price_unit,
         quote_required: profile.quote_required,
-        accept_consumer_leads: profile.accept_consumer_leads,
       })
       .eq("id", userId);
     setSaving(false);
@@ -249,7 +247,7 @@ function VerificationPage() {
       <StatusScreen
         icon={<ShieldCheck size={26} color="var(--accent-2)" strokeWidth={1.75} />}
         title="You're verified"
-        body="Your business is verified on Lanavix. This unlocks consumer marketplace matching and shows a verified badge to customers."
+        body="Your business is verified on Lanavix and now shows a verified badge to customers."
         notes={null}
         good
       />
@@ -412,11 +410,6 @@ function VerificationPage() {
             value={profile.quote_required}
             onChange={(v) => updateField("quote_required", v)}
           />
-          <ToggleField
-            label="Accept consumer marketplace leads"
-            value={profile.accept_consumer_leads}
-            onChange={(v) => updateField("accept_consumer_leads", v)}
-          />
         </div>
       )}
 
@@ -487,8 +480,8 @@ function StatusScreen({ icon, title, body, notes, good }: { icon: React.ReactNod
           </div>
         )}
         {good && (
-          <Link to="/app/network" style={{ display: "inline-block", marginTop: 20, padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
-            Go to Network →
+          <Link to="/app" style={{ display: "inline-block", marginTop: 20, padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+            Go to your dashboard →
           </Link>
         )}
       </div>

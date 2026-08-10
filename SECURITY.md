@@ -64,8 +64,8 @@ session, re-verified now rather than re-built:
 - **Webhook/signature verification**: Stripe webhook validates HMAC-SHA256
   over `timestamp.body` and rejects anything older than 300 seconds
   (replay protection) — now constant-time. Twilio webhooks
-  (`missed-call`, `sms-reply`, `consumer-inbound`) all verify
-  `X-Twilio-Signature` before processing.
+  (`missed-call`, `sms-reply`) all verify `X-Twilio-Signature` before
+  processing.
 - **Rate limiting**: present on every remaining public and authenticated
   endpoint that does anything costly (AI calls, SMS sends, Google Places
   lookups) — IP-keyed for anonymous traffic, user-keyed for authenticated
