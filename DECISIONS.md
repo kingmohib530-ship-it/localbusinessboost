@@ -609,6 +609,63 @@ webhook endpoint in the Stripe dashboard. Both come after this lands,
 confirmed with the account owner first since they create real,
 billable Stripe objects.
 
+## Performance audit fixes
+
+Investigated first (loading states, query patterns, bundle size, page
+load, cross-feature consistency) before fixing anything, then fixed
+the four findings with real, confirmed impact.
+
+**Missing index + unbounded query**: `review_requests` had no index
+beyond its primary key - confirmed live via the Supabase performance
+advisor, which independently flagged `review_requests_user_id_fkey`
+as an unindexed foreign key. Coach's `reviewAskCard()` queried it with
+no date filter and no limit, on every single page load. Added
+`idx_review_requests_user_sent_at (user_id, sent_at)` and bounded the
+query to the same 30-day window already used for the completed-jobs
+half of that card - safe, since `sent_at` defaults to `now()` at
+insert time, so a review request for a job in that window can't itself
+fall outside it.
+
+**Render-blocking Google Fonts**: `__root.tsx` loaded Inter via a
+synchronous `<link rel="stylesheet">` to `fonts.googleapis.com` on
+every page. Fetched the actual CSS Google serves for this weight set
+and confirmed it returns the identical file for all five weights
+(400-800) - so self-hosting one 48KB woff2, declared as the same five
+`@font-face` blocks Google's own CSS uses (deliberately not collapsed
+into a single range-based declaration, to avoid depending on
+variable-range `@font-face` support in older browsers), is byte-for-
+byte what production already downloaded, just same-origin. Preloaded
+from `__root.tsx`, and both `vercel.json`'s CSP and its
+`nitro.config.ts` mirror had `fonts.googleapis.com`/`fonts.gstatic.com`
+dropped since nothing external is fetched anymore.
+
+**Quote follow-up silent pop-in**: `app.receptionist.tsx` fetched
+follow-up status after the main conversation list already finished
+loading, with no in-flight indicator - the badge area was just absent
+until the fetch resolved. First attempt used a single global loading
+flag; caught before committing that this would flicker away
+already-resolved badges from an earlier page during "Load more"
+pagination, since the flag would flip true again for an unrelated
+fetch. Fixed with a per-conversation-ID "checked" set instead, so a
+row's badge state only ever depends on whether that specific row's own
+follow-up status has actually been fetched.
+
+**Onboarding wizard motion inconsistency**: every other dashboard page
+(Coach, Web Chat, Business Facts, Receptionist, Settings) uses the
+shared `useMountReveal()` hook for a staggered `hd-blur-in` entrance on
+page load; the onboarding wizard's top bar (brand mark, step rail,
+skip button) had no entrance motion at all. Wired it onto the same
+hook. Left the step-to-step transition's own `key`-based remount
+animation alone - a different, legitimate mechanism for a different
+interaction (mid-flow step changes, not page mount), not a duplicate
+to consolidate.
+
+Bundle size and page-load checks (the >500kB build warning, the
+founder photo) turned up no real issues - the warning is a shared
+vendor chunk loaded on every page regardless of route, not anything
+built recently, and Coach/onboarding are already split into their own
+small per-route chunks via TanStack Router's file-based routing.
+
 ## Consumer marketplace removed entirely
 
 Deliberate product decision, not a bug fix: Lanavix focuses entirely
