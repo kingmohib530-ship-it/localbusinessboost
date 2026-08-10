@@ -11,7 +11,7 @@
 // own platform auto-detection wins over that fallback on a real Vercel
 // build. Kept here too (in sync with vercel.json's CSP) as a harmless
 // belt-and-suspenders in case that ever changes.
-const CSP = [
+const BASE_DIRECTIVES = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://js.stripe.com",
   "style-src 'self' 'unsafe-inline'",
@@ -19,11 +19,19 @@ const CSP = [
   "img-src 'self' data: https:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com",
   "frame-src https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
-  "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-].join("; ");
+];
+
+const CSP = [...BASE_DIRECTIVES, "frame-ancestors 'none'"].join("; ");
+
+// widget-preview.html is the one page meant to be iframed (from the
+// authenticated Web Chat setup page, same-origin) - relaxed to
+// frame-ancestors 'self' / X-Frame-Options SAMEORIGIN instead of the
+// site-wide DENY, matching vercel.json's own exception for this exact
+// path so the two stay in sync.
+const WIDGET_PREVIEW_CSP = [...BASE_DIRECTIVES, "frame-ancestors 'self'"].join("; ");
 
 export default {
   routeRules: {
@@ -31,6 +39,16 @@ export default {
       headers: {
         "Content-Security-Policy": CSP,
         "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+      },
+    },
+    "/widget-preview.html": {
+      headers: {
+        "Content-Security-Policy": WIDGET_PREVIEW_CSP,
+        "X-Frame-Options": "SAMEORIGIN",
         "X-Content-Type-Options": "nosniff",
         "Referrer-Policy": "strict-origin-when-cross-origin",
         "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
