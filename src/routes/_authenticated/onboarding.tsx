@@ -13,6 +13,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { GoogleListingConnect } from "@/components/GoogleListingConnect";
 import { WebsiteConnect } from "@/components/WebsiteConnect";
 import { TwilioConnect } from "@/components/TwilioConnect";
@@ -48,6 +49,7 @@ const STEPS: { id: StepId; label: string; Icon: typeof Building2 }[] = [
 
 function OnboardingPage() {
   const navigate = useNavigate();
+  const { step: reveal, delay } = useMountReveal();
   const [loading, setLoading] = useState(true);
   const [stepIndex, setStepIndex] = useState(0);
   const [exiting, setExiting] = useState(false);
@@ -216,12 +218,14 @@ function OnboardingPage() {
     >
       {/* Top bar: brand mark + step rail + always-available exit */}
       <div
+        className={reveal}
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           padding: "20px 28px",
           borderBottom: "1px solid var(--hd-border)",
+          ...delay(0),
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
