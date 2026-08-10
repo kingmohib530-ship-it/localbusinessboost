@@ -64,7 +64,7 @@ export function AddFactForm({ fixedType, placeholder, onAdded }: AddFactFormProp
     const { error: insertError } = await supabase.from("business_facts").insert({
       user_id: user.id,
       fact_type: type,
-      fact_text: factText.trim(),
+      fact_text: factText.trim().slice(0, 500),
       source: "setup_form",
       status: "active",
     });
@@ -97,6 +97,7 @@ export function AddFactForm({ fixedType, placeholder, onAdded }: AddFactFormProp
           value={factText}
           onChange={(e) => setFactText(e.target.value)}
           placeholder={placeholder || "e.g. Drain cleaning starts at $150"}
+          maxLength={500}
           style={{ ...inputStyle, flex: "1 1 260px" }}
         />
         <button

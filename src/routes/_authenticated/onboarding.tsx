@@ -671,7 +671,7 @@ function QAForm({ onAdded }: { onAdded: () => void }) {
     const { error: insertError } = await supabase.from("business_facts").insert({
       user_id: user.id,
       fact_type: "faq",
-      fact_text: `Q: ${question.trim()}\nA: ${answer.trim()}`,
+      fact_text: `Q: ${question.trim()}\nA: ${answer.trim()}`.slice(0, 500),
       source: "setup_form",
       status: "active",
     });
@@ -692,12 +692,14 @@ function QAForm({ onAdded }: { onAdded: () => void }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="e.g. Do you offer emergency service?"
+          maxLength={240}
           style={inputStyle}
         />
         <input
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="e.g. Yes, 24/7, no extra charge on weekends"
+          maxLength={240}
           style={inputStyle}
         />
         <button
