@@ -70,6 +70,27 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Rate limit before signature verification, same defense-in-depth
+        // ordering as the Twilio webhooks (missed-call.ts, sms-reply.ts) -
+        // bounds abuse volume regardless of whether the signature would
+        // even be valid, rather than doing the HMAC computation first.
+        const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+        const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_anon_rate_limit", {
+          p_ip_address: ip,
+          p_route: "public-payments-webhook",
+          p_max_requests: 60,
+          p_window_seconds: 3600,
+        });
+        if (rlErr) {
+          console.error("[webhook] rate limit check failed", rlErr);
+          return new Response("Service temporarily unavailable", { status: 503 });
+        }
+        if (!allowed) {
+          // 429 rather than a silent drop - Stripe's own retry-with-backoff
+          // already knows how to handle this correctly.
+          return new Response("Too many requests", { status: 429 });
+        }
+
         try {
           await handleWebhook(request);
           return Response.json({ received: true });
