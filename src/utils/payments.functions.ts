@@ -2,6 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createStripeClient } from "@/lib/stripe.server";
 import { PRICING_PLANS } from "@/lib/pricingPlans";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+// Same "has a real, live subscription" definition the webhook uses
+// (syncProfileSubscription in api/public/payments/webhook.ts) to decide
+// whether to sync a plan or fall back to starter.
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -30,6 +36,26 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     if (!prices.data.length) throw new Error("Price not found");
     const stripePrice = prices.data[0];
     const isRecurring = stripePrice.type === "recurring";
+
+    // SECURITY: server-side guard against creating a second, independent
+    // Stripe subscription for someone who already has a live one - the
+    // pricing page UI steers an already-subscribed contractor toward
+    // Settings instead of a fresh checkout, but that's not something this
+    // handler can trust; it has to hold regardless of what the client
+    // actually sent.
+    if (isRecurring) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("subscription_status")
+        .eq("id", userId)
+        .maybeSingle();
+      const status = profile?.subscription_status;
+      if (status && ACTIVE_SUBSCRIPTION_STATUSES.has(status)) {
+        throw new Error(
+          "You already have an active subscription. Manage or change your plan from Settings instead of starting a new one.",
+        );
+      }
+    }
 
     // Stamped into subscription metadata so the webhook can read the plan
     // directly, instead of reverse-matching a Stripe price ID back to a

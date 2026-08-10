@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/SiteNav";
@@ -26,11 +26,37 @@ export const Route = createFileRoute("/pricing")({
 const PLAN_ORDER: PlanId[] = ["solo", "crew", "agency"];
 const CHECKOUT_CTA = "Start 14-day free trial";
 
+// Same "has a real, live subscription" definition used server-side
+// (payments.functions.ts, the webhook) - duplicated here rather than
+// imported since this is client code and those live in server-only files.
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
+
 function PricingPage() {
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<PlanId | null>(null);
   const reducedMotion = usePrefersReducedMotion();
   const { step, delay } = useMountReveal();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      const user = data.session?.user;
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("subscription_tier, subscription_status")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (
+        profile?.subscription_tier &&
+        profile.subscription_status &&
+        ACTIVE_SUBSCRIPTION_STATUSES.has(profile.subscription_status) &&
+        PLAN_ORDER.includes(profile.subscription_tier as PlanId)
+      ) {
+        setCurrentPlan(profile.subscription_tier as PlanId);
+      }
+    });
+  }, []);
 
   async function handleCheckout(planId: PlanId) {
     setLoadingPlan(planId);
@@ -155,18 +181,35 @@ function PricingPage() {
                     ))}
                   </ul>
 
-                  <Button
-                    onClick={() => handleCheckout(id)}
-                    disabled={loadingPlan === id}
-                    className={`w-full font-semibold rounded-xl h-11 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                      info.featured
-                        ? "bg-[var(--hd-primary)] hover:bg-[var(--hd-primary)]/90 text-white"
-                        : "bg-[var(--hd-glass)] hover:bg-[var(--hd-glass-strong)] border border-[var(--hd-border)] text-[var(--hd-fg)]"
-                    }`}
-                  >
-                    {loadingPlan === id ? "Loading…" : CHECKOUT_CTA}
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
+                  {id === currentPlan ? (
+                    <Button
+                      disabled
+                      className="w-full font-semibold rounded-xl h-11 bg-[var(--hd-glass)] border border-[var(--hd-primary-2)]/40 text-[var(--hd-primary-2)] opacity-100 disabled:opacity-100"
+                    >
+                      <Check className="mr-2 w-4 h-4" /> Current plan
+                    </Button>
+                  ) : currentPlan ? (
+                    <Button
+                      onClick={() => navigate({ to: "/app/settings" })}
+                      className="w-full font-semibold rounded-xl h-11 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md bg-[var(--hd-glass)] hover:bg-[var(--hd-glass-strong)] border border-[var(--hd-border)] text-[var(--hd-fg)]"
+                    >
+                      Manage your plan
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleCheckout(id)}
+                      disabled={loadingPlan === id}
+                      className={`w-full font-semibold rounded-xl h-11 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                        info.featured
+                          ? "bg-[var(--hd-primary)] hover:bg-[var(--hd-primary)]/90 text-white"
+                          : "bg-[var(--hd-glass)] hover:bg-[var(--hd-glass-strong)] border border-[var(--hd-border)] text-[var(--hd-fg)]"
+                      }`}
+                    >
+                      {loadingPlan === id ? "Loading…" : CHECKOUT_CTA}
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  )}
                 </GlowPanel>
               </div>
             );
