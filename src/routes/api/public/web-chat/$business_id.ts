@@ -48,6 +48,24 @@ async function notifyBusinessWidgetIssue(businessId: string, reason: string) {
   }
 }
 
+/**
+ * Same activity feed, different wording: the widget did reply here, this
+ * is just a heads-up that the message came from an origin that doesn't
+ * match the confirmed website, in case it's worth a look (a subdomain, a
+ * stale website field, or someone else embedding against this business_id).
+ */
+async function notifyBusinessOriginMismatch(businessId: string, origin: string) {
+  try {
+    await supabaseAdmin.from("activity_log").insert({
+      user_id: businessId,
+      type: "web_chat_widget_issue",
+      summary: `Your website chat widget replied to a message from ${origin}, which doesn't match the website on file. If that's not your site, check your embed.`,
+    });
+  } catch (err) {
+    console.error("[web-chat] failed to log widget origin mismatch", err);
+  }
+}
+
 // A real browser loading the widget script on the contractor's own site
 // always sends Origin on this cross-origin POST. A non-browser client
 // hitting the endpoint directly (curl, a scraper, another business's
@@ -185,9 +203,19 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
             return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 404, headers: CORS });
           }
 
-          // Layer 5: soft Origin check against the business's confirmed website.
+          // Layer 5: soft Origin check against the business's confirmed
+          // website - genuinely soft, per its own name and the function's
+          // doc comment. This used to return a hard 403 here, which meant
+          // any legitimate visitor from an origin that didn't exactly
+          // match profiles.website (a subdomain, a stale/unconfirmed
+          // value, a contractor just testing the embed somewhere else
+          // first) got silently blocked with no way to know why. Now it
+          // only logs to the business's own activity feed and keeps
+          // going - the origin check was never meant to be the thing
+          // standing between a real visitor and a reply.
           if (originMismatchesConfirmedWebsite(request, profile.website)) {
-            return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 403, headers: CORS });
+            const origin = request.headers.get("origin") || "an unknown origin";
+            await notifyBusinessOriginMismatch(businessId, origin);
           }
 
           // Layer 4: plan gating - same feature bucket as SMS Missed-Call
