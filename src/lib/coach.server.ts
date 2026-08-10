@@ -186,7 +186,16 @@ async function reviewAskCard(userId: string): Promise<CoachCard | null> {
       .eq("status", "completed")
       .not("customer_phone", "is", null)
       .gte("scheduled_at", since),
-    supabaseAdmin.from("review_requests").select("customer_phone").eq("user_id", userId),
+    // Bounded to the same window as the completed-jobs query above - a
+    // review request for one of those jobs can only have been sent on or
+    // after the job itself, so it can't fall outside this window either.
+    // Without this, the query re-fetches every review request this
+    // business has ever sent, on every single Coach page load.
+    supabaseAdmin
+      .from("review_requests")
+      .select("customer_phone")
+      .eq("user_id", userId)
+      .gte("sent_at", since),
   ]);
 
   if (!completed || completed.length === 0) return null;
