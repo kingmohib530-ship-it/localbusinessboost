@@ -4,6 +4,7 @@ import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2, Wand2 } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GlowPanel } from "@/components/GlowPanel";
+import { TwilioConnect } from "@/components/TwilioConnect";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
@@ -69,13 +70,7 @@ function ReceptionistPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [tab, setTab] = useState<"calls" | "setup">("calls");
-  const [accountSid, setAccountSid] = useState("");
-  const [authToken, setAuthToken] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [twilioVerifiedAt, setTwilioVerifiedAt] = useState<string | null>(null);
-  const [savingTwilio, setSavingTwilio] = useState(false);
-  const [twilioMsg, setTwilioMsg] = useState("");
-  const [twilioSaveOk, setTwilioSaveOk] = useState(false);
   const [appointmentsBooked, setAppointmentsBooked] = useState(0);
 
   const [businessHours, setBusinessHours] = useState("");
@@ -90,6 +85,11 @@ function ReceptionistPage() {
   const [previewError, setPreviewError] = useState("");
 
   const [followUps, setFollowUps] = useState<Record<string, FollowUp>>({});
+  // Conversation IDs whose follow-up status has actually been fetched at
+  // least once - lets the badge area tell "still checking" apart from
+  // "checked, nothing active" instead of just popping in silently, without
+  // a per-row loading flag flickering already-known badges during pagination.
+  const [followUpsChecked, setFollowUpsChecked] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadConversations(0);
@@ -119,48 +119,13 @@ function ReceptionistPage() {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("twilio_account_sid, twilio_phone_number, twilio_verified_at, business_hours, greeting_message, escalation_rules")
+      .select("business_hours, greeting_message, escalation_rules, twilio_verified_at")
       .eq("id", user.id)
       .single();
-    setAccountSid(data?.twilio_account_sid || "");
-    setPhoneNumber(data?.twilio_phone_number || "");
-    setTwilioVerifiedAt(data?.twilio_verified_at || null);
     setBusinessHours(data?.business_hours || "");
     setGreetingMessage(data?.greeting_message || "");
     setEscalationRules(data?.escalation_rules || "");
-  }
-
-  async function connectTwilio() {
-    setSavingTwilio(true);
-    setTwilioMsg("");
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setSavingTwilio(false);
-      setTwilioSaveOk(false);
-      setTwilioMsg("Please sign in again and retry.");
-      return;
-    }
-    try {
-      const res = await fetch("/api/twilio-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ accountSid: accountSid.trim(), authToken: authToken.trim(), phoneNumber: phoneNumber.trim() }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setTwilioSaveOk(true);
-        setTwilioMsg("Connected! Your calls and texts now send from your own Twilio number.");
-        setAuthToken("");
-        loadProfile();
-      } else {
-        setTwilioSaveOk(false);
-        setTwilioMsg(data.error || "Could not connect. Please check your details and try again.");
-      }
-    } catch {
-      setTwilioSaveOk(false);
-      setTwilioMsg("Network error. Please try again.");
-    }
-    setSavingTwilio(false);
+    setTwilioVerifiedAt(data?.twilio_verified_at || null);
   }
 
   async function saveConfig() {
@@ -226,6 +191,7 @@ function ReceptionistPage() {
       };
     }
     setFollowUps((prev) => ({ ...prev, ...map }));
+    setFollowUpsChecked((prev) => new Set([...prev, ...conversationIds]));
   }
 
   async function stopFollowUp(conversationId: string) {
@@ -410,48 +376,7 @@ function ReceptionistPage() {
           </div>
 
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Webhook URLs to paste into Twilio</div>
-            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
-              On your Twilio number's configuration page, set these as the Voice and SMS webhook URLs.
-            </div>
-            <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px", marginBottom: 8, wordBreak: "break-all" }}>
-              Voice: https://lanavix.com/api/twilio/missed-call
-            </div>
-            <div style={{ fontFamily: "monospace", fontSize: 11, color: "var(--muted-foreground)", background: "var(--muted)", borderRadius: 6, padding: "8px 10px", wordBreak: "break-all" }}>
-              SMS: https://lanavix.com/api/twilio/sms-reply
-            </div>
-          </div>
-
-          <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Connect your Twilio account</div>
-            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 14, lineHeight: 1.5 }}>
-              Your own Twilio account, so calls and texts send from your business's own number. Find your Account SID and Auth Token on your Twilio console's dashboard. We confirm your details with Twilio before saving them, and your Auth Token is encrypted, so once saved it's never shown again, only replaced.
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Account SID</label>
-              <input value={accountSid} onChange={e => setAccountSid(e.target.value)} placeholder="AC..."
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Auth Token</label>
-              <input value={authToken} onChange={e => setAuthToken(e.target.value)} type="password"
-                placeholder={connected ? "•••••••• (saved, enter a new one to replace it)" : "Your Twilio Auth Token"}
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>Phone number</label>
-              <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+15555550100"
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-            </div>
-
-            <button onClick={connectTwilio} disabled={savingTwilio}
-              style={{ padding: "10px 20px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: savingTwilio ? "not-allowed" : "pointer", opacity: savingTwilio ? 0.7 : 1 }}>
-              {savingTwilio ? "Connecting..." : connected ? "Update connection" : "Connect Twilio"}
-            </button>
-            {twilioMsg && <div style={{ fontSize: 12, color: twilioSaveOk ? "var(--accent-2)" : "var(--destructive)", marginTop: 8 }}>{twilioMsg}</div>}
+            <TwilioConnect onConnected={loadProfile} />
           </div>
 
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
@@ -552,7 +477,20 @@ function ReceptionistPage() {
                         {new Date(conversation.started_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </div>
                       {conversation.notes && <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 6 }}>{conversation.notes}</div>}
-                      {followUps[conversation.id] && (
+                      {!followUpsChecked.has(conversation.id) && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--muted-foreground)",
+                            marginTop: 8,
+                            paddingTop: 8,
+                            borderTop: "1px solid var(--border)",
+                          }}
+                        >
+                          Checking follow-up status...
+                        </div>
+                      )}
+                      {followUpsChecked.has(conversation.id) && followUps[conversation.id] && (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border)" }}>
                           <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
                             Follow-up: {[1, 5, 14].map((day) => {

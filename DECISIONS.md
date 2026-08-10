@@ -491,3 +491,120 @@ a key. The data layer this feature depends on is verified correct; the
 deployed route wiring and the AI extraction quality are not. A real text
 message sent to a live business number after this merges is the
 outstanding check.
+
+## Onboarding Wizard (/onboarding) - dead code, backfill, and scope
+
+`OnboardingWizard.tsx`/`onboarding.functions.ts` were deleted outright
+rather than resurrected: zero importers, referenced `profiles` columns
+that never existed (`business_type`, `primary_goal`, `service_area`,
+`onboarded_at`), filtered by `user_id` when the table's primary key is
+`id`, and the copy still said "Welcome to LUNAVX" from before the
+product was renamed. Deleting it dropped the `tsc` baseline from 16
+errors to 2, since most of the old baseline was this code's own type
+errors against those nonexistent columns.
+
+`profiles.onboarding_completed` already existed live (another case of
+the migrations-drift this repo already has - no local migration record
+for it) but no code read or wrote it, so every account defaulted to
+false. Backfilled it to true for accounts already showing real usage (a
+confirmed listing, a connection, a synced fact, an actual conversation)
+so the new wizard's gating only ever greets accounts that genuinely
+haven't done this yet. Of the 15 real accounts in the live project, only
+one qualified - the other 14 are inert test/QA accounts with no real
+business data, so seeing the wizard once on their next login is correct
+behavior, not a regression.
+
+The wizard reuses the exact same connect flows already built for
+Business Facts and Receptionist Setup (Google listing search/confirm/
+sync, website confirm/sync, Twilio verify-then-save), pulled into three
+shared components rather than duplicated, so there is exactly one
+working implementation of each, not two that can drift apart.
+
+**Not exercised live**: this sandbox has no way to complete a real
+Supabase Auth session or reach the deployed app, so the wizard's actual
+click-through (five real steps, a real Google Places search, a real
+Twilio verify call) was verified by code trace and `tsc`/`eslint`, not
+a live browser session - the same limitation documented for quote
+follow-ups and Coach earlier this session. Worth a real run-through
+after this deploys, especially the "returning visitor lands on their
+first real gap" logic in `onboarding.tsx`'s `load()`, which only static
+analysis has checked so far.
+
+## Onboarding wizard: facts step (services/pricing + FAQ)
+
+Added a sixth `business_facts.fact_type`, `'faq'`, for structured
+question/answer pairs. Checked first whether this was actually
+necessary: `loadBusinessContext()` in `aiReceptionist.server.ts`
+already folds every active fact into the AI receptionist's prompt as
+plain text regardless of type, so a Q&A pair would have worked fine
+even filed under `'general'`. This change is for data quality and the
+Business Facts review page, not to unlock AI behavior that didn't
+already exist. Deliberately left `'faq'` out of the website-sync
+extraction prompt's `validTypes` allowlist in `businessFacts.server.ts`
+- a Q&A pair should come from the owner writing one, not the model
+inferring a question from scraped page text, which would cut against
+this codebase's real-data-only principle for anything AI-touched.
+
+New step placed after Twilio, before Done - the alternative (right
+after business identity, before any sync attempt) would have asked for
+manual facts before the owner had a chance to see what sync already
+caught, working against the step's actual purpose of filling real
+gaps.
+
+`AddFactForm` was extracted from Business Facts' existing manual-entry
+block (same insert shape: `source: 'setup_form'`, `status: 'active'`,
+no conflict-checking - that only applies to the sync path) so the
+wizard reuses the exact same code path rather than a second
+implementation that could drift from it over time.
+
+Not exercised live, same sandbox limitation as the rest of this
+wizard: no way to complete a real Supabase Auth session here, so this
+was verified by code trace, `tsc`, and `eslint`, not a live
+click-through. Particularly worth confirming after deploy: that a
+returning visitor who already has active facts (from any source, not
+just this step) correctly resumes past the facts step per the updated
+`load()` logic.
+
+## Stripe: dropped the Lovable connector-gateway indirection
+
+A real Stripe key (`STRIPE_SECRET_KEY`, a restricted live key) and
+`VITE_STRIPE_PUBLISHABLE_KEY` were added directly to Vercel. Checking
+the existing billing code first turned up that it was never wired to
+those names at all - `stripe.server.ts` read `STRIPE_SANDBOX_API_KEY` /
+`STRIPE_LIVE_API_KEY` plus a `LOVABLE_API_KEY`, and routed every Stripe
+call through `https://connector-gateway.lovable.dev/stripe`, a proxy
+tied to a Lovable-platform connection, instead of `api.stripe.com`
+directly. That's dead architecture for an app that deploys to Vercel
+(see the "Deploy target is Vercel, not Cloudflare" note in
+`CLAUDE.md`) - the gateway was never going to be reachable in
+production the way this app actually ships. Setting the two new vars
+alone would have done nothing; checkout would still throw on the
+missing `LOVABLE_API_KEY`.
+
+Removed the gateway path entirely: `createStripeClient()` now does a
+plain `new Stripe(getEnv('STRIPE_SECRET_KEY'), ...)`, no custom
+`httpClient`, no sandbox/live env switch fed by two separate key vars.
+`verifyWebhook()` reads a single `STRIPE_WEBHOOK_SECRET` instead of a
+sandbox/live pair, and the webhook route dropped its `?env=` query
+param requirement. The client (`stripe.ts`) reads
+`VITE_STRIPE_PUBLISHABLE_KEY` instead of `VITE_PAYMENTS_CLIENT_TOKEN`.
+`env.server.ts` and `DEPLOY.md` were updated to match - the old var
+names don't exist anywhere in the code anymore.
+
+Also fixed a real bug found while tracing this: the webhook's
+`planFromPriceId()` matched Stripe price IDs against `lovable_external_id`
+metadata (a field only the old gateway ever set) or the raw Stripe
+price ID, neither of which would ever equal `solo_monthly` /
+`crew_monthly` / `agency_monthly`. Every real subscription would have
+silently synced as `starter`. Fixed by stamping `plan` directly into
+`subscription_data.metadata` (and top-level session metadata) at
+checkout-creation time in `payments.functions.ts`, derived from
+`PRICING_PLANS` rather than hardcoded twice, and reading it straight
+back in the webhook (`planFromMetadata()`) instead of reverse-matching
+a price ID.
+
+Scope not touched yet, on purpose: `scripts/setup-stripe-products.mjs`
+(creating the real Solo/Crew/Agency products) and registering the live
+webhook endpoint in the Stripe dashboard. Both come after this lands,
+confirmed with the account owner first since they create real,
+billable Stripe objects.

@@ -11,7 +11,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export type FactType = "service" | "pricing" | "hours" | "service_area" | "general";
+export type FactType = "service" | "pricing" | "hours" | "service_area" | "general" | "faq";
 export type FactSource = "setup_form" | "google_synced" | "website_synced" | "auto_learned";
 
 export interface GooglePlaceCandidate {
@@ -242,6 +242,10 @@ Rules:
   }
   if (!Array.isArray(parsed)) return [];
 
+  // 'faq' is deliberately not included here - the extraction prompt above
+  // never asks for it, and a Q&A pair should come from the owner actually
+  // writing one, not the model inferring a question from scraped page
+  // text.
   const validTypes = new Set<FactType>(["service", "pricing", "hours", "service_area", "general"]);
   return parsed
     .filter(

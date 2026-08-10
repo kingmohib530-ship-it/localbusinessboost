@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { DollarSign, Calendar, Star, Target, TrendingUp, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,22 @@ import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export const Route = createFileRoute("/_authenticated/app/")({
+  // The one place a returning user gets sent into the onboarding wizard -
+  // specifically here, not in the parent _authenticated guard, so this
+  // check runs once on landing at /app rather than on every dashboard
+  // navigation. A brand-new signup always lands here first (see auth.tsx's
+  // postAuthTarget), so this is genuinely "right after signup," not a
+  // blanket gate on the whole app.
+  beforeLoad: async ({ context }) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", context.user.id)
+      .maybeSingle();
+    if (data?.onboarding_completed === false) {
+      throw redirect({ to: "/onboarding" });
+    }
+  },
   component: TodayDashboard,
 });
 

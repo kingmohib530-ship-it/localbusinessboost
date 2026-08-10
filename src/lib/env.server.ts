@@ -190,47 +190,29 @@ export const ENV_VARS: EnvVarDef[] = [
     validate: isEmail,
   },
 
-  // billing — Stripe checkout/webhook code is live, but the real
-  // Solo/Crew/Agency Stripe products/prices haven't been created yet (see
-  // scripts/setup-stripe-products.mjs) — so billing is functionally on
-  // hold regardless of whether these are set. Marked optional so a
-  // deploy isn't blocked on Stripe config while that's pending.
+  // billing — Stripe checkout/webhook code calls api.stripe.com directly
+  // with a real secret key (no gateway indirection). Solo/Crew/Agency
+  // products/prices still need to be created — see
+  // scripts/setup-stripe-products.mjs — so billing stays functionally on
+  // hold until that's run, independent of whether these are set. Marked
+  // optional so a deploy isn't blocked on Stripe config while that's
+  // pending.
   {
-    name: "STRIPE_SANDBOX_API_KEY",
+    name: "STRIPE_SECRET_KEY",
     category: "billing",
     required: false,
-    description: "Stripe test-mode secret key, routed through the Lovable connector gateway. Billing on hold — see scripts/setup-stripe-products.mjs.",
-    validate: startsWith("sk_test_"),
+    description: "Stripe secret key (standard or restricted, test or live). Billing on hold — see scripts/setup-stripe-products.mjs.",
+    validate: startsWithAny(["sk_test_", "sk_live_", "rk_test_", "rk_live_"]),
   },
   {
-    name: "STRIPE_LIVE_API_KEY",
+    name: "STRIPE_WEBHOOK_SECRET",
     category: "billing",
     required: false,
-    description: "Stripe live-mode secret key. Billing on hold — see scripts/setup-stripe-products.mjs.",
-    validate: startsWith("sk_live_"),
-  },
-  {
-    name: "LOVABLE_API_KEY",
-    category: "billing",
-    required: false,
-    description: "Auth key for the Lovable connector gateway that this app's Stripe calls route through. Billing on hold.",
-  },
-  {
-    name: "PAYMENTS_SANDBOX_WEBHOOK_SECRET",
-    category: "billing",
-    required: false,
-    description: "Stripe test-mode webhook signing secret. Billing on hold.",
+    description: "Stripe webhook signing secret, from the endpoint registered in the Stripe dashboard. Billing on hold.",
     validate: startsWith("whsec_"),
   },
   {
-    name: "PAYMENTS_LIVE_WEBHOOK_SECRET",
-    category: "billing",
-    required: false,
-    description: "Stripe live-mode webhook signing secret. Billing on hold.",
-    validate: startsWith("whsec_"),
-  },
-  {
-    name: "VITE_PAYMENTS_CLIENT_TOKEN",
+    name: "VITE_STRIPE_PUBLISHABLE_KEY",
     category: "billing",
     required: false,
     description: "Stripe publishable key for the embedded checkout UI. Billing on hold.",

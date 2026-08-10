@@ -18,11 +18,12 @@ npx tsc --noEmit # typecheck (no separate "test" script exists in this repo — 
 
 There is no test framework configured (no `test` script in package.json, no test files in the repo). Correctness is checked via `npx tsc --noEmit` and manual verification.
 
-`npx tsc --noEmit` has a standing baseline of **18 pre-existing errors**, unrelated to any single feature:
-- `src/lib/onboarding.functions.ts` (used by `OnboardingWizard.tsx`) references profile columns that no longer exist. (`src/lib/leadblast.functions.ts` — dead code with zero importers, and a prompt that asked Claude to invent fake businesses — was deleted outright rather than fixed, since the real Lead Generator already replaced it with a Google Places-backed, real-data pipeline.)
-- Four errors in `app.receptionist.tsx` / `app.reputation.tsx` are nullable-DB-column-vs-non-nullable-state-type mismatches.
+`npx tsc --noEmit` has a standing baseline of **2 pre-existing errors**, unrelated to any single feature:
+- Two errors in `app.reputation.tsx` are nullable-DB-column-vs-non-nullable-state-type mismatches.
 
-Run `tsc` before and after any change to confirm you're still at 18 and haven't introduced something new — don't spend time "fixing" the baseline itself unless specifically asked.
+(`src/lib/onboarding.functions.ts` and `src/components/OnboardingWizard.tsx` — dead code with zero importers, referencing profile columns that never existed — were deleted outright rather than fixed, the same way `src/lib/leadblast.functions.ts` was earlier; that deletion dropped the baseline from 16 to 2, since most of the prior baseline was this same dead code's own type errors.)
+
+Run `tsc` before and after any change to confirm you're still at 2 and haven't introduced something new — don't spend time "fixing" the baseline itself unless specifically asked.
 
 ## Architecture
 

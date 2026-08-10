@@ -1,5 +1,5 @@
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { createCheckoutSession } from "@/utils/payments.functions";
 import { absoluteUrl } from "@/lib/url";
 
@@ -18,7 +18,6 @@ export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, retur
         quantity,
         customerEmail,
         returnUrl: returnUrl || absoluteUrl("/checkout/return?session_id={CHECKOUT_SESSION_ID}"),
-        environment: getStripeEnvironment(),
       },
     });
     if (!result) throw new Error("Failed to create checkout session");
