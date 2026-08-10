@@ -85,6 +85,11 @@ function ReceptionistPage() {
   const [previewError, setPreviewError] = useState("");
 
   const [followUps, setFollowUps] = useState<Record<string, FollowUp>>({});
+  // Conversation IDs whose follow-up status has actually been fetched at
+  // least once - lets the badge area tell "still checking" apart from
+  // "checked, nothing active" instead of just popping in silently, without
+  // a per-row loading flag flickering already-known badges during pagination.
+  const [followUpsChecked, setFollowUpsChecked] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadConversations(0);
@@ -186,6 +191,7 @@ function ReceptionistPage() {
       };
     }
     setFollowUps((prev) => ({ ...prev, ...map }));
+    setFollowUpsChecked((prev) => new Set([...prev, ...conversationIds]));
   }
 
   async function stopFollowUp(conversationId: string) {
@@ -471,7 +477,20 @@ function ReceptionistPage() {
                         {new Date(conversation.started_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </div>
                       {conversation.notes && <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 6 }}>{conversation.notes}</div>}
-                      {followUps[conversation.id] && (
+                      {!followUpsChecked.has(conversation.id) && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--muted-foreground)",
+                            marginTop: 8,
+                            paddingTop: 8,
+                            borderTop: "1px solid var(--border)",
+                          }}
+                        >
+                          Checking follow-up status...
+                        </div>
+                      )}
+                      {followUpsChecked.has(conversation.id) && followUps[conversation.id] && (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border)" }}>
                           <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
                             Follow-up: {[1, 5, 14].map((day) => {
