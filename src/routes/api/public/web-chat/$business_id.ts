@@ -66,6 +66,22 @@ async function notifyBusinessOriginMismatch(businessId: string, origin: string) 
   }
 }
 
+// profiles.website is typed in by a contractor, not validated as an
+// absolute URL (see WebsiteConnect.tsx) - a value like "example.com" with
+// no scheme would otherwise throw here. Retries with an https:// prefix
+// before giving up, same as a browser address bar would treat it.
+function hostnameOf(url: string): string | null {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    try {
+      return new URL(`https://${url}`).hostname.replace(/^www\./, "");
+    } catch {
+      return null;
+    }
+  }
+}
+
 // A real browser loading the widget script on the contractor's own site
 // always sends Origin on this cross-origin POST. A non-browser client
 // hitting the endpoint directly (curl, a scraper, another business's
@@ -80,13 +96,14 @@ function originMismatchesConfirmedWebsite(request: Request, website: string | nu
   if (!website) return false;
   const origin = request.headers.get("origin");
   if (!origin) return true;
-  try {
-    const originHost = new URL(origin).hostname.replace(/^www\./, "");
-    const websiteHost = new URL(website).hostname.replace(/^www\./, "");
-    return originHost !== websiteHost;
-  } catch {
-    return true;
-  }
+  const websiteHost = hostnameOf(website);
+  // Can't tell what the confirmed website's hostname actually is (a value
+  // that isn't a recoverable URL even with an https:// prefix) - nothing
+  // reliable to compare against, so don't flag every message as a
+  // mismatch over a data quality problem that isn't the visitor's fault.
+  if (!websiteHost) return false;
+  const originHost = hostnameOf(origin);
+  return originHost !== websiteHost;
 }
 
 // Bounds both the prompt size sent to Anthropic and the plain cost of a
