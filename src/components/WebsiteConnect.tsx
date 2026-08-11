@@ -76,7 +76,24 @@ export function WebsiteConnect({ onSaved, onSynced }: WebsiteConnectProps) {
       setSaving(false);
       return;
     }
-    const trimmed = website.trim();
+    let trimmed = website.trim();
+    // A contractor typing "yourbusiness.com" with no scheme is the common
+    // case, not an error - normalize it the way a browser address bar
+    // would rather than saving something the origin check and the
+    // website-sync fetch would both choke on later.
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      trimmed = `https://${trimmed}`;
+    }
+    if (trimmed) {
+      try {
+        new URL(trimmed);
+      } catch {
+        setSaveOk(false);
+        setSaveMsg("That doesn't look like a valid website address.");
+        setSaving(false);
+        return;
+      }
+    }
     const { error } = await supabase
       .from("profiles")
       .update({ website: trimmed || null })
@@ -84,7 +101,10 @@ export function WebsiteConnect({ onSaved, onSynced }: WebsiteConnectProps) {
     setSaveOk(!error);
     setSaveMsg(error ? "Could not save - please try again." : "Saved!");
     setSaving(false);
-    if (!error) onSaved?.(trimmed);
+    if (!error) {
+      setWebsite(trimmed);
+      onSaved?.(trimmed);
+    }
   }
 
   async function runSync() {
