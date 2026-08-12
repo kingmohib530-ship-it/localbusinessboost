@@ -88,9 +88,11 @@ function isEmail(value: string): string | null {
 // ── Definitions ─────────────────────────────────────────────────────────
 
 export const ENV_VARS: EnvVarDef[] = [
-  // core — Supabase (the only database this app talks to) + Twilio (the
+  // core — Supabase (the only database this app talks to) + Vonage (the
   // receptionist / missed-call text-back is the core, always-on product;
-  // every plan, including free Starter, depends on it).
+  // every plan, including free Starter, depends on it). Vonage is a single
+  // platform-owned account, not per-business credentials — every business's
+  // dedicated number is provisioned under these same credentials.
   {
     name: "SUPABASE_URL",
     category: "core",
@@ -113,25 +115,39 @@ export const ENV_VARS: EnvVarDef[] = [
     validate: minLength(20),
   },
   {
-    name: "TWILIO_ACCOUNT_SID",
+    name: "VONAGE_API_KEY",
     category: "core",
     required: true,
-    description: "Twilio account SID for the business receptionist number (missed-call text-back, SMS conversations).",
-    validate: startsWith("AC"),
+    description: "Lanavix's own Vonage account API key — account-level auth for the Numbers API (search/buy/update numbers provisioned per business) and Number Insight (lead phone verification).",
+    validate: minLength(6),
   },
   {
-    name: "TWILIO_AUTH_TOKEN",
+    name: "VONAGE_API_SECRET",
     category: "core",
     required: true,
-    description: "Twilio auth token — used to send SMS and to verify inbound webhook signatures.",
-    validate: minLength(32),
+    description: "Lanavix's own Vonage account API secret, paired with VONAGE_API_KEY.",
+    validate: minLength(6),
   },
   {
-    name: "TWILIO_PHONE_NUMBER",
+    name: "VONAGE_APPLICATION_ID",
     category: "core",
     required: true,
-    description: "The business-side Twilio number missed calls/SMS are sent from.",
-    validate: isE164Phone,
+    description: "The one Vonage Application (Voice + Messages) every provisioned number is linked to — created once in the Vonage console, shared across every business.",
+    validate: minLength(10),
+  },
+  {
+    name: "VONAGE_PRIVATE_KEY",
+    category: "core",
+    required: true,
+    description: "Private key for VONAGE_APPLICATION_ID, PEM format. Signs the JWTs used to call the Voice and Messages APIs. Cannot be re-downloaded from Vonage if lost.",
+    validate: startsWith("-----BEGIN PRIVATE KEY-----"),
+  },
+  {
+    name: "VONAGE_SIGNATURE_SECRET",
+    category: "core",
+    required: true,
+    description: "A separate dashboard setting (Settings → API settings), distinct from VONAGE_API_SECRET — verifies the JWT Vonage puts in the Authorization header of every inbound webhook.",
+    validate: minLength(6),
   },
   {
     name: "CRON_SECRET",
