@@ -40,7 +40,9 @@ import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as ApiVonageVoiceEventRouteImport } from './routes/api/vonage/voice-event'
 import { Route as ApiVonageVoiceAnswerRouteImport } from './routes/api/vonage/voice-answer'
+import { Route as ApiVonageSmsStatusRouteImport } from './routes/api/vonage/sms-status'
 import { Route as ApiVonageSmsInboundRouteImport } from './routes/api/vonage/sms-inbound'
 import { Route as ApiReviewRequestsIdRouteImport } from './routes/api/review-requests/$id'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
@@ -226,9 +228,19 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const ApiVonageVoiceEventRoute = ApiVonageVoiceEventRouteImport.update({
+  id: '/api/vonage/voice-event',
+  path: '/api/vonage/voice-event',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVonageVoiceAnswerRoute = ApiVonageVoiceAnswerRouteImport.update({
   id: '/api/vonage/voice-answer',
   path: '/api/vonage/voice-answer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVonageSmsStatusRoute = ApiVonageSmsStatusRouteImport.update({
+  id: '/api/vonage/sms-status',
+  path: '/api/vonage/sms-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiVonageSmsInboundRoute = ApiVonageSmsInboundRouteImport.update({
@@ -456,7 +468,9 @@ export interface FileRoutesByFullPath {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
   '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
+  '/api/vonage/sms-status': typeof ApiVonageSmsStatusRoute
   '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
+  '/api/vonage/voice-event': typeof ApiVonageVoiceEventRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -518,7 +532,9 @@ export interface FileRoutesByTo {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
   '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
+  '/api/vonage/sms-status': typeof ApiVonageSmsStatusRoute
   '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
+  '/api/vonage/voice-event': typeof ApiVonageVoiceEventRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -583,7 +599,9 @@ export interface FileRoutesById {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
   '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
+  '/api/vonage/sms-status': typeof ApiVonageSmsStatusRoute
   '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
+  '/api/vonage/voice-event': typeof ApiVonageVoiceEventRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -648,7 +666,9 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/api/review-requests/$id'
     | '/api/vonage/sms-inbound'
+    | '/api/vonage/sms-status'
     | '/api/vonage/voice-answer'
+    | '/api/vonage/voice-event'
     | '/app/'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -710,7 +730,9 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/api/review-requests/$id'
     | '/api/vonage/sms-inbound'
+    | '/api/vonage/sms-status'
     | '/api/vonage/voice-answer'
+    | '/api/vonage/voice-event'
     | '/app'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -774,7 +796,9 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/api/review-requests/$id'
     | '/api/vonage/sms-inbound'
+    | '/api/vonage/sms-status'
     | '/api/vonage/voice-answer'
+    | '/api/vonage/voice-event'
     | '/_authenticated/app/'
     | '/_authenticated/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -825,7 +849,9 @@ export interface RootRouteChildren {
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiReviewRequestsIdRoute: typeof ApiReviewRequestsIdRoute
   ApiVonageSmsInboundRoute: typeof ApiVonageSmsInboundRoute
+  ApiVonageSmsStatusRoute: typeof ApiVonageSmsStatusRoute
   ApiVonageVoiceAnswerRoute: typeof ApiVonageVoiceAnswerRoute
+  ApiVonageVoiceEventRoute: typeof ApiVonageVoiceEventRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicWebChatBusiness_idRoute: typeof ApiPublicWebChatBusiness_idRoute
 }
@@ -1049,11 +1075,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/vonage/voice-event': {
+      id: '/api/vonage/voice-event'
+      path: '/api/vonage/voice-event'
+      fullPath: '/api/vonage/voice-event'
+      preLoaderRoute: typeof ApiVonageVoiceEventRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/vonage/voice-answer': {
       id: '/api/vonage/voice-answer'
       path: '/api/vonage/voice-answer'
       fullPath: '/api/vonage/voice-answer'
       preLoaderRoute: typeof ApiVonageVoiceAnswerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/vonage/sms-status': {
+      id: '/api/vonage/sms-status'
+      path: '/api/vonage/sms-status'
+      fullPath: '/api/vonage/sms-status'
+      preLoaderRoute: typeof ApiVonageSmsStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/vonage/sms-inbound': {
@@ -1394,7 +1434,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiReviewRequestsIdRoute: ApiReviewRequestsIdRoute,
   ApiVonageSmsInboundRoute: ApiVonageSmsInboundRoute,
+  ApiVonageSmsStatusRoute: ApiVonageSmsStatusRoute,
   ApiVonageVoiceAnswerRoute: ApiVonageVoiceAnswerRoute,
+  ApiVonageVoiceEventRoute: ApiVonageVoiceEventRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicWebChatBusiness_idRoute: ApiPublicWebChatBusiness_idRoute,
 }
