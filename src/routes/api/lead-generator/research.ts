@@ -94,14 +94,13 @@ export const Route = createFileRoute("/api/lead-generator/research")({
             );
           }
 
-          // Real carrier-level phone verification (Vonage Number Insight) —
+          // Real carrier-level phone verification (Telnyx Number Lookup) —
           // a lead whose number fails verification is discarded below
-          // rather than stored. If Vonage isn't configured, verification is
+          // rather than stored. If Telnyx isn't configured, verification is
           // skipped (phone_verified stays null) rather than discarding
-          // everyone. Uses Lanavix's own platform-level Vonage account -
-          // the same credentials the Numbers API provisioning flow uses.
-          const vonageApiKey = process.env.VONAGE_API_KEY;
-          const vonageApiSecret = process.env.VONAGE_API_SECRET;
+          // everyone. Uses Lanavix's own platform-level Telnyx account -
+          // the same credential the Numbers API provisioning flow uses.
+          const telnyxApiKey = process.env.TELNYX_API_KEY;
 
           const enrichedWithVerification = await Promise.all(
             places.map(async (place) => {
@@ -110,8 +109,8 @@ export const Route = createFileRoute("/api/lead-generator/research")({
               const leadScore = computeLeadScore(painSignals, place.googleRating);
               const priority = priorityFromScore(leadScore);
               const phoneVerified =
-                vonageApiKey && vonageApiSecret && place.phone
-                  ? await verifyPhoneNumber(vonageApiKey, vonageApiSecret, place.phone)
+                telnyxApiKey && place.phone
+                  ? await verifyPhoneNumber(telnyxApiKey, place.phone)
                   : null;
 
               let summary = "";
@@ -161,7 +160,7 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           );
 
           // Discard leads whose phone failed real carrier verification —
-          // phone_verified === null (Vonage not configured) is kept, since
+          // phone_verified === null (Telnyx not configured) is kept, since
           // that means verification was skipped, not that it failed.
           const enriched = enrichedWithVerification.filter((lead) => lead.phone_verified !== false);
           if (enriched.length === 0) {
