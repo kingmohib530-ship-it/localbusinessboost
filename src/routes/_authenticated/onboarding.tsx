@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { GoogleListingConnect } from "@/components/GoogleListingConnect";
 import { WebsiteConnect } from "@/components/WebsiteConnect";
-import { TwilioConnect } from "@/components/TwilioConnect";
+import { PhoneForwardingSetup } from "@/components/PhoneForwardingSetup";
 import { AddFactForm } from "@/components/AddFactForm";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -36,13 +36,13 @@ const INDUSTRY_SUGGESTIONS = [
 
 type ConnectStatus = "pending" | "connected" | "skipped";
 
-type StepId = "identity" | "google" | "website" | "twilio" | "facts" | "done";
+type StepId = "identity" | "google" | "website" | "phone" | "facts" | "done";
 
 const STEPS: { id: StepId; label: string; Icon: typeof Building2 }[] = [
   { id: "identity", label: "Business", Icon: Building2 },
   { id: "google", label: "Google", Icon: MapPin },
   { id: "website", label: "Website", Icon: Globe },
-  { id: "twilio", label: "Phone", Icon: Phone },
+  { id: "phone", label: "Phone", Icon: Phone },
   { id: "facts", label: "Facts", Icon: Brain },
   { id: "done", label: "Done", Icon: Sparkles },
 ];
@@ -64,7 +64,7 @@ function OnboardingPage() {
 
   const [googleStatus, setGoogleStatus] = useState<ConnectStatus>("pending");
   const [websiteStatus, setWebsiteStatus] = useState<ConnectStatus>("pending");
-  const [twilioStatus, setTwilioStatus] = useState<ConnectStatus>("pending");
+  const [phoneStatus, setPhoneStatus] = useState<ConnectStatus>("pending");
   const [factsStatus, setFactsStatus] = useState<ConnectStatus>("pending");
 
   const [factCount, setFactCount] = useState(0);
@@ -86,7 +86,7 @@ function OnboardingPage() {
       supabase
         .from("profiles")
         .select(
-          "industry, business_name, city, business_hours, google_place_id, website, twilio_verified_at",
+          "industry, business_name, city, business_hours, google_place_id, website, vonage_number_provisioned_at",
         )
         .eq("id", user.id)
         .maybeSingle(),
@@ -108,7 +108,7 @@ function OnboardingPage() {
     setIdentityDone(hasIdentity);
     if (data?.google_place_id) setGoogleStatus("connected");
     if (data?.website) setWebsiteStatus("connected");
-    if (data?.twilio_verified_at) setTwilioStatus("connected");
+    if (data?.vonage_number_provisioned_at) setPhoneStatus("connected");
     // Any real fact already on file - synced or typed in - satisfies this
     // step's purpose, so it's marked done even if the wizard itself never
     // walked through it.
@@ -120,7 +120,7 @@ function OnboardingPage() {
     if (!hasIdentity) setStepIndex(0);
     else if (!data?.google_place_id) setStepIndex(1);
     else if (!data?.website) setStepIndex(2);
-    else if (!data?.twilio_verified_at) setStepIndex(3);
+    else if (!data?.vonage_number_provisioned_at) setStepIndex(3);
     else if (!hasFacts) setStepIndex(4);
     else setStepIndex(5);
 
@@ -251,13 +251,13 @@ function OnboardingPage() {
               (s.id === "identity" && identityDone) ||
               (s.id === "google" && googleStatus !== "pending") ||
               (s.id === "website" && websiteStatus !== "pending") ||
-              (s.id === "twilio" && twilioStatus !== "pending") ||
+              (s.id === "phone" && phoneStatus !== "pending") ||
               (s.id === "facts" && factsStatus !== "pending") ||
               (s.id === "done" && i === stepIndex && identityDone);
             const skipped =
               (s.id === "google" && googleStatus === "skipped") ||
               (s.id === "website" && websiteStatus === "skipped") ||
-              (s.id === "twilio" && twilioStatus === "skipped") ||
+              (s.id === "phone" && phoneStatus === "skipped") ||
               (s.id === "facts" && factsStatus === "skipped");
             const active = i === stepIndex;
             return (
@@ -450,22 +450,22 @@ function OnboardingPage() {
             </StepShell>
           )}
 
-          {currentStep.id === "twilio" && (
+          {currentStep.id === "phone" && (
             <StepShell
               Icon={Phone}
-              title="Connect your Twilio number"
-              subtitle="This is what actually lets Lanavix answer calls and texts as your business, not a demo. We verify it with Twilio before saving anything."
+              title="Confirm your business phone number"
+              subtitle="This is what actually lets Lanavix answer missed calls as your business, not a demo. We automatically set up a dedicated number behind it - no separate account, nothing to sign up for."
             >
-              <TwilioConnect onConnected={() => setTwilioStatus("connected")} />
+              <PhoneForwardingSetup onConnected={() => setPhoneStatus("connected")} />
               <StepFooter>
                 <SecondaryButton onClick={goBack}>
                   <ArrowLeft size={14} /> Back
                 </SecondaryButton>
                 <div style={{ display: "flex", gap: 8 }}>
-                  {twilioStatus === "pending" && (
+                  {phoneStatus === "pending" && (
                     <SecondaryButton
                       onClick={() => {
-                        setTwilioStatus("skipped");
+                        setPhoneStatus("skipped");
                         goNext();
                       }}
                     >
@@ -520,7 +520,7 @@ function OnboardingPage() {
             <DoneStep
               googleStatus={googleStatus}
               websiteStatus={websiteStatus}
-              twilioStatus={twilioStatus}
+              phoneStatus={phoneStatus}
               factsStatus={factsStatus}
               factCount={factCount}
               onFinish={finish}
@@ -538,7 +538,7 @@ function OnboardingPage() {
 function DoneStep({
   googleStatus,
   websiteStatus,
-  twilioStatus,
+  phoneStatus,
   factsStatus,
   factCount,
   onFinish,
@@ -548,7 +548,7 @@ function DoneStep({
 }: {
   googleStatus: ConnectStatus;
   websiteStatus: ConnectStatus;
-  twilioStatus: ConnectStatus;
+  phoneStatus: ConnectStatus;
   factsStatus: ConnectStatus;
   factCount: number;
   onFinish: () => void;
@@ -561,7 +561,7 @@ function DoneStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const connectedCount = [googleStatus, websiteStatus, twilioStatus, factsStatus].filter(
+  const connectedCount = [googleStatus, websiteStatus, phoneStatus, factsStatus].filter(
     (s) => s === "connected",
   ).length;
 
@@ -571,14 +571,14 @@ function DoneStep({
       title={connectedCount === 4 ? "You're set up" : `${connectedCount} of 4 connected`}
       subtitle={
         connectedCount === 4
-          ? "Google, your website, Twilio, and your own facts are all in. Your AI receptionist is working from real information now, not guesses."
+          ? "Google, your website, your phone, and your own facts are all in. Your AI receptionist is working from real information now, not guesses."
           : "The rest you can finish anytime from Business Facts or Receptionist Setup - nothing here is locked."
       }
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
         <StatusRow label="Google Business listing" status={googleStatus} />
         <StatusRow label="Website" status={websiteStatus} />
-        <StatusRow label="Twilio phone number" status={twilioStatus} />
+        <StatusRow label="Phone number" status={phoneStatus} />
         <StatusRow label="Business facts" status={factsStatus} />
       </div>
       <p style={{ fontSize: 12, color: "var(--hd-muted)", marginTop: 10 }}>
