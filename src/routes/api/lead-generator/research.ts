@@ -74,7 +74,10 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           const googleKey = process.env.GOOGLE_PLACES_API_KEY;
           const anthropicKey = process.env.ANTHROPIC_API_KEY;
           if (!googleKey) {
-            return Response.json({ error: "GOOGLE_PLACES_API_KEY not configured" }, { status: 500 });
+            return Response.json(
+              { error: "GOOGLE_PLACES_API_KEY not configured" },
+              { status: 500 },
+            );
           }
           if (!anthropicKey) {
             return Response.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
@@ -83,17 +86,22 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           const places = await searchGooglePlacesLeads(googleKey, industry, city, count);
           if (places.length === 0) {
             return Response.json(
-              { error: "No businesses with public phone numbers found in that area. Try a different city." },
+              {
+                error:
+                  "No businesses with public phone numbers found in that area. Try a different city.",
+              },
               { status: 404 },
             );
           }
 
-          // Real carrier-level phone verification (Twilio Lookup) — a lead
-          // whose number fails verification is discarded below rather than
-          // stored. If Twilio isn't configured, verification is skipped
-          // (phone_verified stays null) rather than discarding everyone.
-          const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-          const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+          // Real carrier-level phone verification (Vonage Number Insight) —
+          // a lead whose number fails verification is discarded below
+          // rather than stored. If Vonage isn't configured, verification is
+          // skipped (phone_verified stays null) rather than discarding
+          // everyone. Uses Lanavix's own platform-level Vonage account -
+          // the same credentials the Numbers API provisioning flow uses.
+          const vonageApiKey = process.env.VONAGE_API_KEY;
+          const vonageApiSecret = process.env.VONAGE_API_SECRET;
 
           const enrichedWithVerification = await Promise.all(
             places.map(async (place) => {
@@ -102,8 +110,8 @@ export const Route = createFileRoute("/api/lead-generator/research")({
               const leadScore = computeLeadScore(painSignals, place.googleRating);
               const priority = priorityFromScore(leadScore);
               const phoneVerified =
-                twilioSid && twilioToken && place.phone
-                  ? await verifyPhoneNumber(twilioSid, twilioToken, place.phone)
+                vonageApiKey && vonageApiSecret && place.phone
+                  ? await verifyPhoneNumber(vonageApiKey, vonageApiSecret, place.phone)
                   : null;
 
               let summary = "";
@@ -153,12 +161,15 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           );
 
           // Discard leads whose phone failed real carrier verification —
-          // phone_verified === null (Twilio not configured) is kept, since
+          // phone_verified === null (Vonage not configured) is kept, since
           // that means verification was skipped, not that it failed.
           const enriched = enrichedWithVerification.filter((lead) => lead.phone_verified !== false);
           if (enriched.length === 0) {
             return Response.json(
-              { error: "No businesses with a verifiable phone number found in that area. Try a different city." },
+              {
+                error:
+                  "No businesses with a verifiable phone number found in that area. Try a different city.",
+              },
               { status: 404 },
             );
           }
@@ -174,14 +185,16 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           }
 
           const sequenceRows = inserted.flatMap((lead) =>
-            buildSequenceTemplates(lead.personalized_opening_line || "", lead.business_name).map((step) => ({
-              lead_id: lead.id,
-              step_number: step.stepNumber,
-              channel: step.channel,
-              delay_hours: step.delayHours,
-              message_template: step.messageTemplate,
-              status: "pending" as const,
-            })),
+            buildSequenceTemplates(lead.personalized_opening_line || "", lead.business_name).map(
+              (step) => ({
+                lead_id: lead.id,
+                step_number: step.stepNumber,
+                channel: step.channel,
+                delay_hours: step.delayHours,
+                message_template: step.messageTemplate,
+                status: "pending" as const,
+              }),
+            ),
           );
 
           const { error: seqErr } = await supabaseAdmin.from("lead_sequences").insert(sequenceRows);
@@ -204,7 +217,10 @@ export const Route = createFileRoute("/api/lead-generator/research")({
                 status: lead.status ?? "new",
               });
               if (itemId) {
-                await supabaseAdmin.from("lead_profiles").update({ monday_item_id: itemId }).eq("id", lead.id);
+                await supabaseAdmin
+                  .from("lead_profiles")
+                  .update({ monday_item_id: itemId })
+                  .eq("id", lead.id);
               }
             }),
           );

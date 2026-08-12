@@ -28,23 +28,19 @@ export const Route = createFileRoute("/api/review-response")({
           if (!token) {
             return Response.json({ error: AUTH_ERROR }, { status: 401 });
           }
-          const { data: userData, error: userErr } =
-            await supabaseAdmin.auth.getUser(token);
+          const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
           const user = userData?.user;
           if (userErr || !user) {
             return Response.json({ error: AUTH_ERROR }, { status: 401 });
           }
 
           // ===== Rate limit: 20 requests per hour per user =====
-          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
-            "check_rate_limit",
-            {
-              p_user_id: user.id,
-              p_route: "review-response",
-              p_max_requests: 20,
-              p_window_seconds: 3600,
-            }
-          );
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_rate_limit", {
+            p_user_id: user.id,
+            p_route: "review-response",
+            p_max_requests: 20,
+            p_window_seconds: 3600,
+          });
           if (rlErr) {
             console.error("[review-response] rate limit check failed");
             // fail closed: if we can't verify the limit, don't allow the spend
@@ -66,21 +62,19 @@ export const Route = createFileRoute("/api/review-response")({
             return Response.json({ error: "Review text is required" }, { status: 400 });
           }
 
-          // The AI receptionist's Twilio number is the real number customers
+          // The AI receptionist's Vonage number is the real number customers
           // already text/call this business on, so it's the correct contact
           // to offer in a negative-review response - never a placeholder.
           const { data: profile } = await supabaseAdmin
             .from("profiles")
-            .select("twilio_phone_number")
+            .select("vonage_number")
             .eq("id", user.id)
             .maybeSingle();
-          const contactPhone = formatPhoneForDisplay(profile?.twilio_phone_number);
+          const contactPhone = formatPhoneForDisplay(profile?.vonage_number);
 
           // ===== Basic input hardening =====
           const safeReviewText = String(reviewText).slice(0, 4000);
-          const safeReviewerName = reviewerName
-            ? String(reviewerName).slice(0, 200)
-            : "";
+          const safeReviewerName = reviewerName ? String(reviewerName).slice(0, 200) : "";
           const rating = Number.isFinite(Number(starRating))
             ? Math.min(5, Math.max(1, Math.round(Number(starRating))))
             : 3;
@@ -133,7 +127,9 @@ Write only the response text, nothing else.`;
 
           if (!res.ok) {
             const errBody = await res.text().catch(() => "");
-            console.error(`[review-response] Anthropic error ${res.status}: ${errBody.slice(0, 500)}`);
+            console.error(
+              `[review-response] Anthropic error ${res.status}: ${errBody.slice(0, 500)}`,
+            );
             return Response.json({ error: "AI generation failed" }, { status: 502 });
           }
 
@@ -158,7 +154,7 @@ Write only the response text, nothing else.`;
             user.id,
             "review_response",
             `Wrote a response to a ${rating}-star review${safeReviewerName ? ` from ${safeReviewerName}` : ""}`,
-            { rating }
+            { rating },
           );
 
           return Response.json({ response: aiResponse });

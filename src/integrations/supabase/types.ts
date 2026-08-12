@@ -587,6 +587,7 @@ export type Database = {
           ein_number: string | null
           emergency_hours: boolean
           escalation_rules: string | null
+          forwarding_phone_number: string | null
           full_name: string | null
           google_place_id: string | null
           greeting_message: string | null
@@ -610,15 +611,13 @@ export type Database = {
           subscription_tier: string | null
           team_size: string | null
           timezone: string
-          twilio_account_sid: string | null
-          twilio_auth_token_secret_id: string | null
-          twilio_phone_number: string | null
-          twilio_verified_at: string | null
           updated_at: string | null
           verification_notes: string | null
           verification_reviewed_at: string | null
           verification_status: string
           verification_submitted_at: string | null
+          vonage_number: string | null
+          vonage_number_provisioned_at: string | null
           website: string | null
           years_in_business: number | null
         }
@@ -634,6 +633,7 @@ export type Database = {
           ein_number?: string | null
           emergency_hours?: boolean
           escalation_rules?: string | null
+          forwarding_phone_number?: string | null
           full_name?: string | null
           google_place_id?: string | null
           greeting_message?: string | null
@@ -657,15 +657,13 @@ export type Database = {
           subscription_tier?: string | null
           team_size?: string | null
           timezone?: string
-          twilio_account_sid?: string | null
-          twilio_auth_token_secret_id?: string | null
-          twilio_phone_number?: string | null
-          twilio_verified_at?: string | null
           updated_at?: string | null
           verification_notes?: string | null
           verification_reviewed_at?: string | null
           verification_status?: string
           verification_submitted_at?: string | null
+          vonage_number?: string | null
+          vonage_number_provisioned_at?: string | null
           website?: string | null
           years_in_business?: number | null
         }
@@ -681,6 +679,7 @@ export type Database = {
           ein_number?: string | null
           emergency_hours?: boolean
           escalation_rules?: string | null
+          forwarding_phone_number?: string | null
           full_name?: string | null
           google_place_id?: string | null
           greeting_message?: string | null
@@ -704,15 +703,13 @@ export type Database = {
           subscription_tier?: string | null
           team_size?: string | null
           timezone?: string
-          twilio_account_sid?: string | null
-          twilio_auth_token_secret_id?: string | null
-          twilio_phone_number?: string | null
-          twilio_verified_at?: string | null
           updated_at?: string | null
           verification_notes?: string | null
           verification_reviewed_at?: string | null
           verification_status?: string
           verification_submitted_at?: string | null
+          vonage_number?: string | null
+          vonage_number_provisioned_at?: string | null
           website?: string | null
           years_in_business?: number | null
         }
@@ -887,7 +884,7 @@ export type Database = {
         }
         Relationships: []
       }
-      unmatched_twilio_webhooks: {
+      unmatched_vonage_webhooks: {
         Row: {
           from_number: string
           id: string
@@ -972,31 +969,6 @@ export type Database = {
           p_window_seconds: number
         }
         Returns: boolean
-      }
-      get_business_twilio_by_number: {
-        Args: { p_phone_number: string }
-        Returns: {
-          account_sid: string
-          auth_token: string
-          user_id: string
-        }[]
-      }
-      get_business_twilio_credentials: {
-        Args: { p_user_id: string }
-        Returns: {
-          account_sid: string
-          auth_token: string
-          phone_number: string
-        }[]
-      }
-      set_business_twilio_credentials: {
-        Args: {
-          p_account_sid: string
-          p_auth_token: string
-          p_phone_number: string
-          p_user_id: string
-        }
-        Returns: undefined
       }
     }
     Enums: {

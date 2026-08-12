@@ -26,7 +26,7 @@ const SECTIONS = [
   },
   {
     title: "3. Third-Party Services",
-    body: `Payment processing (Stripe) and SMS delivery (Twilio) may set their own cookies or local storage when you interact directly with their embedded checkout or hosted pages. These are governed by Stripe's and Twilio's own privacy policies, not this one.`,
+    body: `Payment processing (Stripe) and SMS delivery (Vonage) may set their own cookies or local storage when you interact directly with their embedded checkout or hosted pages. These are governed by Stripe's and Vonage's own privacy policies, not this one.`,
   },
   {
     title: "4. Your Choices",

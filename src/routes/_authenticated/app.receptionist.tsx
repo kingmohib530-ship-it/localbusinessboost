@@ -4,7 +4,7 @@ import { Phone, PhoneOff, MessageSquare, Reply, CheckCircle2, Wand2 } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GlowPanel } from "@/components/GlowPanel";
-import { TwilioConnect } from "@/components/TwilioConnect";
+import { PhoneForwardingSetup } from "@/components/PhoneForwardingSetup";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
@@ -70,7 +70,7 @@ function ReceptionistPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [tab, setTab] = useState<"calls" | "setup">("calls");
-  const [twilioVerifiedAt, setTwilioVerifiedAt] = useState<string | null>(null);
+  const [vonageNumberProvisionedAt, setVonageNumberProvisionedAt] = useState<string | null>(null);
   const [appointmentsBooked, setAppointmentsBooked] = useState(0);
 
   const [businessHours, setBusinessHours] = useState("");
@@ -119,13 +119,13 @@ function ReceptionistPage() {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("business_hours, greeting_message, escalation_rules, twilio_verified_at")
+      .select("business_hours, greeting_message, escalation_rules, vonage_number_provisioned_at")
       .eq("id", user.id)
       .single();
     setBusinessHours(data?.business_hours || "");
     setGreetingMessage(data?.greeting_message || "");
     setEscalationRules(data?.escalation_rules || "");
-    setTwilioVerifiedAt(data?.twilio_verified_at || null);
+    setVonageNumberProvisionedAt(data?.vonage_number_provisioned_at || null);
   }
 
   async function saveConfig() {
@@ -281,7 +281,7 @@ function ReceptionistPage() {
   };
 
   const selectedConversation = conversations.find(c => c.id === selected);
-  const connected = !!twilioVerifiedAt;
+  const connected = !!vonageNumberProvisionedAt;
   const reducedMotion = usePrefersReducedMotion();
   const { step, delay } = useMountReveal();
 
@@ -302,7 +302,7 @@ function ReceptionistPage() {
               color: connected ? "var(--accent-2)" : "var(--muted-foreground)",
             }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: connected ? "var(--accent-2)" : "var(--muted-foreground)" }} />
-              {connected ? "Twilio connected" : "Twilio not connected"}
+              {connected ? "Phone connected" : "Phone not connected"}
             </span>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -360,10 +360,9 @@ function ReceptionistPage() {
               When someone calls your business and you don't pick up, Lanavix automatically sends them a personalized text within 60 seconds and handles the conversation — qualifying the lead, answering questions, and booking appointments — so you wake up to booked jobs.
             </p>
             {[
-              { step: "1", title: "Get a Twilio number", desc: "Sign up at twilio.com (free trial). Buy a local phone number for your area — costs ~$1/month." },
-              { step: "2", title: "Point your number at Lanavix", desc: "In your Twilio console, set your number's Voice and SMS webhook URLs to the ones shown below. If you'd rather keep your existing business number, forward calls from it to your new Twilio number too." },
-              { step: "3", title: "Connect your Twilio account", desc: "Paste your Account SID, Auth Token, and phone number below, and we'll confirm it works right away." },
-              { step: "4", title: "Configure your auto-reply", desc: "Set your business hours, greeting message, and escalation rules below. Lanavix handles the rest." },
+              { step: "1", title: "Enter your business phone number", desc: "Just your real number below - Lanavix automatically sets up a dedicated line behind it. No signup, no separate account, nothing to pay for on your own." },
+              { step: "2", title: "Forward missed calls to it", desc: "Set up conditional forwarding (no answer / busy only, not every call) from your real phone to the number Lanavix gives you. Your phone still rings first - this number only picks up what you miss." },
+              { step: "3", title: "Configure your auto-reply", desc: "Set your business hours, greeting message, and escalation rules below. Lanavix handles the rest." },
             ].map(s => (
               <div key={s.step} style={{ display: "flex", gap: 14, marginBottom: 18 }}>
                 <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--primary)", color: "var(--primary-foreground)", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.step}</div>
@@ -376,7 +375,7 @@ function ReceptionistPage() {
           </div>
 
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
-            <TwilioConnect onConnected={loadProfile} />
+            <PhoneForwardingSetup onConnected={loadProfile} />
           </div>
 
           <div className="glass-dark" style={{ borderRadius: 16, padding: 24, marginBottom: 16 }}>
@@ -450,7 +449,7 @@ function ReceptionistPage() {
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>No missed calls yet</h3>
               <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 380, margin: "0 auto 24px", lineHeight: 1.6 }}>
-                Once you connect Twilio, every missed call will appear here with the full conversation thread. Or click "Preview AI reply" above to see a sample response right now.
+                Once you set up your phone number, every missed call will appear here with the full conversation thread. Or click "Preview AI reply" above to see a sample response right now.
               </p>
               <button onClick={() => setTab("setup")} style={{ padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                 View setup instructions →

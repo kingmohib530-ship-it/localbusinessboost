@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadBusinessTwilioCredentials } from "@/lib/twilioCredentials.server";
+import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
 import type { Json } from "@/integrations/supabase/types";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -38,7 +38,10 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
             return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
           }
           if (!allowed) {
-            return Response.json({ error: "Too many requests. Please wait a bit and try again." }, { status: 429 });
+            return Response.json(
+              { error: "Too many requests. Please wait a bit and try again." },
+              { status: 429 },
+            );
           }
 
           const { lead_id, step_id } = await request.json();
@@ -70,7 +73,7 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
 
           // Atomic claim: flips pending -> sending only if it's still
           // pending, so two concurrent calls for the same step can't both
-          // pass the status check and both fire the Twilio send.
+          // pass the status check and both fire the Vonage send.
           const { data: step, error: claimErr } = await supabaseAdmin
             .from("lead_sequences")
             .update({ status: "sending" })
@@ -80,43 +83,40 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
             .select("*")
             .maybeSingle();
           if (claimErr) {
-            return Response.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+            return Response.json(
+              { error: "Something went wrong. Please try again." },
+              { status: 500 },
+            );
           }
           if (!step) {
-            return Response.json({ error: "Step is already in progress or completed" }, { status: 409 });
+            return Response.json(
+              { error: "Step is already in progress or completed" },
+              { status: 409 },
+            );
           }
 
           let sendError: string | null = null;
 
           if (step.channel === "sms") {
             if (!lead.phone) {
-              return Response.json({ error: "This lead has no phone number on file" }, { status: 400 });
-            }
-            const credentials = await loadBusinessTwilioCredentials(user.id);
-            if (!credentials) {
               return Response.json(
-                { error: "Connect your Twilio account in Receptionist Setup before sending outreach." },
+                { error: "This lead has no phone number on file" },
+                { status: 400 },
+              );
+            }
+            const vonageNumber = await loadBusinessVonageNumber(user.id);
+            if (!vonageNumber) {
+              return Response.json(
+                {
+                  error: "Set up your phone number in Receptionist Setup before sending outreach.",
+                },
                 { status: 400 },
               );
             }
 
-            const twilioRes = await fetch(
-              `https://api.twilio.com/2010-04-01/Accounts/${credentials.accountSid}/Messages.json`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                  Authorization: `Basic ${btoa(`${credentials.accountSid}:${credentials.authToken}`)}`,
-                },
-                body: new URLSearchParams({
-                  From: credentials.phoneNumber,
-                  To: lead.phone,
-                  Body: step.message_template,
-                }).toString(),
-              },
-            );
-            if (!twilioRes.ok) {
-              sendError = await twilioRes.text();
+            const sendResult = await sendVonageSms(vonageNumber, lead.phone, step.message_template);
+            if (!sendResult.ok) {
+              sendError = sendResult.error;
             }
           } else {
             // sendExternalEmail (email.server.ts) now exists for transactional
@@ -131,9 +131,15 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
           }
 
           if (sendError) {
-            await supabaseAdmin.from("lead_sequences").update({ status: "failed" }).eq("id", step_id);
+            await supabaseAdmin
+              .from("lead_sequences")
+              .update({ status: "failed" })
+              .eq("id", step_id);
             const status = step.channel === "sms" ? 502 : 501;
-            return Response.json({ error: step.channel === "sms" ? `Failed to send: ${sendError}` : sendError }, { status });
+            return Response.json(
+              { error: step.channel === "sms" ? `Failed to send: ${sendError}` : sendError },
+              { status },
+            );
           }
 
           const now = new Date().toISOString();

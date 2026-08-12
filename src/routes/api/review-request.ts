@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadBusinessTwilioCredentials } from "@/lib/twilioCredentials.server";
+import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
 import { checkReviewRequestQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -29,23 +29,19 @@ export const Route = createFileRoute("/api/review-request")({
             return Response.json({ error: AUTH_ERROR }, { status: 401 });
           }
           const token = authHeader.slice(7).trim();
-          const { data: userData, error: userErr } =
-            await supabaseAdmin.auth.getUser(token);
+          const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
           if (userErr || !userData?.user) {
             return Response.json({ error: AUTH_ERROR }, { status: 401 });
           }
           const user = userData.user;
 
           // ===== Rate limit: 20 requests per hour per user =====
-          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
-            "check_rate_limit",
-            {
-              p_user_id: user.id,
-              p_route: "review-request",
-              p_max_requests: 20,
-              p_window_seconds: 3600,
-            },
-          );
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_rate_limit", {
+            p_user_id: user.id,
+            p_route: "review-request",
+            p_max_requests: 20,
+            p_window_seconds: 3600,
+          });
           if (rlErr) {
             console.error("[api/review-request] rate limit check failed");
             return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
@@ -79,34 +75,25 @@ export const Route = createFileRoute("/api/review-request")({
           const jobStr = jobDescription ? ` on the ${jobDescription}` : "";
           const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏${businessFooter()}`;
 
-          // Send via the business's own connected Twilio account
-          const credentials = await loadBusinessTwilioCredentials(user.id);
-          if (!credentials) {
-            return Response.json({
-              error: "Connect your Twilio account in Receptionist Setup before sending review requests."
-            }, { status: 400 });
+          // Send via the business's own Lanavix-provisioned Vonage number
+          const vonageNumber = await loadBusinessVonageNumber(user.id);
+          if (!vonageNumber) {
+            return Response.json(
+              {
+                error:
+                  "Set up your phone number in Receptionist Setup before sending review requests.",
+              },
+              { status: 400 },
+            );
           }
 
-          const twilioRes = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${credentials.accountSid}/Messages.json`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${btoa(`${credentials.accountSid}:${credentials.authToken}`)}`,
-              },
-              body: new URLSearchParams({
-                From: credentials.phoneNumber,
-                To: customerPhone,
-                Body: message,
-              }).toString(),
-            },
-          );
-
-          if (!twilioRes.ok) {
-            const twilioErr = await twilioRes.text();
-            console.error("[review-request] Twilio send failed", twilioErr);
-            return Response.json({ error: "Failed to send the review request. Please try again." }, { status: 500 });
+          const sendResult = await sendVonageSms(vonageNumber, customerPhone, message);
+          if (!sendResult.ok) {
+            console.error("[review-request] Vonage send failed", sendResult.error);
+            return Response.json(
+              { error: "Failed to send the review request. Please try again." },
+              { status: 500 },
+            );
           }
 
           // Save to database, attributed to the actual authenticated caller
