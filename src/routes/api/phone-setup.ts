@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { provisionVonageNumber } from "@/lib/vonageProvisioning.server";
+import { provisionTelnyxNumber } from "@/lib/telnyxProvisioning.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
@@ -30,9 +30,8 @@ const RequestSchema = z.object({
 
 /**
  * Confirms a contractor's real business line and provisions their
- * dedicated Lanavix-owned Vonage number - no Twilio signup, no separate
- * billing, nothing for the contractor to authenticate. Replaces the old
- * "paste your Twilio Account SID/Auth Token" flow entirely.
+ * dedicated Lanavix-owned Telnyx number - no separate signup, no separate
+ * billing, nothing for the contractor to authenticate.
  */
 export const Route = createFileRoute("/api/phone-setup")({
   server: {
@@ -72,12 +71,12 @@ export const Route = createFileRoute("/api/phone-setup")({
             return Response.json({ error: firstIssue }, { status: 400 });
           }
 
-          const result = await provisionVonageNumber(user.id, parsed.data.forwardingPhoneNumber);
+          const result = await provisionTelnyxNumber(user.id, parsed.data.forwardingPhoneNumber);
           if (!result.ok) {
             return Response.json({ error: result.error }, { status: 502 });
           }
 
-          return Response.json({ success: true, vonageNumber: result.vonageNumber });
+          return Response.json({ success: true, telnyxNumber: result.telnyxNumber });
         } catch (err) {
           console.error("[phone-setup]", err);
           return Response.json({ error: "Internal server error" }, { status: 500 });

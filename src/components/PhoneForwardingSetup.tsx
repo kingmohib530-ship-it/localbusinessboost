@@ -16,7 +16,7 @@ function normalizePhoneNumber(raw: string): string {
 }
 
 export interface PhoneForwardingSetupProps {
-  /** Fires once a Vonage number is provisioned (first time) or re-confirmed. */
+  /** Fires once a Telnyx number is provisioned (first time) or re-confirmed. */
   onConnected?: () => void;
 }
 
@@ -53,7 +53,7 @@ const codeBoxStyle: React.CSSProperties = {
 
 /**
  * Confirms a contractor's real business phone number, then Lanavix
- * auto-provisions a dedicated Vonage number behind it - no Twilio signup,
+ * auto-provisions a dedicated Telnyx number behind it - no separate signup,
  * no separate billing, nothing to authenticate. Shared between
  * Receptionist Setup and the onboarding wizard - same /api/phone-setup
  * endpoint either way.
@@ -61,12 +61,12 @@ const codeBoxStyle: React.CSSProperties = {
 export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps) {
   const [loading, setLoading] = useState(true);
   const [forwardingPhoneNumber, setForwardingPhoneNumber] = useState("");
-  const [vonageNumber, setVonageNumber] = useState<string | null>(null);
+  const [telnyxNumber, setTelnyxNumber] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [ok, setOk] = useState(false);
 
-  const connected = !!vonageNumber;
+  const connected = !!telnyxNumber;
 
   useEffect(() => {
     load();
@@ -83,11 +83,11 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
     }
     const { data } = await supabase
       .from("profiles")
-      .select("forwarding_phone_number, vonage_number")
+      .select("forwarding_phone_number, telnyx_number")
       .eq("id", user.id)
       .maybeSingle();
     setForwardingPhoneNumber(data?.forwarding_phone_number || "");
-    setVonageNumber(data?.vonage_number || null);
+    setTelnyxNumber(data?.telnyx_number || null);
     setLoading(false);
   }
 
@@ -120,7 +120,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
           "Your number is ready. Set up call forwarding below to start receiving missed calls.",
         );
         setForwardingPhoneNumber(normalized);
-        setVonageNumber(data.vonageNumber);
+        setTelnyxNumber(data.telnyxNumber);
         onConnected?.();
       } else {
         setOk(false);
@@ -189,7 +189,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
       {connected && (
         <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--hd-border)" }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: "var(--hd-fg)", marginBottom: 8 }}>
-            Forward your missed calls to {vonageNumber}
+            Forward your missed calls to {telnyxNumber}
           </div>
           <p style={{ fontSize: 12, color: "var(--hd-muted)", marginBottom: 10, lineHeight: 1.5 }}>
             Important: set up <strong>conditional</strong> forwarding (no answer / busy only), not
@@ -198,9 +198,9 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
             miss.
           </p>
           <div style={codeBoxStyle}>
-            On most carriers (AT&T, T-Mobile): dial *61*{vonageNumber}#
+            On most carriers (AT&T, T-Mobile): dial *61*{telnyxNumber}#
           </div>
-          <div style={codeBoxStyle}>To also forward on busy: dial *67*{vonageNumber}#</div>
+          <div style={codeBoxStyle}>To also forward on busy: dial *67*{telnyxNumber}#</div>
           <p style={{ fontSize: 11, color: "var(--hd-muted)", lineHeight: 1.5 }}>
             Verizon and some other carriers use different codes or handle this in your phone's
             settings app instead - if the code above doesn't work, search "conditional call
