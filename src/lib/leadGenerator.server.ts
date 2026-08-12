@@ -217,24 +217,29 @@ export async function assessWebsite(url: string | null): Promise<WebsiteAssessme
 }
 
 /**
- * Verifies a phone number via Twilio's Lookup v2 API — a real carrier-level
- * check that the number is a valid, assignable line, not just well-formed.
- * Returns false (never throws) on any failure so a Twilio outage degrades
- * to "treat as unverified" rather than crashing the whole research run.
+ * Verifies a phone number via Vonage's Number Insight (Lookup) API — a
+ * real carrier-level check that the number is a valid, assignable line,
+ * not just well-formed. Returns false (never throws) on any failure so a
+ * Vonage outage degrades to "treat as unverified" rather than crashing
+ * the whole research run. Uses Lanavix's platform-level account
+ * credentials - the same VONAGE_API_KEY/VONAGE_API_SECRET the Numbers API
+ * provisioning flow uses, not a per-business credential.
  */
 export async function verifyPhoneNumber(
-  twilioSid: string,
-  twilioToken: string,
+  vonageApiKey: string,
+  vonageApiSecret: string,
   phone: string,
 ): Promise<boolean> {
   try {
-    const res = await fetch(
-      `https://lookups.twilio.com/v2/PhoneNumbers/${encodeURIComponent(phone)}`,
-      { headers: { Authorization: `Basic ${btoa(`${twilioSid}:${twilioToken}`)}` } },
-    );
+    const params = new URLSearchParams({
+      api_key: vonageApiKey,
+      api_secret: vonageApiSecret,
+      number: phone,
+    });
+    const res = await fetch(`https://api.nexmo.com/ni/standard/json?${params.toString()}`);
     if (!res.ok) return false;
     const data = await res.json();
-    return data.valid === true;
+    return data.status === 0 && data.valid_number === "valid";
   } catch {
     return false;
   }
