@@ -17,9 +17,13 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const VONAGE_NUMBERS_API_BASE = "https://rest.nexmo.com";
 const VONAGE_API_BASE = "https://api.nexmo.com";
 
+// Trimmed defensively - a trailing newline or stray space from pasting a
+// value into Vercel's env var UI produces a credential pair that looks
+// right but fails Basic Auth with a genuine 401 from Vonage, indistinguishable
+// from the key/secret actually being wrong without inspecting the raw bytes.
 function accountCredentials(): { apiKey: string; apiSecret: string } {
-  const apiKey = process.env.VONAGE_API_KEY;
-  const apiSecret = process.env.VONAGE_API_SECRET;
+  const apiKey = process.env.VONAGE_API_KEY?.trim();
+  const apiSecret = process.env.VONAGE_API_SECRET?.trim();
   if (!apiKey || !apiSecret) {
     throw new Error("VONAGE_API_KEY / VONAGE_API_SECRET not configured");
   }
