@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import { Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+// A person typing or pasting their own number almost never types raw
+// E.164 - "(571) 521-5254", "571-521-5254", or just "5715215254" are all
+// more natural than "+15715215254". Strip separators and fill in the +1
+// country code for a bare 10-digit US number rather than rejecting
+// anything that isn't already in the exact wire format.
+function normalizePhoneNumber(raw: string): string {
+  const trimmed = raw.trim();
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  if (trimmed.startsWith("+")) return `+${digitsOnly}`;
+  if (digitsOnly.length === 10) return `+1${digitsOnly}`;
+  return `+${digitsOnly}`;
+}
+
 export interface PhoneForwardingSetupProps {
   /** Fires once a Vonage number is provisioned (first time) or re-confirmed. */
   onConnected?: () => void;
@@ -90,6 +103,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
       setMsg("Please sign in again and retry.");
       return;
     }
+    const normalized = normalizePhoneNumber(forwardingPhoneNumber);
     try {
       const res = await fetch("/api/phone-setup", {
         method: "POST",
@@ -97,7 +111,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ forwardingPhoneNumber: forwardingPhoneNumber.trim() }),
+        body: JSON.stringify({ forwardingPhoneNumber: normalized }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -105,6 +119,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
         setMsg(
           "Your number is ready. Set up call forwarding below to start receiving missed calls.",
         );
+        setForwardingPhoneNumber(normalized);
         setVonageNumber(data.vonageNumber);
         onConnected?.();
       } else {

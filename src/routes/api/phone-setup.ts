@@ -6,14 +6,26 @@ import { provisionVonageNumber } from "@/lib/vonageProvisioning.server";
 const AUTH_ERROR = "Authentication required. Please sign in.";
 const RATE_LIMIT_ERROR = "Too many requests. Please wait a bit and try again.";
 
+// Mirrors the client-side normalization in PhoneForwardingSetup.tsx - never
+// trust the client alone. A bare 10-digit US number or one with dashes/
+// parens/dots is exactly what a person actually types, not an error.
+function normalizePhoneNumber(raw: string): string {
+  const trimmed = raw.trim();
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  if (trimmed.startsWith("+")) return `+${digitsOnly}`;
+  if (digitsOnly.length === 10) return `+1${digitsOnly}`;
+  return `+${digitsOnly}`;
+}
+
 const RequestSchema = z.object({
   forwardingPhoneNumber: z
     .string()
     .trim()
-    .regex(
-      /^\+[1-9]\d{7,14}$/,
-      "Enter your business phone number in E.164 format, e.g. +15555550100.",
-    ),
+    .min(1, "Enter your business phone number.")
+    .transform(normalizePhoneNumber)
+    .refine((v) => /^\+[1-9]\d{7,14}$/.test(v), {
+      message: "Enter your business phone number in E.164 format, e.g. +15555550100.",
+    }),
 });
 
 /**
