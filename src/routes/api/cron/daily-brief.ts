@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { generateDailyBriefCards, type CoachCard } from "@/lib/coach.server";
 import { sendExternalEmail } from "@/lib/email.server";
-import { loadBusinessTwilioCredentials } from "@/lib/twilioCredentials.server";
+import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
 import { checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 // Same constant-time comparison approach as every other cron in this
@@ -189,34 +189,20 @@ export const Route = createFileRoute("/api/cron/daily-brief")({
             if (channel === "sms" || channel === "both") {
               anyAttempted = true;
               if (profile.owner_phone) {
-                const [credentials, hourlyOk] = await Promise.all([
-                  loadBusinessTwilioCredentials(profile.id),
+                const [vonageNumber, hourlyOk] = await Promise.all([
+                  loadBusinessVonageNumber(profile.id),
                   checkSmsHourlyRateLimit(profile.id),
                 ]);
-                if (credentials && hourlyOk.allowed) {
+                if (vonageNumber && hourlyOk.allowed) {
                   try {
-                    const res = await fetch(
-                      `https://api.twilio.com/2010-04-01/Accounts/${credentials.accountSid}/Messages.json`,
-                      {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/x-www-form-urlencoded",
-                          Authorization: `Basic ${btoa(`${credentials.accountSid}:${credentials.authToken}`)}`,
-                        },
-                        body: new URLSearchParams({
-                          From: credentials.phoneNumber,
-                          To: profile.owner_phone,
-                          Body: buildSmsTeaser(cards),
-                        }).toString(),
-                      },
-                    );
-                    if (res.ok) {
+                    const sendResult = await sendVonageSms(vonageNumber, profile.owner_phone, buildSmsTeaser(cards));
+                    if (sendResult.ok) {
                       anySent = true;
                     } else {
                       console.error(
-                        "[cron/daily-brief] Twilio send failed",
+                        "[cron/daily-brief] Vonage send failed",
                         profile.id,
-                        await res.text(),
+                        sendResult.error,
                       );
                     }
                   } catch (err) {

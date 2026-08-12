@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { verifyTwilioRequestWithToken } from "@/lib/twilio.server";
-import { findBusinessByTwilioNumber } from "@/lib/twilioCredentials.server";
+import { verifyVonageWebhookSignature } from "@/lib/vonage.server";
+import { findBusinessByVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
 import { classifyLeadResponse, syncLeadStatusToMonday } from "@/lib/leadGenerator.server";
 import type { Json } from "@/integrations/supabase/types";
 
-const EMPTY_TWIML = new Response(
-  `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`,
-  { headers: { "Content-Type": "text/xml" } },
-);
+// No synchronous reply-in-response mechanism on Vonage's inbound message
+// webhook - a bare 2xx acknowledgment is all it wants (same as sms-inbound.ts).
+const ACK = () => new Response(null, { status: 200 });
 
 const STATUS_BY_CLASSIFICATION: Record<string, string> = {
   interested: "responded",
@@ -25,10 +24,10 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
       POST: async ({ request }) => {
         try {
           const rawBody = await request.text();
-          const params = new URLSearchParams(rawBody);
-          const from = params.get("From") || "";
-          const to = params.get("To") || "";
-          const body = params.get("Body") || "";
+          const params = JSON.parse(rawBody || "{}");
+          const from = params.msisdn || "";
+          const to = params.to || "";
+          const body = params.text || "";
 
           const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_anon_rate_limit", {
             p_ip_address: from,
@@ -37,28 +36,26 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
             p_window_seconds: 3600,
           });
           if (rlErr || !allowed) {
-            return EMPTY_TWIML;
+            return ACK();
           }
 
-          // Which business's outbound Twilio number received this reply,
-          // same lookup pattern as missed-call.ts. Scopes the lead search
-          // to that business's own leads rather than matching phone alone,
-          // and gives us that business's own Auth Token to verify the
-          // signature with (each business now brings their own Twilio
-          // account rather than sharing one platform-wide number).
-          const business = await findBusinessByTwilioNumber(to);
+          // Which business's outbound Vonage number received this reply.
+          // Scopes the lead search to that business's own leads rather
+          // than matching phone alone. No credentials to fetch here -
+          // one platform Vonage account sends/verifies for every business.
+          const business = await findBusinessByVonageNumber(to);
           if (!business) {
-            await supabaseAdmin.from("unmatched_twilio_webhooks").insert({
+            await supabaseAdmin.from("unmatched_vonage_webhooks").insert({
               route: "lead-generator-handle-response",
               to_number: to,
               from_number: from,
             });
-            return EMPTY_TWIML;
+            return ACK();
           }
 
-          const isValid = await verifyTwilioRequestWithToken(request, rawBody, business.authToken);
+          const isValid = await verifyVonageWebhookSignature(request, rawBody);
           if (!isValid) {
-            console.warn("[lead-generator/handle-response] invalid Twilio signature");
+            console.warn("[lead-generator/handle-response] invalid Vonage signature");
             return new Response("Forbidden", { status: 403 });
           }
 
@@ -71,7 +68,7 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
             .limit(1)
             .maybeSingle();
           if (!lead) {
-            return EMPTY_TWIML;
+            return ACK();
           }
 
           const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -112,20 +109,16 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
           // automatic follow-up SMS asking for availability directly.
           if (classification === "interested") {
             const followUp = "Great! What day/time works best this week for a quick call?";
-            await fetch(`https://api.twilio.com/2010-04-01/Accounts/${business.accountSid}/Messages.json`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${btoa(`${business.accountSid}:${business.authToken}`)}`,
-              },
-              body: new URLSearchParams({ From: to, To: from, Body: followUp }).toString(),
-            });
+            const sendResult = await sendVonageSms(to, from, followUp);
+            if (!sendResult.ok) {
+              console.error("[lead-generator/handle-response] follow-up send failed", sendResult.error);
+            }
           }
 
-          return EMPTY_TWIML;
+          return ACK();
         } catch (err) {
           console.error("[lead-generator/handle-response]", err);
-          return EMPTY_TWIML;
+          return ACK();
         }
       },
     },

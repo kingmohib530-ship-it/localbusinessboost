@@ -146,6 +146,20 @@ export async function provisionVonageNumber(
   return { ok: true, vonageNumber, alreadyProvisioned: false };
 }
 
+/** Loads a business's own assigned Vonage number, or null if not yet provisioned. */
+export async function loadBusinessVonageNumber(userId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("vonage_number")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) {
+    console.error("[vonageProvisioning] failed to load business's number", error);
+    return null;
+  }
+  return data?.vonage_number || null;
+}
+
 export interface BusinessVonageMatch {
   userId: string;
   vonageNumber: string;

@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadBusinessTwilioCredentials } from "@/lib/twilioCredentials.server";
+import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { SERVICE_TYPE_LABELS, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 // Same constant-time comparison approach as verifyWebhook in
-// stripe.server.ts and verifyTwilioRequestWithToken in twilio.server.ts - a
+// stripe.server.ts and verifyVonageWebhookSignature in vonage.server.ts - a
 // naive `===` on the cron secret short-circuits on the first mismatched
 // byte.
 function timingSafeEqualStr(a: string, b: string): boolean {
@@ -155,13 +155,13 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
               continue;
             }
 
-            const [credentials, quota, hourlyOk] = await Promise.all([
-              loadBusinessTwilioCredentials(followUp.user_id),
+            const [vonageNumber, quota, hourlyOk] = await Promise.all([
+              loadBusinessVonageNumber(followUp.user_id),
               checkSmsQuota(followUp.user_id),
               checkSmsHourlyRateLimit(followUp.user_id),
             ]);
 
-            if (!credentials || !quota.allowed || !hourlyOk.allowed) {
+            if (!vonageNumber || !quota.allowed || !hourlyOk.allowed) {
               await supabaseAdmin.from("quote_follow_up_steps").update({ status: "failed" }).eq("id", step.id);
               failed++;
               continue;
@@ -174,25 +174,10 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
               followUp.quoted_price,
             );
 
-            const twilioRes = await fetch(
-              `https://api.twilio.com/2010-04-01/Accounts/${credentials.accountSid}/Messages.json`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                  Authorization: `Basic ${btoa(`${credentials.accountSid}:${credentials.authToken}`)}`,
-                },
-                body: new URLSearchParams({
-                  From: credentials.phoneNumber,
-                  To: conversation.customer_identifier,
-                  Body: message,
-                }).toString(),
-              },
-            );
+            const sendResult = await sendVonageSms(vonageNumber, conversation.customer_identifier, message);
 
-            if (!twilioRes.ok) {
-              const twilioErr = await twilioRes.text();
-              console.error("[cron/quote-follow-ups] Twilio send failed", twilioErr);
+            if (!sendResult.ok) {
+              console.error("[cron/quote-follow-ups] Vonage send failed", sendResult.error);
               await supabaseAdmin.from("quote_follow_up_steps").update({ status: "failed" }).eq("id", step.id);
               failed++;
               continue;

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadBusinessTwilioCredentials } from "@/lib/twilioCredentials.server";
+import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
 import { checkReviewRequestQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -79,33 +79,17 @@ export const Route = createFileRoute("/api/review-request")({
           const jobStr = jobDescription ? ` on the ${jobDescription}` : "";
           const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏${businessFooter()}`;
 
-          // Send via the business's own connected Twilio account
-          const credentials = await loadBusinessTwilioCredentials(user.id);
-          if (!credentials) {
+          // Send via the business's own Lanavix-provisioned Vonage number
+          const vonageNumber = await loadBusinessVonageNumber(user.id);
+          if (!vonageNumber) {
             return Response.json({
-              error: "Connect your Twilio account in Receptionist Setup before sending review requests."
+              error: "Set up your phone number in Receptionist Setup before sending review requests."
             }, { status: 400 });
           }
 
-          const twilioRes = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${credentials.accountSid}/Messages.json`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${btoa(`${credentials.accountSid}:${credentials.authToken}`)}`,
-              },
-              body: new URLSearchParams({
-                From: credentials.phoneNumber,
-                To: customerPhone,
-                Body: message,
-              }).toString(),
-            },
-          );
-
-          if (!twilioRes.ok) {
-            const twilioErr = await twilioRes.text();
-            console.error("[review-request] Twilio send failed", twilioErr);
+          const sendResult = await sendVonageSms(vonageNumber, customerPhone, message);
+          if (!sendResult.ok) {
+            console.error("[review-request] Vonage send failed", sendResult.error);
             return Response.json({ error: "Failed to send the review request. Please try again." }, { status: 500 });
           }
 
