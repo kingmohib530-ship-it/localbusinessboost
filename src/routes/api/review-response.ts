@@ -66,15 +66,15 @@ export const Route = createFileRoute("/api/review-response")({
             return Response.json({ error: "Review text is required" }, { status: 400 });
           }
 
-          // The AI receptionist's Twilio number is the real number customers
+          // The AI receptionist's Vonage number is the real number customers
           // already text/call this business on, so it's the correct contact
           // to offer in a negative-review response - never a placeholder.
           const { data: profile } = await supabaseAdmin
             .from("profiles")
-            .select("twilio_phone_number")
+            .select("vonage_number")
             .eq("id", user.id)
             .maybeSingle();
-          const contactPhone = formatPhoneForDisplay(profile?.twilio_phone_number);
+          const contactPhone = formatPhoneForDisplay(profile?.vonage_number);
 
           // ===== Basic input hardening =====
           const safeReviewText = String(reviewText).slice(0, 4000);

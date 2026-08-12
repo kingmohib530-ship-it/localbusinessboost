@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
 
           // Atomic claim: flips pending -> sending only if it's still
           // pending, so two concurrent calls for the same step can't both
-          // pass the status check and both fire the Twilio send.
+          // pass the status check and both fire the Vonage send.
           const { data: step, error: claimErr } = await supabaseAdmin
             .from("lead_sequences")
             .update({ status: "sending" })
