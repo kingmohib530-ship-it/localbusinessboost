@@ -25,7 +25,14 @@
  *   reads secrets that must never end up in a client bundle.
  */
 
-export type EnvCategory = "core" | "auth" | "email" | "billing" | "ai" | "monitoring" | "integrations";
+export type EnvCategory =
+  | "core"
+  | "auth"
+  | "email"
+  | "billing"
+  | "ai"
+  | "monitoring"
+  | "integrations";
 
 export interface EnvVarDef {
   name: string;
@@ -78,7 +85,9 @@ function startsWithAny(prefixes: string[]) {
 }
 
 function isE164Phone(value: string): string | null {
-  return /^\+[1-9]\d{7,14}$/.test(value) ? null : "must be an E.164 phone number, e.g. +15555550100";
+  return /^\+[1-9]\d{7,14}$/.test(value)
+    ? null
+    : "must be an E.164 phone number, e.g. +15555550100";
 }
 
 function isEmail(value: string): string | null {
@@ -88,11 +97,13 @@ function isEmail(value: string): string | null {
 // ── Definitions ─────────────────────────────────────────────────────────
 
 export const ENV_VARS: EnvVarDef[] = [
-  // core — Supabase (the only database this app talks to) + Vonage (the
+  // core — Supabase (the only database this app talks to) + Telnyx (the
   // receptionist / missed-call text-back is the core, always-on product;
-  // every plan, including free Starter, depends on it). Vonage is a single
+  // every plan, including free Starter, depends on it). Telnyx is a single
   // platform-owned account, not per-business credentials — every business's
-  // dedicated number is provisioned under these same credentials.
+  // dedicated number is provisioned under these same credentials. One API
+  // key covers everything — no split key/secret pair, no separate signed
+  // JWT per request the way Vonage needed.
   {
     name: "SUPABASE_URL",
     category: "core",
@@ -104,56 +115,56 @@ export const ENV_VARS: EnvVarDef[] = [
     name: "SUPABASE_PUBLISHABLE_KEY",
     category: "core",
     required: false,
-    description: "Server-side Supabase publishable key. Only used as a fallback in client.ts and directly by auth-middleware.ts's requireSupabaseAuth (protected server functions e.g. checkout) — VITE_SUPABASE_PUBLISHABLE_KEY covers page rendering, so this isn't load-bearing for most routes.",
+    description:
+      "Server-side Supabase publishable key. Only used as a fallback in client.ts and directly by auth-middleware.ts's requireSupabaseAuth (protected server functions e.g. checkout) — VITE_SUPABASE_PUBLISHABLE_KEY covers page rendering, so this isn't load-bearing for most routes.",
     validate: minLength(20),
   },
   {
     name: "SUPABASE_SERVICE_ROLE_KEY",
     category: "core",
     required: true,
-    description: "Service-role key for the admin Supabase client. Bypasses RLS — server-only, never expose to the client.",
+    description:
+      "Service-role key for the admin Supabase client. Bypasses RLS — server-only, never expose to the client.",
     validate: minLength(20),
   },
   {
-    name: "VONAGE_API_KEY",
+    name: "TELNYX_API_KEY",
     category: "core",
     required: true,
-    description: "Lanavix's own Vonage account API key — account-level auth for the Numbers API (search/buy/update numbers provisioned per business) and Number Insight (lead phone verification).",
-    validate: minLength(6),
+    description:
+      "Lanavix's own Telnyx account API key — Bearer auth for every Telnyx API call (number search/order, Messages, Call Control, Number Lookup).",
+    validate: minLength(20),
   },
   {
-    name: "VONAGE_API_SECRET",
+    name: "TELNYX_PUBLIC_KEY",
     category: "core",
     required: true,
-    description: "Lanavix's own Vonage account API secret, paired with VONAGE_API_KEY.",
-    validate: minLength(6),
+    description:
+      "Telnyx's account public key (Mission Control Portal) — verifies the Ed25519 signature on every inbound webhook. A public key, not a secret, but still required for the app to trust inbound webhooks at all.",
+    validate: minLength(20),
   },
   {
-    name: "VONAGE_APPLICATION_ID",
+    name: "TELNYX_MESSAGING_PROFILE_ID",
     category: "core",
     required: true,
-    description: "The one Vonage Application (Voice + Messages) every provisioned number is linked to — created once in the Vonage console, shared across every business.",
+    description:
+      "The one Messaging Profile every provisioned number is assigned to — created once in the Telnyx console, shared across every business.",
     validate: minLength(10),
   },
   {
-    name: "VONAGE_PRIVATE_KEY",
+    name: "TELNYX_CONNECTION_ID",
     category: "core",
     required: true,
-    description: "Private key for VONAGE_APPLICATION_ID, PEM format. Signs the JWTs used to call the Voice and Messages APIs. Cannot be re-downloaded from Vonage if lost.",
-    validate: startsWith("-----BEGIN PRIVATE KEY-----"),
-  },
-  {
-    name: "VONAGE_SIGNATURE_SECRET",
-    category: "core",
-    required: true,
-    description: "A separate dashboard setting (Settings → API settings), distinct from VONAGE_API_SECRET — verifies the JWT Vonage puts in the Authorization header of every inbound webhook.",
-    validate: minLength(6),
+    description:
+      "The one Call Control Application (Connection) every provisioned number is assigned to for voice — created once in the Telnyx console, shared across every business.",
+    validate: minLength(10),
   },
   {
     name: "CRON_SECRET",
     category: "core",
     required: true,
-    description: "Shared secret Vercel Cron sends as a bearer token so /api/cron/* routes can tell a real scheduled run from an arbitrary request.",
+    description:
+      "Shared secret Vercel Cron sends as a bearer token so /api/cron/* routes can tell a real scheduled run from an arbitrary request.",
     validate: minLength(32),
   },
 
@@ -189,7 +200,8 @@ export const ENV_VARS: EnvVarDef[] = [
     name: "RESEND_FROM_EMAIL",
     category: "email",
     required: false,
-    description: "Sender address for outbound notification email. Defaults to a Lanavix address if unset.",
+    description:
+      "Sender address for outbound notification email. Defaults to a Lanavix address if unset.",
   },
   {
     name: "NOTIFICATION_EMAIL",
@@ -210,14 +222,16 @@ export const ENV_VARS: EnvVarDef[] = [
     name: "STRIPE_SECRET_KEY",
     category: "billing",
     required: false,
-    description: "Stripe secret key (standard or restricted, test or live). Billing on hold — see scripts/setup-stripe-products.mjs.",
+    description:
+      "Stripe secret key (standard or restricted, test or live). Billing on hold — see scripts/setup-stripe-products.mjs.",
     validate: startsWithAny(["sk_test_", "sk_live_", "rk_test_", "rk_live_"]),
   },
   {
     name: "STRIPE_WEBHOOK_SECRET",
     category: "billing",
     required: false,
-    description: "Stripe webhook signing secret, from the endpoint registered in the Stripe dashboard. Billing on hold.",
+    description:
+      "Stripe webhook signing secret, from the endpoint registered in the Stripe dashboard. Billing on hold.",
     validate: startsWith("whsec_"),
   },
   {
@@ -233,14 +247,16 @@ export const ENV_VARS: EnvVarDef[] = [
     name: "ANTHROPIC_API_KEY",
     category: "ai",
     required: true,
-    description: "Claude API key — powers the receptionist's AI replies, review responses, Lead Generator copy, and the orchestrator.",
+    description:
+      "Claude API key — powers the receptionist's AI replies, review responses, Lead Generator copy, and the orchestrator.",
     validate: startsWith("sk-ant-"),
   },
   {
     name: "GOOGLE_PLACES_API_KEY",
     category: "ai",
     required: true,
-    description: "Google Places API key — the only real-business-data source for Lead Blast and the Lead Generator.",
+    description:
+      "Google Places API key — the only real-business-data source for Lead Blast and the Lead Generator.",
   },
 
   // monitoring — no observability/error-tracking integration (Sentry,
@@ -278,7 +294,10 @@ export function validateEnv(): void {
   for (const def of ENV_VARS) {
     const value = process.env[def.name];
     if (!value) {
-      if (def.required) problems.push(`Missing required env var: ${def.name} [${def.category}] — ${def.description}`);
+      if (def.required)
+        problems.push(
+          `Missing required env var: ${def.name} [${def.category}] — ${def.description}`,
+        );
       continue;
     }
     const error = def.validate?.(value);

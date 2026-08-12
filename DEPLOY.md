@@ -6,7 +6,7 @@ Set these in your Vercel project's **Settings → Environment Variables** (Produ
 environment). `src/lib/env.server.ts` validates all of these on server boot
 (`src/server.ts` calls `validateEnv()`) — in production, a missing/invalid
 **required** var throws immediately with a message like
-`Missing required env var: VONAGE_API_KEY [core] — ...`, so the app will
+`Missing required env var: TELNYX_API_KEY [core] — ...`, so the app will
 refuse to start rather than fail silently later.
 
 ### Required — the app will not boot in production without these
@@ -18,11 +18,10 @@ refuse to start rather than fail silently later.
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role key for the admin Supabase client. Bypasses RLS — never expose to the client. |
 | `VITE_SUPABASE_URL` | Client-side Supabase project URL. The app can't load at all without this. |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Client-side Supabase publishable (anon) key. |
-| `VONAGE_API_KEY` | Lanavix's own Vonage account API key — provisions and manages every business's dedicated number. |
-| `VONAGE_API_SECRET` | Paired with `VONAGE_API_KEY`. |
-| `VONAGE_APPLICATION_ID` | The one Vonage Application every provisioned number is linked to. |
-| `VONAGE_PRIVATE_KEY` | Private key for `VONAGE_APPLICATION_ID` — signs the JWTs used to call the Voice/Messages APIs. |
-| `VONAGE_SIGNATURE_SECRET` | Verifies inbound Vonage webhook signatures. Distinct from `VONAGE_API_SECRET`. |
+| `TELNYX_API_KEY` | Lanavix's own Telnyx account API key — provisions and manages every business's dedicated number. |
+| `TELNYX_PUBLIC_KEY` | Telnyx's account public key — verifies inbound webhook signatures (Ed25519). |
+| `TELNYX_MESSAGING_PROFILE_ID` | The one Messaging Profile every provisioned number is assigned to. |
+| `TELNYX_CONNECTION_ID` | The one Call Control Application every provisioned number is assigned to for voice. |
 | `ANTHROPIC_API_KEY` | Claude API key — powers the receptionist's AI replies, review responses, Lead Generator copy, and the audit tool. |
 | `GOOGLE_PLACES_API_KEY` | Google Places API key — the only real-business-data source for Lead Blast and the Lead Generator. |
 
@@ -119,12 +118,13 @@ Git** to confirm which branch is set to auto-deploy.
      `customer.subscription.deleted`.
    - Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
 
-2. **Vonage Application webhooks** — one-time, in the Vonage console, on the
-   single Application every provisioned number is linked to (`VONAGE_APPLICATION_ID`):
-   - Answer URL: `https://<your-domain>/api/vonage/voice-answer`
-   - Inbound message webhook: `https://<your-domain>/api/vonage/sms-inbound`
-   - Every number provisioned afterward via the Numbers API is linked to
-     this same Application, so this is a one-time setup, not per-business.
+2. **Telnyx webhooks** — one-time, in the Telnyx console:
+   - Call Control Application (`TELNYX_CONNECTION_ID`) webhook URL:
+     `https://<your-domain>/api/telnyx/voice`
+   - Messaging Profile (`TELNYX_MESSAGING_PROFILE_ID`) webhook URL:
+     `https://<your-domain>/api/telnyx/sms-inbound`
+   - Every number provisioned afterward via the Numbers API is assigned to
+     these same two objects, so this is a one-time setup, not per-business.
 
 3. **Custom domain** — attach your production domain in Vercel project
    settings, and update `SITE_URL` in `src/lib/seo.ts` (currently
