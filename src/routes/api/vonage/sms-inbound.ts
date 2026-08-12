@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { verifyTwilioRequestWithToken } from "@/lib/twilio.server";
-import { findBusinessByTwilioNumber } from "@/lib/twilioCredentials.server";
+import { verifyVonageWebhookSignature } from "@/lib/vonage.server";
+import { findBusinessByVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 import { loadBusinessContext, buildReceptionistSystemPrompt, generateReceptionistReply, detectBooking, deriveUrgency } from "@/lib/aiReceptionist.server";
@@ -11,63 +11,56 @@ function businessFooter(): string {
   return "\n\nManaged by Lanavix";
 }
 
-// Only worth showing on the first reply in a conversation - repeating it on
-// every message in an ongoing back-and-forth just adds noise.
-const FALLBACK_TWIML = (message: string, includeFooter = true) =>
-  new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}${includeFooter ? businessFooter() : ""}</Message></Response>`,
-    { headers: { "Content-Type": "text/xml" } },
-  );
+// Unlike Twilio/Plivo, Vonage's inbound message webhook has no
+// synchronous XML/JSON reply-in-response mechanism - it just wants a bare
+// 2xx acknowledgment (anything else triggers Vonage's 24h retry policy),
+// and any reply is a separate outbound Messages API call. That converges
+// this route's shape with voice-answer.ts's: build the message, send it,
+// then acknowledge, rather than returning the reply in the response body.
+const ACK = () => new Response(null, { status: 200 });
 
-export const Route = createFileRoute("/api/twilio/sms-reply")({
+export const Route = createFileRoute("/api/vonage/sms-inbound")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
           const rawBody = await request.text();
-          const params = new URLSearchParams(rawBody);
-          const from = params.get("From") || "";
-          const to = params.get("To") || "";
-          const messageBody = params.get("Body") || "";
+          const params = JSON.parse(rawBody || "{}");
+          const from = params.msisdn || "";
+          const to = params.to || "";
+          const messageBody = params.text || "";
 
           // Cap by caller phone before any lookup or write, since each
           // inbound message triggers a billed Anthropic call (the
           // cost-abuse backstop), and this also bounds the business lookup
-          // below regardless of whether "To" matches a real business.
-          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
-            "check_anon_rate_limit",
-            {
-              p_ip_address: from,
-              p_route: "twilio-sms-reply",
-              p_max_requests: 20,
-              p_window_seconds: 3600,
-            },
-          );
+          // below regardless of whether "to" matches a real business.
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_anon_rate_limit", {
+            p_ip_address: from,
+            p_route: "vonage-sms-inbound",
+            p_max_requests: 20,
+            p_window_seconds: 3600,
+          });
           if (rlErr) {
-            console.error("[sms-reply] rate limit check failed");
-            return FALLBACK_TWIML("Thanks! We'll be in touch shortly.");
+            console.error("[sms-inbound] rate limit check failed");
+            return ACK();
           }
           if (!allowed) {
-            return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.");
+            return ACK();
           }
 
-          // Which business owns the number this reply landed on. This also
-          // gives us that business's own Auth Token to verify the
-          // signature with, since each business now brings their own
-          // Twilio account rather than sharing one platform-wide number.
-          const business = await findBusinessByTwilioNumber(to);
+          const business = await findBusinessByVonageNumber(to);
           if (!business) {
-            await supabaseAdmin.from("unmatched_twilio_webhooks").insert({
-              route: "sms-reply",
+            await supabaseAdmin.from("unmatched_vonage_webhooks").insert({
+              route: "sms-inbound",
               to_number: to,
               from_number: from,
             });
-            return FALLBACK_TWIML("Thanks! We'll be in touch shortly.");
+            return ACK();
           }
 
-          const isValid = await verifyTwilioRequestWithToken(request, rawBody, business.authToken);
+          const isValid = await verifyVonageWebhookSignature(request, rawBody);
           if (!isValid) {
-            console.warn("[sms-reply] invalid Twilio signature");
+            console.warn("[sms-inbound] invalid Vonage signature");
             return new Response("Forbidden", { status: 403 });
           }
 
@@ -87,7 +80,7 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             .single();
 
           if (!conversation) {
-            return FALLBACK_TWIML("Thanks for reaching out! We'll be in touch shortly.");
+            return ACK();
           }
 
           const now = new Date().toISOString();
@@ -114,8 +107,6 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             .eq("conversation_id", conversation.id)
             .order("sent_at", { ascending: true });
 
-          const isFirstReply = !(history || []).some((m) => m.direction === "outbound");
-
           // Starter plan's SMS/month cap, plus a flat per-hour abuse ceiling
           // that applies on every plan — skip the AI reply (and its
           // billable Anthropic call) once either limit is hit.
@@ -125,7 +116,8 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
               checkSmsHourlyRateLimit(conversation.user_id),
             ]);
             if (!quota.allowed || !hourlyOk.allowed) {
-              return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.", isFirstReply);
+              await sendVonageSms(to, from, `Thanks for your message! We'll get back to you shortly.${businessFooter()}`);
+              return ACK();
             }
           }
 
@@ -201,7 +193,7 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
                   .single();
 
                 if (apptErr) {
-                  console.error("[sms-reply] failed to create appointment", apptErr);
+                  console.error("[sms-inbound] failed to create appointment", apptErr);
                 } else if (appointment && savedReply) {
                   await supabaseAdmin
                     .from("conversation_messages")
@@ -253,17 +245,19 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
                 }
               }
             } catch (err) {
-              console.error("[sms-reply] booking/quote detection error", err);
+              console.error("[sms-inbound] booking/quote detection error", err);
             }
           }
 
-          return FALLBACK_TWIML(
-            aiReply.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
-            isFirstReply,
-          );
+          const sendResult = await sendVonageSms(to, from, `${aiReply}${businessFooter()}`);
+          if (!sendResult.ok) {
+            console.error("[sms-inbound] failed to send AI reply", sendResult.error);
+          }
+
+          return ACK();
         } catch (err) {
-          console.error("[sms-reply]", err);
-          return FALLBACK_TWIML("Thanks! We'll be in touch shortly.");
+          console.error("[sms-inbound]", err);
+          return ACK();
         }
       },
     },
