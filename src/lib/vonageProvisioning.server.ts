@@ -7,6 +7,14 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+// Two different hosts, not interchangeable - confirmed against Vonage's own
+// curl examples after this got misrouted in an earlier pass. The Numbers
+// API (search/buy/update) lives on rest.nexmo.com; api.nexmo.com serves the
+// Messages API (sendVonageSms below) and Number Insight
+// (leadGenerator.server.ts's verifyPhoneNumber) - hitting the Numbers API
+// on the wrong host 404s, which is what "Could not find an available
+// number right now" was actually masking.
+const VONAGE_NUMBERS_API_BASE = "https://rest.nexmo.com";
 const VONAGE_API_BASE = "https://api.nexmo.com";
 
 function accountCredentials(): { apiKey: string; apiSecret: string } {
@@ -16,6 +24,10 @@ function accountCredentials(): { apiKey: string; apiSecret: string } {
     throw new Error("VONAGE_API_KEY / VONAGE_API_SECRET not configured");
   }
   return { apiKey, apiSecret };
+}
+
+function basicAuthHeader(apiKey: string, apiSecret: string): string {
+  return `Basic ${btoa(`${apiKey}:${apiSecret}`)}`;
 }
 
 // Vonage's Numbers API takes/returns msisdn without a leading "+"; the
@@ -77,13 +89,14 @@ export async function provisionVonageNumber(
   }
 
   const searchParams = new URLSearchParams({
-    api_key: apiKey,
-    api_secret: apiSecret,
     country: "US",
     features: "SMS,VOICE",
     size: "1",
   });
-  const searchRes = await fetch(`${VONAGE_API_BASE}/number/search?${searchParams.toString()}`);
+  const searchRes = await fetch(
+    `${VONAGE_NUMBERS_API_BASE}/number/search?${searchParams.toString()}`,
+    { headers: { Authorization: basicAuthHeader(apiKey, apiSecret) } },
+  );
   if (!searchRes.ok) {
     console.error(
       "[vonageProvisioning] number search failed",
@@ -101,15 +114,13 @@ export async function provisionVonageNumber(
     return { ok: false, error: "No numbers available right now. Please try again shortly." };
   }
 
-  const buyRes = await fetch(`${VONAGE_API_BASE}/number/buy`, {
+  const buyRes = await fetch(`${VONAGE_NUMBERS_API_BASE}/number/buy`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      api_key: apiKey,
-      api_secret: apiSecret,
-      country: "US",
-      msisdn: candidate,
-    }).toString(),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: basicAuthHeader(apiKey, apiSecret),
+    },
+    body: new URLSearchParams({ country: "US", msisdn: candidate }).toString(),
   });
   if (!buyRes.ok) {
     console.error(
@@ -123,12 +134,13 @@ export async function provisionVonageNumber(
     };
   }
 
-  const updateRes = await fetch(`${VONAGE_API_BASE}/number/update`, {
+  const updateRes = await fetch(`${VONAGE_NUMBERS_API_BASE}/number/update`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: basicAuthHeader(apiKey, apiSecret),
+    },
     body: new URLSearchParams({
-      api_key: apiKey,
-      api_secret: apiSecret,
       country: "US",
       msisdn: candidate,
       app_id: applicationId,
