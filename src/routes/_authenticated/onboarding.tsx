@@ -86,7 +86,7 @@ function OnboardingPage() {
       supabase
         .from("profiles")
         .select(
-          "industry, business_name, city, business_hours, google_place_id, website, vonage_number_provisioned_at",
+          "industry, business_name, city, business_hours, google_place_id, website, telnyx_number_provisioned_at",
         )
         .eq("id", user.id)
         .maybeSingle(),
@@ -108,7 +108,7 @@ function OnboardingPage() {
     setIdentityDone(hasIdentity);
     if (data?.google_place_id) setGoogleStatus("connected");
     if (data?.website) setWebsiteStatus("connected");
-    if (data?.vonage_number_provisioned_at) setPhoneStatus("connected");
+    if (data?.telnyx_number_provisioned_at) setPhoneStatus("connected");
     // Any real fact already on file - synced or typed in - satisfies this
     // step's purpose, so it's marked done even if the wizard itself never
     // walked through it.
@@ -120,7 +120,7 @@ function OnboardingPage() {
     if (!hasIdentity) setStepIndex(0);
     else if (!data?.google_place_id) setStepIndex(1);
     else if (!data?.website) setStepIndex(2);
-    else if (!data?.vonage_number_provisioned_at) setStepIndex(3);
+    else if (!data?.telnyx_number_provisioned_at) setStepIndex(3);
     else if (!hasFacts) setStepIndex(4);
     else setStepIndex(5);
 
