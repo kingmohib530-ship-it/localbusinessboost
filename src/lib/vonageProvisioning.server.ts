@@ -85,8 +85,15 @@ export async function provisionVonageNumber(
   });
   const searchRes = await fetch(`${VONAGE_API_BASE}/number/search?${searchParams.toString()}`);
   if (!searchRes.ok) {
-    console.error("[vonageProvisioning] number search failed", searchRes.status, await searchRes.text().catch(() => ""));
-    return { ok: false, error: "Could not find an available number right now. Please try again shortly." };
+    console.error(
+      "[vonageProvisioning] number search failed",
+      searchRes.status,
+      await searchRes.text().catch(() => ""),
+    );
+    return {
+      ok: false,
+      error: "Could not find an available number right now. Please try again shortly.",
+    };
   }
   const searchData = await searchRes.json();
   const candidate = searchData?.numbers?.[0]?.msisdn;
@@ -105,8 +112,15 @@ export async function provisionVonageNumber(
     }).toString(),
   });
   if (!buyRes.ok) {
-    console.error("[vonageProvisioning] number buy failed", buyRes.status, await buyRes.text().catch(() => ""));
-    return { ok: false, error: "Could not provision a number right now. Please try again shortly." };
+    console.error(
+      "[vonageProvisioning] number buy failed",
+      buyRes.status,
+      await buyRes.text().catch(() => ""),
+    );
+    return {
+      ok: false,
+      error: "Could not provision a number right now. Please try again shortly.",
+    };
   }
 
   const updateRes = await fetch(`${VONAGE_API_BASE}/number/update`, {
@@ -121,8 +135,15 @@ export async function provisionVonageNumber(
     }).toString(),
   });
   if (!updateRes.ok) {
-    console.error("[vonageProvisioning] linking number to application failed", updateRes.status, await updateRes.text().catch(() => ""));
-    return { ok: false, error: "Could not finish setting up your number. Please try again shortly." };
+    console.error(
+      "[vonageProvisioning] linking number to application failed",
+      updateRes.status,
+      await updateRes.text().catch(() => ""),
+    );
+    return {
+      ok: false,
+      error: "Could not finish setting up your number. Please try again shortly.",
+    };
   }
 
   const vonageNumber = toE164(candidate);
@@ -140,7 +161,11 @@ export async function provisionVonageNumber(
     // of this same idempotent function will pick up via a future manual
     // reconciliation, not silently re-buy a second number.
     console.error("[vonageProvisioning] provisioned a number but failed to save it", saveErr);
-    return { ok: false, error: "Your number was provisioned but we couldn't save it. Please try again or contact support." };
+    return {
+      ok: false,
+      error:
+        "Your number was provisioned but we couldn't save it. Please try again or contact support.",
+    };
   }
 
   return { ok: true, vonageNumber, alreadyProvisioned: false };

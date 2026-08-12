@@ -10,7 +10,10 @@ const RequestSchema = z.object({
   forwardingPhoneNumber: z
     .string()
     .trim()
-    .regex(/^\+[1-9]\d{7,14}$/, "Enter your business phone number in E.164 format, e.g. +15555550100."),
+    .regex(
+      /^\+[1-9]\d{7,14}$/,
+      "Enter your business phone number in E.164 format, e.g. +15555550100.",
+    ),
 });
 
 /**

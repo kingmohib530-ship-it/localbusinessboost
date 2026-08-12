@@ -29,12 +29,14 @@ const MESSAGE_BY_DAY: Record<
   1: {
     withPrice: (service, price) =>
       `quick follow-up on the $${price} estimate for your ${service}. Any questions I can answer before you decide?`,
-    noPrice: (service) => `following up on the estimate we gave for your ${service}. Any questions before you decide?`,
+    noPrice: (service) =>
+      `following up on the estimate we gave for your ${service}. Any questions before you decide?`,
   },
   5: {
     withPrice: (service, price) =>
       `checking back on your ${service} quote ($${price}). Want to get it on the schedule, or is timing still up in the air?`,
-    noPrice: (service) => `checking back on your ${service} estimate. Want to get it scheduled, or still deciding?`,
+    noPrice: (service) =>
+      `checking back on your ${service} estimate. Want to get it scheduled, or still deciding?`,
   },
   14: {
     withPrice: (service, price) =>
@@ -66,7 +68,10 @@ function buildMessage(
   const greeting = customerName ? `Hi ${customerName}, ` : "Hi there, ";
   const serviceLabel = serviceLabelFor(serviceType);
   const templates = MESSAGE_BY_DAY[dayOffset];
-  const body = quotedPrice != null ? templates.withPrice(serviceLabel, quotedPrice) : templates.noPrice(serviceLabel);
+  const body =
+    quotedPrice != null
+      ? templates.withPrice(serviceLabel, quotedPrice)
+      : templates.noPrice(serviceLabel);
   return greeting + body;
 }
 
@@ -102,7 +107,9 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
         try {
           const { data: dueSteps, error: dueErr } = await supabaseAdmin
             .from("quote_follow_up_steps")
-            .select("id, follow_up_id, day_offset, quote_follow_ups(id, user_id, conversation_id, service_type, quoted_price, quoted_at, status)")
+            .select(
+              "id, follow_up_id, day_offset, quote_follow_ups(id, user_id, conversation_id, service_type, quoted_price, quoted_at, status)",
+            )
             .eq("status", "pending")
             .lte("scheduled_for", new Date().toISOString())
             .limit(MAX_STEPS_PER_RUN);
@@ -133,7 +140,10 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
               .eq("id", followUp.conversation_id)
               .maybeSingle();
             if (!conversation) {
-              await supabaseAdmin.from("quote_follow_up_steps").update({ status: "failed" }).eq("id", step.id);
+              await supabaseAdmin
+                .from("quote_follow_up_steps")
+                .update({ status: "failed" })
+                .eq("id", step.id);
               failed++;
               continue;
             }
@@ -150,7 +160,10 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
               .limit(1)
               .maybeSingle();
             if (lastInbound && new Date(lastInbound.sent_at) > new Date(followUp.quoted_at)) {
-              await supabaseAdmin.from("quote_follow_up_steps").update({ status: "skipped" }).eq("id", step.id);
+              await supabaseAdmin
+                .from("quote_follow_up_steps")
+                .update({ status: "skipped" })
+                .eq("id", step.id);
               skipped++;
               continue;
             }
@@ -162,7 +175,10 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
             ]);
 
             if (!vonageNumber || !quota.allowed || !hourlyOk.allowed) {
-              await supabaseAdmin.from("quote_follow_up_steps").update({ status: "failed" }).eq("id", step.id);
+              await supabaseAdmin
+                .from("quote_follow_up_steps")
+                .update({ status: "failed" })
+                .eq("id", step.id);
               failed++;
               continue;
             }
@@ -174,11 +190,18 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
               followUp.quoted_price,
             );
 
-            const sendResult = await sendVonageSms(vonageNumber, conversation.customer_identifier, message);
+            const sendResult = await sendVonageSms(
+              vonageNumber,
+              conversation.customer_identifier,
+              message,
+            );
 
             if (!sendResult.ok) {
               console.error("[cron/quote-follow-ups] Vonage send failed", sendResult.error);
-              await supabaseAdmin.from("quote_follow_up_steps").update({ status: "failed" }).eq("id", step.id);
+              await supabaseAdmin
+                .from("quote_follow_up_steps")
+                .update({ status: "failed" })
+                .eq("id", step.id);
               failed++;
               continue;
             }

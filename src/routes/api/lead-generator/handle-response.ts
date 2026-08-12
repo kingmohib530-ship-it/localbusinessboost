@@ -89,7 +89,8 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
             history.push({ channel: "sms", sent_at: now, message: "", response: body });
           }
 
-          const newStatus: string = STATUS_BY_CLASSIFICATION[classification] || lead.status || "new";
+          const newStatus: string =
+            STATUS_BY_CLASSIFICATION[classification] || lead.status || "new";
 
           await supabaseAdmin
             .from("lead_profiles")
@@ -111,7 +112,10 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
             const followUp = "Great! What day/time works best this week for a quick call?";
             const sendResult = await sendVonageSms(to, from, followUp);
             if (!sendResult.ok) {
-              console.error("[lead-generator/handle-response] follow-up send failed", sendResult.error);
+              console.error(
+                "[lead-generator/handle-response] follow-up send failed",
+                sendResult.error,
+              );
             }
           }
 

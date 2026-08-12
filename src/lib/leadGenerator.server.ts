@@ -41,9 +41,9 @@ function parseAddressComponents(components: AddressComponent[] | undefined): {
   zip: string | null;
 } {
   if (!components) return { city: null, state: null, zip: null };
-  const find = (type: string) =>
-    components.find((c) => c.types.includes(type))?.long_name ?? null;
-  const stateShort = components.find((c) => c.types.includes("administrative_area_level_1"))?.short_name ?? null;
+  const find = (type: string) => components.find((c) => c.types.includes(type))?.long_name ?? null;
+  const stateShort =
+    components.find((c) => c.types.includes("administrative_area_level_1"))?.short_name ?? null;
   return {
     city: find("locality") ?? find("sublocality") ?? find("postal_town"),
     state: stateShort,
@@ -106,34 +106,45 @@ export async function searchGooglePlacesLeads(
   }
 
   const detailed = await Promise.all(
-    candidates.map(async (place: { place_id: string; name: string; formatted_address?: string }) => {
-      try {
-        const fields = "name,formatted_phone_number,formatted_address,website,rating,user_ratings_total,address_components,reviews,types";
-        const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=${fields}&key=${googleKey}`;
-        const detailRes = await fetch(detailUrl);
-        const detailData = await detailRes.json();
-        const detail = detailData.result ?? {};
-        const { city: parsedCity, state, zip } = parseAddressComponents(detail.address_components);
+    candidates.map(
+      async (place: { place_id: string; name: string; formatted_address?: string }) => {
+        try {
+          const fields =
+            "name,formatted_phone_number,formatted_address,website,rating,user_ratings_total,address_components,reviews,types";
+          const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=${fields}&key=${googleKey}`;
+          const detailRes = await fetch(detailUrl);
+          const detailData = await detailRes.json();
+          const detail = detailData.result ?? {};
+          const {
+            city: parsedCity,
+            state,
+            zip,
+          } = parseAddressComponents(detail.address_components);
 
-        return {
-          businessName: detail.name || place.name,
-          phone: detail.formatted_phone_number || null,
-          website: detail.website || null,
-          address: detail.formatted_address || place.formatted_address || null,
-          city: parsedCity,
-          state,
-          zip,
-          googleRating: typeof detail.rating === "number" ? detail.rating : null,
-          googleReviewCount: typeof detail.user_ratings_total === "number" ? detail.user_ratings_total : null,
-          reviewSnippets: Array.isArray(detail.reviews)
-            ? detail.reviews.slice(0, 5).map((r: { text?: string }) => r.text || "").filter(Boolean)
-            : [],
-          types: Array.isArray(detail.types) ? detail.types : [],
-        } as GooglePlaceLead;
-      } catch {
-        return null;
-      }
-    }),
+          return {
+            businessName: detail.name || place.name,
+            phone: detail.formatted_phone_number || null,
+            website: detail.website || null,
+            address: detail.formatted_address || place.formatted_address || null,
+            city: parsedCity,
+            state,
+            zip,
+            googleRating: typeof detail.rating === "number" ? detail.rating : null,
+            googleReviewCount:
+              typeof detail.user_ratings_total === "number" ? detail.user_ratings_total : null,
+            reviewSnippets: Array.isArray(detail.reviews)
+              ? detail.reviews
+                  .slice(0, 5)
+                  .map((r: { text?: string }) => r.text || "")
+                  .filter(Boolean)
+              : [],
+            types: Array.isArray(detail.types) ? detail.types : [],
+          } as GooglePlaceLead;
+        } catch {
+          return null;
+        }
+      },
+    ),
   );
 
   // A phone number is required for the SMS-based outreach sequence this
@@ -154,17 +165,60 @@ export async function searchGooglePlacesLeads(
  * while still catching the "wrong business type" complaint.
  */
 const NON_SERVICE_BUSINESS_TYPES = new Set([
-  "restaurant", "cafe", "bar", "bakery", "meal_delivery", "meal_takeaway",
-  "lodging", "school", "primary_school", "secondary_school", "university",
-  "church", "hindu_temple", "mosque", "synagogue", "place_of_worship",
-  "bank", "atm", "finance", "government_office", "local_government_office",
-  "courthouse", "embassy", "grocery_or_supermarket", "supermarket",
-  "convenience_store", "gas_station", "clothing_store", "shoe_store",
-  "jewelry_store", "movie_theater", "amusement_park", "casino", "night_club",
-  "hospital", "doctor", "dentist", "pharmacy", "real_estate_agency",
-  "insurance_agency", "car_dealer", "gym", "beauty_salon", "hair_care",
-  "spa", "tourist_attraction", "museum", "zoo", "stadium", "airport",
-  "train_station", "subway_station", "library", "post_office",
+  "restaurant",
+  "cafe",
+  "bar",
+  "bakery",
+  "meal_delivery",
+  "meal_takeaway",
+  "lodging",
+  "school",
+  "primary_school",
+  "secondary_school",
+  "university",
+  "church",
+  "hindu_temple",
+  "mosque",
+  "synagogue",
+  "place_of_worship",
+  "bank",
+  "atm",
+  "finance",
+  "government_office",
+  "local_government_office",
+  "courthouse",
+  "embassy",
+  "grocery_or_supermarket",
+  "supermarket",
+  "convenience_store",
+  "gas_station",
+  "clothing_store",
+  "shoe_store",
+  "jewelry_store",
+  "movie_theater",
+  "amusement_park",
+  "casino",
+  "night_club",
+  "hospital",
+  "doctor",
+  "dentist",
+  "pharmacy",
+  "real_estate_agency",
+  "insurance_agency",
+  "car_dealer",
+  "gym",
+  "beauty_salon",
+  "hair_care",
+  "spa",
+  "tourist_attraction",
+  "museum",
+  "zoo",
+  "stadium",
+  "airport",
+  "train_station",
+  "subway_station",
+  "library",
+  "post_office",
 ]);
 
 export function isPlausibleTradeMatch(types: string[]): boolean {
@@ -246,9 +300,18 @@ export async function verifyPhoneNumber(
 }
 
 const MISSED_CALL_PHRASES = [
-  "never answer", "never picked up", "no response", "doesn't pick up", "does not pick up",
-  "hard to reach", "never called back", "didn't call back", "did not call back", "straight to voicemail",
-  "no call back", "unresponsive",
+  "never answer",
+  "never picked up",
+  "no response",
+  "doesn't pick up",
+  "does not pick up",
+  "hard to reach",
+  "never called back",
+  "didn't call back",
+  "did not call back",
+  "straight to voicemail",
+  "no call back",
+  "unresponsive",
 ];
 
 /**
@@ -256,10 +319,7 @@ const MISSED_CALL_PHRASES = [
  * review count, website fetch result, actual review text) — nothing here
  * is invented.
  */
-export function detectPainSignals(
-  place: GooglePlaceLead,
-  website: WebsiteAssessment,
-): string[] {
+export function detectPainSignals(place: GooglePlaceLead, website: WebsiteAssessment): string[] {
   const signals: string[] = [];
 
   if (place.googleRating !== null && place.googleRating < 4.0) signals.push("Low rating");
@@ -296,7 +356,10 @@ export function computeLeadScore(painSignals: string[], googleRating: number | n
     googleRating === null ? NEUTRAL : Math.max(0, Math.min(100, ((5 - googleRating) / 5) * 100));
 
   const score =
-    0.4 * painSeverityScore + 0.2 * companySizeScore + 0.2 * recencyScore + 0.2 * reviewSentimentScore;
+    0.4 * painSeverityScore +
+    0.2 * companySizeScore +
+    0.2 * recencyScore +
+    0.2 * reviewSentimentScore;
   return Math.round(Math.max(0, Math.min(100, score)));
 }
 
@@ -356,7 +419,12 @@ export interface LeadForMonday {
   status: string;
 }
 
-const PRIORITY_LABEL: Record<string, string> = { hot: "Hot", warm: "Warm", cold: "Cold", medium: "Warm" };
+const PRIORITY_LABEL: Record<string, string> = {
+  hot: "Hot",
+  warm: "Warm",
+  cold: "Cold",
+  medium: "Warm",
+};
 
 /**
  * Pushes what the board's known columns actually support (business name,
@@ -372,7 +440,9 @@ export async function syncLeadToMonday(lead: LeadForMonday): Promise<string | nu
     const columnValues: Record<string, unknown> = {
       color_mm40t58z: { label: PRIORITY_LABEL[lead.priority] || "Warm" },
       text_mm408bbv: "Lead Generator",
-      text_mm40qp3y: lead.owner_name ? `${lead.business_name} (${lead.owner_name})` : lead.business_name,
+      text_mm40qp3y: lead.owner_name
+        ? `${lead.business_name} (${lead.owner_name})`
+        : lead.business_name,
     };
     if (lead.email) columnValues.email_mm40q7z1 = { email: lead.email, text: lead.email };
     if (lead.phone) columnValues.text_mm40k4r8 = lead.phone;
@@ -439,10 +509,18 @@ export async function synthesizeLeadCopy(
     `Business name: ${place.businessName}`,
     `Industry context: ${industry}`,
     category ? `Google's listed category: ${category}` : "",
-    place.googleRating !== null ? `Google rating: ${place.googleRating} (${place.googleReviewCount ?? 0} reviews)` : "Google rating: unknown",
-    painSignals.length ? `Detected pain signals: ${painSignals.join(", ")}` : "Detected pain signals: none",
-    place.reviewSnippets.length ? `Real review excerpts:\n${place.reviewSnippets.map((s) => `- "${s.slice(0, 200)}"`).join("\n")}` : "",
-  ].filter(Boolean).join("\n");
+    place.googleRating !== null
+      ? `Google rating: ${place.googleRating} (${place.googleReviewCount ?? 0} reviews)`
+      : "Google rating: unknown",
+    painSignals.length
+      ? `Detected pain signals: ${painSignals.join(", ")}`
+      : "Detected pain signals: none",
+    place.reviewSnippets.length
+      ? `Real review excerpts:\n${place.reviewSnippets.map((s) => `- "${s.slice(0, 200)}"`).join("\n")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const prompt = `You are texting on behalf of a real ${industry} contractor who is reaching out to another local business owner about their services. You are given ONLY the real facts below — do not invent or assume any fact not listed here (no owner name, no email, no revenue, no detail not present below).
 
@@ -480,14 +558,22 @@ Return ONLY valid JSON, no markdown:
   }
 
   const result = await res.json();
-  const text: string = result.content?.map((b: { text?: string }) => b.text || "").join("").trim() ?? "";
+  const text: string =
+    result.content
+      ?.map((b: { text?: string }) => b.text || "")
+      .join("")
+      .trim() ?? "";
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("Could not parse AI response");
 
   const parsed = JSON.parse(match[0]);
   return {
-    summary: parsed.summary || `${place.businessName} matches the target profile for ${industry} outreach.`,
-    openingLine: parsed.openingLine || `Hey, this is a ${industry} contractor local to the area — got a few minutes to talk about your place sometime this week?`,
+    summary:
+      parsed.summary ||
+      `${place.businessName} matches the target profile for ${industry} outreach.`,
+    openingLine:
+      parsed.openingLine ||
+      `Hey, this is a ${industry} contractor local to the area — got a few minutes to talk about your place sometime this week?`,
   };
 }
 
@@ -500,7 +586,12 @@ export type ResponseClassification =
   | "stop";
 
 const VALID_CLASSIFICATIONS: ResponseClassification[] = [
-  "interested", "not_interested", "needs_time", "asked_question", "wrong_number", "stop",
+  "interested",
+  "not_interested",
+  "needs_time",
+  "asked_question",
+  "wrong_number",
+  "stop",
 ];
 
 /** Classifies a lead's SMS reply into a fixed set of categories from the reply text alone. */

@@ -195,7 +195,11 @@ export const Route = createFileRoute("/api/cron/daily-brief")({
                 ]);
                 if (vonageNumber && hourlyOk.allowed) {
                   try {
-                    const sendResult = await sendVonageSms(vonageNumber, profile.owner_phone, buildSmsTeaser(cards));
+                    const sendResult = await sendVonageSms(
+                      vonageNumber,
+                      profile.owner_phone,
+                      buildSmsTeaser(cards),
+                    );
                     if (sendResult.ok) {
                       anySent = true;
                     } else {

@@ -159,7 +159,9 @@ export async function verifyVonageWebhookSignature(
   if (payload.payload_hash) {
     const actualHash = await sha256Hex(rawBody);
     if (!timingSafeEqualStr(actualHash, payload.payload_hash)) {
-      console.warn("[vonage] payload_hash claim did not match request body - signature itself still valid");
+      console.warn(
+        "[vonage] payload_hash claim did not match request body - signature itself still valid",
+      );
     }
   }
 

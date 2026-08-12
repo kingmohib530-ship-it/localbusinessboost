@@ -29,19 +29,19 @@ import { Route as CheckoutStartRouteImport } from './routes/checkout.start'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
-import { Route as ApiTwilioSettingsRouteImport } from './routes/api/twilio-settings'
 import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
 import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
 import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
 import { Route as ApiReceptionistPreviewRouteImport } from './routes/api/receptionist-preview'
+import { Route as ApiPhoneSetupRouteImport } from './routes/api/phone-setup'
 import { Route as ApiCompetitorIntelRouteImport } from './routes/api/competitor-intel'
 import { Route as ApiBookingPlanRouteImport } from './routes/api/booking-plan'
 import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
-import { Route as ApiTwilioSmsReplyRouteImport } from './routes/api/twilio/sms-reply'
-import { Route as ApiTwilioMissedCallRouteImport } from './routes/api/twilio/missed-call'
+import { Route as ApiVonageVoiceAnswerRouteImport } from './routes/api/vonage/voice-answer'
+import { Route as ApiVonageSmsInboundRouteImport } from './routes/api/vonage/sms-inbound'
 import { Route as ApiReviewRequestsIdRouteImport } from './routes/api/review-requests/$id'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
@@ -171,11 +171,6 @@ const ApiWorkflowRoute = ApiWorkflowRouteImport.update({
   path: '/api/workflow',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTwilioSettingsRoute = ApiTwilioSettingsRouteImport.update({
-  id: '/api/twilio-settings',
-  path: '/api/twilio-settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiSaveAutomationRoute = ApiSaveAutomationRouteImport.update({
   id: '/api/save-automation',
   path: '/api/save-automation',
@@ -194,6 +189,11 @@ const ApiReviewRequestRoute = ApiReviewRequestRouteImport.update({
 const ApiReceptionistPreviewRoute = ApiReceptionistPreviewRouteImport.update({
   id: '/api/receptionist-preview',
   path: '/api/receptionist-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPhoneSetupRoute = ApiPhoneSetupRouteImport.update({
+  id: '/api/phone-setup',
+  path: '/api/phone-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCompetitorIntelRoute = ApiCompetitorIntelRouteImport.update({
@@ -226,14 +226,14 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const ApiTwilioSmsReplyRoute = ApiTwilioSmsReplyRouteImport.update({
-  id: '/api/twilio/sms-reply',
-  path: '/api/twilio/sms-reply',
+const ApiVonageVoiceAnswerRoute = ApiVonageVoiceAnswerRouteImport.update({
+  id: '/api/vonage/voice-answer',
+  path: '/api/vonage/voice-answer',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTwilioMissedCallRoute = ApiTwilioMissedCallRouteImport.update({
-  id: '/api/twilio/missed-call',
-  path: '/api/twilio/missed-call',
+const ApiVonageSmsInboundRoute = ApiVonageSmsInboundRouteImport.update({
+  id: '/api/vonage/sms-inbound',
+  path: '/api/vonage/sms-inbound',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiReviewRequestsIdRoute = ApiReviewRequestsIdRouteImport.update({
@@ -420,11 +420,11 @@ export interface FileRoutesByFullPath {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/phone-setup': typeof ApiPhoneSetupRoute
   '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
-  '/api/twilio-settings': typeof ApiTwilioSettingsRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -455,8 +455,8 @@ export interface FileRoutesByFullPath {
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
-  '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
-  '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
+  '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
+  '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -482,11 +482,11 @@ export interface FileRoutesByTo {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/phone-setup': typeof ApiPhoneSetupRoute
   '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
-  '/api/twilio-settings': typeof ApiTwilioSettingsRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -517,8 +517,8 @@ export interface FileRoutesByTo {
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
-  '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
-  '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
+  '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
+  '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -547,11 +547,11 @@ export interface FileRoutesById {
   '/api/appointments': typeof ApiAppointmentsRouteWithChildren
   '/api/booking-plan': typeof ApiBookingPlanRoute
   '/api/competitor-intel': typeof ApiCompetitorIntelRoute
+  '/api/phone-setup': typeof ApiPhoneSetupRoute
   '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
   '/api/save-automation': typeof ApiSaveAutomationRoute
-  '/api/twilio-settings': typeof ApiTwilioSettingsRoute
   '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -582,8 +582,8 @@ export interface FileRoutesById {
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
-  '/api/twilio/missed-call': typeof ApiTwilioMissedCallRoute
-  '/api/twilio/sms-reply': typeof ApiTwilioSmsReplyRoute
+  '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
+  '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -612,11 +612,11 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/phone-setup'
     | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
-    | '/api/twilio-settings'
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
@@ -647,8 +647,8 @@ export interface FileRouteTypes {
     | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/review-requests/$id'
-    | '/api/twilio/missed-call'
-    | '/api/twilio/sms-reply'
+    | '/api/vonage/sms-inbound'
+    | '/api/vonage/voice-answer'
     | '/app/'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -674,11 +674,11 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/phone-setup'
     | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
-    | '/api/twilio-settings'
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
@@ -709,8 +709,8 @@ export interface FileRouteTypes {
     | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/review-requests/$id'
-    | '/api/twilio/missed-call'
-    | '/api/twilio/sms-reply'
+    | '/api/vonage/sms-inbound'
+    | '/api/vonage/voice-answer'
     | '/app'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -738,11 +738,11 @@ export interface FileRouteTypes {
     | '/api/appointments'
     | '/api/booking-plan'
     | '/api/competitor-intel'
+    | '/api/phone-setup'
     | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
     | '/api/save-automation'
-    | '/api/twilio-settings'
     | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
@@ -773,8 +773,8 @@ export interface FileRouteTypes {
     | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/review-requests/$id'
-    | '/api/twilio/missed-call'
-    | '/api/twilio/sms-reply'
+    | '/api/vonage/sms-inbound'
+    | '/api/vonage/voice-answer'
     | '/_authenticated/app/'
     | '/_authenticated/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -801,11 +801,11 @@ export interface RootRouteChildren {
   ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
   ApiBookingPlanRoute: typeof ApiBookingPlanRoute
   ApiCompetitorIntelRoute: typeof ApiCompetitorIntelRoute
+  ApiPhoneSetupRoute: typeof ApiPhoneSetupRoute
   ApiReceptionistPreviewRoute: typeof ApiReceptionistPreviewRoute
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
   ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
-  ApiTwilioSettingsRoute: typeof ApiTwilioSettingsRoute
   ApiWorkflowRoute: typeof ApiWorkflowRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   CheckoutStartRoute: typeof CheckoutStartRoute
@@ -824,8 +824,8 @@ export interface RootRouteChildren {
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiReviewRequestsIdRoute: typeof ApiReviewRequestsIdRoute
-  ApiTwilioMissedCallRoute: typeof ApiTwilioMissedCallRoute
-  ApiTwilioSmsReplyRoute: typeof ApiTwilioSmsReplyRoute
+  ApiVonageSmsInboundRoute: typeof ApiVonageSmsInboundRoute
+  ApiVonageVoiceAnswerRoute: typeof ApiVonageVoiceAnswerRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicWebChatBusiness_idRoute: typeof ApiPublicWebChatBusiness_idRoute
 }
@@ -972,13 +972,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWorkflowRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/twilio-settings': {
-      id: '/api/twilio-settings'
-      path: '/api/twilio-settings'
-      fullPath: '/api/twilio-settings'
-      preLoaderRoute: typeof ApiTwilioSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/save-automation': {
       id: '/api/save-automation'
       path: '/api/save-automation'
@@ -1005,6 +998,13 @@ declare module '@tanstack/react-router' {
       path: '/api/receptionist-preview'
       fullPath: '/api/receptionist-preview'
       preLoaderRoute: typeof ApiReceptionistPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/phone-setup': {
+      id: '/api/phone-setup'
+      path: '/api/phone-setup'
+      fullPath: '/api/phone-setup'
+      preLoaderRoute: typeof ApiPhoneSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/competitor-intel': {
@@ -1049,18 +1049,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/api/twilio/sms-reply': {
-      id: '/api/twilio/sms-reply'
-      path: '/api/twilio/sms-reply'
-      fullPath: '/api/twilio/sms-reply'
-      preLoaderRoute: typeof ApiTwilioSmsReplyRouteImport
+    '/api/vonage/voice-answer': {
+      id: '/api/vonage/voice-answer'
+      path: '/api/vonage/voice-answer'
+      fullPath: '/api/vonage/voice-answer'
+      preLoaderRoute: typeof ApiVonageVoiceAnswerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/twilio/missed-call': {
-      id: '/api/twilio/missed-call'
-      path: '/api/twilio/missed-call'
-      fullPath: '/api/twilio/missed-call'
-      preLoaderRoute: typeof ApiTwilioMissedCallRouteImport
+    '/api/vonage/sms-inbound': {
+      id: '/api/vonage/sms-inbound'
+      path: '/api/vonage/sms-inbound'
+      fullPath: '/api/vonage/sms-inbound'
+      preLoaderRoute: typeof ApiVonageSmsInboundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/review-requests/$id': {
@@ -1369,11 +1369,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
   ApiBookingPlanRoute: ApiBookingPlanRoute,
   ApiCompetitorIntelRoute: ApiCompetitorIntelRoute,
+  ApiPhoneSetupRoute: ApiPhoneSetupRoute,
   ApiReceptionistPreviewRoute: ApiReceptionistPreviewRoute,
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
   ApiSaveAutomationRoute: ApiSaveAutomationRoute,
-  ApiTwilioSettingsRoute: ApiTwilioSettingsRoute,
   ApiWorkflowRoute: ApiWorkflowRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   CheckoutStartRoute: CheckoutStartRoute,
@@ -1393,8 +1393,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiReviewRequestsIdRoute: ApiReviewRequestsIdRoute,
-  ApiTwilioMissedCallRoute: ApiTwilioMissedCallRoute,
-  ApiTwilioSmsReplyRoute: ApiTwilioSmsReplyRoute,
+  ApiVonageSmsInboundRoute: ApiVonageSmsInboundRoute,
+  ApiVonageVoiceAnswerRoute: ApiVonageVoiceAnswerRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicWebChatBusiness_idRoute: ApiPublicWebChatBusiness_idRoute,
 }

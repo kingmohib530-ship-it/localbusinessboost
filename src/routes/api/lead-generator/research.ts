@@ -74,7 +74,10 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           const googleKey = process.env.GOOGLE_PLACES_API_KEY;
           const anthropicKey = process.env.ANTHROPIC_API_KEY;
           if (!googleKey) {
-            return Response.json({ error: "GOOGLE_PLACES_API_KEY not configured" }, { status: 500 });
+            return Response.json(
+              { error: "GOOGLE_PLACES_API_KEY not configured" },
+              { status: 500 },
+            );
           }
           if (!anthropicKey) {
             return Response.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
@@ -83,7 +86,10 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           const places = await searchGooglePlacesLeads(googleKey, industry, city, count);
           if (places.length === 0) {
             return Response.json(
-              { error: "No businesses with public phone numbers found in that area. Try a different city." },
+              {
+                error:
+                  "No businesses with public phone numbers found in that area. Try a different city.",
+              },
               { status: 404 },
             );
           }
@@ -160,7 +166,10 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           const enriched = enrichedWithVerification.filter((lead) => lead.phone_verified !== false);
           if (enriched.length === 0) {
             return Response.json(
-              { error: "No businesses with a verifiable phone number found in that area. Try a different city." },
+              {
+                error:
+                  "No businesses with a verifiable phone number found in that area. Try a different city.",
+              },
               { status: 404 },
             );
           }
@@ -176,14 +185,16 @@ export const Route = createFileRoute("/api/lead-generator/research")({
           }
 
           const sequenceRows = inserted.flatMap((lead) =>
-            buildSequenceTemplates(lead.personalized_opening_line || "", lead.business_name).map((step) => ({
-              lead_id: lead.id,
-              step_number: step.stepNumber,
-              channel: step.channel,
-              delay_hours: step.delayHours,
-              message_template: step.messageTemplate,
-              status: "pending" as const,
-            })),
+            buildSequenceTemplates(lead.personalized_opening_line || "", lead.business_name).map(
+              (step) => ({
+                lead_id: lead.id,
+                step_number: step.stepNumber,
+                channel: step.channel,
+                delay_hours: step.delayHours,
+                message_template: step.messageTemplate,
+                status: "pending" as const,
+              }),
+            ),
           );
 
           const { error: seqErr } = await supabaseAdmin.from("lead_sequences").insert(sequenceRows);
@@ -206,7 +217,10 @@ export const Route = createFileRoute("/api/lead-generator/research")({
                 status: lead.status ?? "new",
               });
               if (itemId) {
-                await supabaseAdmin.from("lead_profiles").update({ monday_item_id: itemId }).eq("id", lead.id);
+                await supabaseAdmin
+                  .from("lead_profiles")
+                  .update({ monday_item_id: itemId })
+                  .eq("id", lead.id);
               }
             }),
           );

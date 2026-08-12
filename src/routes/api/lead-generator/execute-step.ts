@@ -38,7 +38,10 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
             return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
           }
           if (!allowed) {
-            return Response.json({ error: "Too many requests. Please wait a bit and try again." }, { status: 429 });
+            return Response.json(
+              { error: "Too many requests. Please wait a bit and try again." },
+              { status: 429 },
+            );
           }
 
           const { lead_id, step_id } = await request.json();
@@ -80,22 +83,33 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
             .select("*")
             .maybeSingle();
           if (claimErr) {
-            return Response.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+            return Response.json(
+              { error: "Something went wrong. Please try again." },
+              { status: 500 },
+            );
           }
           if (!step) {
-            return Response.json({ error: "Step is already in progress or completed" }, { status: 409 });
+            return Response.json(
+              { error: "Step is already in progress or completed" },
+              { status: 409 },
+            );
           }
 
           let sendError: string | null = null;
 
           if (step.channel === "sms") {
             if (!lead.phone) {
-              return Response.json({ error: "This lead has no phone number on file" }, { status: 400 });
+              return Response.json(
+                { error: "This lead has no phone number on file" },
+                { status: 400 },
+              );
             }
             const vonageNumber = await loadBusinessVonageNumber(user.id);
             if (!vonageNumber) {
               return Response.json(
-                { error: "Set up your phone number in Receptionist Setup before sending outreach." },
+                {
+                  error: "Set up your phone number in Receptionist Setup before sending outreach.",
+                },
                 { status: 400 },
               );
             }
@@ -117,9 +131,15 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
           }
 
           if (sendError) {
-            await supabaseAdmin.from("lead_sequences").update({ status: "failed" }).eq("id", step_id);
+            await supabaseAdmin
+              .from("lead_sequences")
+              .update({ status: "failed" })
+              .eq("id", step_id);
             const status = step.channel === "sms" ? 502 : 501;
-            return Response.json({ error: step.channel === "sms" ? `Failed to send: ${sendError}` : sendError }, { status });
+            return Response.json(
+              { error: step.channel === "sms" ? `Failed to send: ${sendError}` : sendError },
+              { status },
+            );
           }
 
           const now = new Date().toISOString();

@@ -102,7 +102,9 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
       const data = await res.json();
       if (res.ok) {
         setOk(true);
-        setMsg("Your number is ready. Set up call forwarding below to start receiving missed calls.");
+        setMsg(
+          "Your number is ready. Set up call forwarding below to start receiving missed calls.",
+        );
         setVonageNumber(data.vonageNumber);
         onConnected?.();
       } else {
@@ -120,7 +122,9 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
         <Phone size={15} color="var(--hd-primary)" strokeWidth={1.75} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--hd-fg)" }}>Business phone number</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--hd-fg)" }}>
+          Business phone number
+        </span>
       </div>
       <p style={{ fontSize: 12, color: "var(--hd-muted)", marginBottom: 16, lineHeight: 1.5 }}>
         Enter your real business phone number. Lanavix automatically sets up a dedicated line behind
@@ -156,7 +160,13 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
         {saving ? "Setting up..." : connected ? "Update number" : "Set up my number"}
       </button>
       {msg && (
-        <div style={{ fontSize: 12, color: ok ? "var(--hd-primary-2)" : "var(--destructive)", marginTop: 8 }}>
+        <div
+          style={{
+            fontSize: 12,
+            color: ok ? "var(--hd-primary-2)" : "var(--destructive)",
+            marginTop: 8,
+          }}
+        >
           {msg}
         </div>
       )}
@@ -168,10 +178,13 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
           </div>
           <p style={{ fontSize: 12, color: "var(--hd-muted)", marginBottom: 10, lineHeight: 1.5 }}>
             Important: set up <strong>conditional</strong> forwarding (no answer / busy only), not
-            forwarding for every call. Lanavix only texts back calls that actually reach this number,
-            so your real phone should still ring first - this number only picks up what you miss.
+            forwarding for every call. Lanavix only texts back calls that actually reach this
+            number, so your real phone should still ring first - this number only picks up what you
+            miss.
           </p>
-          <div style={codeBoxStyle}>On most carriers (AT&T, T-Mobile): dial *61*{vonageNumber}#</div>
+          <div style={codeBoxStyle}>
+            On most carriers (AT&T, T-Mobile): dial *61*{vonageNumber}#
+          </div>
           <div style={codeBoxStyle}>To also forward on busy: dial *67*{vonageNumber}#</div>
           <p style={{ fontSize: 11, color: "var(--hd-muted)", lineHeight: 1.5 }}>
             Verizon and some other carriers use different codes or handle this in your phone's

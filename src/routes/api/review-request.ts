@@ -29,23 +29,19 @@ export const Route = createFileRoute("/api/review-request")({
             return Response.json({ error: AUTH_ERROR }, { status: 401 });
           }
           const token = authHeader.slice(7).trim();
-          const { data: userData, error: userErr } =
-            await supabaseAdmin.auth.getUser(token);
+          const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
           if (userErr || !userData?.user) {
             return Response.json({ error: AUTH_ERROR }, { status: 401 });
           }
           const user = userData.user;
 
           // ===== Rate limit: 20 requests per hour per user =====
-          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
-            "check_rate_limit",
-            {
-              p_user_id: user.id,
-              p_route: "review-request",
-              p_max_requests: 20,
-              p_window_seconds: 3600,
-            },
-          );
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_rate_limit", {
+            p_user_id: user.id,
+            p_route: "review-request",
+            p_max_requests: 20,
+            p_window_seconds: 3600,
+          });
           if (rlErr) {
             console.error("[api/review-request] rate limit check failed");
             return Response.json({ error: "Service temporarily unavailable" }, { status: 503 });
@@ -82,15 +78,22 @@ export const Route = createFileRoute("/api/review-request")({
           // Send via the business's own Lanavix-provisioned Vonage number
           const vonageNumber = await loadBusinessVonageNumber(user.id);
           if (!vonageNumber) {
-            return Response.json({
-              error: "Set up your phone number in Receptionist Setup before sending review requests."
-            }, { status: 400 });
+            return Response.json(
+              {
+                error:
+                  "Set up your phone number in Receptionist Setup before sending review requests.",
+              },
+              { status: 400 },
+            );
           }
 
           const sendResult = await sendVonageSms(vonageNumber, customerPhone, message);
           if (!sendResult.ok) {
             console.error("[review-request] Vonage send failed", sendResult.error);
-            return Response.json({ error: "Failed to send the review request. Please try again." }, { status: 500 });
+            return Response.json(
+              { error: "Failed to send the review request. Please try again." },
+              { status: 500 },
+            );
           }
 
           // Save to database, attributed to the actual authenticated caller
