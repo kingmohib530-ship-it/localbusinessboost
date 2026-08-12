@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { verifyVonageWebhookSignature } from "@/lib/vonage.server";
-import { findBusinessByVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
+import { verifyTelnyxWebhookSignature } from "@/lib/telnyx.server";
+import { findBusinessByTelnyxNumber, sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
 import { classifyLeadResponse, syncLeadStatusToMonday } from "@/lib/leadGenerator.server";
 import type { Json } from "@/integrations/supabase/types";
 
-// No synchronous reply-in-response mechanism on Vonage's inbound message
+// No synchronous reply-in-response mechanism on Telnyx's inbound message
 // webhook - a bare 2xx acknowledgment is all it wants (same as sms-inbound.ts).
 const ACK = () => new Response(null, { status: 200 });
 
@@ -24,10 +24,21 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
       POST: async ({ request }) => {
         try {
           const rawBody = await request.text();
-          const params = JSON.parse(rawBody || "{}");
-          const from = params.msisdn || "";
-          const to = params.to || "";
-          const body = params.text || "";
+          const isValid = await verifyTelnyxWebhookSignature(request, rawBody);
+          if (!isValid) {
+            console.warn("[lead-generator/handle-response] invalid signature");
+            return new Response("Forbidden", { status: 403 });
+          }
+
+          const parsed = JSON.parse(rawBody || "{}");
+          const eventType: string | undefined = parsed?.data?.event_type;
+          if (eventType !== "message.received") {
+            return ACK();
+          }
+          const payload = parsed?.data?.payload || {};
+          const from: string = payload.from?.phone_number || "";
+          const to: string = payload.to?.[0]?.phone_number || "";
+          const body: string = payload.text || "";
 
           const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_anon_rate_limit", {
             p_ip_address: from,
@@ -39,24 +50,18 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
             return ACK();
           }
 
-          // Which business's outbound Vonage number received this reply.
+          // Which business's outbound Telnyx number received this reply.
           // Scopes the lead search to that business's own leads rather
           // than matching phone alone. No credentials to fetch here -
-          // one platform Vonage account sends/verifies for every business.
-          const business = await findBusinessByVonageNumber(to);
+          // one platform Telnyx account sends/verifies for every business.
+          const business = await findBusinessByTelnyxNumber(to);
           if (!business) {
-            await supabaseAdmin.from("unmatched_vonage_webhooks").insert({
+            await supabaseAdmin.from("unmatched_telnyx_webhooks").insert({
               route: "lead-generator-handle-response",
               to_number: to,
               from_number: from,
             });
             return ACK();
-          }
-
-          const isValid = await verifyVonageWebhookSignature(request, rawBody);
-          if (!isValid) {
-            console.warn("[lead-generator/handle-response] invalid Vonage signature");
-            return new Response("Forbidden", { status: 403 });
           }
 
           const { data: lead } = await supabaseAdmin
@@ -110,7 +115,7 @@ export const Route = createFileRoute("/api/lead-generator/handle-response")({
           // automatic follow-up SMS asking for availability directly.
           if (classification === "interested") {
             const followUp = "Great! What day/time works best this week for a quick call?";
-            const sendResult = await sendVonageSms(to, from, followUp);
+            const sendResult = await sendTelnyxSms(to, from, followUp);
             if (!sendResult.ok) {
               console.error(
                 "[lead-generator/handle-response] follow-up send failed",

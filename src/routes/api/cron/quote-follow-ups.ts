@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
+import { loadBusinessTelnyxNumber, sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { SERVICE_TYPE_LABELS, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 // Same constant-time comparison approach as verifyWebhook in
-// stripe.server.ts and verifyVonageWebhookSignature in vonage.server.ts - a
+// stripe.server.ts and verifyTelnyxWebhookSignature in telnyx.server.ts - a
 // naive `===` on the cron secret short-circuits on the first mismatched
 // byte.
 function timingSafeEqualStr(a: string, b: string): boolean {
@@ -168,13 +168,13 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
               continue;
             }
 
-            const [vonageNumber, quota, hourlyOk] = await Promise.all([
-              loadBusinessVonageNumber(followUp.user_id),
+            const [telnyxNumber, quota, hourlyOk] = await Promise.all([
+              loadBusinessTelnyxNumber(followUp.user_id),
               checkSmsQuota(followUp.user_id),
               checkSmsHourlyRateLimit(followUp.user_id),
             ]);
 
-            if (!vonageNumber || !quota.allowed || !hourlyOk.allowed) {
+            if (!telnyxNumber || !quota.allowed || !hourlyOk.allowed) {
               await supabaseAdmin
                 .from("quote_follow_up_steps")
                 .update({ status: "failed" })
@@ -190,14 +190,14 @@ export const Route = createFileRoute("/api/cron/quote-follow-ups")({
               followUp.quoted_price,
             );
 
-            const sendResult = await sendVonageSms(
-              vonageNumber,
+            const sendResult = await sendTelnyxSms(
+              telnyxNumber,
               conversation.customer_identifier,
               message,
             );
 
             if (!sendResult.ok) {
-              console.error("[cron/quote-follow-ups] Vonage send failed", sendResult.error);
+              console.error("[cron/quote-follow-ups] Telnyx send failed", sendResult.error);
               await supabaseAdmin
                 .from("quote_follow_up_steps")
                 .update({ status: "failed" })
