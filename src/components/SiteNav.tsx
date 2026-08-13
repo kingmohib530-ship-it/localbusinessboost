@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sparkles, ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type NavLink = { to: string; label: string; anchor?: boolean };
@@ -39,13 +39,21 @@ export function SiteNav({ variant = "light" }: SiteNavProps) {
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className={`font-display font-bold tracking-tight ${dark ? "text-[var(--hd-fg)]" : ""}`}>Lanavix</span>
+          <img
+            src={dark ? "/logo-white.png" : "/logo.png"}
+            alt="Lanavix"
+            className="h-8 w-8 transition-transform duration-200 group-hover:scale-105"
+          />
+          <span
+            className={`font-display font-bold tracking-tight ${dark ? "text-[var(--hd-fg)]" : ""}`}
+          >
+            Lanavix
+          </span>
         </Link>
 
-        <nav className={`hidden md:flex items-center gap-1 text-sm ${dark ? "text-[var(--hd-muted)]" : "text-muted-foreground"}`}>
+        <nav
+          className={`hidden md:flex items-center gap-1 text-sm ${dark ? "text-[var(--hd-muted)]" : "text-muted-foreground"}`}
+        >
           {NAV_LINKS.map((l) =>
             l.anchor ? (
               <a
@@ -91,15 +99,21 @@ export function SiteNav({ variant = "light" }: SiteNavProps) {
           aria-expanded={open}
         >
           <span className="relative block h-5 w-5">
-            <Menu className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${open ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"}`} />
-            <X className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${open ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"}`} />
+            <Menu
+              className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${open ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"}`}
+            />
+            <X
+              className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${open ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"}`}
+            />
           </span>
         </button>
       </div>
 
       <div
         className={`md:hidden overflow-hidden backdrop-blur-xl transition-all duration-300 ease-out ${open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"} ${
-          dark ? "border-t border-[var(--hd-border)] bg-[var(--hd-bg)]/95" : "border-t border-border/60 bg-background/95"
+          dark
+            ? "border-t border-[var(--hd-border)] bg-[var(--hd-bg)]/95"
+            : "border-t border-border/60 bg-background/95"
         }`}
       >
         <div className="px-6 py-4 flex flex-col gap-1 text-sm">
@@ -124,12 +138,23 @@ export function SiteNav({ variant = "light" }: SiteNavProps) {
               </Link>
             ),
           )}
-          <div className={`flex flex-col gap-2 pt-3 mt-2 border-t ${dark ? "border-[var(--hd-border)]" : "border-border/60"}`}>
+          <div
+            className={`flex flex-col gap-2 pt-3 mt-2 border-t ${dark ? "border-[var(--hd-border)]" : "border-border/60"}`}
+          >
             <Link to="/auth" onClick={() => setOpen(false)}>
-              <Button variant="outline" size="sm" className={`w-full ${dark ? "bg-[var(--hd-glass)] border-[var(--hd-border)] text-[var(--hd-fg)]" : ""}`}>Sign in</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`w-full ${dark ? "bg-[var(--hd-glass)] border-[var(--hd-border)] text-[var(--hd-fg)]" : ""}`}
+              >
+                Sign in
+              </Button>
             </Link>
             <Link to="/auth" search={{ mode: "signup" }} onClick={() => setOpen(false)}>
-              <Button size="sm" className={`w-full ${dark ? "bg-[var(--hd-primary)] hover:bg-[var(--hd-primary)]/90 text-white" : ""}`}>
+              <Button
+                size="sm"
+                className={`w-full ${dark ? "bg-[var(--hd-primary)] hover:bg-[var(--hd-primary)]/90 text-white" : ""}`}
+              >
                 Sign up <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>

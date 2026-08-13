@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Sparkles, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth/reset-password")({
   ssr: false,
@@ -14,8 +14,10 @@ export const Route = createFileRoute("/auth/reset-password")({
 });
 
 function friendlyError(message: string): string {
-  if (message.includes("Password should be at least")) return "Password must be at least 8 characters.";
-  if (message.includes("session")) return "This reset link has expired or already been used. Please request a new one.";
+  if (message.includes("Password should be at least"))
+    return "Password must be at least 8 characters.";
+  if (message.includes("session"))
+    return "This reset link has expired or already been used. Please request a new one.";
   return message;
 }
 
@@ -42,8 +44,14 @@ function ResetPasswordPage() {
   }, []);
 
   const submit = async () => {
-    if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
-    if (password !== confirmPassword) { toast.error("Passwords don't match."); return; }
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords don't match.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
@@ -56,9 +64,7 @@ function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-background bg-radial-glow px-4">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src="/logo.png" alt="Lanavix" className="h-9 w-9" />
           <span className="text-xl font-display font-bold tracking-tight">Lanavix</span>
         </Link>
 
@@ -70,7 +76,9 @@ function ResetPasswordPage() {
               </div>
               <div>
                 <h2 className="font-display font-bold text-lg mb-1">Password updated</h2>
-                <p className="text-sm text-muted-foreground">You can now sign in with your new password.</p>
+                <p className="text-sm text-muted-foreground">
+                  You can now sign in with your new password.
+                </p>
               </div>
               <Button className="w-full" onClick={() => navigate({ to: "/auth" })}>
                 Go to sign in
@@ -81,14 +89,19 @@ function ResetPasswordPage() {
               <h2 className="font-display font-bold text-lg">Verifying your link…</h2>
               <p className="text-sm text-muted-foreground">
                 If this doesn't update in a few seconds, your reset link may have expired.{" "}
-                <Link to="/auth" className="underline hover:text-foreground transition-colors">Request a new one</Link>.
+                <Link to="/auth" className="underline hover:text-foreground transition-colors">
+                  Request a new one
+                </Link>
+                .
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               <div>
                 <h2 className="font-display font-bold text-lg mb-1">Set a new password</h2>
-                <p className="text-sm text-muted-foreground">Choose a new password for your account.</p>
+                <p className="text-sm text-muted-foreground">
+                  Choose a new password for your account.
+                </p>
               </div>
               <div className="space-y-1">
                 <Label>New password</Label>

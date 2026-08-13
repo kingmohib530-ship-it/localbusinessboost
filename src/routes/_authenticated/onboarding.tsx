@@ -229,19 +229,7 @@ function OnboardingPage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 8,
-              background: "var(--hd-primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Sparkles size={15} color="var(--primary-foreground)" />
-          </div>
+          <img src="/logo-white.png" alt="" style={{ width: 24, height: 24 }} />
           <span style={{ fontSize: 14, fontWeight: 700, color: "var(--hd-fg)" }}>Lanavix</span>
         </div>
 
