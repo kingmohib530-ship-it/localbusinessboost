@@ -129,7 +129,6 @@ export async function provisionTelnyxNumber(
   const orderData = await orderRes.json();
   const orderId: string | undefined = orderData?.data?.id;
   let orderStatus: string | undefined = orderData?.data?.status;
-  let phoneNumberResourceId: string | undefined = orderData?.data?.phone_numbers?.[0]?.id;
 
   // 3. Poll for order completion, bounded - see the comment on
   // ORDER_POLL_ATTEMPTS above for why this isn't webhook-driven.
@@ -145,18 +144,51 @@ export async function provisionTelnyxNumber(
     if (!pollRes.ok) continue;
     const pollData = await pollRes.json();
     orderStatus = pollData?.data?.status;
-    phoneNumberResourceId = pollData?.data?.phone_numbers?.[0]?.id ?? phoneNumberResourceId;
   }
 
-  if (orderStatus !== "success" || !phoneNumberResourceId) {
+  if (orderStatus !== "success") {
     return {
       ok: false,
       error: "Your number is still being set up. Please check back in a minute and try again.",
     };
   }
 
-  // 4. Assign the messaging profile and voice connection - one PATCH on
-  // the number's resource ID, not the raw E.164 string.
+  // 4. Look up the actual owned-number resource by its E.164 number. The
+  // `id` on a number order's phone_numbers[] entries is a
+  // number_order_phone_number resource - a different Telnyx resource from
+  // the /v2/phone_numbers/{id} one this PATCH needs. Using that order-item
+  // id here is what previously produced a 404 (code 10005) on this PATCH:
+  // number search/order/poll all succeeded, but that id was never valid
+  // against the /phone_numbers endpoint. The phone_numbers resource is
+  // only guaranteed to exist once the order status is "success", which the
+  // poll above just confirmed.
+  const lookupParams = new URLSearchParams({ "filter[phone_number]": candidate });
+  const lookupRes = await fetch(`${TELNYX_API_BASE}/phone_numbers?${lookupParams.toString()}`, {
+    headers: { Authorization: authHeader() },
+  });
+  if (!lookupRes.ok) {
+    console.error(
+      "[telnyxProvisioning] looking up owned number resource failed",
+      lookupRes.status,
+      await lookupRes.text().catch(() => ""),
+    );
+    return {
+      ok: false,
+      error: "Your number is still being set up. Please check back in a minute and try again.",
+    };
+  }
+  const lookupData = await lookupRes.json();
+  const phoneNumberResourceId: string | undefined = lookupData?.data?.[0]?.id;
+  if (!phoneNumberResourceId) {
+    return {
+      ok: false,
+      error: "Your number is still being set up. Please check back in a minute and try again.",
+    };
+  }
+
+  // 5. Assign the messaging profile and voice connection - one PATCH on
+  // the number's actual resource ID, not the raw E.164 string and not the
+  // number_order_phone_number id.
   const assignRes = await fetch(`${TELNYX_API_BASE}/phone_numbers/${phoneNumberResourceId}`, {
     method: "PATCH",
     headers: { Authorization: authHeader(), "Content-Type": "application/json" },
