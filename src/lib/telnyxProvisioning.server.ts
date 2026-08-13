@@ -186,19 +186,41 @@ export async function provisionTelnyxNumber(
     };
   }
 
-  // 5. Assign the messaging profile and voice connection - one PATCH on
-  // the number's actual resource ID, not the raw E.164 string and not the
-  // number_order_phone_number id.
-  const assignRes = await fetch(`${TELNYX_API_BASE}/phone_numbers/${phoneNumberResourceId}`, {
+  // 5. Assign the messaging profile and voice connection. These are two
+  // separate sub-resources on the number, each with its own dedicated PATCH
+  // endpoint - the general PATCH /v2/phone_numbers/{id} rejects
+  // messaging_profile_id with a 422 ("not reachable here"), pointing at
+  // Number-Configurations#updatePhoneNumberWithMessagingSettings instead.
+  const messagingRes = await fetch(
+    `${TELNYX_API_BASE}/phone_numbers/${phoneNumberResourceId}/messaging`,
+    {
+      method: "PATCH",
+      headers: { Authorization: authHeader(), "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_profile_id: messagingProfileId }),
+    },
+  );
+  if (!messagingRes.ok) {
+    console.error(
+      "[telnyxProvisioning] linking number to messaging profile failed",
+      messagingRes.status,
+      await messagingRes.text().catch(() => ""),
+    );
+    return {
+      ok: false,
+      error: "Could not finish setting up your number. Please try again shortly.",
+    };
+  }
+
+  const voiceRes = await fetch(`${TELNYX_API_BASE}/phone_numbers/${phoneNumberResourceId}/voice`, {
     method: "PATCH",
     headers: { Authorization: authHeader(), "Content-Type": "application/json" },
-    body: JSON.stringify({ messaging_profile_id: messagingProfileId, connection_id: connectionId }),
+    body: JSON.stringify({ connection_id: connectionId }),
   });
-  if (!assignRes.ok) {
+  if (!voiceRes.ok) {
     console.error(
-      "[telnyxProvisioning] linking number to messaging profile/connection failed",
-      assignRes.status,
-      await assignRes.text().catch(() => ""),
+      "[telnyxProvisioning] linking number to voice connection failed",
+      voiceRes.status,
+      await voiceRes.text().catch(() => ""),
     );
     return {
       ok: false,
