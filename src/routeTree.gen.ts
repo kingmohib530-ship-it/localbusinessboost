@@ -68,6 +68,9 @@ import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppBusinessFactsRouteImport } from './routes/_authenticated/app.business-facts'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
+import { Route as ApiTelnyxVoiceAiEscalateRouteImport } from './routes/api/telnyx/voice-ai/escalate'
+import { Route as ApiTelnyxVoiceAiDynamicVariablesRouteImport } from './routes/api/telnyx/voice-ai/dynamic-variables'
+import { Route as ApiTelnyxVoiceAiBookAppointmentRouteImport } from './routes/api/telnyx/voice-ai/book-appointment'
 import { Route as ApiPublicWebChatBusiness_idRouteImport } from './routes/api/public/web-chat/$business_id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppAdminVerificationReviewRouteImport } from './routes/_authenticated/app.admin.verification-review'
@@ -380,6 +383,24 @@ const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const ApiTelnyxVoiceAiEscalateRoute =
+  ApiTelnyxVoiceAiEscalateRouteImport.update({
+    id: '/api/telnyx/voice-ai/escalate',
+    path: '/api/telnyx/voice-ai/escalate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTelnyxVoiceAiDynamicVariablesRoute =
+  ApiTelnyxVoiceAiDynamicVariablesRouteImport.update({
+    id: '/api/telnyx/voice-ai/dynamic-variables',
+    path: '/api/telnyx/voice-ai/dynamic-variables',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTelnyxVoiceAiBookAppointmentRoute =
+  ApiTelnyxVoiceAiBookAppointmentRouteImport.update({
+    id: '/api/telnyx/voice-ai/book-appointment',
+    path: '/api/telnyx/voice-ai/book-appointment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebChatBusiness_idRoute =
   ApiPublicWebChatBusiness_idRouteImport.update({
     id: '/api/public/web-chat/$business_id',
@@ -461,6 +482,9 @@ export interface FileRoutesByFullPath {
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
+  '/api/telnyx/voice-ai/book-appointment': typeof ApiTelnyxVoiceAiBookAppointmentRoute
+  '/api/telnyx/voice-ai/dynamic-variables': typeof ApiTelnyxVoiceAiDynamicVariablesRoute
+  '/api/telnyx/voice-ai/escalate': typeof ApiTelnyxVoiceAiEscalateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -523,6 +547,9 @@ export interface FileRoutesByTo {
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
+  '/api/telnyx/voice-ai/book-appointment': typeof ApiTelnyxVoiceAiBookAppointmentRoute
+  '/api/telnyx/voice-ai/dynamic-variables': typeof ApiTelnyxVoiceAiDynamicVariablesRoute
+  '/api/telnyx/voice-ai/escalate': typeof ApiTelnyxVoiceAiEscalateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -588,6 +615,9 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
+  '/api/telnyx/voice-ai/book-appointment': typeof ApiTelnyxVoiceAiBookAppointmentRoute
+  '/api/telnyx/voice-ai/dynamic-variables': typeof ApiTelnyxVoiceAiDynamicVariablesRoute
+  '/api/telnyx/voice-ai/escalate': typeof ApiTelnyxVoiceAiEscalateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -653,6 +683,9 @@ export interface FileRouteTypes {
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
     | '/api/public/web-chat/$business_id'
+    | '/api/telnyx/voice-ai/book-appointment'
+    | '/api/telnyx/voice-ai/dynamic-variables'
+    | '/api/telnyx/voice-ai/escalate'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -715,6 +748,9 @@ export interface FileRouteTypes {
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
     | '/api/public/web-chat/$business_id'
+    | '/api/telnyx/voice-ai/book-appointment'
+    | '/api/telnyx/voice-ai/dynamic-variables'
+    | '/api/telnyx/voice-ai/escalate'
   id:
     | '__root__'
     | '/'
@@ -779,6 +815,9 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/verification-review'
     | '/api/public/payments/webhook'
     | '/api/public/web-chat/$business_id'
+    | '/api/telnyx/voice-ai/book-appointment'
+    | '/api/telnyx/voice-ai/dynamic-variables'
+    | '/api/telnyx/voice-ai/escalate'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -828,6 +867,9 @@ export interface RootRouteChildren {
   ApiTelnyxVoiceRoute: typeof ApiTelnyxVoiceRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicWebChatBusiness_idRoute: typeof ApiPublicWebChatBusiness_idRoute
+  ApiTelnyxVoiceAiBookAppointmentRoute: typeof ApiTelnyxVoiceAiBookAppointmentRoute
+  ApiTelnyxVoiceAiDynamicVariablesRoute: typeof ApiTelnyxVoiceAiDynamicVariablesRoute
+  ApiTelnyxVoiceAiEscalateRoute: typeof ApiTelnyxVoiceAiEscalateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1245,6 +1287,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/telnyx/voice-ai/escalate': {
+      id: '/api/telnyx/voice-ai/escalate'
+      path: '/api/telnyx/voice-ai/escalate'
+      fullPath: '/api/telnyx/voice-ai/escalate'
+      preLoaderRoute: typeof ApiTelnyxVoiceAiEscalateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telnyx/voice-ai/dynamic-variables': {
+      id: '/api/telnyx/voice-ai/dynamic-variables'
+      path: '/api/telnyx/voice-ai/dynamic-variables'
+      fullPath: '/api/telnyx/voice-ai/dynamic-variables'
+      preLoaderRoute: typeof ApiTelnyxVoiceAiDynamicVariablesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telnyx/voice-ai/book-appointment': {
+      id: '/api/telnyx/voice-ai/book-appointment'
+      path: '/api/telnyx/voice-ai/book-appointment'
+      fullPath: '/api/telnyx/voice-ai/book-appointment'
+      preLoaderRoute: typeof ApiTelnyxVoiceAiBookAppointmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/web-chat/$business_id': {
       id: '/api/public/web-chat/$business_id'
       path: '/api/public/web-chat/$business_id'
@@ -1397,6 +1460,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTelnyxVoiceRoute: ApiTelnyxVoiceRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicWebChatBusiness_idRoute: ApiPublicWebChatBusiness_idRoute,
+  ApiTelnyxVoiceAiBookAppointmentRoute: ApiTelnyxVoiceAiBookAppointmentRoute,
+  ApiTelnyxVoiceAiDynamicVariablesRoute: ApiTelnyxVoiceAiDynamicVariablesRoute,
+  ApiTelnyxVoiceAiEscalateRoute: ApiTelnyxVoiceAiEscalateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -127,6 +127,34 @@ export async function generateReceptionistReply(
   }
 }
 
+/**
+ * Same grounding as buildReceptionistSystemPrompt, reshaped for Telnyx's AI
+ * Assistant dynamic variables (a flat string map resolved into a static
+ * Instructions template at call start - see the Voice AI phase-0 spike).
+ * businessUserId and callerPhone ride along only so they can be bound as
+ * hidden, non-model-supplied parameters on the book_appointment/escalate
+ * webhook tools; they're never spoken or shown to the model as content.
+ */
+export function buildVoiceDynamicVariables(
+  context: BusinessContext,
+  businessUserId: string,
+  callerPhone: string,
+): Record<string, string> {
+  return {
+    business_user_id: businessUserId,
+    caller_phone: callerPhone,
+    business_name: context.businessName,
+    service: context.service,
+    business_hours:
+      context.businessHours || "not specified - never make up hours, offer to have someone confirm",
+    escalation_rules:
+      context.escalationRules ||
+      "none configured - use your own judgment on what needs a human callback",
+    known_facts:
+      context.knownFacts || "none confirmed yet - never invent a price or promise a specific time",
+  };
+}
+
 export interface QuoteExtraction {
   quoteGiven: boolean;
   serviceType: ServiceTypeKey | "other" | null;
