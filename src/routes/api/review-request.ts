@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
+import { loadBusinessTelnyxNumber, sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
 import { checkReviewRequestQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -75,9 +75,9 @@ export const Route = createFileRoute("/api/review-request")({
           const jobStr = jobDescription ? ` on the ${jobDescription}` : "";
           const message = `Hi${nameStr}! Thanks for choosing us${jobStr} — we hope everything went smoothly! If you have a moment, an honest Google review means the world to a small business: ${reviewLink} 🙏${businessFooter()}`;
 
-          // Send via the business's own Lanavix-provisioned Vonage number
-          const vonageNumber = await loadBusinessVonageNumber(user.id);
-          if (!vonageNumber) {
+          // Send via the business's own Lanavix-provisioned Telnyx number
+          const telnyxNumber = await loadBusinessTelnyxNumber(user.id);
+          if (!telnyxNumber) {
             return Response.json(
               {
                 error:
@@ -87,9 +87,9 @@ export const Route = createFileRoute("/api/review-request")({
             );
           }
 
-          const sendResult = await sendVonageSms(vonageNumber, customerPhone, message);
+          const sendResult = await sendTelnyxSms(telnyxNumber, customerPhone, message);
           if (!sendResult.ok) {
-            console.error("[review-request] Vonage send failed", sendResult.error);
+            console.error("[review-request] Telnyx send failed", sendResult.error);
             return Response.json(
               { error: "Failed to send the review request. Please try again." },
               { status: 500 },

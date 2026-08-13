@@ -610,14 +610,14 @@ export type Database = {
           subscription_status: string | null
           subscription_tier: string | null
           team_size: string | null
+          telnyx_number: string | null
+          telnyx_number_provisioned_at: string | null
           timezone: string
           updated_at: string | null
           verification_notes: string | null
           verification_reviewed_at: string | null
           verification_status: string
           verification_submitted_at: string | null
-          vonage_number: string | null
-          vonage_number_provisioned_at: string | null
           website: string | null
           years_in_business: number | null
         }
@@ -656,14 +656,14 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           team_size?: string | null
+          telnyx_number?: string | null
+          telnyx_number_provisioned_at?: string | null
           timezone?: string
           updated_at?: string | null
           verification_notes?: string | null
           verification_reviewed_at?: string | null
           verification_status?: string
           verification_submitted_at?: string | null
-          vonage_number?: string | null
-          vonage_number_provisioned_at?: string | null
           website?: string | null
           years_in_business?: number | null
         }
@@ -702,14 +702,14 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           team_size?: string | null
+          telnyx_number?: string | null
+          telnyx_number_provisioned_at?: string | null
           timezone?: string
           updated_at?: string | null
           verification_notes?: string | null
           verification_reviewed_at?: string | null
           verification_status?: string
           verification_submitted_at?: string | null
-          vonage_number?: string | null
-          vonage_number_provisioned_at?: string | null
           website?: string | null
           years_in_business?: number | null
         }
@@ -884,7 +884,7 @@ export type Database = {
         }
         Relationships: []
       }
-      unmatched_vonage_webhooks: {
+      unmatched_telnyx_webhooks: {
         Row: {
           from_number: string
           id: string

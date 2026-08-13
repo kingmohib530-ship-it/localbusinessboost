@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
+import { loadBusinessTelnyxNumber, sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
 import type { Json } from "@/integrations/supabase/types";
 
 const AUTH_ERROR = "Authentication required. Please sign in.";
@@ -73,7 +73,7 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
 
           // Atomic claim: flips pending -> sending only if it's still
           // pending, so two concurrent calls for the same step can't both
-          // pass the status check and both fire the Vonage send.
+          // pass the status check and both fire the Telnyx send.
           const { data: step, error: claimErr } = await supabaseAdmin
             .from("lead_sequences")
             .update({ status: "sending" })
@@ -104,8 +104,8 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
                 { status: 400 },
               );
             }
-            const vonageNumber = await loadBusinessVonageNumber(user.id);
-            if (!vonageNumber) {
+            const telnyxNumber = await loadBusinessTelnyxNumber(user.id);
+            if (!telnyxNumber) {
               return Response.json(
                 {
                   error: "Set up your phone number in Receptionist Setup before sending outreach.",
@@ -114,7 +114,7 @@ export const Route = createFileRoute("/api/lead-generator/execute-step")({
               );
             }
 
-            const sendResult = await sendVonageSms(vonageNumber, lead.phone, step.message_template);
+            const sendResult = await sendTelnyxSms(telnyxNumber, lead.phone, step.message_template);
             if (!sendResult.ok) {
               sendError = sendResult.error;
             }

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { verifyVonageWebhookSignature } from "@/lib/vonage.server";
-import { findBusinessByVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
+import { verifyTelnyxWebhookSignature } from "@/lib/telnyx.server";
+import { findBusinessByTelnyxNumber, sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 import {
@@ -10,6 +10,7 @@ import {
   generateReceptionistReply,
   detectBooking,
   deriveUrgency,
+  type BusinessProfile,
 } from "@/lib/aiReceptionist.server";
 import { cancelActiveQuoteFollowUp, maybeStartQuoteFollowUp } from "@/lib/quoteFollowUps.server";
 
@@ -17,24 +18,45 @@ function businessFooter(): string {
   return "\n\nManaged by Lanavix";
 }
 
-// Unlike Twilio/Plivo, Vonage's inbound message webhook has no
-// synchronous XML/JSON reply-in-response mechanism - it just wants a bare
-// 2xx acknowledgment (anything else triggers Vonage's 24h retry policy),
-// and any reply is a separate outbound Messages API call. That converges
-// this route's shape with voice-answer.ts's: build the message, send it,
-// then acknowledge, rather than returning the reply in the response body.
+// Telnyx's webhook has no synchronous reply-in-response mechanism - it
+// just wants a bare 2xx acknowledgment (anything else triggers Telnyx's
+// retry policy), and any reply is a separate outbound Messages API call.
 const ACK = () => new Response(null, { status: 200 });
 
-export const Route = createFileRoute("/api/vonage/sms-inbound")({
+/**
+ * Webhook for the one Messaging Profile every provisioned number is
+ * assigned to. Carries both inbound messages (message.received) and
+ * delivery-status events (message.sent, message.finalized, etc.) on the
+ * same URL, distinguished by event_type - only message.received does
+ * real work.
+ *
+ * The inbound payload shape is nested, not flat: `from` is an object and
+ * `to` is an array of objects (a message can technically have multiple
+ * recipients) - genuinely different from the query-param/flat-body shape
+ * every other provider handled in this app used.
+ */
+export const Route = createFileRoute("/api/telnyx/sms-inbound")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
           const rawBody = await request.text();
-          const params = JSON.parse(rawBody || "{}");
-          const from = params.msisdn || "";
-          const to = params.to || "";
-          const messageBody = params.text || "";
+          const isValid = await verifyTelnyxWebhookSignature(request, rawBody);
+          if (!isValid) {
+            console.warn("[telnyx/sms-inbound] invalid signature");
+            return new Response("Forbidden", { status: 403 });
+          }
+
+          const body = JSON.parse(rawBody || "{}");
+          const eventType: string | undefined = body?.data?.event_type;
+          if (eventType !== "message.received") {
+            return ACK();
+          }
+
+          const payload = body?.data?.payload || {};
+          const from: string = payload.from?.phone_number || "";
+          const to: string = payload.to?.[0]?.phone_number || "";
+          const messageBody: string = payload.text || "";
 
           // Cap by caller phone before any lookup or write, since each
           // inbound message triggers a billed Anthropic call (the
@@ -42,32 +64,26 @@ export const Route = createFileRoute("/api/vonage/sms-inbound")({
           // below regardless of whether "to" matches a real business.
           const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_anon_rate_limit", {
             p_ip_address: from,
-            p_route: "vonage-sms-inbound",
+            p_route: "telnyx-sms-inbound",
             p_max_requests: 20,
             p_window_seconds: 3600,
           });
           if (rlErr) {
-            console.error("[sms-inbound] rate limit check failed");
+            console.error("[telnyx/sms-inbound] rate limit check failed");
             return ACK();
           }
           if (!allowed) {
             return ACK();
           }
 
-          const business = await findBusinessByVonageNumber(to);
+          const business = await findBusinessByTelnyxNumber(to);
           if (!business) {
-            await supabaseAdmin.from("unmatched_vonage_webhooks").insert({
+            await supabaseAdmin.from("unmatched_telnyx_webhooks").insert({
               route: "sms-inbound",
               to_number: to,
               from_number: from,
             });
             return ACK();
-          }
-
-          const isValid = await verifyVonageWebhookSignature(request, rawBody);
-          if (!isValid) {
-            console.warn("[sms-inbound] invalid Vonage signature");
-            return new Response("Forbidden", { status: 403 });
           }
 
           // Find the most recent sms-channel conversation with this
@@ -122,7 +138,7 @@ export const Route = createFileRoute("/api/vonage/sms-inbound")({
               checkSmsHourlyRateLimit(conversation.user_id),
             ]);
             if (!quota.allowed || !hourlyOk.allowed) {
-              await sendVonageSms(
+              await sendTelnyxSms(
                 to,
                 from,
                 `Thanks for your message! We'll get back to you shortly.${businessFooter()}`,
@@ -145,7 +161,7 @@ export const Route = createFileRoute("/api/vonage/sms-inbound")({
           if (apiKey && conversation.user_id) {
             const context = await loadBusinessContext(
               conversation.user_id,
-              (conversation as any).profiles ?? null,
+              (conversation as unknown as { profiles: BusinessProfile | null }).profiles ?? null,
             );
             const systemPrompt = buildReceptionistSystemPrompt(context, "sms");
             const reply = await generateReceptionistReply(
@@ -217,7 +233,7 @@ export const Route = createFileRoute("/api/vonage/sms-inbound")({
                   .single();
 
                 if (apptErr) {
-                  console.error("[sms-inbound] failed to create appointment", apptErr);
+                  console.error("[telnyx/sms-inbound] failed to create appointment", apptErr);
                 } else if (appointment && savedReply) {
                   await supabaseAdmin
                     .from("conversation_messages")
@@ -274,18 +290,18 @@ export const Route = createFileRoute("/api/vonage/sms-inbound")({
                 }
               }
             } catch (err) {
-              console.error("[sms-inbound] booking/quote detection error", err);
+              console.error("[telnyx/sms-inbound] booking/quote detection error", err);
             }
           }
 
-          const sendResult = await sendVonageSms(to, from, `${aiReply}${businessFooter()}`);
+          const sendResult = await sendTelnyxSms(to, from, `${aiReply}${businessFooter()}`);
           if (!sendResult.ok) {
-            console.error("[sms-inbound] failed to send AI reply", sendResult.error);
+            console.error("[telnyx/sms-inbound] failed to send AI reply", sendResult.error);
           }
 
           return ACK();
         } catch (err) {
-          console.error("[sms-inbound]", err);
+          console.error("[telnyx/sms-inbound]", err);
           return ACK();
         }
       },

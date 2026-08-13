@@ -62,15 +62,15 @@ export const Route = createFileRoute("/api/review-response")({
             return Response.json({ error: "Review text is required" }, { status: 400 });
           }
 
-          // The AI receptionist's Vonage number is the real number customers
+          // The AI receptionist's Telnyx number is the real number customers
           // already text/call this business on, so it's the correct contact
           // to offer in a negative-review response - never a placeholder.
           const { data: profile } = await supabaseAdmin
             .from("profiles")
-            .select("vonage_number")
+            .select("telnyx_number")
             .eq("id", user.id)
             .maybeSingle();
-          const contactPhone = formatPhoneForDisplay(profile?.vonage_number);
+          const contactPhone = formatPhoneForDisplay(profile?.telnyx_number);
 
           // ===== Basic input hardening =====
           const safeReviewText = String(reviewText).slice(0, 4000);

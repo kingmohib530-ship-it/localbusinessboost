@@ -40,10 +40,8 @@ import { Route as ApiAppointmentsRouteImport } from './routes/api/appointments'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
-import { Route as ApiVonageVoiceEventRouteImport } from './routes/api/vonage/voice-event'
-import { Route as ApiVonageVoiceAnswerRouteImport } from './routes/api/vonage/voice-answer'
-import { Route as ApiVonageSmsStatusRouteImport } from './routes/api/vonage/sms-status'
-import { Route as ApiVonageSmsInboundRouteImport } from './routes/api/vonage/sms-inbound'
+import { Route as ApiTelnyxVoiceRouteImport } from './routes/api/telnyx/voice'
+import { Route as ApiTelnyxSmsInboundRouteImport } from './routes/api/telnyx/sms-inbound'
 import { Route as ApiReviewRequestsIdRouteImport } from './routes/api/review-requests/$id'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
@@ -228,24 +226,14 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const ApiVonageVoiceEventRoute = ApiVonageVoiceEventRouteImport.update({
-  id: '/api/vonage/voice-event',
-  path: '/api/vonage/voice-event',
+const ApiTelnyxVoiceRoute = ApiTelnyxVoiceRouteImport.update({
+  id: '/api/telnyx/voice',
+  path: '/api/telnyx/voice',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiVonageVoiceAnswerRoute = ApiVonageVoiceAnswerRouteImport.update({
-  id: '/api/vonage/voice-answer',
-  path: '/api/vonage/voice-answer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiVonageSmsStatusRoute = ApiVonageSmsStatusRouteImport.update({
-  id: '/api/vonage/sms-status',
-  path: '/api/vonage/sms-status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiVonageSmsInboundRoute = ApiVonageSmsInboundRouteImport.update({
-  id: '/api/vonage/sms-inbound',
-  path: '/api/vonage/sms-inbound',
+const ApiTelnyxSmsInboundRoute = ApiTelnyxSmsInboundRouteImport.update({
+  id: '/api/telnyx/sms-inbound',
+  path: '/api/telnyx/sms-inbound',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiReviewRequestsIdRoute = ApiReviewRequestsIdRouteImport.update({
@@ -467,10 +455,8 @@ export interface FileRoutesByFullPath {
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
-  '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
-  '/api/vonage/sms-status': typeof ApiVonageSmsStatusRoute
-  '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
-  '/api/vonage/voice-event': typeof ApiVonageVoiceEventRoute
+  '/api/telnyx/sms-inbound': typeof ApiTelnyxSmsInboundRoute
+  '/api/telnyx/voice': typeof ApiTelnyxVoiceRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -531,10 +517,8 @@ export interface FileRoutesByTo {
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
-  '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
-  '/api/vonage/sms-status': typeof ApiVonageSmsStatusRoute
-  '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
-  '/api/vonage/voice-event': typeof ApiVonageVoiceEventRoute
+  '/api/telnyx/sms-inbound': typeof ApiTelnyxSmsInboundRoute
+  '/api/telnyx/voice': typeof ApiTelnyxVoiceRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -598,10 +582,8 @@ export interface FileRoutesById {
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/review-requests/$id': typeof ApiReviewRequestsIdRoute
-  '/api/vonage/sms-inbound': typeof ApiVonageSmsInboundRoute
-  '/api/vonage/sms-status': typeof ApiVonageSmsStatusRoute
-  '/api/vonage/voice-answer': typeof ApiVonageVoiceAnswerRoute
-  '/api/vonage/voice-event': typeof ApiVonageVoiceEventRoute
+  '/api/telnyx/sms-inbound': typeof ApiTelnyxSmsInboundRoute
+  '/api/telnyx/voice': typeof ApiTelnyxVoiceRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -665,10 +647,8 @@ export interface FileRouteTypes {
     | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/review-requests/$id'
-    | '/api/vonage/sms-inbound'
-    | '/api/vonage/sms-status'
-    | '/api/vonage/voice-answer'
-    | '/api/vonage/voice-event'
+    | '/api/telnyx/sms-inbound'
+    | '/api/telnyx/voice'
     | '/app/'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -729,10 +709,8 @@ export interface FileRouteTypes {
     | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/review-requests/$id'
-    | '/api/vonage/sms-inbound'
-    | '/api/vonage/sms-status'
-    | '/api/vonage/voice-answer'
-    | '/api/vonage/voice-event'
+    | '/api/telnyx/sms-inbound'
+    | '/api/telnyx/voice'
     | '/app'
     | '/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -795,10 +773,8 @@ export interface FileRouteTypes {
     | '/api/lead-generator/research'
     | '/api/public/contact'
     | '/api/review-requests/$id'
-    | '/api/vonage/sms-inbound'
-    | '/api/vonage/sms-status'
-    | '/api/vonage/voice-answer'
-    | '/api/vonage/voice-event'
+    | '/api/telnyx/sms-inbound'
+    | '/api/telnyx/voice'
     | '/_authenticated/app/'
     | '/_authenticated/app/admin/verification-review'
     | '/api/public/payments/webhook'
@@ -848,10 +824,8 @@ export interface RootRouteChildren {
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiReviewRequestsIdRoute: typeof ApiReviewRequestsIdRoute
-  ApiVonageSmsInboundRoute: typeof ApiVonageSmsInboundRoute
-  ApiVonageSmsStatusRoute: typeof ApiVonageSmsStatusRoute
-  ApiVonageVoiceAnswerRoute: typeof ApiVonageVoiceAnswerRoute
-  ApiVonageVoiceEventRoute: typeof ApiVonageVoiceEventRoute
+  ApiTelnyxSmsInboundRoute: typeof ApiTelnyxSmsInboundRoute
+  ApiTelnyxVoiceRoute: typeof ApiTelnyxVoiceRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicWebChatBusiness_idRoute: typeof ApiPublicWebChatBusiness_idRoute
 }
@@ -1075,32 +1049,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/api/vonage/voice-event': {
-      id: '/api/vonage/voice-event'
-      path: '/api/vonage/voice-event'
-      fullPath: '/api/vonage/voice-event'
-      preLoaderRoute: typeof ApiVonageVoiceEventRouteImport
+    '/api/telnyx/voice': {
+      id: '/api/telnyx/voice'
+      path: '/api/telnyx/voice'
+      fullPath: '/api/telnyx/voice'
+      preLoaderRoute: typeof ApiTelnyxVoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/vonage/voice-answer': {
-      id: '/api/vonage/voice-answer'
-      path: '/api/vonage/voice-answer'
-      fullPath: '/api/vonage/voice-answer'
-      preLoaderRoute: typeof ApiVonageVoiceAnswerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/vonage/sms-status': {
-      id: '/api/vonage/sms-status'
-      path: '/api/vonage/sms-status'
-      fullPath: '/api/vonage/sms-status'
-      preLoaderRoute: typeof ApiVonageSmsStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/vonage/sms-inbound': {
-      id: '/api/vonage/sms-inbound'
-      path: '/api/vonage/sms-inbound'
-      fullPath: '/api/vonage/sms-inbound'
-      preLoaderRoute: typeof ApiVonageSmsInboundRouteImport
+    '/api/telnyx/sms-inbound': {
+      id: '/api/telnyx/sms-inbound'
+      path: '/api/telnyx/sms-inbound'
+      fullPath: '/api/telnyx/sms-inbound'
+      preLoaderRoute: typeof ApiTelnyxSmsInboundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/review-requests/$id': {
@@ -1433,10 +1393,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiReviewRequestsIdRoute: ApiReviewRequestsIdRoute,
-  ApiVonageSmsInboundRoute: ApiVonageSmsInboundRoute,
-  ApiVonageSmsStatusRoute: ApiVonageSmsStatusRoute,
-  ApiVonageVoiceAnswerRoute: ApiVonageVoiceAnswerRoute,
-  ApiVonageVoiceEventRoute: ApiVonageVoiceEventRoute,
+  ApiTelnyxSmsInboundRoute: ApiTelnyxSmsInboundRoute,
+  ApiTelnyxVoiceRoute: ApiTelnyxVoiceRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicWebChatBusiness_idRoute: ApiPublicWebChatBusiness_idRoute,
 }

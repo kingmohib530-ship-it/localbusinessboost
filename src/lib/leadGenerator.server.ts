@@ -271,29 +271,29 @@ export async function assessWebsite(url: string | null): Promise<WebsiteAssessme
 }
 
 /**
- * Verifies a phone number via Vonage's Number Insight (Lookup) API — a
- * real carrier-level check that the number is a valid, assignable line,
- * not just well-formed. Returns false (never throws) on any failure so a
- * Vonage outage degrades to "treat as unverified" rather than crashing
- * the whole research run. Uses Lanavix's platform-level account
- * credentials - the same VONAGE_API_KEY/VONAGE_API_SECRET the Numbers API
- * provisioning flow uses, not a per-business credential.
+ * Verifies a phone number via Telnyx's Number Lookup API — a real
+ * carrier-level check that the number is a valid, assignable line, not
+ * just well-formed. Returns false (never throws) on any failure so a
+ * Telnyx outage degrades to "treat as unverified" rather than crashing
+ * the whole research run. Uses Lanavix's platform-level TELNYX_API_KEY -
+ * the same credential the Numbers API provisioning flow uses, not a
+ * per-business credential.
+ *
+ * A successful lookup means Telnyx could resolve carrier data for the
+ * number at all - the exact shape of an "invalid number" response isn't
+ * confirmed against real traffic yet, so this treats any non-2xx or a
+ * response with no phone_number back as unverified rather than guessing
+ * at a specific error-field name.
  */
-export async function verifyPhoneNumber(
-  vonageApiKey: string,
-  vonageApiSecret: string,
-  phone: string,
-): Promise<boolean> {
+export async function verifyPhoneNumber(telnyxApiKey: string, phone: string): Promise<boolean> {
   try {
-    const params = new URLSearchParams({
-      api_key: vonageApiKey,
-      api_secret: vonageApiSecret,
-      number: phone,
-    });
-    const res = await fetch(`https://api.nexmo.com/ni/standard/json?${params.toString()}`);
+    const res = await fetch(
+      `https://api.telnyx.com/v2/number_lookup/${encodeURIComponent(phone)}?type=carrier`,
+      { headers: { Authorization: `Bearer ${telnyxApiKey}` } },
+    );
     if (!res.ok) return false;
     const data = await res.json();
-    return data.status === 0 && data.valid_number === "valid";
+    return !!data?.data?.phone_number;
   } catch {
     return false;
   }

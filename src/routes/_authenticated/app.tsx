@@ -70,13 +70,36 @@ function AppShell() {
           hours, not a landing page, so the motion stays as a faint depth
           cue behind the glass panels rather than something to look at. */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="hd-mesh-blob hd-mesh-blob-a" style={{ top: "-15%", left: "-10%", width: 520, height: 520, background: "var(--hd-primary)", opacity: 0.12 }} />
-        <div className="hd-mesh-blob hd-mesh-blob-b" style={{ bottom: "-20%", right: "-10%", width: 480, height: 480, background: "var(--hd-primary-2)", opacity: 0.08 }} />
+        <div
+          className="hd-mesh-blob hd-mesh-blob-a"
+          style={{
+            top: "-15%",
+            left: "-10%",
+            width: 520,
+            height: 520,
+            background: "var(--hd-primary)",
+            opacity: 0.12,
+          }}
+        />
+        <div
+          className="hd-mesh-blob hd-mesh-blob-b"
+          style={{
+            bottom: "-20%",
+            right: "-10%",
+            width: 480,
+            height: 480,
+            background: "var(--hd-primary-2)",
+            opacity: 0.08,
+          }}
+        />
       </div>
 
       <aside className="relative z-10 w-64 border-r border-[var(--hd-border)] flex flex-col bg-[var(--hd-glass)] backdrop-blur-xl">
-        <div className="h-16 px-5 flex items-center border-b border-[var(--hd-border)]">
-          <div className="font-display font-bold tracking-tight text-lg text-[var(--hd-fg)]">Lanavix</div>
+        <div className="h-16 px-5 flex items-center gap-2 border-b border-[var(--hd-border)]">
+          <img src="/logo-white.png" alt="" className="h-6 w-6" />
+          <div className="font-display font-bold tracking-tight text-lg text-[var(--hd-fg)]">
+            Lanavix
+          </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {nav.map((n) => {

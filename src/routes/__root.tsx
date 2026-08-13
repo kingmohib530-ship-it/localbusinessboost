@@ -1,4 +1,10 @@
-import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+  HeadContent,
+  Scripts,
+} from "@tanstack/react-router";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { Toaster } from "@/components/ui/sonner";
@@ -33,14 +39,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Lanavix — AI Workforce for Local Contractors" },
-      { name: "description", content: "AI workforce for local contractors. Texts back missed calls in 60s, automates reviews, and finds leads — built for HVAC, plumbing, roofing & more." },
+      {
+        name: "description",
+        content:
+          "AI workforce for local contractors. Texts back missed calls in 60s, automates reviews, and finds leads — built for HVAC, plumbing, roofing & more.",
+      },
       { name: "author", content: "Lanavix" },
       { name: "robots", content: "index, follow" },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://lanavix.com" },
       { property: "og:site_name", content: "Lanavix" },
       { property: "og:title", content: "Lanavix — AI Workforce for Local Contractors" },
-      { property: "og:description", content: "Stop losing $2,000/week to missed calls. Texts back in 60s, automates reviews, finds local leads — all on autopilot." },
+      {
+        property: "og:description",
+        content:
+          "Stop losing $2,000/week to missed calls. Texts back in 60s, automates reviews, finds local leads — all on autopilot.",
+      },
       { property: "og:image", content: "https://lanavix.com/og-image.png.svg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
@@ -49,7 +63,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@lanavix" },
       { name: "twitter:url", content: "https://lanavix.com" },
       { name: "twitter:title", content: "Lanavix — AI Workforce for Local Contractors" },
-      { name: "twitter:description", content: "Stop losing $2,000/week to missed calls. Texts back in 60s, automates reviews, finds local leads — all on autopilot." },
+      {
+        name: "twitter:description",
+        content:
+          "Stop losing $2,000/week to missed calls. Texts back in 60s, automates reviews, finds local leads — all on autopilot.",
+      },
       { name: "twitter:image", content: "https://lanavix.com/og-image.png.svg" },
       { name: "theme-color", content: "#2563EB" },
     ],
@@ -65,6 +83,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         type: "font/woff2",
         crossOrigin: "anonymous",
       },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,

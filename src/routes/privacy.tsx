@@ -34,7 +34,7 @@ const SECTIONS = [
   },
   {
     title: "5. Data Sharing",
-    body: `We do not sell your personal data. We share data only with service providers that help us operate the platform (Supabase for database, Vonage for SMS, Anthropic for AI, Stripe for payments). All providers are contractually required to protect your data.`,
+    body: `We do not sell your personal data. We share data only with service providers that help us operate the platform (Supabase for database, Telnyx for SMS, Anthropic for AI, Stripe for payments). All providers are contractually required to protect your data.`,
   },
   {
     title: "6. Data Retention",

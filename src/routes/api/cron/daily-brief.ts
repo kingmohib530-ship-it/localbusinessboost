@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { generateDailyBriefCards, type CoachCard } from "@/lib/coach.server";
 import { sendExternalEmail } from "@/lib/email.server";
-import { loadBusinessVonageNumber, sendVonageSms } from "@/lib/vonageProvisioning.server";
+import { loadBusinessTelnyxNumber, sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
 import { checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 // Same constant-time comparison approach as every other cron in this
@@ -189,14 +189,14 @@ export const Route = createFileRoute("/api/cron/daily-brief")({
             if (channel === "sms" || channel === "both") {
               anyAttempted = true;
               if (profile.owner_phone) {
-                const [vonageNumber, hourlyOk] = await Promise.all([
-                  loadBusinessVonageNumber(profile.id),
+                const [telnyxNumber, hourlyOk] = await Promise.all([
+                  loadBusinessTelnyxNumber(profile.id),
                   checkSmsHourlyRateLimit(profile.id),
                 ]);
-                if (vonageNumber && hourlyOk.allowed) {
+                if (telnyxNumber && hourlyOk.allowed) {
                   try {
-                    const sendResult = await sendVonageSms(
-                      vonageNumber,
+                    const sendResult = await sendTelnyxSms(
+                      telnyxNumber,
                       profile.owner_phone,
                       buildSmsTeaser(cards),
                     );
@@ -204,7 +204,7 @@ export const Route = createFileRoute("/api/cron/daily-brief")({
                       anySent = true;
                     } else {
                       console.error(
-                        "[cron/daily-brief] Vonage send failed",
+                        "[cron/daily-brief] Telnyx send failed",
                         profile.id,
                         sendResult.error,
                       );
