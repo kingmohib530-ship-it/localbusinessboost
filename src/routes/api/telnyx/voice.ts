@@ -5,10 +5,18 @@ import {
   findBusinessByTelnyxNumber,
   sendTelnyxSms,
   hangupTelnyxCall,
+  answerCallWithAiAssistant,
 } from "@/lib/telnyxProvisioning.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 const ACK = () => new Response(null, { status: 200 });
+
+// PHASE 0 SPIKE: one hardcoded test business/number gets routed to the
+// Telnyx AI Assistant instead of the text-back flow below - see the Voice
+// AI investigation. Not a real per-business toggle; remove once Phase 1
+// replaces this with a real profiles column.
+const PHASE_0_VOICE_AI_TEST_USER_ID = "c9af73d5-e5c6-43de-8a5f-f631aca92726";
+const PHASE_0_VOICE_AI_ASSISTANT_ID = "assistant-dadbacf1-334d-411d-8227-bd05f9e9c354";
 
 /**
  * Telnyx Call Control webhook for the one Connection every provisioned
@@ -78,6 +86,23 @@ export const Route = createFileRoute("/api/telnyx/voice")({
               from_number: callerPhone,
             });
             await endCall();
+            return ACK();
+          }
+
+          // PHASE 0 SPIKE: bypass text-back entirely for the one hardcoded
+          // test business - answer the call and hand it straight to the
+          // Assistant in one command instead.
+          if (business.userId === PHASE_0_VOICE_AI_TEST_USER_ID) {
+            if (callControlId) {
+              const result = await answerCallWithAiAssistant(
+                callControlId,
+                PHASE_0_VOICE_AI_ASSISTANT_ID,
+              );
+              if (!result.ok) {
+                console.error("[telnyx/voice] phase-0 AI assistant answer failed", result.error);
+                await endCall();
+              }
+            }
             return ACK();
           }
 

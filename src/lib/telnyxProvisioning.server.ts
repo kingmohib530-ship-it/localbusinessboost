@@ -331,3 +331,28 @@ export async function hangupTelnyxCall(callControlId: string): Promise<void> {
     );
   }
 }
+
+/**
+ * PHASE 0 SPIKE - answers a call and hands it straight to a Telnyx AI
+ * Assistant in one command, instead of the text-back flow's answer-less
+ * hangup. Confirmed against Telnyx's own API reference: assigning a
+ * number to an Assistant in the dashboard does not override an existing
+ * Call Control Connection's webhook, so this has to be triggered
+ * explicitly from inside call.initiated - see voice.ts.
+ */
+export async function answerCallWithAiAssistant(
+  callControlId: string,
+  assistantId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await fetch(`${TELNYX_API_BASE}/calls/${callControlId}/actions/answer`, {
+    method: "POST",
+    headers: { Authorization: authHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify({ assistant: { id: assistantId } }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    console.error("[telnyxProvisioning] answering with AI assistant failed", res.status, errText);
+    return { ok: false, error: errText || `HTTP ${res.status}` };
+  }
+  return { ok: true };
+}
