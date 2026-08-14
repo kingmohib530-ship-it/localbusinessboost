@@ -27,12 +27,6 @@ import { loadBusinessContext, buildVoiceDynamicVariables } from "@/lib/aiRecepti
  * pass those two fields as tool parameters.
  */
 
-const ACK_FALLBACK = () =>
-  new Response(JSON.stringify({ dynamic_variables: FALLBACK_VARIABLES }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
-
 // Used when the webhook fails closed for any reason (bad signature, no
 // matching business, DB error) - the call must still get *some* Instructions
 // content rather than an empty/broken template.
@@ -68,12 +62,31 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // PHASE 0: elapsed-time logging - this webhook has a hard budget
+        // (Telnyx falls back to defaults if it's too slow), and until now
+        // nothing here actually measured how long it takes, only whether
+        // it ran at all. Every return path logs elapsed_ms so real
+        // latency numbers exist instead of inferring from request
+        // timestamps alone.
+        const startedAt = Date.now();
+        const ackFallback = (reason: string) => {
+          console.log(
+            `[telnyx/voice-ai/dynamic-variables] returning fallback (${reason})`,
+            "elapsed_ms:",
+            Date.now() - startedAt,
+          );
+          return new Response(JSON.stringify({ dynamic_variables: FALLBACK_VARIABLES }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        };
+
         try {
           const rawBody = await request.text();
           const isValid = await verifyTelnyxWebhookSignature(request, rawBody);
           if (!isValid) {
             console.warn("[telnyx/voice-ai/dynamic-variables] invalid signature");
-            return ACK_FALLBACK();
+            return ackFallback("invalid signature");
           }
 
           let body: Record<string, unknown> = {};
@@ -81,7 +94,7 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
             body = JSON.parse(rawBody || "{}");
           } catch {
             console.error("[telnyx/voice-ai/dynamic-variables] non-JSON body", rawBody);
-            return ACK_FALLBACK();
+            return ackFallback("non-JSON body");
           }
 
           // PHASE 0: always log the raw payload - this is the actual
@@ -114,7 +127,7 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
             console.warn(
               "[telnyx/voice-ai/dynamic-variables] could not find a called number in the payload",
             );
-            return ACK_FALLBACK();
+            return ackFallback("no called number in payload");
           }
 
           // Single consolidated query rather than the SMS path's
@@ -129,7 +142,7 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
 
           if (error) {
             console.error("[telnyx/voice-ai/dynamic-variables] profile lookup failed", error);
-            return ACK_FALLBACK();
+            return ackFallback("profile lookup failed");
           }
           if (!profile) {
             console.warn("[telnyx/voice-ai/dynamic-variables] no business found for", calledNumber);
@@ -147,7 +160,7 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
                 () => {},
                 () => {},
               );
-            return ACK_FALLBACK();
+            return ackFallback("no business found");
           }
 
           const context = await loadBusinessContext(profile.id, profile);
@@ -185,13 +198,18 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
             );
           }
 
+          console.log(
+            "[telnyx/voice-ai/dynamic-variables] returning real variables",
+            "elapsed_ms:",
+            Date.now() - startedAt,
+          );
           return new Response(JSON.stringify({ dynamic_variables: variables }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
           });
         } catch (err) {
           console.error("[telnyx/voice-ai/dynamic-variables]", err);
-          return ACK_FALLBACK();
+          return ackFallback("unhandled error");
         }
       },
     },
