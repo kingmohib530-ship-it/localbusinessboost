@@ -13,13 +13,18 @@ import { loadBusinessContext, buildVoiceDynamicVariables } from "@/lib/aiRecepti
  * branch below returns *something* rather than ever letting the request
  * hang or throw.
  *
- * UNCONFIRMED (this is the actual point of the spike): the exact request
- * body shape. Telnyx's own docs describe the built-in variables available
- * (telnyx_agent_target = the called number, telnyx_end_user_target = the
- * caller's number, call_control_id) but not the literal JSON envelope this
- * webhook receives them in. Every plausible field path is tried below and
- * the full raw body is always logged so the first real test call tells us
- * definitively what to keep and what to delete.
+ * CONFIRMED against a real call (logged raw payload from the first
+ * successful test): event_type "assistant.initialization", with the
+ * called/caller numbers and call_control_id at data.payload.{to,from,
+ * call_control_id} - that's the path pickString() below leads with now.
+ * The other paths stay as fallbacks in case a different event type or
+ * envelope shows up later, not because they're expected to hit.
+ *
+ * This also persists {business_user_id, caller_phone} into
+ * voice_ai_call_context, keyed by call_control_id - the book_appointment/
+ * escalate tool webhooks read it back via the x-telnyx-call-control-id
+ * header instead of requiring the model (or a confusing dashboard UI) to
+ * pass those two fields as tool parameters.
  */
 
 const ACK_FALLBACK = () =>
@@ -86,20 +91,23 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
           console.log("[telnyx/voice-ai/dynamic-variables] raw payload", JSON.stringify(body));
 
           const calledNumber = pickString(body, [
+            ["data", "payload", "to"],
             ["telnyx_agent_target"],
             ["agent_target"],
             ["to"],
-            ["data", "payload", "to"],
             ["params", "telnyx_agent_target"],
-            ["params", "_meta", "telnyx_agent_target"],
           ]);
           const callerPhone = pickString(body, [
+            ["data", "payload", "from"],
             ["telnyx_end_user_target"],
             ["end_user_target"],
             ["from"],
-            ["data", "payload", "from"],
             ["params", "telnyx_end_user_target"],
-            ["params", "_meta", "telnyx_end_user_target"],
+          ]);
+          const callControlId = pickString(body, [
+            ["data", "payload", "call_control_id"],
+            ["call_control_id"],
+            ["params", "call_control_id"],
           ]);
 
           if (!calledNumber) {
@@ -144,6 +152,38 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/dynamic-variables")({
 
           const context = await loadBusinessContext(profile.id, profile);
           const variables = buildVoiceDynamicVariables(context, profile.id, callerPhone);
+
+          // Lets book_appointment/escalate look this business up by
+          // call_control_id (from the x-telnyx-call-control-id header)
+          // instead of needing it as a model-supplied or dashboard-
+          // templated tool parameter. Best-effort: a failed insert here
+          // degrades to those tools getting a "missing business context"
+          // error rather than breaking the call already in progress, so
+          // this isn't allowed to block or fail the response.
+          if (callControlId) {
+            supabaseAdmin
+              .from("voice_ai_call_context")
+              .upsert(
+                {
+                  call_control_id: callControlId,
+                  business_user_id: profile.id,
+                  caller_phone: callerPhone,
+                },
+                { onConflict: "call_control_id" },
+              )
+              .then(
+                () => {},
+                (err) =>
+                  console.error(
+                    "[telnyx/voice-ai/dynamic-variables] call context save failed",
+                    err,
+                  ),
+              );
+          } else {
+            console.warn(
+              "[telnyx/voice-ai/dynamic-variables] no call_control_id found to save context under",
+            );
+          }
 
           return new Response(JSON.stringify({ dynamic_variables: variables }), {
             status: 200,

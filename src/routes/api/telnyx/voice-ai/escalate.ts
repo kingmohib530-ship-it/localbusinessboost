@@ -4,11 +4,18 @@ import { verifyTelnyxWebhookSignature } from "@/lib/telnyx.server";
 import { sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
 
 /**
- * PHASE 0 SPIKE - not wired to any real call yet. Telnyx AI Assistant
- * webhook tool: `escalate`, called when the AI can't handle something
- * itself (per the business's own free-text escalation_rules). Notifies
- * the owner by SMS - reuses profile.owner_phone and sendTelnyxSms, both
- * already in production for other flows.
+ * PHASE 0 SPIKE - Telnyx AI Assistant webhook tool: `escalate`, called
+ * when the AI can't handle something itself (per the business's own
+ * free-text escalation_rules). Notifies the owner by SMS - reuses
+ * profile.owner_phone and sendTelnyxSms, both already in production for
+ * other flows.
+ *
+ * Only real model-supplied param is `reason`. business_user_id and
+ * caller_phone come from voice_ai_call_context, looked up by the
+ * call_control_id Telnyx sends in the x-telnyx-call-control-id request
+ * header - same mechanism as book-appointment.ts, see that file's header
+ * comment for why (the dashboard has no clear way to bind a fixed value
+ * into a Body Parameter, so this sidesteps needing one at all).
  *
  * Deliberately does not write a `conversations` row: conversations.channel
  * only allows 'sms' | 'web_chat' today (checked against the live DB
@@ -43,22 +50,48 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/escalate")({
             return ACK({ status: "error", message: "Could not read the request." }, 400);
           }
 
-          // PHASE 0: always log the raw payload - remove once the real
-          // shape is confirmed.
-          console.log("[telnyx/voice-ai/escalate] raw payload", JSON.stringify(body));
+          // PHASE 0: always log the raw payload and the call-control header -
+          // remove once the real shape is confirmed.
+          const callControlIdHeader = request.headers.get("x-telnyx-call-control-id");
+          console.log(
+            "[telnyx/voice-ai/escalate] raw payload",
+            JSON.stringify(body),
+            "x-telnyx-call-control-id:",
+            callControlIdHeader,
+          );
 
-          const businessUserId =
-            typeof body.business_user_id === "string" ? body.business_user_id : "";
-          const callerPhone = typeof body.caller_phone === "string" ? body.caller_phone : "";
           const reason =
             typeof body.reason === "string" && body.reason.trim()
               ? body.reason.trim()
               : "no reason given";
 
-          if (!businessUserId) {
-            console.error("[telnyx/voice-ai/escalate] missing business_user_id");
+          // Fall back to a call_control_id in the body defensively, same
+          // reasoning as book-appointment.ts.
+          const callControlId =
+            callControlIdHeader ||
+            (typeof body.call_control_id === "string" ? body.call_control_id : "");
+          if (!callControlId) {
+            console.error("[telnyx/voice-ai/escalate] no call_control_id in header or body");
+            return ACK({ status: "error", message: "Missing call context." }, 400);
+          }
+
+          const { data: callContext, error: contextError } = await supabaseAdmin
+            .from("voice_ai_call_context")
+            .select("business_user_id, caller_phone")
+            .eq("call_control_id", callControlId)
+            .maybeSingle();
+
+          if (contextError || !callContext) {
+            console.error(
+              "[telnyx/voice-ai/escalate] no call context found for",
+              callControlId,
+              contextError,
+            );
             return ACK({ status: "error", message: "Missing business context." }, 400);
           }
+
+          const businessUserId = callContext.business_user_id;
+          const callerPhone = callContext.caller_phone || "";
 
           const { data: profile, error } = await supabaseAdmin
             .from("profiles")

@@ -4,18 +4,19 @@ import { verifyTelnyxWebhookSignature } from "@/lib/telnyx.server";
 import { ESTIMATED_VALUE_MAP, SERVICE_TYPE_KEYS, type ServiceTypeKey } from "@/lib/serviceTypes";
 
 /**
- * PHASE 0 SPIKE - not wired to any real call yet. Telnyx AI Assistant
- * webhook tool: `book_appointment`. Two of its parameters
- * (business_user_id, caller_phone) are configured in the dashboard as
- * hidden, dynamic-variable-bound values (never shown to or filled in by
- * the model) - see buildVoiceDynamicVariables. The rest are the fields the
- * model actually gathered from the caller.
+ * PHASE 0 SPIKE - Telnyx AI Assistant webhook tool: `book_appointment`.
+ * Only four params are defined on the Tool in the dashboard - all
+ * model-supplied, nothing hidden/dynamic-variable-bound. business_user_id
+ * and caller_phone come instead from voice_ai_call_context, looked up by
+ * the call_control_id Telnyx sends in the x-telnyx-call-control-id
+ * request header (confirmed real - see the async-tools docs) - written
+ * there by dynamic-variables.ts at call start. This sidesteps the
+ * dashboard having no clear way to bind a fixed/templated value into a
+ * Body Parameter.
  *
- * UNCONFIRMED: whether Telnyx posts these as a flat top-level JSON body
- * (what this assumes, matching the "body parameters ... passed to the
- * webhook as the body of the request" description in Telnyx's docs) or
- * wraps them under an envelope key. Raw body is always logged so the real
- * test call confirms this.
+ * Model-supplied body params confirmed flat top-level (not wrapped in an
+ * envelope key) against a real call - matches "body parameters ... passed
+ * to the webhook as the body of the request" from Telnyx's docs.
  *
  * appointments.source only allows 'manual' | 'inbound_sms' | 'lead_blast' |
  * 'web_chat' today (checked directly against the live DB constraint) - no
@@ -53,13 +54,16 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/book-appointment")({
             return ACK({ status: "error", message: "Could not read the request." }, 400);
           }
 
-          // PHASE 0: always log the raw payload - remove once the real
-          // shape is confirmed.
-          console.log("[telnyx/voice-ai/book-appointment] raw payload", JSON.stringify(body));
+          // PHASE 0: always log the raw payload and the call-control header -
+          // remove once the real shape is confirmed.
+          const callControlIdHeader = request.headers.get("x-telnyx-call-control-id");
+          console.log(
+            "[telnyx/voice-ai/book-appointment] raw payload",
+            JSON.stringify(body),
+            "x-telnyx-call-control-id:",
+            callControlIdHeader,
+          );
 
-          const businessUserId =
-            typeof body.business_user_id === "string" ? body.business_user_id : "";
-          const callerPhone = typeof body.caller_phone === "string" ? body.caller_phone : "";
           const customerName =
             typeof body.customer_name === "string" && body.customer_name.trim()
               ? body.customer_name.trim()
@@ -68,10 +72,36 @@ export const Route = createFileRoute("/api/telnyx/voice-ai/book-appointment")({
           const scheduledAtRaw = typeof body.scheduled_at === "string" ? body.scheduled_at : "";
           const notes = typeof body.notes === "string" ? body.notes : null;
 
-          if (!businessUserId) {
-            console.error("[telnyx/voice-ai/book-appointment] missing business_user_id");
+          // Fall back to a call_control_id in the body defensively, in case
+          // a sync tool call carries it differently than the documented
+          // async-tool header - not confirmed either way yet.
+          const callControlId =
+            callControlIdHeader ||
+            (typeof body.call_control_id === "string" ? body.call_control_id : "");
+          if (!callControlId) {
+            console.error(
+              "[telnyx/voice-ai/book-appointment] no call_control_id in header or body",
+            );
+            return ACK({ status: "error", message: "Missing call context." }, 400);
+          }
+
+          const { data: callContext, error: contextError } = await supabaseAdmin
+            .from("voice_ai_call_context")
+            .select("business_user_id, caller_phone")
+            .eq("call_control_id", callControlId)
+            .maybeSingle();
+
+          if (contextError || !callContext) {
+            console.error(
+              "[telnyx/voice-ai/book-appointment] no call context found for",
+              callControlId,
+              contextError,
+            );
             return ACK({ status: "error", message: "Missing business context." }, 400);
           }
+
+          const businessUserId = callContext.business_user_id;
+          const callerPhone = callContext.caller_phone || "";
 
           const scheduledMs = Date.parse(scheduledAtRaw);
           if (isNaN(scheduledMs) || scheduledMs <= Date.now()) {
