@@ -9,7 +9,12 @@
  * this — RESEND_API_KEY must be set for this to actually send; until then
  * it logs what it would have sent and returns.
  */
-async function sendEmail(opts: { to: string; subject: string; text: string; html?: string }): Promise<void> {
+async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+}): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
@@ -36,7 +41,15 @@ async function sendEmail(opts: { to: string; subject: string; text: string; html
       signal: controller.signal,
     });
     if (!res.ok) {
-      console.error("[email] Resend API error", await res.text());
+      console.error("[email] Resend API error", res.status, await res.text());
+    } else {
+      // Previously silent on success - the only way to confirm Resend
+      // actually accepted a send was the absence of an error, which reads
+      // identically to "nothing happened yet" while debugging. Resend
+      // returns { id: "..." } for the created email on success; logging
+      // it gives something concrete to cross-check against Resend's own
+      // dashboard (Emails -> search by that id).
+      console.log("[email] sent via Resend", await res.text());
     }
   } catch (e) {
     console.error("[email] failed to send", e);
@@ -52,6 +65,11 @@ export async function sendNotificationEmail(subject: string, body: string): Prom
 }
 
 /** Sends an arbitrary email to an external recipient (e.g. the audit report). */
-export async function sendExternalEmail(to: string, subject: string, text: string, html?: string): Promise<void> {
+export async function sendExternalEmail(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string,
+): Promise<void> {
   await sendEmail({ to, subject, text, html });
 }
