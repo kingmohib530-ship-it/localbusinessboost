@@ -2,58 +2,151 @@ import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tan
 import { useState } from "react";
 import {
   LayoutDashboard,
-  Sparkles,
-  Phone,
-  MessageCircle,
-  Target,
+  Inbox,
   Calendar,
-  Star,
   Users,
-  Brain,
+  FileText,
+  Target,
+  Star,
+  ClipboardCheck,
+  Phone,
   Settings,
   LogOut,
+  Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { CommandPalette } from "@/components/CommandPalette";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppShell,
 });
 
-const nav: {
-  to:
-    | "/app"
-    | "/app/coach"
-    | "/app/receptionist"
-    | "/app/web-chat"
-    | "/app/agents"
-    | "/app/calendar"
-    | "/app/reputation"
-    | "/app/network"
-    | "/app/business-facts"
-    | "/app/settings"
-    | null;
+type NavItem = {
+  to: string | null;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
-}[] = [
-  { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/app/coach", label: "Coach", icon: Sparkles },
-  { to: "/app/receptionist", label: "Receptionist", icon: Phone },
-  { to: "/app/web-chat", label: "Web Chat", icon: MessageCircle },
-  { to: "/app/agents", label: "Campaigns", icon: Target },
-  { to: "/app/calendar", label: "Calendar", icon: Calendar },
-  { to: "/app/reputation", label: "Reputation", icon: Star },
-  { to: "/app/network", label: "Network", icon: Users },
-  { to: "/app/business-facts", label: "Business Facts", icon: Brain },
-  { to: "/app/settings", label: "Settings", icon: Settings },
+};
+
+type NavSection = { heading: string; items: NavItem[] };
+
+/**
+ * Approved App Shell IA. Two items (Inbox, Leads, Quotes) have no backing
+ * page yet - later slices - so they render disabled with a "Soon" badge
+ * rather than a dead link. Outreach and Reviews link to existing pages
+ * (Lead Generator / Reputation) under the approved vocabulary's labels;
+ * those pages themselves aren't restyled this slice. Coach is deliberately
+ * not here - it lives in the Cmd+K palette instead (see CommandPalette).
+ */
+const NAV_SECTIONS: NavSection[] = [
+  {
+    heading: "Today",
+    items: [
+      { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
+      { to: null, label: "Inbox", icon: Inbox },
+      { to: "/app/calendar", label: "Calendar", icon: Calendar },
+    ],
+  },
+  {
+    heading: "Pipeline",
+    items: [
+      { to: null, label: "Leads", icon: Users },
+      { to: null, label: "Quotes", icon: FileText },
+      { to: "/app/agents", label: "Outreach", icon: Target },
+    ],
+  },
+  {
+    heading: "Growth",
+    items: [
+      { to: "/app/reputation", label: "Reviews", icon: Star },
+      { to: "/audit", label: "Audit", icon: ClipboardCheck },
+    ],
+  },
+  {
+    heading: "Setup",
+    items: [
+      { to: "/app/receptionist", label: "Receptionist", icon: Phone },
+      { to: "/app/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
+
+const MOBILE_TABS: NavItem[] = [
+  { to: "/app", label: "Today", icon: LayoutDashboard, exact: true },
+  { to: null, label: "Inbox", icon: Inbox },
+  { to: "/app/calendar", label: "Calendar", icon: Calendar },
+];
+
+const BREADCRUMB_LABELS: { prefix: string; label: string }[] = [
+  { prefix: "/app/calendar", label: "Calendar" },
+  { prefix: "/app/agents", label: "Outreach" },
+  { prefix: "/app/reputation", label: "Reviews" },
+  { prefix: "/app/receptionist", label: "Receptionist" },
+  { prefix: "/app/settings", label: "Settings" },
+  { prefix: "/app/coach", label: "Coach" },
+  { prefix: "/app/business-facts", label: "Business Facts" },
+  { prefix: "/app/web-chat", label: "Web Chat" },
+  { prefix: "/app/network", label: "Network" },
+  { prefix: "/app/verification", label: "Verification" },
+  { prefix: "/app/admin", label: "Admin" },
+  { prefix: "/app", label: "Overview" },
+];
+
+function breadcrumbLabel(path: string): string {
+  const match = BREADCRUMB_LABELS.find((b) => path.startsWith(b.prefix));
+  return match?.label ?? "Overview";
+}
+
+function isActive(item: NavItem, path: string): boolean {
+  if (!item.to) return false;
+  return item.exact ? path === item.to : path.startsWith(item.to);
+}
+
+function NavLink({
+  item,
+  active,
+  onClick,
+}: {
+  item: NavItem;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  if (!item.to) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-sm px-3 py-2 lv-body text-muted-foreground/60">
+        <span className="flex items-center gap-3">
+          <item.icon className="h-4 w-4" aria-hidden="true" />
+          {item.label}
+        </span>
+        <span className="lv-meta rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground">
+          Soon
+        </span>
+      </div>
+    );
+  }
+  return (
+    <Link
+      to={item.to}
+      onClick={onClick}
+      className={`flex items-center gap-3 rounded-sm px-3 py-2 lv-body transition-colors duration-150 ease-out ${
+        active ? "bg-accent text-primary font-medium" : "text-foreground hover:bg-accent"
+      }`}
+    >
+      <item.icon className="h-4 w-4" aria-hidden="true" />
+      {item.label}
+    </Link>
+  );
+}
 
 function AppShell() {
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [signingOut, setSigningOut] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+
   const signOut = async () => {
     setSigningOut(true);
     const { error } = await supabase.auth.signOut();
@@ -67,70 +160,145 @@ function AppShell() {
   };
 
   return (
-    <div className="app-dark min-h-screen flex relative">
-      {/* Same animated gradient mesh as the homepage, held far dimmer and
-          fixed in place: this is a workspace people read data in for
-          hours, not a landing page, so the motion stays as a faint depth
-          cue behind the glass panels rather than something to look at. */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="hd-mesh-blob hd-mesh-blob-a" style={{ top: "-15%", left: "-10%", width: 520, height: 520, background: "var(--hd-primary)", opacity: 0.12 }} />
-        <div className="hd-mesh-blob hd-mesh-blob-b" style={{ bottom: "-20%", right: "-10%", width: 480, height: 480, background: "var(--hd-primary-2)", opacity: 0.08 }} />
-      </div>
-
-      <aside className="relative z-10 w-64 border-r border-[var(--hd-border)] flex flex-col bg-[var(--hd-glass)] backdrop-blur-xl">
-        <div className="h-16 px-5 flex items-center border-b border-[var(--hd-border)]">
-          <div className="font-display font-bold tracking-tight text-lg text-[var(--hd-fg)]">Lanavix</div>
+    <div className="lv-light min-h-screen flex">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-60 shrink-0 border-r border-border flex-col bg-card">
+        <div className="h-[52px] px-5 flex items-center border-b border-border">
+          <span className="lv-section text-foreground">Lanavix</span>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
-          {nav.map((n) => {
-            if (!n.to) {
-              return (
-                <div
-                  key={n.label}
-                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm text-[var(--hd-muted)]/50 cursor-default"
-                >
-                  <span className="flex items-center gap-3">
-                    <n.icon className="h-4 w-4" />
-                    {n.label}
-                  </span>
-                  <span className="text-[10px] font-medium uppercase tracking-wide bg-white/[0.06] text-[var(--hd-muted)] rounded px-1.5 py-0.5">
-                    Soon
-                  </span>
-                </div>
-              );
-            }
-            const active = n.exact ? path === n.to : path.startsWith(n.to);
-            return (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                  active
-                    ? "bg-[var(--hd-primary)]/15 text-[var(--hd-primary-2)] border border-[var(--hd-primary)]/25"
-                    : "text-[var(--hd-muted)] hover:bg-white/[0.05] hover:text-[var(--hd-fg)]"
-                }`}
-              >
-                <n.icon className="h-4 w-4" />
-                {n.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.heading}>
+              <div className="lv-meta px-3 pb-1 uppercase tracking-wide text-muted-foreground">
+                {section.heading}
+              </div>
+              <div className="space-y-0.5">
+                {section.items.map((item) => (
+                  <NavLink key={item.label} item={item} active={isActive(item, path)} />
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
-        <div className="p-3 border-t border-[var(--hd-border)]">
+        <div className="p-3 border-t border-border">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2 text-[var(--hd-muted)] hover:text-[var(--hd-fg)] hover:bg-white/[0.05]"
+            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
             onClick={signOut}
             disabled={signingOut}
           >
-            <LogOut className="h-4 w-4" /> {signingOut ? "Signing out..." : "Sign out"}
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            {signingOut ? "Signing out..." : "Sign out"}
           </Button>
         </div>
       </aside>
-      <main className="relative z-10 flex-1 overflow-auto">
-        <Outlet />
-      </main>
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar: 52px, hairline border, breadcrumb left, search/Coach right */}
+        <header className="h-[52px] shrink-0 border-b border-border bg-card flex items-center justify-between px-4 md:px-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              className="md:hidden flex h-9 w-9 items-center justify-center rounded-sm text-foreground hover:bg-accent"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <span className="lv-label text-muted-foreground truncate">{breadcrumbLabel(path)}</span>
+          </div>
+          <CommandPalette />
+        </header>
+
+        {/* Every other route (not yet redesigned this slice) keeps its
+            current dark presentation exactly as before - app-dark is
+            scoped here instead of on the whole shell so Overview (which
+            opts back out via .lv-light on its own root) can render the
+            new light Foundations while everything else is untouched. */}
+        <main className="app-dark flex-1 overflow-auto pb-16 md:pb-0">
+          <Outlet />
+        </main>
+
+        {/* Mobile bottom nav */}
+        <nav className="lv-light md:hidden fixed bottom-0 inset-x-0 h-16 border-t border-border bg-card flex items-stretch z-20">
+          {MOBILE_TABS.map((item) => {
+            const active = isActive(item, path);
+            const content = (
+              <>
+                <item.icon className="h-5 w-5" aria-hidden="true" />
+                <span className="lv-meta">{item.label}</span>
+              </>
+            );
+            return item.to ? (
+              <Link
+                key={item.label}
+                to={item.to}
+                className={`flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] ${
+                  active ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {content}
+              </Link>
+            ) : (
+              <div
+                key={item.label}
+                className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] text-muted-foreground/50"
+              >
+                {content}
+              </div>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] text-muted-foreground"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+            <span className="lv-meta">More</span>
+          </button>
+        </nav>
+      </div>
+
+      {/* Mobile "More" sheet: everything not on the 4-tab bar */}
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent side="bottom" className="lv-light max-h-[80vh] overflow-y-auto rounded-t-lg">
+          <SheetHeader>
+            <SheetTitle className="lv-section">More</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            {NAV_SECTIONS.map((section) => (
+              <div key={section.heading}>
+                <div className="lv-meta pb-1 uppercase tracking-wide text-muted-foreground">
+                  {section.heading}
+                </div>
+                <div className="space-y-0.5">
+                  {section.items.map((item) => (
+                    <NavLink
+                      key={item.label}
+                      item={item}
+                      active={isActive(item, path)}
+                      onClick={() => setMoreOpen(false)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="border-t border-border pt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 min-h-[44px] text-muted-foreground hover:text-foreground"
+                onClick={signOut}
+                disabled={signingOut}
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                {signingOut ? "Signing out..." : "Sign out"}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
