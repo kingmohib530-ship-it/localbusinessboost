@@ -111,7 +111,8 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
           return Response.json(
             {
               businessName,
-              greeting: profile.greeting_message || `Hi! Welcome to ${businessName}. How can we help?`,
+              greeting:
+                profile.greeting_message || `Hi! Welcome to ${businessName}. How can we help?`,
             },
             { headers: CORS },
           );
@@ -212,7 +213,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
           // Find or start this visitor's conversation.
           const { data: existing } = await supabaseAdmin
             .from("conversations")
-            .select("id, status")
+            .select("id, status, ai_paused")
             .eq("user_id", businessId)
             .eq("channel", "web_chat")
             .eq("customer_identifier", sessionId)
@@ -233,10 +234,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
               .single();
             if (createErr || !created) {
               console.error("[web-chat] failed to create conversation", createErr);
-              return Response.json(
-                { error: WIDGET_GENERIC_ERROR },
-                { status: 500, headers: CORS },
-              );
+              return Response.json({ error: WIDGET_GENERIC_ERROR }, { status: 500, headers: CORS });
             }
             conversationId = created.id;
           }
@@ -264,9 +262,17 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
           }));
 
           const apiKey = process.env.ANTHROPIC_API_KEY;
-          let aiReply = "Thanks for your message! We'll have someone reach out to you shortly.";
+          // The visitor is mid-conversation and needs *some* reply in this
+          // same response no matter what, but once the owner has taken this
+          // conversation over from the Inbox composer, the AI stops writing
+          // on their behalf - a plain holding line instead of a generated
+          // one, and no billable Anthropic call.
+          const aiPaused = existing?.ai_paused === true;
+          let aiReply = aiPaused
+            ? "Thanks for your message - the team will follow up with you directly."
+            : "Thanks for your message! We'll have someone reach out to you shortly.";
 
-          if (apiKey) {
+          if (apiKey && !aiPaused) {
             const context = await loadBusinessContext(businessId, profile);
             const systemPrompt = buildReceptionistSystemPrompt(context, "web_chat");
             const reply = await generateReceptionistReply(
@@ -309,7 +315,8 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
                 ? Date.parse(extraction.scheduledAt)
                 : NaN;
               const isFuture = !isNaN(scheduledMs) && scheduledMs > Date.now();
-              const bookingConfirmed = !!extraction?.bookingConfirmed && extraction.confidence === "high" && isFuture;
+              const bookingConfirmed =
+                !!extraction?.bookingConfirmed && extraction.confidence === "high" && isFuture;
 
               if (bookingConfirmed && extraction) {
                 const serviceKey: ServiceTypeKey | "other" =
@@ -357,7 +364,13 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
 
                 await cancelActiveQuoteFollowUp(conversationId);
               } else {
-                const quote = await maybeStartQuoteFollowUp(apiKey, conversationId, businessId, fullHistory, false);
+                const quote = await maybeStartQuoteFollowUp(
+                  apiKey,
+                  conversationId,
+                  businessId,
+                  fullHistory,
+                  false,
+                );
                 if (quote?.quoteGiven && quote.confidence === "high") {
                   await supabaseAdmin.from("conversation_intelligence").insert({
                     business_id: businessId,

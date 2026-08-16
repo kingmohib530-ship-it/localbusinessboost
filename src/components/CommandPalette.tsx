@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   Sparkles,
   LayoutDashboard,
+  Inbox,
   Phone,
   Target,
   Calendar,
@@ -26,6 +27,7 @@ import {
  */
 const DESTINATIONS: { to: string; label: string; icon: typeof LayoutDashboard }[] = [
   { to: "/app", label: "Overview", icon: LayoutDashboard },
+  { to: "/app/inbox", label: "Inbox", icon: Inbox },
   { to: "/app/calendar", label: "Calendar", icon: Calendar },
   { to: "/app/agents", label: "Outreach", icon: Target },
   { to: "/app/reputation", label: "Reviews", icon: Star },

@@ -4,7 +4,13 @@ import { verifyTwilioRequestWithToken } from "@/lib/twilio.server";
 import { findBusinessByTwilioNumber } from "@/lib/twilioCredentials.server";
 import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
-import { loadBusinessContext, buildReceptionistSystemPrompt, generateReceptionistReply, detectBooking, deriveUrgency } from "@/lib/aiReceptionist.server";
+import {
+  loadBusinessContext,
+  buildReceptionistSystemPrompt,
+  generateReceptionistReply,
+  detectBooking,
+  deriveUrgency,
+} from "@/lib/aiReceptionist.server";
 import { cancelActiveQuoteFollowUp, maybeStartQuoteFollowUp } from "@/lib/quoteFollowUps.server";
 
 function businessFooter(): string {
@@ -37,15 +43,12 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
           // inbound message triggers a billed Anthropic call (the
           // cost-abuse backstop), and this also bounds the business lookup
           // below regardless of whether "To" matches a real business.
-          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
-            "check_anon_rate_limit",
-            {
-              p_ip_address: from,
-              p_route: "twilio-sms-reply",
-              p_max_requests: 20,
-              p_window_seconds: 3600,
-            },
-          );
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc("check_anon_rate_limit", {
+            p_ip_address: from,
+            p_route: "twilio-sms-reply",
+            p_max_requests: 20,
+            p_window_seconds: 3600,
+          });
           if (rlErr) {
             console.error("[sms-reply] rate limit check failed");
             return FALLBACK_TWIML("Thanks! We'll be in touch shortly.");
@@ -110,6 +113,15 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
             .update({ status: "replied", last_message_at: now })
             .eq("id", conversation.id);
 
+          // The owner took this conversation over from the Inbox composer -
+          // the inbound message above is still saved so it shows up there,
+          // but the AI stays quiet instead of talking over a human reply.
+          if (conversation.ai_paused) {
+            return new Response(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`, {
+              headers: { "Content-Type": "text/xml" },
+            });
+          }
+
           // Get conversation history
           const { data: history } = await supabaseAdmin
             .from("conversation_messages")
@@ -128,7 +140,10 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
               checkSmsHourlyRateLimit(conversation.user_id),
             ]);
             if (!quota.allowed || !hourlyOk.allowed) {
-              return FALLBACK_TWIML("Thanks for your message! We'll get back to you shortly.", isFirstReply);
+              return FALLBACK_TWIML(
+                "Thanks for your message! We'll get back to you shortly.",
+                isFirstReply,
+              );
             }
           }
 
@@ -136,15 +151,24 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
           const apiKey = process.env.ANTHROPIC_API_KEY;
           let aiReply = "Thanks for your message! We'll have someone reach out to you shortly.";
 
-          const conversationHistory = (history || []).map((m: { direction: string; message: string }) => ({
-            role: m.direction === "outbound" ? "assistant" : "user",
-            content: m.message,
-          }));
+          const conversationHistory = (history || []).map(
+            (m: { direction: string; message: string }) => ({
+              role: m.direction === "outbound" ? "assistant" : "user",
+              content: m.message,
+            }),
+          );
 
           if (apiKey && conversation.user_id) {
-            const context = await loadBusinessContext(conversation.user_id, (conversation as any).profiles ?? null);
+            const context = await loadBusinessContext(
+              conversation.user_id,
+              (conversation as any).profiles ?? null,
+            );
             const systemPrompt = buildReceptionistSystemPrompt(context, "sms");
-            const reply = await generateReceptionistReply(apiKey, systemPrompt, conversationHistory);
+            const reply = await generateReceptionistReply(
+              apiKey,
+              systemPrompt,
+              conversationHistory,
+            );
             if (reply) aiReply = reply;
           }
 
@@ -173,10 +197,15 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
               const fullHistory = [...conversationHistory, { role: "assistant", content: aiReply }];
               const extraction = await detectBooking(apiKey, fullHistory);
 
-              const scheduledMs = extraction?.scheduledAt ? Date.parse(extraction.scheduledAt) : NaN;
+              const scheduledMs = extraction?.scheduledAt
+                ? Date.parse(extraction.scheduledAt)
+                : NaN;
               const isFuture = !isNaN(scheduledMs) && scheduledMs > Date.now();
               const bookingConfirmed =
-                !!extraction?.bookingConfirmed && extraction.confidence === "high" && isFuture && !!conversation.user_id;
+                !!extraction?.bookingConfirmed &&
+                extraction.confidence === "high" &&
+                isFuture &&
+                !!conversation.user_id;
 
               if (bookingConfirmed && extraction) {
                 const serviceKey: ServiceTypeKey | "other" =
@@ -215,7 +244,9 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
                   // location_zip stays null — nothing in this app captures a
                   // ZIP code anywhere (profiles.city and the consumer flow
                   // both only ever collect free-text city).
-                  const firstContactMs = conversation.started_at ? new Date(conversation.started_at).getTime() : Date.now();
+                  const firstContactMs = conversation.started_at
+                    ? new Date(conversation.started_at).getTime()
+                    : Date.now();
                   await supabaseAdmin.from("conversation_intelligence").insert({
                     business_id: conversation.user_id,
                     consumer_phone: from,
@@ -224,7 +255,10 @@ export const Route = createFileRoute("/api/twilio/sms-reply")({
                     price_mentioned: estimatedValue,
                     urgency_level: deriveUrgency(scheduledMs),
                     outcome: "booked",
-                    time_to_book_minutes: Math.max(0, Math.round((Date.now() - firstContactMs) / 60000)),
+                    time_to_book_minutes: Math.max(
+                      0,
+                      Math.round((Date.now() - firstContactMs) / 60000),
+                    ),
                     source_channel: "inbound_sms",
                     ai_confidence_score: 0.85,
                   });

@@ -51,6 +51,7 @@ import { Route as ApiPublicContactRouteImport } from './routes/api/public/contac
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiInboxSendRouteImport } from './routes/api/inbox/send'
 import { Route as ApiCronQuoteFollowUpsRouteImport } from './routes/api/cron/quote-follow-ups'
 import { Route as ApiCronDailyBriefRouteImport } from './routes/api/cron/daily-brief'
 import { Route as ApiConsumerRequestsMatchIdRouteImport } from './routes/api/consumer-requests/$matchId'
@@ -71,6 +72,7 @@ import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
 import { Route as AuthenticatedAppNetworkRouteImport } from './routes/_authenticated/app.network'
+import { Route as AuthenticatedAppInboxRouteImport } from './routes/_authenticated/app.inbox'
 import { Route as AuthenticatedAppCoachRouteImport } from './routes/_authenticated/app.coach'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppBusinessFactsRouteImport } from './routes/_authenticated/app.business-facts'
@@ -293,6 +295,11 @@ const ApiLeadGeneratorExecuteStepRoute =
     path: '/api/lead-generator/execute-step',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiInboxSendRoute = ApiInboxSendRouteImport.update({
+  id: '/api/inbox/send',
+  path: '/api/inbox/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronQuoteFollowUpsRoute = ApiCronQuoteFollowUpsRouteImport.update({
   id: '/api/cron/quote-follow-ups',
   path: '/api/cron/quote-follow-ups',
@@ -404,6 +411,11 @@ const AuthenticatedAppNetworkRoute = AuthenticatedAppNetworkRouteImport.update({
   path: '/network',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppInboxRoute = AuthenticatedAppInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppCoachRoute = AuthenticatedAppCoachRouteImport.update({
   id: '/coach',
   path: '/coach',
@@ -487,6 +499,7 @@ export interface FileRoutesByFullPath {
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/coach': typeof AuthenticatedAppCoachRoute
+  '/app/inbox': typeof AuthenticatedAppInboxRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
@@ -507,6 +520,7 @@ export interface FileRoutesByFullPath {
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -556,6 +570,7 @@ export interface FileRoutesByTo {
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/coach': typeof AuthenticatedAppCoachRoute
+  '/app/inbox': typeof AuthenticatedAppInboxRoute
   '/app/network': typeof AuthenticatedAppNetworkRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
@@ -576,6 +591,7 @@ export interface FileRoutesByTo {
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -629,6 +645,7 @@ export interface FileRoutesById {
   '/_authenticated/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/coach': typeof AuthenticatedAppCoachRoute
+  '/_authenticated/app/inbox': typeof AuthenticatedAppInboxRoute
   '/_authenticated/app/network': typeof AuthenticatedAppNetworkRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
@@ -649,6 +666,7 @@ export interface FileRoutesById {
   '/api/consumer-requests/$matchId': typeof ApiConsumerRequestsMatchIdRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -701,6 +719,7 @@ export interface FileRouteTypes {
     | '/app/business-facts'
     | '/app/calendar'
     | '/app/coach'
+    | '/app/inbox'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
@@ -721,6 +740,7 @@ export interface FileRouteTypes {
     | '/api/consumer-requests/$matchId'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -770,6 +790,7 @@ export interface FileRouteTypes {
     | '/app/business-facts'
     | '/app/calendar'
     | '/app/coach'
+    | '/app/inbox'
     | '/app/network'
     | '/app/receptionist'
     | '/app/reputation'
@@ -790,6 +811,7 @@ export interface FileRouteTypes {
     | '/api/consumer-requests/$matchId'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -842,6 +864,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/business-facts'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/coach'
+    | '/_authenticated/app/inbox'
     | '/_authenticated/app/network'
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
@@ -862,6 +885,7 @@ export interface FileRouteTypes {
     | '/api/consumer-requests/$matchId'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -918,6 +942,7 @@ export interface RootRouteChildren {
   ApiCoachBriefRoute: typeof ApiCoachBriefRoute
   ApiCronDailyBriefRoute: typeof ApiCronDailyBriefRoute
   ApiCronQuoteFollowUpsRoute: typeof ApiCronQuoteFollowUpsRoute
+  ApiInboxSendRoute: typeof ApiInboxSendRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
@@ -1226,6 +1251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/inbox/send': {
+      id: '/api/inbox/send'
+      path: '/api/inbox/send'
+      fullPath: '/api/inbox/send'
+      preLoaderRoute: typeof ApiInboxSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/quote-follow-ups': {
       id: '/api/cron/quote-follow-ups'
       path: '/api/cron/quote-follow-ups'
@@ -1366,6 +1398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppNetworkRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/inbox': {
+      id: '/_authenticated/app/inbox'
+      path: '/inbox'
+      fullPath: '/app/inbox'
+      preLoaderRoute: typeof AuthenticatedAppInboxRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/coach': {
       id: '/_authenticated/app/coach'
       path: '/coach'
@@ -1445,6 +1484,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppBusinessFactsRoute: typeof AuthenticatedAppBusinessFactsRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppCoachRoute: typeof AuthenticatedAppCoachRoute
+  AuthenticatedAppInboxRoute: typeof AuthenticatedAppInboxRoute
   AuthenticatedAppNetworkRoute: typeof AuthenticatedAppNetworkRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
@@ -1460,6 +1500,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppBusinessFactsRoute: AuthenticatedAppBusinessFactsRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppCoachRoute: AuthenticatedAppCoachRoute,
+  AuthenticatedAppInboxRoute: AuthenticatedAppInboxRoute,
   AuthenticatedAppNetworkRoute: AuthenticatedAppNetworkRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
@@ -1584,6 +1625,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCoachBriefRoute: ApiCoachBriefRoute,
   ApiCronDailyBriefRoute: ApiCronDailyBriefRoute,
   ApiCronQuoteFollowUpsRoute: ApiCronQuoteFollowUpsRoute,
+  ApiInboxSendRoute: ApiInboxSendRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,

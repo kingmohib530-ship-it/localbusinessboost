@@ -31,7 +31,12 @@ const STATUS_META: Record<LvStatus, { label: string; dotClassName: string }> = {
 export function StatusDot({ status, className }: { status: LvStatus; className?: string }) {
   const meta = STATUS_META[status];
   return (
-    <span className={cn("inline-flex items-center gap-1.5 lv-label text-foreground", className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 lv-label text-foreground whitespace-nowrap",
+        className,
+      )}
+    >
       <span
         className={cn("h-1.5 w-1.5 shrink-0 rounded-full", meta.dotClassName)}
         aria-hidden="true"

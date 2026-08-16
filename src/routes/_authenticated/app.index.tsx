@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusDot } from "@/components/StatusDot";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { daysAgo, formatTime } from "@/lib/timeFormat";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: Overview,
@@ -84,18 +85,6 @@ type NeedsYouItem =
 const NEEDS_YOU_LIMIT = 3;
 /** Looks like a phone number (E.164 or close enough) - safe to offer a tel: link for. */
 const PHONE_LIKE = /^\+?[\d\s().-]{7,}$/;
-
-function daysAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const hours = Math.floor(diffMs / 3600000);
-  if (hours < 1) return "just now";
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-}
 
 /** Most recent Monday 00:00 local time. */
 function startOfWeek(from: Date): Date {
