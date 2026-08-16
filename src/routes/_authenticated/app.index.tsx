@@ -51,6 +51,14 @@ interface AppointmentRow {
   status: string;
 }
 
+interface TodayAppointmentRow {
+  id: string;
+  customer_name: string;
+  service_type: string;
+  scheduled_at: string;
+  status: string;
+}
+
 type NeedsYouItem =
   | {
       kind: "unanswered";
@@ -85,6 +93,10 @@ function daysAgo(iso: string): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 /** Most recent Monday 00:00 local time. */
 function startOfWeek(from: Date): Date {
   const d = new Date(from);
@@ -110,6 +122,7 @@ function Overview() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<TodayAppointmentRow[]>([]);
   const [hasAnyHistory, setHasAnyHistory] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -127,6 +140,9 @@ function Overview() {
         if (!user) return;
 
         const twoWeeksAgoIso = new Date(Date.now() - 14 * 86400000).toISOString();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(todayStart.getTime() + 86400000);
 
         const [
           { data: profileData, error: profileErr },
@@ -135,6 +151,7 @@ function Overview() {
           { data: leadData, error: leadErr },
           { data: quoteData, error: quoteErr },
           { data: appointmentData, error: appointmentErr },
+          { data: todayAppointmentData, error: todayAppointmentErr },
           { count: everConversationCount },
           { count: everLeadCount },
           { count: everAppointmentCount },
@@ -169,6 +186,14 @@ function Overview() {
             .neq("status", "cancelled")
             .gte("created_at", twoWeeksAgoIso),
           supabase
+            .from("appointments")
+            .select("id, customer_name, service_type, scheduled_at, status")
+            .eq("user_id", user.id)
+            .neq("status", "cancelled")
+            .gte("scheduled_at", todayStart.toISOString())
+            .lt("scheduled_at", todayEnd.toISOString())
+            .order("scheduled_at", { ascending: true }),
+          supabase
             .from("conversations")
             .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
@@ -183,7 +208,13 @@ function Overview() {
         ]);
 
         const firstErr =
-          profileErr || conversationErr || messageErr || leadErr || quoteErr || appointmentErr;
+          profileErr ||
+          conversationErr ||
+          messageErr ||
+          leadErr ||
+          quoteErr ||
+          appointmentErr ||
+          todayAppointmentErr;
         if (firstErr) {
           console.error("[overview] failed to load one or more queries", firstErr);
           setError("Some of your dashboard data couldn't load. What did load is still accurate.");
@@ -195,6 +226,7 @@ function Overview() {
         setLeads((leadData as LeadRow[]) ?? []);
         setQuotes((quoteData as QuoteRow[]) ?? []);
         setAppointments((appointmentData as AppointmentRow[]) ?? []);
+        setTodayAppointments((todayAppointmentData as TodayAppointmentRow[]) ?? []);
         setHasAnyHistory(
           (everConversationCount ?? 0) > 0 ||
             (everLeadCount ?? 0) > 0 ||
@@ -403,6 +435,42 @@ function Overview() {
           )}
         </section>
 
+        {/* Today's schedule */}
+        <section aria-labelledby="today-heading" className="mb-8">
+          <h2 id="today-heading" className="lv-section text-foreground mb-3">
+            Today
+          </h2>
+          {loading ? (
+            <Skeleton className="h-[60px] w-full rounded-md" />
+          ) : todayAppointments.length === 0 ? (
+            <div className="rounded-md border border-border bg-card px-4 py-4">
+              <p className="lv-body text-muted-foreground">Nothing scheduled today.</p>
+            </div>
+          ) : (
+            <ul className="rounded-md border border-border bg-card divide-y divide-border overflow-hidden">
+              {todayAppointments.map((a) => (
+                <li key={a.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="lv-numbers text-foreground w-16 shrink-0">
+                    {formatTime(a.scheduled_at)}
+                  </span>
+                  <span
+                    className="lv-body text-foreground truncate flex-1 min-w-0"
+                    title={a.customer_name}
+                  >
+                    {a.customer_name}
+                  </span>
+                  <span
+                    className="lv-meta text-muted-foreground truncate shrink-0 max-w-[40%]"
+                    title={a.service_type}
+                  >
+                    {a.service_type}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         {/* This Week */}
         <section aria-labelledby="this-week-heading">
           <h2 id="this-week-heading" className="lv-section text-foreground mb-1">
@@ -463,7 +531,15 @@ function NeedsYouCard({
     window.setTimeout(onDismiss, 160);
   }
 
-  const { icon: Icon, title, detail, status, action } = describeItem(item);
+  const {
+    icon: Icon,
+    title,
+    metaPrimary,
+    metaSecondary,
+    fullDetail,
+    status,
+    action,
+  } = describeItem(item);
 
   return (
     <li
@@ -483,12 +559,20 @@ function NeedsYouCard({
           <p className="lv-body text-foreground font-medium truncate" title={title}>
             {title}
           </p>
-          <div className="flex items-center gap-2 min-w-0">
+          {/* metaPrimary (price/time - short and important) never shrinks;
+              only metaSecondary (the free-text tail) truncates, so a long
+              service description or channel name never eats into a dollar
+              amount or timestamp. */}
+          <div className="flex items-center gap-2 min-w-0" title={fullDetail}>
             <StatusDot status={status} className="shrink-0" />
-            <span className="lv-meta text-muted-foreground/40">·</span>
-            <p className="lv-meta text-muted-foreground truncate" title={detail}>
-              {detail}
-            </p>
+            <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
+            {metaPrimary && (
+              <>
+                <span className="lv-meta text-foreground font-medium shrink-0">{metaPrimary}</span>
+                <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
+              </>
+            )}
+            <span className="lv-meta text-muted-foreground truncate">{metaSecondary}</span>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -511,10 +595,15 @@ function NeedsYouCard({
 function describeItem(item: NeedsYouItem) {
   if (item.kind === "unanswered") {
     const isPhone = PHONE_LIKE.test(item.customerIdentifier);
+    const channelLabel = item.channel === "web_chat" ? "Web chat" : "Text";
     return {
       icon: MessageSquare,
       title: item.customerName,
-      detail: `Waiting ${daysAgo(item.since)} for a reply · ${item.channel === "web_chat" ? "Web chat" : "Text"}`,
+      // StatusDot already says "Waiting on you" - the meta line only needs
+      // to add the concrete facts (how long, which channel), not repeat it.
+      metaPrimary: daysAgo(item.since),
+      metaSecondary: channelLabel,
+      fullDetail: `Waiting ${daysAgo(item.since)} for a reply · ${channelLabel}`,
       status: "waiting_on_you" as const,
       action:
         item.channel === "web_chat" ? (
@@ -530,11 +619,18 @@ function describeItem(item: NeedsYouItem) {
   }
   if (item.kind === "quote") {
     const isPhone = PHONE_LIKE.test(item.customerIdentifier);
-    const priceText = item.quotedPrice ? `$${item.quotedPrice.toLocaleString()}` : "quote";
+    const priceText = item.quotedPrice ? `$${item.quotedPrice.toLocaleString()}` : "Quote";
     return {
       icon: FileClock,
       title: item.customerName,
-      detail: `${priceText}${item.serviceType ? ` · ${item.serviceType}` : ""} · sent ${daysAgo(item.since)} ago, no reply`,
+      // Price is the fact that matters most here and must never truncate -
+      // it gets its own non-shrinking slot instead of sharing the
+      // truncated tail with the service description.
+      metaPrimary: priceText,
+      metaSecondary: item.serviceType
+        ? `${item.serviceType} · ${daysAgo(item.since)} ago`
+        : `${daysAgo(item.since)} ago`,
+      fullDetail: `${priceText}${item.serviceType ? ` · ${item.serviceType}` : ""} · sent ${daysAgo(item.since)} ago, no reply`,
       status: "stale" as const,
       action: isPhone ? (
         <Button asChild size="sm" variant="outline">
@@ -546,7 +642,9 @@ function describeItem(item: NeedsYouItem) {
   return {
     icon: UserPlus,
     title: item.businessName,
-    detail: `New lead · found ${daysAgo(item.since)} ago`,
+    metaPrimary: null,
+    metaSecondary: `Found ${daysAgo(item.since)} ago`,
+    fullDetail: `New lead · found ${daysAgo(item.since)} ago`,
     status: "new" as const,
     action: (
       <Button asChild size="sm" variant="outline">
