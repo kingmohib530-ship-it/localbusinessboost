@@ -1,7 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
-import { Calendar as CalendarIcon, Plus, X, DollarSign } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Phone, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,13 +31,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { GlowPanel } from "@/components/GlowPanel";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { StatusDot, type LvStatus } from "@/components/StatusDot";
+import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/timeFormat";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
   component: CalendarPage,
 });
+
+type AppointmentStatus = "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
 
 interface Appointment {
   id: string;
@@ -27,45 +48,139 @@ interface Appointment {
   customer_email: string | null;
   service_type: string;
   scheduled_at: string;
-  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
+  status: AppointmentStatus;
   estimated_value: number | null;
   notes: string | null;
   source: string;
 }
 
-const STATUS_STYLES: Record<Appointment["status"], { bg: string; color: string; label: string }> = {
-  pending: { bg: "var(--muted)", color: "var(--foreground)", label: "Pending" },
-  confirmed: { bg: "var(--accent)", color: "var(--accent-2)", label: "Confirmed" },
-  completed: { bg: "var(--accent)", color: "var(--primary)", label: "Completed" },
-  cancelled: { bg: "var(--muted)", color: "var(--destructive)", label: "Cancelled" },
-  no_show: { bg: "var(--muted)", color: "var(--muted-foreground)", label: "No-show" },
+// Real appointment statuses compressed onto the approved, closed StatusDot
+// vocabulary (same technique app.leads.tsx uses for lead statuses) so
+// Calendar reads as the same product as Overview/Inbox/Leads rather than
+// inventing its own color language. Cancelled and no-show stay visually
+// distinct (destructive vs muted) since a contractor needs to tell "customer
+// cancelled" apart from "customer didn't show" at a glance.
+const STATUS_TO_DOT: Record<AppointmentStatus, LvStatus> = {
+  pending: "new",
+  confirmed: "booked",
+  completed: "done",
+  cancelled: "failed",
+  no_show: "stale",
 };
 
-function humanizeServiceType(s: string): string {
-  return s
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+const STATUS_LABELS: Record<AppointmentStatus, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  no_show: "No-show",
+};
+
+const STATUS_OPTIONS: AppointmentStatus[] = [
+  "pending",
+  "confirmed",
+  "completed",
+  "cancelled",
+  "no_show",
+];
+
+// Real values of appointments.source (see CreateAppointmentSchema in
+// src/routes/api/appointments.ts) - shown in the detail sheet only, since
+// it's rarely useful at a glance in the row list.
+const SOURCE_LABELS: Record<string, string> = {
+  manual: "Added manually",
+  inbound_sms: "Missed-call text-back",
+  lead_blast: "Outreach",
+  consumer_marketplace: "Marketplace request",
+  web_chat: "Web chat",
+};
+
+const PAGE_SIZE = 20;
+
+function formatMoney(dollars: number | null): string {
+  if (dollars === null) return "—";
+  return `$${dollars.toLocaleString()}`;
 }
 
-function dateKey(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function formatDateHeading(key: string): string {
-  const d = new Date(`${key}T00:00:00`);
-  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+function addDays(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 }
 
-function formatMoney(cents: number | null): string {
-  if (cents === null) return "—";
-  return `$${cents.toLocaleString()}`;
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
-type ModalState =
-  | { mode: "create" }
-  | { mode: "edit"; appointment: Appointment }
-  | null;
+function dateInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function parseDateInputValue(v: string): Date | null {
+  const parts = v.split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+  const [y, m, d] = parts;
+  return new Date(y, m - 1, d);
+}
+
+function toLocalInputValue(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatDayHeading(d: Date): string {
+  const today = startOfDay(new Date());
+  const target = startOfDay(d);
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+  const withYear = d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    ...(d.getFullYear() !== today.getFullYear() ? { year: "numeric" } : {}),
+  });
+  if (diffDays === 0) return `Today, ${withYear}`;
+  if (diffDays === -1) return `Yesterday, ${withYear}`;
+  if (diffDays === 1) return `Tomorrow, ${withYear}`;
+  return withYear;
+}
+
+function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error && err.message ? err.message : fallback;
+}
+
+async function authHeader(): Promise<Record<string, string>> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }
+    : { "Content-Type": "application/json" };
+}
+
+function SkeletonRows() {
+  return (
+    <div className="rounded-md border border-border overflow-hidden divide-y divide-border">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="flex items-center gap-3 px-4 py-3">
+          <Skeleton className="h-4 w-14 shrink-0" />
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <Skeleton className="h-4 w-16 shrink-0" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const EMPTY_FORM = {
   customer_name: "",
@@ -75,47 +190,77 @@ const EMPTY_FORM = {
   scheduled_at: "",
   estimated_value: "",
   notes: "",
-  status: "pending" as Appointment["status"],
 };
 
-const PAGE_SIZE = 20;
+const EDIT_FORM_DEFAULTS = { scheduled_at: "", estimated_value: "", notes: "" };
 
 function CalendarPage() {
+  const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
-  const [error, setError] = useState("");
-  const [monthCount, setMonthCount] = useState(0);
+  const [listError, setListError] = useState("");
+  const [everCount, setEverCount] = useState<number | null>(null);
+
+  const [monthCount, setMonthCount] = useState<number | null>(null);
   const [monthTotal, setMonthTotal] = useState(0);
-  const [modal, setModal] = useState<ModalState>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState("");
+
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [editForm, setEditForm] = useState(EDIT_FORM_DEFAULTS);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const reducedMotion = usePrefersReducedMotion();
-  const { step, delay } = useMountReveal();
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState(EMPTY_FORM);
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState("");
+
+  const isToday = isSameDay(selectedDate, new Date());
 
   useEffect(() => {
-    loadAppointments(0);
+    setPageIndex(0);
+    loadAppointments(selectedDate, 0);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    loadEverCount();
     loadMonthStats();
   }, []);
 
-  async function authHeader() {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    if (!token) throw new Error("Please sign in again and retry.");
-    return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  useEffect(() => {
+    if (!selectedAppt) return;
+    setEditForm({
+      scheduled_at: toLocalInputValue(selectedAppt.scheduled_at),
+      estimated_value:
+        selectedAppt.estimated_value != null ? String(selectedAppt.estimated_value) : "",
+      notes: selectedAppt.notes || "",
+    });
+    setEditError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAppt?.id]);
+
+  async function loadEverCount() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const { count } = await supabase
+      .from("appointments")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+    setEverCount(count ?? 0);
   }
 
-  /**
-   * Independent of the paginated list below - these tiles need an accurate
-   * total for the current calendar month regardless of how many pages of
-   * the full history the user has loaded so far.
-   */
+  /** This calendar month's totals, independent of whichever day is
+   * currently selected - a quick "how's the month going" glance, not the
+   * page's primary purpose. */
   async function loadMonthStats() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -128,7 +273,6 @@ function CalendarPage() {
       .lt("scheduled_at", monthEnd);
     if (error) {
       console.error("[calendar] failed to load month stats", error);
-      setError("Couldn't load this month's totals. Please refresh the page.");
       return;
     }
     const rows = data ?? [];
@@ -136,339 +280,639 @@ function CalendarPage() {
     setMonthTotal(rows.reduce((sum, r) => sum + (r.estimated_value || 0), 0));
   }
 
-  async function loadAppointments(page: number) {
-    if (page === 0) setLoading(true); else setLoadingMore(true);
-    setError("");
+  async function loadAppointments(date: Date, page: number) {
+    if (page === 0) setLoading(true);
+    else setLoadingMore(true);
+    setListError("");
     try {
       const headers = await authHeader();
-      const res = await fetch(`/api/appointments?page=${page}`, { headers });
+      const start = startOfDay(date).toISOString();
+      const end = addDays(startOfDay(date), 1).toISOString();
+      const res = await fetch(
+        `/api/appointments?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&page=${page}`,
+        { headers },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load appointments");
-      const rows = data.appointments ?? [];
+      const rows: Appointment[] = data.appointments ?? [];
       setAppointments((prev) => (page === 0 ? rows : [...prev, ...rows]));
       setHasMore(!!data.hasMore);
-    } catch (err: any) {
-      setError(err.message || "Failed to load appointments.");
+    } catch (err) {
+      setListError(errorMessage(err, "Appointments could not be loaded."));
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
   }
 
-  function openCreate() {
-    setForm(EMPTY_FORM);
-    setFormError("");
-    setModal({ mode: "create" });
+  function refreshAfterMutation() {
+    loadAppointments(selectedDate, 0);
+    loadEverCount();
+    loadMonthStats();
   }
 
-  function openEdit(appt: Appointment) {
-    setForm({
-      customer_name: appt.customer_name,
-      customer_phone: appt.customer_phone || "",
-      customer_email: appt.customer_email || "",
-      service_type: appt.service_type,
-      scheduled_at: toLocalInputValue(appt.scheduled_at),
-      estimated_value: appt.estimated_value != null ? String(appt.estimated_value) : "",
-      notes: appt.notes || "",
-      status: appt.status,
-    });
-    setFormError("");
-    setModal({ mode: "edit", appointment: appt });
-  }
-
-  function toLocalInputValue(iso: string): string {
-    const d = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
-  async function handleSave() {
-    setFormError("");
-    if (!form.customer_name.trim()) { setFormError("Customer name is required."); return; }
-    if (!form.service_type.trim()) { setFormError("Service type is required."); return; }
-    if (!form.scheduled_at) { setFormError("Date and time are required."); return; }
-
-    const scheduledIso = new Date(form.scheduled_at).toISOString();
-
-    if (modal?.mode === "create" && new Date(scheduledIso).getTime() <= Date.now()) {
-      setFormError("Scheduled time must be in the future.");
-      return;
-    }
-
-    setSaving(true);
+  async function updateStatus(appt: Appointment, status: AppointmentStatus) {
+    setSelectedAppt({ ...appt, status });
+    setAppointments((prev) => prev.map((a) => (a.id === appt.id ? { ...a, status } : a)));
     try {
       const headers = await authHeader();
-
-      if (modal?.mode === "create") {
-        const res = await fetch("/api/appointments", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            customer_name: form.customer_name.trim(),
-            customer_phone: form.customer_phone.trim() || undefined,
-            customer_email: form.customer_email.trim() || undefined,
-            service_type: form.service_type.trim(),
-            scheduled_at: scheduledIso,
-            estimated_value: form.estimated_value ? Number(form.estimated_value) : null,
-            notes: form.notes.trim() || undefined,
-            source: "manual",
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to create appointment");
-      } else if (modal?.mode === "edit") {
-        // Only send scheduled_at when it actually moved - the backend
-        // rejects any scheduled_at that isn't in the future, which would
-        // otherwise block editing a past appointment (e.g. marking it
-        // Completed or adding notes after the job happened) even though
-        // its time isn't changing. Compare against the same minute-precision
-        // local value the form field was seeded with, not the full-precision
-        // original timestamp - otherwise leftover seconds/milliseconds on
-        // the original would make this look "changed" on every edit.
-        const scheduledChanged = form.scheduled_at !== toLocalInputValue(modal.appointment.scheduled_at);
-        const res = await fetch(`/api/appointments/${modal.appointment.id}`, {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({
-            status: form.status,
-            ...(scheduledChanged ? { scheduled_at: scheduledIso } : {}),
-            notes: form.notes.trim() || null,
-            estimated_value: form.estimated_value ? Number(form.estimated_value) : null,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to update appointment");
-      }
-
-      setModal(null);
-      setPageIndex(0);
-      loadAppointments(0);
+      const res = await fetch(`/api/appointments/${appt.id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update status");
       loadMonthStats();
-    } catch (err: any) {
-      setFormError(err.message || "Something went wrong. Please try again.");
+    } catch (err) {
+      setEditError(errorMessage(err, "Couldn't update status. Please try again."));
+      loadAppointments(selectedDate, 0);
+    }
+  }
+
+  async function handleSaveEdit() {
+    if (!selectedAppt) return;
+    setEditError("");
+
+    const scheduledChanged = editForm.scheduled_at !== toLocalInputValue(selectedAppt.scheduled_at);
+    if (scheduledChanged) {
+      const asIso = new Date(editForm.scheduled_at);
+      if (Number.isNaN(asIso.getTime())) {
+        setEditError("Enter a valid date and time.");
+        return;
+      }
+      if (asIso.getTime() <= Date.now()) {
+        setEditError("Rescheduled time must be in the future.");
+        return;
+      }
+    }
+
+    setSavingEdit(true);
+    try {
+      const headers = await authHeader();
+      const res = await fetch(`/api/appointments/${selectedAppt.id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          ...(scheduledChanged
+            ? { scheduled_at: new Date(editForm.scheduled_at).toISOString() }
+            : {}),
+          notes: editForm.notes.trim() || null,
+          estimated_value: editForm.estimated_value ? Number(editForm.estimated_value) : null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save changes");
+      setSelectedAppt(null);
+      refreshAfterMutation();
+    } catch (err) {
+      setEditError(errorMessage(err, "Something went wrong. Please try again."));
     } finally {
-      setSaving(false);
+      setSavingEdit(false);
     }
   }
 
   async function handleDelete() {
-    if (modal?.mode !== "edit") return;
+    if (!selectedAppt) return;
     setConfirmingDelete(false);
-    setSaving(true);
+    setSavingEdit(true);
     try {
       const headers = await authHeader();
-      const res = await fetch(`/api/appointments/${modal.appointment.id}`, { method: "DELETE", headers });
+      const res = await fetch(`/api/appointments/${selectedAppt.id}`, {
+        method: "DELETE",
+        headers,
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete appointment");
-      setModal(null);
-      setPageIndex(0);
-      loadAppointments(0);
-      loadMonthStats();
-    } catch (err: any) {
-      setFormError(err.message || "Something went wrong. Please try again.");
+      setSelectedAppt(null);
+      refreshAfterMutation();
+    } catch (err) {
+      setEditError(errorMessage(err, "Something went wrong. Please try again."));
     } finally {
-      setSaving(false);
+      setSavingEdit(false);
     }
   }
 
-  const groups = new Map<string, Appointment[]>();
-  for (const a of appointments) {
-    const key = dateKey(a.scheduled_at);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(a);
+  function openAdd() {
+    setAddForm(EMPTY_FORM);
+    setAddError("");
+    setAddOpen(true);
   }
-  const sortedKeys = Array.from(groups.keys()).sort();
 
-  const inputStyle = {
-    width: "100%",
-    padding: "10px 14px",
-    border: "1.5px solid var(--border)",
-    borderRadius: 10,
-    fontSize: 14,
-    color: "var(--foreground)",
-    background: "var(--input)",
-    fontFamily: "inherit",
-    boxSizing: "border-box" as const,
-  };
+  async function handleAdd(e: FormEvent) {
+    e.preventDefault();
+    setAddError("");
+    if (!addForm.customer_name.trim()) return setAddError("Customer name is required.");
+    if (!addForm.service_type.trim()) return setAddError("Service type is required.");
+    if (!addForm.scheduled_at) return setAddError("Date and time are required.");
+    const scheduledIso = new Date(addForm.scheduled_at);
+    if (Number.isNaN(scheduledIso.getTime())) return setAddError("Enter a valid date and time.");
+    if (scheduledIso.getTime() <= Date.now())
+      return setAddError("Scheduled time must be in the future.");
+
+    setAddSaving(true);
+    try {
+      const headers = await authHeader();
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          customer_name: addForm.customer_name.trim(),
+          customer_phone: addForm.customer_phone.trim() || undefined,
+          customer_email: addForm.customer_email.trim() || undefined,
+          service_type: addForm.service_type.trim(),
+          scheduled_at: scheduledIso.toISOString(),
+          estimated_value: addForm.estimated_value ? Number(addForm.estimated_value) : null,
+          notes: addForm.notes.trim() || undefined,
+          source: "manual",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create appointment");
+      setAddOpen(false);
+      setSelectedDate(startOfDay(scheduledIso));
+      refreshAfterMutation();
+    } catch (err) {
+      setAddError(errorMessage(err, "Something went wrong. Please try again."));
+    } finally {
+      setAddSaving(false);
+    }
+  }
+
+  const { upcoming, earlier } = useMemo(() => {
+    if (!isToday) return { upcoming: appointments, earlier: [] as Appointment[] };
+    const now = Date.now();
+    const up: Appointment[] = [];
+    const rest: Appointment[] = [];
+    for (const a of appointments) {
+      const isPending = a.status === "pending" || a.status === "confirmed";
+      if (isPending && new Date(a.scheduled_at).getTime() >= now) up.push(a);
+      else rest.push(a);
+    }
+    const byTime = (a: Appointment, b: Appointment) =>
+      new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+    return { upcoming: up.sort(byTime), earlier: rest.sort(byTime) };
+  }, [appointments, isToday]);
+
+  const dayCount = appointments.length;
+  const dayTotal = appointments.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
+
+  const isFirstRun = everCount === 0;
+  const isDayEmpty = !loading && !listError && appointments.length === 0;
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div className={step} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12, ...delay(0) }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>Calendar</h1>
-          <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Appointments booked manually and through inbound texts.</p>
+    <div className="lv-light min-h-full bg-background">
+      <div className="max-w-[1080px] mx-auto px-4 md:px-8 py-6 md:py-8">
+        {/* Header */}
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+          <div>
+            <h1 className="lv-page-title text-foreground">Calendar</h1>
+            {!loading && !listError && !isDayEmpty && (
+              <p className="lv-body text-muted-foreground mt-1">
+                <span className="lv-numbers">
+                  {dayCount}
+                  {hasMore ? "+" : ""}
+                </span>{" "}
+                {dayCount === 1 ? "appointment" : "appointments"}
+                {dayTotal > 0 && (
+                  <>
+                    {" · "}
+                    <span className="lv-numbers">{formatMoney(dayTotal)}</span> estimated
+                  </>
+                )}
+              </p>
+            )}
+          </div>
+          <Button size="sm" onClick={openAdd} className="gap-1.5 min-h-[44px] md:min-h-[38px]">
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            Add appointment
+          </Button>
         </div>
-        <button onClick={openCreate}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-          <Plus size={16} strokeWidth={2} /> Add Appointment
-        </button>
-      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 24 }}>
-        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(1) }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-            <CalendarIcon size={16} color="var(--primary)" strokeWidth={1.75} />
+        {/* Day navigation */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 shrink-0"
+              onClick={() => setSelectedDate((d) => addDays(d, -1))}
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 shrink-0"
+              onClick={() => setSelectedDate((d) => addDays(d, 1))}
+              aria-label="Next day"
+            >
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <h2 className="lv-section text-foreground ml-1" aria-live="polite">
+              {formatDayHeading(selectedDate)}
+            </h2>
           </div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{monthCount}</div>
-          <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>Appointments this month</div>
-        </GlowPanel>
-        <GlowPanel reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(2) }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-            <DollarSign size={16} color="var(--primary)" strokeWidth={1.75} />
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{formatMoney(monthTotal)}</div>
-          <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>Estimated value this month</div>
-        </GlowPanel>
-      </div>
-
-      {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
-
-      {loading && (
-        <div className="glass-dark" style={{ borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
-          Loading...
-        </div>
-      )}
-
-      {!loading && appointments.length === 0 && !error && (
-        <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(3) }}>
-          <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-            <CalendarIcon size={26} color="var(--primary)" strokeWidth={1.75} />
-          </div>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>No appointments yet</h3>
-          <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 380, margin: "0 auto 24px", lineHeight: 1.6 }}>
-            Add one manually, or they'll appear here automatically once a missed-call text-back confirms a booking.
-          </p>
-          <button onClick={openCreate}
-            style={{ padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            Add your first appointment →
-          </button>
-        </div>
-      )}
-
-      {sortedKeys.map((key) => (
-        <div key={key} style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
-            {formatDateHeading(key)}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {groups.get(key)!
-              .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
-              .map((appt) => {
-                const s = STATUS_STYLES[appt.status];
-                return (
-                  <GlowPanel key={appt.id} reducedMotion={reducedMotion} onClick={() => openEdit(appt)}
-                    className="glass-dark hover-lift-dark rounded-2xl"
-                    style={{ padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{appt.customer_name}</span>
-                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: s.bg, color: s.color }}>{s.label}</span>
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
-                        {humanizeServiceType(appt.service_type)} · {new Date(appt.scheduled_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                        {appt.customer_phone ? ` · ${appt.customer_phone}` : ""}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{formatMoney(appt.estimated_value)}</div>
-                  </GlowPanel>
-                );
-              })}
+          <div className="flex items-center gap-2">
+            {!isToday && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="min-h-[44px] md:min-h-[36px]"
+                onClick={() => setSelectedDate(startOfDay(new Date()))}
+              >
+                Today
+              </Button>
+            )}
+            <Input
+              type="date"
+              aria-label="Jump to date"
+              value={dateInputValue(selectedDate)}
+              onChange={(e) => {
+                const parsed = parseDateInputValue(e.target.value);
+                if (parsed) setSelectedDate(parsed);
+              }}
+              className="h-11 md:h-9 w-[170px]"
+            />
           </div>
         </div>
-      ))}
 
-      {hasMore && (
-        <button
-          onClick={() => { const next = pageIndex + 1; setPageIndex(next); loadAppointments(next); }}
-          disabled={loadingMore}
-          style={{ display: "block", margin: "0 auto", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-          {loadingMore ? "Loading..." : "Load more"}
-        </button>
-      )}
-
-      {modal && (
-        <div
-          onClick={() => !saving && setModal(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 20 }}
-        >
-          <div onClick={(e) => e.stopPropagation()}
-            className="glass-dark"
-            style={{ borderRadius: 20, padding: 28, maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>
-                {modal.mode === "create" ? "Add Appointment" : "Appointment details"}
-              </div>
-              <button onClick={() => setModal(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted-foreground)" }}>
-                <X size={20} />
-              </button>
-            </div>
-
-            {modal.mode === "create" && (
+        {monthCount !== null && monthCount > 0 && (
+          <p className="lv-meta text-muted-foreground mb-4">
+            This month: <span className="lv-numbers">{monthCount}</span>{" "}
+            {monthCount === 1 ? "appointment" : "appointments"}
+            {monthTotal > 0 && (
               <>
-                <Field label="Customer name *">
-                  <input className="lv-input" style={inputStyle} value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="e.g. John Smith" />
-                </Field>
-                <Field label="Phone">
-                  <input className="lv-input" style={inputStyle} value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} placeholder="e.g. 404-555-0100" />
-                </Field>
-                <Field label="Email">
-                  <input className="lv-input" style={inputStyle} value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} placeholder="e.g. john@example.com" />
-                </Field>
-                <Field label="Service type *">
-                  <input className="lv-input" style={inputStyle} value={form.service_type} onChange={(e) => setForm({ ...form, service_type: e.target.value })} placeholder="e.g. HVAC repair" />
-                </Field>
+                {" · "}
+                <span className="lv-numbers">{formatMoney(monthTotal)}</span> estimated
               </>
             )}
+          </p>
+        )}
+        {(monthCount === null || monthCount === 0) && <div className="mb-4" />}
 
-            {modal.mode === "edit" && (
-              <>
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>{modal.appointment.customer_name}</div>
-                  <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
-                    {humanizeServiceType(modal.appointment.service_type)}
-                    {modal.appointment.customer_phone ? ` · ${modal.appointment.customer_phone}` : ""}
+        {listError && (
+          <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+            <p className="lv-label text-destructive">Appointments could not be loaded</p>
+            <p className="lv-body text-foreground mt-0.5">{listError}</p>
+            <p className="lv-meta text-muted-foreground mt-1">
+              The rest of Calendar still works - try again, or come back in a moment.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => loadAppointments(selectedDate, 0)}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {loading ? (
+          <SkeletonRows />
+        ) : listError ? null : isFirstRun ? (
+          <div className="rounded-md border border-border py-16 px-6 text-center">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-sm bg-accent text-primary">
+              <CalendarIcon className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <p className="lv-body text-foreground font-medium">No appointments yet</p>
+            <p className="lv-meta text-muted-foreground mt-1 max-w-sm mx-auto">
+              Add one manually, or they'll appear here automatically once a missed-call text-back
+              confirms a booking.
+            </p>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button size="sm" onClick={openAdd} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                Add your first appointment
+              </Button>
+            </div>
+          </div>
+        ) : isDayEmpty ? (
+          <div className="rounded-md border border-border py-12 px-6 text-center">
+            <p className="lv-body text-foreground font-medium">
+              {isToday ? "You're caught up" : "No appointments on this day"}
+            </p>
+            <p className="lv-meta text-muted-foreground mt-1">
+              {isToday
+                ? "Nothing scheduled for the rest of today."
+                : "Nothing scheduled for this date."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {isToday && upcoming.length === 0 && earlier.length > 0 && (
+              <div className="rounded-md border border-border py-6 px-6 text-center mb-6">
+                <p className="lv-body text-foreground font-medium">You're caught up</p>
+                <p className="lv-meta text-muted-foreground mt-1">
+                  Nothing scheduled for the rest of today.
+                </p>
+              </div>
+            )}
+
+            {upcoming.length > 0 && (
+              <section aria-labelledby="calendar-schedule-heading" className="mb-6">
+                <h3 id="calendar-schedule-heading" className="lv-label text-muted-foreground mb-2">
+                  {isToday ? "Today's schedule" : "Schedule"}
+                </h3>
+                <ul className="rounded-md border border-border bg-card divide-y divide-border overflow-hidden">
+                  {upcoming.map((a, i) => (
+                    <AppointmentRow
+                      key={a.id}
+                      appt={a}
+                      isNext={isToday && i === 0}
+                      onClick={() => setSelectedAppt(a)}
+                    />
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {isToday && earlier.length > 0 && (
+              <section aria-labelledby="calendar-earlier-heading">
+                <h3 id="calendar-earlier-heading" className="lv-label text-muted-foreground mb-2">
+                  Earlier today
+                </h3>
+                <ul className="rounded-md border border-border bg-card divide-y divide-border overflow-hidden">
+                  {earlier.map((a) => (
+                    <AppointmentRow key={a.id} appt={a} dimmed onClick={() => setSelectedAppt(a)} />
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {hasMore && (
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={loadingMore}
+                  onClick={() => {
+                    const next = pageIndex + 1;
+                    setPageIndex(next);
+                    loadAppointments(selectedDate, next);
+                  }}
+                >
+                  {loadingMore ? "Loading..." : "Load more"}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Add appointment dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="lv-light sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="lv-section">Add appointment</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAdd} className="space-y-3">
+            <div>
+              <label htmlFor="appt-customer-name" className="lv-label text-foreground block mb-1">
+                Customer name
+              </label>
+              <Input
+                id="appt-customer-name"
+                value={addForm.customer_name}
+                onChange={(e) => setAddForm((f) => ({ ...f, customer_name: e.target.value }))}
+                placeholder="e.g. John Smith"
+                required
+                autoFocus
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="appt-phone" className="lv-label text-foreground block mb-1">
+                  Phone
+                </label>
+                <Input
+                  id="appt-phone"
+                  value={addForm.customer_phone}
+                  onChange={(e) => setAddForm((f) => ({ ...f, customer_phone: e.target.value }))}
+                  placeholder="e.g. 404-555-0100"
+                />
+              </div>
+              <div>
+                <label htmlFor="appt-email" className="lv-label text-foreground block mb-1">
+                  Email
+                </label>
+                <Input
+                  id="appt-email"
+                  type="email"
+                  value={addForm.customer_email}
+                  onChange={(e) => setAddForm((f) => ({ ...f, customer_email: e.target.value }))}
+                  placeholder="e.g. john@example.com"
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="appt-service" className="lv-label text-foreground block mb-1">
+                Service type
+              </label>
+              <Input
+                id="appt-service"
+                value={addForm.service_type}
+                onChange={(e) => setAddForm((f) => ({ ...f, service_type: e.target.value }))}
+                placeholder="e.g. HVAC repair"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="appt-scheduled" className="lv-label text-foreground block mb-1">
+                Date and time
+              </label>
+              <Input
+                id="appt-scheduled"
+                type="datetime-local"
+                value={addForm.scheduled_at}
+                onChange={(e) => setAddForm((f) => ({ ...f, scheduled_at: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="appt-value" className="lv-label text-foreground block mb-1">
+                Estimated value ($)
+              </label>
+              <Input
+                id="appt-value"
+                type="number"
+                min={0}
+                step={1}
+                value={addForm.estimated_value}
+                onChange={(e) => setAddForm((f) => ({ ...f, estimated_value: e.target.value }))}
+                placeholder="e.g. 450"
+              />
+            </div>
+            <div>
+              <label htmlFor="appt-notes" className="lv-label text-foreground block mb-1">
+                Notes
+              </label>
+              <Textarea
+                id="appt-notes"
+                value={addForm.notes}
+                onChange={(e) => setAddForm((f) => ({ ...f, notes: e.target.value }))}
+                rows={3}
+                placeholder="Optional notes"
+              />
+            </div>
+            {addError && <p className="lv-meta text-destructive">{addError}</p>}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={addSaving}>
+                {addSaving ? "Adding..." : "Add appointment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Appointment detail sheet */}
+      <Sheet
+        open={!!selectedAppt}
+        onOpenChange={(v) => {
+          if (!v) setSelectedAppt(null);
+        }}
+      >
+        <SheetContent side="right" className="lv-light w-full sm:max-w-xl overflow-y-auto">
+          {selectedAppt && (
+            <>
+              <SheetHeader className="pr-8 text-left">
+                <SheetTitle className="lv-section text-foreground truncate">
+                  {selectedAppt.customer_name}
+                </SheetTitle>
+                <p className="lv-meta text-muted-foreground mt-0.5">
+                  {selectedAppt.service_type}
+                  {selectedAppt.customer_phone ? ` · ${selectedAppt.customer_phone}` : ""}
+                </p>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-5">
+                <div>
+                  <label htmlFor="appt-status" className="lv-label text-foreground block mb-1.5">
+                    Status
+                  </label>
+                  <Select
+                    value={selectedAppt.status}
+                    onValueChange={(v) => updateStatus(selectedAppt, v as AppointmentStatus)}
+                  >
+                    <SelectTrigger id="appt-status" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {STATUS_LABELS[s]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5 lv-body text-foreground">
+                  {selectedAppt.customer_phone && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span>
+                        <span className="text-muted-foreground">Phone: </span>
+                        {selectedAppt.customer_phone}
+                      </span>
+                      <Button variant="outline" size="sm" className="gap-1.5 shrink-0" asChild>
+                        <a href={`tel:${selectedAppt.customer_phone}`}>
+                          <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                          Call
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+                  {selectedAppt.customer_email && (
+                    <div>
+                      <span className="text-muted-foreground">Email: </span>
+                      {selectedAppt.customer_email}
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-muted-foreground">Booked via: </span>
+                    {SOURCE_LABELS[selectedAppt.source] ?? selectedAppt.source}
                   </div>
                 </div>
-                <Field label="Status">
-                  <select className="lv-input" style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Appointment["status"] })}>
-                    {(["pending", "confirmed", "completed", "cancelled", "no_show"] as const).map((s) => (
-                      <option key={s} value={s}>{STATUS_STYLES[s].label}</option>
-                    ))}
-                  </select>
-                </Field>
-              </>
-            )}
 
-            <Field label="Date and time *">
-              <input type="datetime-local" className="lv-input" style={inputStyle} value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
-            </Field>
-            <Field label="Estimated value ($)">
-              <input type="number" min={0} step={1} className="lv-input" style={inputStyle} value={form.estimated_value} onChange={(e) => setForm({ ...form, estimated_value: e.target.value })} placeholder="e.g. 450" />
-            </Field>
-            <Field label="Notes">
-              <textarea className="lv-input" style={{ ...inputStyle, resize: "vertical" as const }} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
-            </Field>
+                <div>
+                  <label
+                    htmlFor="appt-edit-scheduled"
+                    className="lv-label text-foreground block mb-1.5"
+                  >
+                    Date and time
+                  </label>
+                  <Input
+                    id="appt-edit-scheduled"
+                    type="datetime-local"
+                    value={editForm.scheduled_at}
+                    onChange={(e) => setEditForm((f) => ({ ...f, scheduled_at: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="appt-edit-value"
+                    className="lv-label text-foreground block mb-1.5"
+                  >
+                    Estimated value ($)
+                  </label>
+                  <Input
+                    id="appt-edit-value"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={editForm.estimated_value}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, estimated_value: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="appt-edit-notes"
+                    className="lv-label text-foreground block mb-1.5"
+                  >
+                    Notes
+                  </label>
+                  <Textarea
+                    id="appt-edit-notes"
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
+                    rows={4}
+                  />
+                </div>
 
-            {formError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{formError}</p>}
+                {editError && <p className="lv-meta text-destructive">{editError}</p>}
 
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={handleSave} disabled={saving}
-                style={{ flex: 1, padding: 12, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
-                {saving ? "Saving..." : modal.mode === "create" ? "Add appointment" : "Save changes"}
-              </button>
-              {modal.mode === "edit" && (
-                <button onClick={() => setConfirmingDelete(true)} disabled={saving}
-                  style={{ padding: "12px 18px", background: "var(--card)", color: "var(--destructive)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    className="flex-1 min-h-[44px]"
+                    onClick={handleSaveEdit}
+                    disabled={savingEdit}
+                  >
+                    {savingEdit ? "Saving..." : "Save changes"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="min-h-[44px] text-destructive hover:text-destructive"
+                    onClick={() => setConfirmingDelete(true)}
+                    disabled={savingEdit}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <AlertDialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
-        <AlertDialogContent>
+        <AlertDialogContent className="lv-light">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this appointment?</AlertDialogTitle>
             <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
@@ -483,11 +927,54 @@ function CalendarPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function AppointmentRow({
+  appt,
+  isNext,
+  dimmed,
+  onClick,
+}: {
+  appt: Appointment;
+  isNext?: boolean;
+  dimmed?: boolean;
+  onClick: () => void;
+}) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>{label}</label>
-      {children}
-    </div>
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "w-full min-h-[44px] flex items-center gap-3 px-4 py-3 text-left hover:bg-accent transition-colors duration-150 ease-out",
+          dimmed && "opacity-70",
+        )}
+      >
+        <span className="lv-numbers text-foreground w-[68px] shrink-0">
+          {formatTime(appt.scheduled_at)}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              className="lv-body text-foreground font-medium truncate"
+              title={appt.customer_name}
+            >
+              {appt.customer_name}
+            </span>
+            {isNext && (
+              <span className="lv-meta rounded-sm bg-accent text-primary px-1.5 py-0.5 shrink-0">
+                Next
+              </span>
+            )}
+          </div>
+          <div className="lv-meta text-muted-foreground truncate mt-0.5" title={appt.service_type}>
+            {appt.service_type}
+            {appt.customer_phone ? ` · ${appt.customer_phone}` : ""}
+          </div>
+        </div>
+        <StatusDot status={STATUS_TO_DOT[appt.status]} className="shrink-0" />
+        <span className="lv-numbers text-foreground shrink-0 hidden sm:inline w-16 text-right">
+          {formatMoney(appt.estimated_value)}
+        </span>
+      </button>
+    </li>
   );
 }
