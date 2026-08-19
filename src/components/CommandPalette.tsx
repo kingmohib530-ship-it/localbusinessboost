@@ -8,6 +8,7 @@ import {
   Target,
   Calendar,
   Star,
+  Users,
   Search as SearchIcon,
 } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ import {
 const DESTINATIONS: { to: string; label: string; icon: typeof LayoutDashboard }[] = [
   { to: "/app", label: "Overview", icon: LayoutDashboard },
   { to: "/app/inbox", label: "Inbox", icon: Inbox },
+  { to: "/app/leads", label: "Leads", icon: Users },
   { to: "/app/calendar", label: "Calendar", icon: Calendar },
   { to: "/app/agents", label: "Outreach", icon: Target },
   { to: "/app/reputation", label: "Reviews", icon: Star },

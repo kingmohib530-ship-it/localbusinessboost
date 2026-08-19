@@ -34,12 +34,12 @@ type NavItem = {
 type NavSection = { heading: string; items: NavItem[] };
 
 /**
- * Approved App Shell IA. Leads and Quotes have no backing page yet - later
- * slices - so they render disabled with a "Soon" badge rather than a dead
- * link. Outreach and Reviews link to existing pages (Lead Generator /
- * Reputation) under the approved vocabulary's labels; those pages
- * themselves aren't restyled this slice. Coach is deliberately not here -
- * it lives in the Cmd+K palette instead (see CommandPalette).
+ * Approved App Shell IA. Quotes has no backing page yet - later slice - so
+ * it renders disabled with a "Soon" badge rather than a dead link. Outreach
+ * and Reviews link to existing pages (Lead Generator / Reputation) under
+ * the approved vocabulary's labels; those pages themselves aren't restyled
+ * this slice. Coach is deliberately not here - it lives in the Cmd+K
+ * palette instead (see CommandPalette).
  */
 const NAV_SECTIONS: NavSection[] = [
   {
@@ -53,7 +53,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     heading: "Pipeline",
     items: [
-      { to: null, label: "Leads", icon: Users },
+      { to: "/app/leads", label: "Leads", icon: Users },
       { to: null, label: "Quotes", icon: FileText },
       { to: "/app/agents", label: "Outreach", icon: Target },
     ],
@@ -82,6 +82,7 @@ const MOBILE_TABS: NavItem[] = [
 
 const BREADCRUMB_LABELS: { prefix: string; label: string }[] = [
   { prefix: "/app/inbox", label: "Inbox" },
+  { prefix: "/app/leads", label: "Leads" },
   { prefix: "/app/calendar", label: "Calendar" },
   { prefix: "/app/agents", label: "Outreach" },
   { prefix: "/app/reputation", label: "Reviews" },
