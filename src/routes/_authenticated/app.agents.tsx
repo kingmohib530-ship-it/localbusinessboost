@@ -1,17 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect, type CSSProperties } from "react";
-import { Target, Star, Calendar, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, Search, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LeadGenerator from "@/components/LeadGenerator";
-import { StarRatingInput } from "@/components/StarRatingInput";
 import { toast } from "sonner";
-import { GlowPanel } from "@/components/GlowPanel";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { SOLO_LEAD_BLAST_MONTHLY_CAP } from "@/lib/pricingPlans";
 
 export const Route = createFileRoute("/_authenticated/app/agents")({
   component: AgentsHub,
 });
+
+// Same "has a real, live subscription" definition used across the app
+// (pricing.tsx, app.billing.tsx, the Stripe webhook) - duplicated here
+// since this is client code reading a value those server-only files
+// can't export into.
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 interface Competitor {
   name: string;
@@ -53,139 +66,154 @@ interface BookingPlanResult {
   nextActions?: ForgeNextAction[];
 }
 
-const CAMPAIGNS = [
-  {
-    id: "lead-generator",
-    Icon: Target,
-    name: "Lead Generator",
-    desc: "Build a complete intelligence profile on every prospect and run hyper-personalized multi-touch outreach.",
-    time: "~30 seconds",
-    active: true,
-  },
-  {
-    id: "review-recovery",
-    Icon: Star,
-    name: "Review Response",
-    desc: "Write a professional, personalized response to any customer review in seconds.",
-    time: "~10 seconds",
-    active: true,
-  },
+type ToolId = "booking-booster" | "competitor-intel";
+
+const SECONDARY_TOOLS: {
+  id: ToolId;
+  Icon: typeof Search;
+  name: string;
+  desc: string;
+  time: string;
+}[] = [
   {
     id: "booking-booster",
     Icon: Calendar,
     name: "Booking Follow-Up Plan",
-    desc: "Get a ready-to-use follow-up and booking plan to win back no-shows and fill your calendar.",
+    desc: "Get a ready-to-use follow-up plan for winning back no-shows and filling your calendar.",
     time: "~30 seconds",
-    active: true,
   },
   {
     id: "competitor-intel",
     Icon: Search,
     name: "Competitor Intelligence",
-    desc: "Analyse your top local competitors and find the gaps you can win.",
+    desc: "See plausible competitor archetypes for your market and where the gaps are.",
     time: "~20 seconds",
-    active: true,
   },
 ];
 
-const STEPS_BY_CAMPAIGN: Record<string, string[]> = {
+const STEPS_BY_TOOL: Record<ToolId, string[]> = {
   "competitor-intel": [
     "Scanning your local market...",
     "Profiling competitor archetypes...",
     "Surfacing opportunities...",
-    "Synthesizing insights...",
-  ],
-  "review-recovery": [
-    "Reading the review...",
-    "Drafting a personalized response...",
-    "Polishing tone and phrasing...",
   ],
   "booking-booster": [
     "Designing the follow-up flow...",
     "Writing email + SMS templates...",
-    "Setting up booking + reminders...",
     "Projecting revenue impact...",
   ],
 };
 
-function CrewUpgradeBanner({ feature }: { feature: string }) {
+function PlanGateNotice({ title, description }: { title: string; description: string }) {
   return (
-    <div className="glass-dark" style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>{feature} is a Crew feature</div>
-        <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to Crew or Agency to unlock it.</div>
-      </div>
-      <Link to="/app/billing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
-        Upgrade now →
-      </Link>
+    <div className="rounded-md border border-border px-4 py-3">
+      <p className="lv-label text-foreground">{title}</p>
+      <p className="lv-body text-muted-foreground mt-0.5">{description}</p>
+      <Button size="sm" className="mt-3" asChild>
+        <Link to="/app/billing">Upgrade now</Link>
+      </Button>
     </div>
   );
 }
 
-const inputStyle: CSSProperties = {
-  width: "100%",
-  padding: "10px 14px",
-  border: "1.5px solid var(--border)",
-  borderRadius: 10,
-  fontSize: 14,
-  fontFamily: "inherit",
-  color: "var(--foreground)",
-  background: "var(--input)",
-  boxSizing: "border-box",
-};
+function OutreachStatusPanel({
+  isPaidActive,
+  tier,
+}: {
+  isPaidActive: boolean;
+  tier: string | null;
+}) {
+  if (!isPaidActive) {
+    return (
+      <div className="rounded-md border border-border bg-card px-4 py-3 mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="lv-label text-foreground">Outreach requires an active plan</p>
+          <p className="lv-meta text-muted-foreground mt-0.5">
+            Subscribe to Solo or higher to find and contact new prospects.
+          </p>
+        </div>
+        <Button size="sm" asChild className="shrink-0">
+          <Link to="/app/billing">Upgrade now</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const capText =
+    tier === "solo"
+      ? `Solo plan — up to ${SOLO_LEAD_BLAST_MONTHLY_CAP} prospect searches per month`
+      : "Unlimited prospect searches on your plan";
+
+  return (
+    <div className="rounded-md border border-border bg-card px-4 py-3 mb-6 flex flex-wrap items-center justify-between gap-3">
+      <p className="lv-meta text-muted-foreground">{capText}</p>
+      {tier === "solo" && (
+        <Button size="sm" variant="outline" asChild className="shrink-0">
+          <Link to="/app/billing">Upgrade for unlimited</Link>
+        </Button>
+      )}
+    </div>
+  );
+}
 
 function AgentsHub() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [openTool, setOpenTool] = useState<ToolId | null>(null);
   const [industry, setIndustry] = useState("");
   const [city, setCity] = useState("");
   const [running, setRunning] = useState(false);
   const [competitorResult, setCompetitorResult] = useState<CompetitorResult | null>(null);
+  const [bookingPlan, setBookingPlan] = useState<BookingPlanResult | null>(null);
   const [error, setError] = useState("");
 
-  const [reviewText, setReviewText] = useState("");
-  const [reviewerName, setReviewerName] = useState("");
-  const [starRating, setStarRating] = useState(5);
-  const [reviewResponse, setReviewResponse] = useState<string | null>(null);
-
-  const [bookingPlan, setBookingPlan] = useState<BookingPlanResult | null>(null);
   const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
-  const reducedMotion = usePrefersReducedMotion();
-  const { step, delay } = useMountReveal();
+  const [isPaidActive, setIsPaidActive] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       supabase
         .from("profiles")
-        .select("industry, city, subscription_tier")
+        .select("industry, city, subscription_tier, subscription_status")
         .eq("id", user.id)
         .single()
         .then(({ data }) => {
           if (data?.industry) setIndustry(data.industry);
           if (data?.city) setCity(data.city);
           setSubscriptionTier(data?.subscription_tier ?? null);
+          setIsPaidActive(
+            !!data?.subscription_tier &&
+              data.subscription_tier !== "starter" &&
+              ACTIVE_SUBSCRIPTION_STATUSES.has(data?.subscription_status ?? ""),
+          );
         });
     });
   }, []);
 
   const isCrewPlus = subscriptionTier === "crew" || subscriptionTier === "agency";
 
-  const campaign = CAMPAIGNS.find((c) => c.id === selected);
-  const steps = STEPS_BY_CAMPAIGN[selected ?? ""] ?? [];
+  function openDialog(id: ToolId) {
+    setOpenTool(id);
+    setError("");
+    setCompetitorResult(null);
+    setBookingPlan(null);
+  }
 
-  async function runCampaign() {
+  function closeDialog() {
+    setOpenTool(null);
+    setRunning(false);
+  }
+
+  async function runTool() {
     if (!industry.trim() || !city.trim()) {
       setError("Please enter your trade type and city.");
       return;
     }
     const endpoint =
-      selected === "competitor-intel" ? "/api/competitor-intel" :
-      "/api/booking-plan";
+      openTool === "competitor-intel" ? "/api/competitor-intel" : "/api/booking-plan";
 
     setError("");
     setRunning(true);
     setCompetitorResult(null);
-    setReviewResponse(null);
     setBookingPlan(null);
 
     try {
@@ -213,61 +241,12 @@ function AgentsHub() {
         return;
       }
 
-      if (selected === "competitor-intel") {
+      if (openTool === "competitor-intel") {
         setCompetitorResult(data);
       } else {
         setBookingPlan(data);
       }
-    } catch (err) {
-      setError("Network error. Please try again.");
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  async function runReviewRecovery() {
-    if (!reviewText.trim()) {
-      setError("Please paste the review text.");
-      return;
-    }
-
-    setError("");
-    setRunning(true);
-    setCompetitorResult(null);
-    setReviewResponse(null);
-    setBookingPlan(null);
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        setError("Please sign in again and retry.");
-        setRunning(false);
-        return;
-      }
-
-      const res = await fetch("/api/review-response", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          reviewText: reviewText.trim(),
-          reviewerName: reviewerName.trim(),
-          starRating,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setError(data.error || "Something went wrong. Please try again.");
-        return;
-      }
-
-      setReviewResponse(data.response);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setRunning(false);
@@ -293,16 +272,6 @@ function AgentsHub() {
     }
   }
 
-  async function copyReviewResponse() {
-    if (!reviewResponse) return;
-    try {
-      await navigator.clipboard.writeText(reviewResponse);
-      toast.success("Response copied to clipboard!");
-    } catch {
-      toast.error("Couldn't copy - please select and copy the text manually.");
-    }
-  }
-
   async function copyBookingPlan() {
     if (!bookingPlan) return;
     const lines: string[] = [];
@@ -312,19 +281,23 @@ function AgentsHub() {
     bookingPlan.steps.forEach((s, i) => lines.push(`${i + 1}. ${s.action} — ${s.details}`));
     if (bookingPlan.emailTemplates?.length) {
       lines.push("", "EMAIL TEMPLATES");
-      bookingPlan.emailTemplates.forEach(t => lines.push(`- ${t.name}\n  Subject: ${t.subject}\n  ${t.body}`));
+      bookingPlan.emailTemplates.forEach((t) =>
+        lines.push(`- ${t.name}\n  Subject: ${t.subject}\n  ${t.body}`),
+      );
     }
     if (bookingPlan.smsTemplates?.length) {
       lines.push("", "SMS TEMPLATES");
-      bookingPlan.smsTemplates.forEach(t => lines.push(`- ${t.name}: ${t.body}`));
+      bookingPlan.smsTemplates.forEach((t) => lines.push(`- ${t.name}: ${t.body}`));
     }
     if (bookingPlan.kpis?.length) {
       lines.push("", "KPIS");
-      bookingPlan.kpis.forEach(k => lines.push(`- ${k}`));
+      bookingPlan.kpis.forEach((k) => lines.push(`- ${k}`));
     }
     if (bookingPlan.nextActions?.length) {
       lines.push("", "NEXT ACTIONS");
-      bookingPlan.nextActions.forEach((a, i) => lines.push(`${i + 1}. ${a.title}${a.eta ? ` (${a.eta})` : ""}`));
+      bookingPlan.nextActions.forEach((a, i) =>
+        lines.push(`${i + 1}. ${a.title}${a.eta ? ` (${a.eta})` : ""}`),
+      );
     }
     try {
       await navigator.clipboard.writeText(lines.join("\n"));
@@ -334,324 +307,311 @@ function AgentsHub() {
     }
   }
 
-  const hasResult = !!competitorResult || !!reviewResponse || !!bookingPlan;
+  const tool = SECONDARY_TOOLS.find((t) => t.id === openTool);
+  const hasResult = !!competitorResult || !!bookingPlan;
+  const steps = openTool ? STEPS_BY_TOOL[openTool] : [];
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
-      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>Campaigns</h1>
-        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>Pick a campaign type and run it end-to-end.</p>
+    <div className="lv-light min-h-full bg-background">
+      <div className="max-w-[1000px] mx-auto px-4 md:px-8 py-6 md:py-8">
+        <div className="mb-6">
+          <h1 className="lv-page-title text-foreground">Outreach</h1>
+          <p className="lv-body text-muted-foreground mt-1">
+            Find local prospects, start outreach, and follow progress. Real opportunities move into
+            Leads as they respond.
+          </p>
+        </div>
+
+        <OutreachStatusPanel isPaidActive={isPaidActive} tier={subscriptionTier} />
+
+        <LeadGenerator />
+
+        {/* More tools */}
+        <div className="mt-10">
+          <h2 className="lv-section text-foreground mb-1">More tools</h2>
+          <p className="lv-meta text-muted-foreground mb-4">
+            Optional utilities for Crew and Agency plans.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {SECONDARY_TOOLS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => openDialog(t.id)}
+                className="text-left rounded-md border border-border bg-card px-4 py-4 min-h-[44px] hover:bg-accent transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent text-primary">
+                    <t.Icon className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <span className="lv-body text-foreground font-medium">{t.name}</span>
+                </div>
+                <p className="lv-meta text-muted-foreground">{t.desc}</p>
+                <p className="lv-meta text-muted-foreground mt-2">{t.time}</p>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Grid */}
-      {!selected && !running && !hasResult && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
-          {CAMPAIGNS.map((c, i) => (
-            <GlowPanel key={c.id} reducedMotion={reducedMotion} onClick={() => c.active && setSelected(c.id)}
-              className={`${step} glass-dark hover-lift-dark rounded-2xl`}
-              style={{ padding: 22, cursor: c.active ? "pointer" : "default", opacity: c.active ? 1 : 0.55, ...delay(i + 1) }}>
-              {!c.active && <div style={{ position: "absolute", top: 12, right: 12, fontSize: 11, fontWeight: 600, background: "var(--secondary)", color: "var(--muted-foreground)", padding: "2px 8px", borderRadius: 4 }}>Coming soon</div>}
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                <c.Icon size={20} color="var(--primary)" strokeWidth={1.75} />
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>{c.name}</div>
-              <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5, marginBottom: 12 }}>{c.desc}</div>
-              <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: c.active ? 12 : 0 }}>{c.time}</div>
-              {c.active && <div style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)" }}>Run this campaign →</div>}
-            </GlowPanel>
-          ))}
-        </div>
-      )}
-
-      {/* Lead Generator: self-contained panel, bypasses the generic run/result flow */}
-      {selected === "lead-generator" && (
-        <div>
-          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
-          <LeadGenerator />
-        </div>
-      )}
-
-      {/* Form: Competitor Intelligence */}
-      {selected === "competitor-intel" && !running && !hasResult && (
-        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
-          {!isCrewPlus && <CrewUpgradeBanner feature="Competitor Intelligence" />}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Search size={20} color="var(--primary)" strokeWidth={1.75} />
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Competitor Intelligence</div>
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
-            <input value={industry} onChange={e => setIndustry(e.target.value)}
-              placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              className="lv-input" style={inputStyle} />
-          </div>
-          <div style={{ marginBottom: 22 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
-            <input value={city} onChange={e => setCity(e.target.value)}
-              placeholder="e.g. Atlanta GA, Dallas TX..."
-              className="lv-input" style={inputStyle} />
-          </div>
-          {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runCampaign} disabled={!isCrewPlus}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
-            Run Competitor Intelligence →
-          </button>
-          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~20 seconds</p>
-        </div>
-      )}
-
-      {/* Form: Booking Follow-Up Plan */}
-      {selected === "booking-booster" && !running && !hasResult && (
-        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
-          {!isCrewPlus && <CrewUpgradeBanner feature="Booking Follow-Up Plan" />}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Calendar size={20} color="var(--primary)" strokeWidth={1.75} />
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Booking Follow-Up Plan</div>
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your trade / service *</label>
-            <input value={industry} onChange={e => setIndustry(e.target.value)}
-              placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
-              className="lv-input" style={inputStyle} />
-          </div>
-          <div style={{ marginBottom: 22 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your city / area *</label>
-            <input value={city} onChange={e => setCity(e.target.value)}
-              placeholder="e.g. Atlanta GA, Dallas TX..."
-              className="lv-input" style={inputStyle} />
-          </div>
-          {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runCampaign} disabled={!isCrewPlus}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
-            Run Booking Follow-Up Plan →
-          </button>
-          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~30 seconds</p>
-        </div>
-      )}
-
-      {/* Form: Review Response */}
-      {selected === "review-recovery" && !running && !hasResult && (
-        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <button onClick={() => setSelected(null)} style={{ fontSize: 13, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", marginBottom: 20, padding: 0 }}>← Back</button>
-          {!isCrewPlus && <CrewUpgradeBanner feature="Review Response" />}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Star size={20} color="var(--primary)" strokeWidth={1.75} />
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Review Response</div>
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Star rating</label>
-            <StarRatingInput rating={starRating} onChange={setStarRating} size={24} />
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Reviewer name</label>
-            <input value={reviewerName} onChange={e => setReviewerName(e.target.value)}
-              placeholder="e.g. Sarah M."
-              className="lv-input" style={inputStyle} />
-          </div>
-          <div style={{ marginBottom: 22 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Review text *</label>
-            <textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
-              placeholder="Paste the review here..."
-              rows={4}
-              className="lv-input" style={{ ...inputStyle, resize: "vertical" }} />
-          </div>
-          {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          <button onClick={runReviewRecovery} disabled={!isCrewPlus}
-            style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: isCrewPlus ? "pointer" : "not-allowed", opacity: isCrewPlus ? 1 : 0.6, fontFamily: "inherit" }}>
-            Run Review Response →
-          </button>
-          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>~10 seconds</p>
-        </div>
-      )}
-
-      {/* Loading */}
-      {running && (
-        <div className="glass-dark hd-blur-in" style={{ borderRadius: 20, padding: 32, maxWidth: 520 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--primary)", marginBottom: 8 }}>Running campaign</div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: "var(--foreground)", marginBottom: 24 }}>
-            {selected === "review-recovery"
-              ? "Writing your response..."
-              : selected === "competitor-intel"
-              ? `Analyzing ${industry} competitors in ${city}...`
-              : `Building a booking system for ${industry} in ${city}...`}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {steps.map((s, i) => (
-              <div key={i} className="animate-pulse" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10,
-                background: "var(--accent)", border: "1px solid var(--border)" }}>
-                <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--primary)", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: "var(--primary)" }}>{s}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-      {/* Results: Competitor Intelligence */}
-      {competitorResult && !running && (
-        <div className="hd-blur-in">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>Market analysis for {industry} in {city}</h2>
-              <p style={{ fontSize: 14, color: "var(--primary)", fontWeight: 600, margin: 0 }}>{competitorResult.competitors.length} competitor archetypes · {competitorResult.opportunities.length} opportunities</p>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={copyCompetitorIntel} style={{ padding: "9px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy full report</button>
-              <button onClick={() => { setCompetitorResult(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
-            </div>
-          </div>
-
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)", marginBottom: 8, marginTop: 4 }}>These are plausible competitor archetypes for your market, not named real businesses.</div>
-
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Competitor archetypes</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-            {competitorResult.competitors.map((c, i) => (
-              <div key={i} className="glass-dark" style={{ borderRadius: 14, padding: "16px 20px" }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>{c.name}</div>
-                <p style={{ fontSize: 13, color: "var(--accent-2)", margin: "0 0 4px" }}><strong>Strength:</strong> {c.strength}</p>
-                <p style={{ fontSize: 13, color: "var(--destructive)", margin: 0 }}><strong>Weakness:</strong> {c.weakness}</p>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Opportunities</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
-            {competitorResult.opportunities.map((o, i) => (
-              <div key={i} style={{ background: "var(--accent)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--foreground)" }}>{o}</div>
-            ))}
-          </div>
-
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "18px 0 10px" }}>Sharp insights</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {competitorResult.insights.map((n, i) => (
-              <div key={i} className="glass-dark" style={{ borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--muted-foreground)" }}>{n}</div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Results: Review Response */}
-      {reviewResponse && !running && (
-        <div className="hd-blur-in" style={{ maxWidth: 680 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>Response ready</h2>
-              <p style={{ fontSize: 14, color: "var(--accent-2)", fontWeight: 600, margin: 0 }}>For {reviewerName || "this reviewer"} · {starRating}★ review</p>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={copyReviewResponse} style={{ padding: "9px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy response</button>
-              <button onClick={() => { setReviewResponse(null); setSelected(null); setReviewText(""); setReviewerName(""); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
-            </div>
-          </div>
-          <div className="glass-dark" style={{ borderRadius: 14, padding: "18px 20px" }}>
-            <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.6, margin: 0 }}>{reviewResponse}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Results: Booking Follow-Up Plan */}
-      {bookingPlan && !running && (
-        <div className="hd-blur-in" style={{ maxWidth: 760 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)", margin: "0 0 4px" }}>Booking plan for {industry} in {city}</h2>
-              {bookingPlan.estimatedRoi && <p style={{ fontSize: 14, color: "var(--primary)", fontWeight: 600, margin: 0 }}>{bookingPlan.estimatedRoi}</p>}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={copyBookingPlan} style={{ padding: "9px 18px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Copy full plan</button>
-              <button onClick={() => { setBookingPlan(null); setSelected(null); }} style={{ padding: "9px 18px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>New campaign</button>
-            </div>
-          </div>
-
-          {bookingPlan.trigger && (
-            <div style={{ background: "var(--accent)", border: "1px solid var(--border)", borderRadius: 12, padding: "11px 16px", marginBottom: 20, fontSize: 13, color: "var(--foreground)" }}>
-              <strong>Trigger:</strong> {bookingPlan.trigger}
-            </div>
-          )}
-
-          {bookingPlan.kpis && bookingPlan.kpis.length > 0 && (
+      {/* Secondary tool dialog */}
+      <Dialog open={!!openTool} onOpenChange={(v) => !v && closeDialog()}>
+        <DialogContent className="lv-light sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          {tool && (
             <>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Target KPIs</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-                {bookingPlan.kpis.map((k, i) => (
-                  <span key={i} style={{ fontSize: 12, fontWeight: 600, color: "var(--primary)", background: "var(--accent)", border: "1px solid var(--border)", borderRadius: 100, padding: "5px 12px" }}>{k}</span>
-                ))}
-              </div>
-            </>
-          )}
+              <DialogHeader>
+                <DialogTitle className="lv-section">{tool.name}</DialogTitle>
+              </DialogHeader>
 
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Follow-up flow</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-            {bookingPlan.steps.map((s, i) => (
-              <div key={i} className="glass-dark" style={{ borderRadius: 14, padding: "14px 18px", display: "flex", gap: 12 }}>
-                <span style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--accent)", color: "var(--primary)", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
+              {!isCrewPlus ? (
+                <PlanGateNotice
+                  title={`${tool.name} is a Crew feature`}
+                  description="Upgrade to Crew or Agency to unlock it."
+                />
+              ) : running ? (
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 3 }}>{s.action}</div>
-                  <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>{s.details}</p>
+                  <p className="lv-body text-foreground font-medium mb-4">
+                    {openTool === "competitor-intel"
+                      ? `Analyzing ${industry} competitors in ${city}...`
+                      : `Building a follow-up plan for ${industry} in ${city}...`}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {steps.map((s) => (
+                      <div
+                        key={s}
+                        className="rounded-sm border border-border bg-accent px-3 py-2 lv-meta text-primary"
+                      >
+                        {s}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {bookingPlan.emailTemplates && bookingPlan.emailTemplates.length > 0 && (
-            <>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Email templates</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-                {bookingPlan.emailTemplates.map((t, i) => (
-                  <div key={i} className="glass-dark" style={{ borderRadius: 14, padding: "14px 18px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>{t.name}</div>
-                    <div style={{ fontSize: 13, color: "var(--primary)", marginBottom: 6 }}>Subject: {t.subject}</div>
-                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0, whiteSpace: "pre-wrap" }}>{t.body}</p>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {bookingPlan.smsTemplates && bookingPlan.smsTemplates.length > 0 && (
-            <>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>SMS templates</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
-                {bookingPlan.smsTemplates.map((t, i) => (
-                  <div key={i} className="glass-dark" style={{ borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>
-                    <strong style={{ color: "var(--foreground)" }}>{t.name}:</strong> <span style={{ color: "var(--muted-foreground)" }}>{t.body}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {bookingPlan.nextActions && bookingPlan.nextActions.length > 0 && (
-            <>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", margin: "0 0 10px" }}>Week 1 action plan</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
-                {bookingPlan.nextActions.map((a, i) => (
-                  <div key={i} className="glass-dark" style={{ borderRadius: 10, padding: "10px 14px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>
-                      {a.title}
-                      {a.eta && <span style={{ fontWeight: 500, color: "var(--muted-foreground)" }}> · {a.eta}</span>}
+              ) : hasResult ? (
+                <div>
+                  {competitorResult && (
+                    <div className="space-y-5">
+                      <p className="lv-meta text-muted-foreground">
+                        These are plausible competitor archetypes for your market, not named real
+                        businesses.
+                      </p>
+                      <div>
+                        <p className="lv-label text-foreground mb-2">Competitor archetypes</p>
+                        <div className="space-y-2">
+                          {competitorResult.competitors.map((c, i) => (
+                            <div key={i} className="rounded-md border border-border px-3 py-2.5">
+                              <p className="lv-body text-foreground font-medium mb-1">{c.name}</p>
+                              <p className="lv-meta text-muted-foreground">
+                                <span className="text-foreground">Strength:</span> {c.strength}
+                              </p>
+                              <p className="lv-meta text-muted-foreground">
+                                <span className="text-foreground">Weakness:</span> {c.weakness}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="lv-label text-foreground mb-2">Opportunities</p>
+                        <div className="space-y-1.5">
+                          {competitorResult.opportunities.map((o, i) => (
+                            <div
+                              key={i}
+                              className="rounded-sm border border-border bg-accent px-3 py-2 lv-meta text-foreground"
+                            >
+                              {o}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="lv-label text-foreground mb-2">Sharp insights</p>
+                        <div className="space-y-1.5">
+                          {competitorResult.insights.map((n, i) => (
+                            <div
+                              key={i}
+                              className="rounded-sm border border-border px-3 py-2 lv-meta text-muted-foreground"
+                            >
+                              {n}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    {a.why && <p style={{ fontSize: 12, color: "var(--muted-foreground)", margin: "3px 0 0" }}>{a.why}</p>}
+                  )}
+
+                  {bookingPlan && (
+                    <div className="space-y-5">
+                      {bookingPlan.estimatedRoi && (
+                        <p className="lv-body text-primary font-medium">
+                          {bookingPlan.estimatedRoi}
+                        </p>
+                      )}
+                      {bookingPlan.trigger && (
+                        <div className="rounded-sm border border-border bg-accent px-3 py-2 lv-meta text-foreground">
+                          <span className="font-medium">Trigger:</span> {bookingPlan.trigger}
+                        </div>
+                      )}
+                      {bookingPlan.kpis && bookingPlan.kpis.length > 0 && (
+                        <div>
+                          <p className="lv-label text-foreground mb-2">Target KPIs</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {bookingPlan.kpis.map((k, i) => (
+                              <span
+                                key={i}
+                                className="lv-meta rounded-sm bg-accent text-primary px-2 py-0.5"
+                              >
+                                {k}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <p className="lv-label text-foreground mb-2">Follow-up flow</p>
+                        <div className="space-y-2">
+                          {bookingPlan.steps.map((s, i) => (
+                            <div key={i} className="rounded-md border border-border px-3 py-2.5">
+                              <p className="lv-body text-foreground font-medium">
+                                {i + 1}. {s.action}
+                              </p>
+                              <p className="lv-meta text-muted-foreground mt-0.5">{s.details}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {bookingPlan.emailTemplates && bookingPlan.emailTemplates.length > 0 && (
+                        <div>
+                          <p className="lv-label text-foreground mb-2">Email templates</p>
+                          <div className="space-y-2">
+                            {bookingPlan.emailTemplates.map((t, i) => (
+                              <div key={i} className="rounded-md border border-border px-3 py-2.5">
+                                <p className="lv-body text-foreground font-medium">{t.name}</p>
+                                <p className="lv-meta text-primary mt-0.5">Subject: {t.subject}</p>
+                                <p className="lv-meta text-muted-foreground mt-1 whitespace-pre-wrap">
+                                  {t.body}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {bookingPlan.smsTemplates && bookingPlan.smsTemplates.length > 0 && (
+                        <div>
+                          <p className="lv-label text-foreground mb-2">SMS templates</p>
+                          <div className="space-y-1.5">
+                            {bookingPlan.smsTemplates.map((t, i) => (
+                              <div
+                                key={i}
+                                className="rounded-sm border border-border px-3 py-2 lv-meta"
+                              >
+                                <span className="text-foreground font-medium">{t.name}:</span>{" "}
+                                <span className="text-muted-foreground">{t.body}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {bookingPlan.nextActions && bookingPlan.nextActions.length > 0 && (
+                        <div>
+                          <p className="lv-label text-foreground mb-2">Week 1 action plan</p>
+                          <div className="space-y-1.5">
+                            {bookingPlan.nextActions.map((a, i) => (
+                              <div key={i} className="rounded-sm border border-border px-3 py-2">
+                                <p className="lv-meta text-foreground font-medium">
+                                  {a.title}
+                                  {a.eta && (
+                                    <span className="text-muted-foreground font-normal">
+                                      {" "}
+                                      · {a.eta}
+                                    </span>
+                                  )}
+                                </p>
+                                {a.why && (
+                                  <p className="lv-meta text-muted-foreground mt-0.5">{a.why}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <p className="lv-meta text-muted-foreground">
+                        This gives you ready-to-use copy and setup steps. Automatically sending
+                        texts and emails on a schedule isn't wired up yet — for now, copy these
+                        templates and use them manually.
+                      </p>
+                    </div>
+                  )}
+
+                  <DialogFooter className="mt-5">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setCompetitorResult(null);
+                        setBookingPlan(null);
+                      }}
+                    >
+                      Run again
+                    </Button>
+                    <Button
+                      onClick={
+                        openTool === "competitor-intel" ? copyCompetitorIntel : copyBookingPlan
+                      }
+                      className="gap-1.5"
+                    >
+                      <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                      Copy
+                    </Button>
+                  </DialogFooter>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    runTool();
+                  }}
+                  className="space-y-3"
+                >
+                  <div>
+                    <Label htmlFor="tool-industry" className="lv-label text-foreground block mb-1">
+                      Your trade / service
+                    </Label>
+                    <Input
+                      id="tool-industry"
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      placeholder="e.g. HVAC, Plumbing, Cleaning, Roofing..."
+                      required
+                    />
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <Label htmlFor="tool-city" className="lv-label text-foreground block mb-1">
+                      Your city / area
+                    </Label>
+                    <Input
+                      id="tool-city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="e.g. Atlanta GA, Dallas TX..."
+                      required
+                    />
+                  </div>
+                  {error && (
+                    <p className="lv-meta text-destructive" role="alert">
+                      {error}
+                    </p>
+                  )}
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={closeDialog}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Run {tool.name}</Button>
+                  </DialogFooter>
+                </form>
+              )}
             </>
           )}
-
-          <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 12 }}>
-            This plan gives you ready-to-use copy and setup steps. Automatically sending texts and emails on a schedule isn't wired up yet — for now, copy these templates and use them manually.
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
