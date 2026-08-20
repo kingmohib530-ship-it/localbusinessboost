@@ -2,19 +2,26 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 
 const STORAGE_KEY = "lanavix:cookie_consent";
-const DARK_PATHS = ["/", "/pricing", "/about", "/terms", "/privacy", "/refund", "/cookies", "/faq"];
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   // Rendered once in __root.tsx as a sibling of <Outlet/>, not a descendant
-  // of it, so it can't inherit --hd-* custom properties from either the
-  // homepage's .page-dark or the dashboard's .app-dark scope: those only
-  // cascade to elements nested inside them, not to siblings. Hardcoding the
-  // same dark palette values directly below (rather than reading the
-  // custom properties) is what actually makes this render correctly on
-  // both dark surfaces, not just by coincidence on one of them.
+  // of it, so it can't inherit --hd-* custom properties from the
+  // dashboard's .app-dark scope: those only cascade to elements nested
+  // inside it, not to siblings. Hardcoding the same dark palette values
+  // directly below (rather than reading the custom properties) is what
+  // actually makes this render correctly there, not just by coincidence.
+  //
+  // Marketing pages (/, /pricing, /faq, /refund, /about, /terms, /privacy,
+  // /cookies) are all on the light Foundations system as of the Phase 5
+  // redesign, so only /app/* still needs the dark variant - and even there
+  // it's an approximation: some authenticated routes (Overview, Billing,
+  // Settings, Receptionist, ...) have already been redesigned light too,
+  // but this banner renders outside the Outlet and can't see which child
+  // route is active. That mismatch is a pre-existing, already-tracked
+  // blocker (see PRE-PRODUCTION BLOCKERS), not something this fix resolves.
   const { pathname } = useLocation();
-  const dark = DARK_PATHS.includes(pathname) || pathname.startsWith("/app");
+  const dark = pathname.startsWith("/app");
 
   useEffect(() => {
     try {
