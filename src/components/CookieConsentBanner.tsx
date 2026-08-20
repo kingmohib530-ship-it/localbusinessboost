@@ -15,6 +15,11 @@ export function CookieConsentBanner() {
   // both dark surfaces, not just by coincidence on one of them.
   const { pathname } = useLocation();
   const dark = DARK_PATHS.includes(pathname) || pathname.startsWith("/app");
+  // The App Shell's mobile bottom tab bar (Today/Calendar/More, <md only)
+  // sits at bottom-0 with z-20 - at the banner's usual bottom-4 it would
+  // render on top of and block those tap targets. Only /app routes have
+  // that tab bar, so only they need the extra clearance.
+  const inApp = pathname.startsWith("/app");
 
   useEffect(() => {
     try {
@@ -42,7 +47,7 @@ export function CookieConsentBanner() {
       // corner card keeps the same content but clears that CTA - and any
       // other bottom-of-viewport content - on both the marketing pages and
       // the dashboard.
-      className={`fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-[60] rounded-2xl border shadow-lg backdrop-blur-md ${
+      className={`fixed ${inApp ? "bottom-20 md:bottom-4" : "bottom-4"} right-4 left-4 sm:left-auto sm:max-w-sm z-[60] rounded-2xl border shadow-lg backdrop-blur-md ${
         dark ? "border-white/10 bg-[#08090b]/95" : "border-border bg-background/95"
       }`}
     >

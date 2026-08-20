@@ -1,18 +1,19 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { DollarSign, Calendar, Star, Target, TrendingUp, MessageSquare } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { MessageSquare, UserPlus, FileClock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { GlowPanel } from "@/components/GlowPanel";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusDot } from "@/components/StatusDot";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { daysAgo, formatTime } from "@/lib/timeFormat";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   // The one place a returning user gets sent into the onboarding wizard -
   // specifically here, not in the parent _authenticated guard, so this
   // check runs once on landing at /app rather than on every dashboard
-  // navigation. A brand-new signup always lands here first (see auth.tsx's
-  // postAuthTarget), so this is genuinely "right after signup," not a
-  // blanket gate on the whole app.
+  // navigation. Preserved from current main's Overview (the redesign
+  // branch's version dropped this gate - see the Slice 1 report).
   beforeLoad: async ({ context }) => {
     const { data } = await supabase
       .from("profiles")
@@ -23,392 +24,707 @@ export const Route = createFileRoute("/_authenticated/app/")({
       throw redirect({ to: "/onboarding" });
     }
   },
-  component: TodayDashboard,
+  component: Overview,
 });
 
 interface Profile {
   full_name: string | null;
   business_name: string | null;
-  industry: string | null;
-  subscription_tier: string | null;
-  verification_status: string | null;
-}
-
-interface ActivityRow {
-  id: string;
-  type: string;
-  summary: string;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
 }
 
 interface ConversationRow {
+  id: string;
+  customer_name: string | null;
+  customer_identifier: string;
+  channel: string;
   status: string | null;
-  started_at: string | null;
 }
 
-interface ConversationMessageRow {
+interface MessageRow {
   conversation_id: string | null;
+  direction: string | null;
   sent_at: string | null;
 }
 
-interface ReviewResponseRow {
-  star_rating: number | null;
-  created_at: string | null;
+interface LeadRow {
+  id: string;
+  business_name: string | null;
+  created_at: string;
 }
 
-interface AppointmentRevenueRow {
+interface QuoteRow {
+  id: string;
+  conversation_id: string;
+  service_type: string | null;
+  quoted_price: number | null;
+  quoted_at: string;
+}
+
+interface AppointmentRow {
+  id: string;
   estimated_value: number | null;
-  created_at: string | null;
-  source: string;
+  created_at: string;
   status: string;
 }
 
-function timeAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+interface TodayAppointmentRow {
+  id: string;
+  customer_name: string;
+  service_type: string;
+  scheduled_at: string;
+  status: string;
 }
 
-const QUICK_WINS = [
-  {
-    Icon: Target,
-    title: "Run the Lead Generator",
-    desc: "Build a complete intelligence profile on up to 50 local prospects with personalized outreach.",
-    action: "Run now →",
-    href: "/app/agents",
-  },
-  {
-    Icon: Star,
-    title: "Send review requests",
-    desc: "Text your last few customers a review request and boost your Google rating.",
-    action: "Send requests →",
-    href: "/app/reputation",
-  },
-  {
-    Icon: TrendingUp,
-    title: "Check your audit score",
-    desc: "See exactly what's costing you customers and get 12 plain-English fixes.",
-    action: "View audit →",
-    href: "/audit",
-  },
-];
+type NeedsYouItem =
+  | {
+      kind: "unanswered";
+      id: string;
+      conversationId: string;
+      customerName: string;
+      customerIdentifier: string;
+      channel: string;
+      since: string;
+    }
+  | { kind: "lead"; id: string; businessName: string; since: string }
+  | {
+      kind: "quote";
+      id: string;
+      conversationId: string;
+      customerName: string;
+      customerIdentifier: string;
+      serviceType: string | null;
+      quotedPrice: number | null;
+      since: string;
+    };
 
-const ACTIVITY_PAGE_SIZE = 20;
+const NEEDS_YOU_LIMIT = 3;
+/** Looks like a phone number (E.164 or close enough) - safe to offer a tel: link for. */
+const PHONE_LIKE = /^\+?[\d\s().-]{7,}$/;
 
-function TodayDashboard() {
+/** Most recent Monday 00:00 local time. */
+function startOfWeek(from: Date): Date {
+  const d = new Date(from);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatDelta(current: number, previous: number): string | null {
+  if (previous === 0) return current > 0 ? "new this week" : null;
+  const diff = current - previous;
+  if (diff === 0) return "flat vs last week";
+  const pct = Math.round((diff / previous) * 100);
+  return `${diff > 0 ? "+" : ""}${pct}% vs last week`;
+}
+
+function Overview() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [activity, setActivity] = useState<ActivityRow[]>([]);
-  const [activityLoadingMore, setActivityLoadingMore] = useState(false);
-  const [activityHasMore, setActivityHasMore] = useState(false);
-  const [activityPageIndex, setActivityPageIndex] = useState(0);
-  const [activityError, setActivityError] = useState("");
-  const [outboundLeadsSent, setOutboundLeadsSent] = useState(0);
-  const [conversationRows, setConversationRows] = useState<ConversationRow[]>([]);
-  const [conversationMessages, setConversationMessages] = useState<ConversationMessageRow[]>([]);
-  const [reviewResponses, setReviewResponses] = useState<ReviewResponseRow[]>([]);
-  const [revenueAppointments, setRevenueAppointments] = useState<AppointmentRevenueRow[]>([]);
+  const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [messages, setMessages] = useState<MessageRow[]>([]);
+  const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [quotes, setQuotes] = useState<QuoteRow[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<TodayAppointmentRow[]>([]);
+  const [hasAnyHistory, setHasAnyHistory] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [showAllNeedsYou, setShowAllNeedsYou] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
-    async function loadDashboard() {
+    async function load() {
       try {
         setError("");
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
-        const monthStartIso = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+        const twoWeeksAgoIso = new Date(Date.now() - 14 * 86400000).toISOString();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(todayStart.getTime() + 86400000);
+
         const [
           { data: profileData, error: profileErr },
-          { data: leadBlastData, error: leadBlastErr },
-          { data: conversationRowData, error: conversationErr },
-          { data: conversationMessageData, error: conversationMessageErr },
-          { data: reviewResponseData, error: reviewResponseErr },
-          { data: appointmentRevenueData, error: appointmentErr },
+          { data: conversationData, error: conversationErr },
+          { data: messageData, error: messageErr },
+          { data: leadData, error: leadErr },
+          { data: quoteData, error: quoteErr },
+          { data: appointmentData, error: appointmentErr },
+          { data: todayAppointmentData, error: todayAppointmentErr },
+          { count: everConversationCount },
+          { count: everLeadCount },
+          { count: everAppointmentCount },
         ] = await Promise.all([
-          supabase
-            .from("profiles")
-            .select("full_name, business_name, industry, subscription_tier, verification_status")
-            .eq("id", user.id)
-            .single(),
-          // Scoped to this calendar month and this activity type specifically,
-          // rather than deriving from the paginated "recent activity" list
-          // below - that list only ever holds whatever page the user has
-          // loaded, which isn't a safe source for a stat tile.
-          supabase
-            .from("activity_log")
-            .select("metadata")
-            .eq("user_id", user.id)
-            .eq("type", "lead_blast")
-            .gte("created_at", monthStartIso),
+          supabase.from("profiles").select("full_name, business_name").eq("id", user.id).single(),
           supabase
             .from("conversations")
-            .select("status, started_at")
-            .eq("user_id", user.id),
+            .select("id, customer_name, customer_identifier, channel, status")
+            .eq("user_id", user.id)
+            .neq("status", "booked"),
           supabase
             .from("conversation_messages")
-            .select("conversation_id, sent_at")
+            .select("conversation_id, direction, sent_at")
+            .eq("user_id", user.id)
+            .order("sent_at", { ascending: false })
+            .limit(300),
+          supabase
+            .from("lead_profiles")
+            .select("id, business_name, created_at")
+            .eq("user_id", user.id)
+            .eq("status", "new")
+            .gte("created_at", twoWeeksAgoIso),
+          supabase
+            .from("quote_follow_ups")
+            .select("id, conversation_id, service_type, quoted_price, quoted_at")
+            .eq("user_id", user.id)
+            .eq("status", "active"),
+          supabase
+            .from("appointments")
+            .select("id, estimated_value, created_at, status")
+            .eq("user_id", user.id)
+            .neq("status", "cancelled")
+            .gte("created_at", twoWeeksAgoIso),
+          supabase
+            .from("appointments")
+            .select("id, customer_name, service_type, scheduled_at, status")
+            .eq("user_id", user.id)
+            .neq("status", "cancelled")
+            .gte("scheduled_at", todayStart.toISOString())
+            .lt("scheduled_at", todayEnd.toISOString())
+            .order("scheduled_at", { ascending: true }),
+          supabase
+            .from("conversations")
+            .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
           supabase
-            .from("review_responses")
-            .select("star_rating, created_at")
+            .from("lead_profiles")
+            .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
           supabase
             .from("appointments")
-            .select("estimated_value, created_at, source, status")
-            .eq("user_id", user.id)
-            .eq("source", "inbound_sms")
-            .neq("status", "cancelled"),
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id),
         ]);
-        const firstErr = profileErr || leadBlastErr || conversationErr || conversationMessageErr || reviewResponseErr || appointmentErr;
+
+        const firstErr =
+          profileErr ||
+          conversationErr ||
+          messageErr ||
+          leadErr ||
+          quoteErr ||
+          appointmentErr ||
+          todayAppointmentErr;
         if (firstErr) {
-          console.error("[dashboard] failed to load one or more dashboard queries", firstErr);
-          setError("Couldn't load some of your dashboard data. Please refresh the page.");
+          console.error("[overview] failed to load one or more queries", firstErr);
+          setError("Some of your dashboard data couldn't load. What did load is still accurate.");
         }
+
         setProfile(profileData);
-        const leadBlastRows = (leadBlastData as Array<{ metadata: Record<string, unknown> | null }>) ?? [];
-        setOutboundLeadsSent(
-          leadBlastRows.reduce((sum, a) => sum + (Number(a.metadata?.leadCount) || 0), 0),
+        setConversations((conversationData as ConversationRow[]) ?? []);
+        setMessages((messageData as MessageRow[]) ?? []);
+        setLeads((leadData as LeadRow[]) ?? []);
+        setQuotes((quoteData as QuoteRow[]) ?? []);
+        setAppointments((appointmentData as AppointmentRow[]) ?? []);
+        setTodayAppointments((todayAppointmentData as TodayAppointmentRow[]) ?? []);
+        setHasAnyHistory(
+          (everConversationCount ?? 0) > 0 ||
+            (everLeadCount ?? 0) > 0 ||
+            (everAppointmentCount ?? 0) > 0,
         );
-        setConversationRows((conversationRowData as ConversationRow[]) ?? []);
-        setConversationMessages((conversationMessageData as ConversationMessageRow[]) ?? []);
-        setReviewResponses((reviewResponseData as ReviewResponseRow[]) ?? []);
-        setRevenueAppointments((appointmentRevenueData as AppointmentRevenueRow[]) ?? []);
       } catch (e) {
-        console.error(e);
-        setError("Couldn't load your dashboard. Please refresh the page.");
+        console.error("[overview]", e);
+        setError("Couldn't load your Overview. Please refresh the page.");
       } finally {
         setLoading(false);
       }
     }
-    loadDashboard();
-    loadActivity(0);
+    load();
   }, []);
 
-  async function loadActivity(page: number) {
-    if (page > 0) setActivityLoadingMore(true);
-    setActivityError("");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setActivityLoadingMore(false); return; }
-    const from = page * ACTIVITY_PAGE_SIZE;
-    const { data, error: loadErr } = await supabase
-      .from("activity_log")
-      .select("id, type, summary, metadata, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .range(from, from + ACTIVITY_PAGE_SIZE - 1);
-    if (loadErr) {
-      console.error("[dashboard] failed to load activity", loadErr);
-      setActivityError("Couldn't load recent activity. Please refresh the page.");
+  // Needs You: combined across three item types, ranked by business
+  // urgency rather than recency. Type first (a customer actively waiting
+  // on a reply outranks an aging quote, which outranks a fresh unworked
+  // lead), then oldest-first within each type - see the report for why
+  // this ordering, not a single shared "urgency score" across unrelated
+  // tables.
+  const needsYouAll = useMemo<NeedsYouItem[]>(() => {
+    const latestByConversation = new Map<string, MessageRow>();
+    for (const m of messages) {
+      if (!m.conversation_id || !m.sent_at) continue;
+      if (!latestByConversation.has(m.conversation_id))
+        latestByConversation.set(m.conversation_id, m);
     }
-    const rows = (data as ActivityRow[]) ?? [];
-    setActivity((prev) => (page === 0 ? rows : [...prev, ...rows]));
-    setActivityHasMore(rows.length === ACTIVITY_PAGE_SIZE);
-    setActivityLoadingMore(false);
+    const conversationById = new Map(conversations.map((c) => [c.id, c]));
+
+    const unanswered: NeedsYouItem[] = conversations
+      .filter((c) => {
+        const last = latestByConversation.get(c.id);
+        return last?.direction === "inbound";
+      })
+      .map((c) => ({
+        kind: "unanswered" as const,
+        id: `unanswered-${c.id}`,
+        conversationId: c.id,
+        customerName: c.customer_name || "Unknown caller",
+        customerIdentifier: c.customer_identifier,
+        channel: c.channel,
+        since: latestByConversation.get(c.id)?.sent_at || new Date().toISOString(),
+      }))
+      .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
+
+    // A quote only counts as "stale" past the day-1 automated nudge - a
+    // quote sent an hour ago isn't neglected yet, the follow-up sequence
+    // is still doing its job.
+    const STALE_QUOTE_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000;
+    const staleQuotes: NeedsYouItem[] = quotes
+      .filter((q) => Date.now() - new Date(q.quoted_at).getTime() >= STALE_QUOTE_THRESHOLD_MS)
+      .map((q) => {
+        const convo = conversationById.get(q.conversation_id);
+        return {
+          kind: "quote" as const,
+          id: `quote-${q.id}`,
+          conversationId: q.conversation_id,
+          customerName: convo?.customer_name || "Unknown customer",
+          customerIdentifier: convo?.customer_identifier || "",
+          serviceType: q.service_type,
+          quotedPrice: q.quoted_price,
+          since: q.quoted_at,
+        };
+      })
+      .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
+
+    const newLeads: NeedsYouItem[] = leads
+      .map((l) => ({
+        kind: "lead" as const,
+        id: `lead-${l.id}`,
+        businessName: l.business_name || "Unnamed prospect",
+        since: l.created_at,
+      }))
+      .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
+
+    return [...unanswered, ...staleQuotes, ...newLeads];
+  }, [conversations, messages, quotes, leads]);
+
+  const needsYouVisible = needsYouAll.filter((item) => !dismissed.has(item.id));
+  const needsYouShown = showAllNeedsYou
+    ? needsYouVisible
+    : needsYouVisible.slice(0, NEEDS_YOU_LIMIT);
+
+  // This Week / Last Week, Monday-anchored.
+  const { thisWeek, lastWeek } = useMemo(() => {
+    const now = new Date();
+    const weekStart = startOfWeek(now);
+    const lastWeekStart = new Date(weekStart.getTime() - 7 * 86400000);
+
+    const inRange = (iso: string, start: Date, end: Date) => {
+      const t = new Date(iso).getTime();
+      return t >= start.getTime() && t < end.getTime();
+    };
+
+    const leadsThis = leads.filter((l) => inRange(l.created_at, weekStart, now)).length;
+    const leadsLast = leads.filter((l) => inRange(l.created_at, lastWeekStart, weekStart)).length;
+    const quotesThis = quotes.filter((q) => inRange(q.quoted_at, weekStart, now)).length;
+    const quotesLast = quotes.filter((q) => inRange(q.quoted_at, lastWeekStart, weekStart)).length;
+    const apptsThis = appointments.filter((a) => inRange(a.created_at, weekStart, now));
+    const apptsLast = appointments.filter((a) => inRange(a.created_at, lastWeekStart, weekStart));
+    const revenueThis = apptsThis.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
+    const revenueLast = apptsLast.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
+
+    return {
+      thisWeek: {
+        leads: leadsThis,
+        quotes: quotesThis,
+        jobs: apptsThis.length,
+        revenue: revenueThis,
+      },
+      lastWeek: {
+        leads: leadsLast,
+        quotes: quotesLast,
+        jobs: apptsLast.length,
+        revenue: revenueLast,
+      },
+    };
+  }, [leads, quotes, appointments]);
+
+  function dismiss(id: string) {
+    setDismissed((prev) => new Set(prev).add(id));
   }
 
-  const reducedMotion = usePrefersReducedMotion();
-  const { step, delay } = useMountReveal();
-
   const name = profile?.business_name || profile?.full_name || null;
-  const isFree = !profile?.subscription_tier || profile?.subscription_tier === "starter";
-
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  const inThisMonth = (iso: string | null) => !!iso && new Date(iso) >= monthStart;
-
-  const conversationsThisMonthByStatus = conversationRows.filter((c) => inThisMonth(c.started_at));
-  const appointmentsBooked = conversationsThisMonthByStatus.filter((c) => c.status === "booked").length;
-  const respondedCount = conversationsThisMonthByStatus.filter((c) => c.status === "replied" || c.status === "booked").length;
-  const responseRate = conversationsThisMonthByStatus.length > 0
-    ? Math.round((respondedCount / conversationsThisMonthByStatus.length) * 100)
-    : null;
-
-  const reviewsThisMonth = reviewResponses.filter((r) => inThisMonth(r.created_at));
-  const newReviewsGained = reviewsThisMonth.length;
-  const ratedReviews = reviewsThisMonth.filter((r) => typeof r.star_rating === "number");
-  const avgStars = ratedReviews.length > 0
-    ? (ratedReviews.reduce((sum, r) => sum + (r.star_rating ?? 0), 0) / ratedReviews.length).toFixed(1)
-    : null;
-
-  const messagesThisMonth = conversationMessages.filter((c) => inThisMonth(c.sent_at));
-  const conversationsHandled = new Set(
-    messagesThisMonth.map((c) => c.conversation_id).filter((id): id is string => !!id)
-  ).size;
-
-  const revenueThisMonth = revenueAppointments
-    .filter((a) => inThisMonth(a.created_at))
-    .reduce((sum, a) => sum + (a.estimated_value || 0), 0);
-
-  const stats = [
-    {
-      label: "Revenue recovered this month",
-      value: `$${revenueThisMonth.toLocaleString()}`,
-      note: revenueThisMonth === 0 ? "Book your first appointment to see revenue here." : undefined,
-      Icon: DollarSign,
-    },
-    {
-      label: "Appointments booked",
-      value: String(appointmentsBooked),
-      Icon: Calendar,
-    },
-    {
-      label: "New reviews gained",
-      value: String(newReviewsGained),
-      note: avgStars ? `${avgStars}★ average` : undefined,
-      Icon: Star,
-    },
-    {
-      label: "Outbound leads sent",
-      value: String(outboundLeadsSent),
-      Icon: Target,
-    },
-    {
-      label: "Response rate",
-      value: responseRate === null ? "—" : `${responseRate}%`,
-      Icon: TrendingUp,
-    },
-    {
-      label: "Conversations handled",
-      value: String(conversationsHandled),
-      Icon: MessageSquare,
-    },
-  ];
+  const isFirstRun = !loading && !error && !hasAnyHistory;
+  const isCaughtUp = !loading && !error && hasAnyHistory && needsYouVisible.length === 0;
+  // A load error can leave needsYouVisible empty for a reason that has
+  // nothing to do with being caught up - don't claim confidently that
+  // nothing needs attention when we couldn't actually check.
+  const isUncertainDueToError = !loading && error && needsYouVisible.length === 0;
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter, -apple-system, sans-serif" }}>
-
-      {/* Header */}
-      <div className={step} style={{ marginBottom: 32, ...delay(0) }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: "0 0 6px" }}>
-          {loading ? "Loading..." : name ? `Welcome back, ${name}` : "Welcome to Lanavix"}
-        </h1>
-        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
-          Here's how your business is performing this month.
+    <div className="lv-light min-h-full bg-background">
+      <div className="max-w-[1080px] mx-auto px-4 md:px-8 py-6 md:py-8">
+        <h1 className="sr-only">Overview</h1>
+        <p className="lv-body text-muted-foreground mb-6">
+          {loading
+            ? "Loading..."
+            : name
+              ? `Good to see you, ${name}.`
+              : "What needs your attention today."}
         </p>
-      </div>
 
-      {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{error}</p>}
-
-      {/* Upgrade banner for free users */}
-      {isFree && !loading && (
-        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>You don't have an active plan yet</div>
-            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to unlock the receptionist, review automation, and Lead Generator.</div>
+        {error && (
+          <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+            <p className="lv-label text-destructive">Some data didn't load</p>
+            <p className="lv-body text-foreground mt-0.5">{error}</p>
           </div>
-          <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
-            Upgrade now →
-          </Link>
-        </div>
-      )}
-
-      {/* Verification banner */}
-      {!loading && profile?.verification_status === "unverified" && (
-        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Get verified</div>
-            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Earn a trust badge and unlock the consumer marketplace — takes about 5 minutes.</div>
-          </div>
-          <Link to="/app/verification" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
-            Get verified →
-          </Link>
-        </div>
-      )}
-      {!loading && profile?.verification_status === "pending" && (
-        <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, ...delay(1) }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Verification in review</div>
-            <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>We're reviewing your documents — usually within 1–2 business days.</div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 32 }}>
-        {stats.map((s, i) => (
-          <GlowPanel
-            key={s.label}
-            reducedMotion={reducedMotion}
-            className={`${step} glass-dark hover-lift-dark rounded-2xl`}
-            style={{ padding: "16px 18px", ...delay(i + 2) }}
-          >
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-              <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--foreground)", lineHeight: 1 }}>{loading ? "—" : s.value}</div>
-            <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
-            {s.note && <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 2 }}>{s.note}</div>}
-          </GlowPanel>
-        ))}
-      </div>
-
-      {/* Quick wins */}
-      <h2 className={step} style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 14, ...delay(8) }}>Quick wins — pick one to start</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
-        {QUICK_WINS.map((w, i) => (
-          <GlowPanel
-            key={w.title}
-            reducedMotion={reducedMotion}
-            className={`${step} glass-dark hover-lift-dark rounded-2xl`}
-            style={{ padding: 22, display: "flex", flexDirection: "column", gap: 10, ...delay(i + 9) }}
-          >
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <w.Icon size={18} color="var(--primary)" strokeWidth={1.75} />
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 5 }}>{w.title}</div>
-              <div style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5 }}>{w.desc}</div>
-            </div>
-            <Link to={w.href} style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)", textDecoration: "none", marginTop: "auto" }}>
-              {w.action}
-            </Link>
-          </GlowPanel>
-        ))}
-      </div>
-
-      {/* Recent activity */}
-      <div className={`${step} glass-dark`} style={{ borderRadius: 16, padding: 24, ...delay(12) }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Recent activity</h2>
-        {loading && (
-          <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Loading...</p>
         )}
-        {activityError && (
-          <p style={{ fontSize: 13, color: "var(--destructive)", marginBottom: 20 }}>{activityError}</p>
-        )}
-        {!loading && !activityError && activity.length === 0 && (
-          <p style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 20 }}>Run your first campaign to see activity here.</p>
-        )}
-        {activity.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            {activity.map((a) => (
-              <div key={a.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-                <span style={{ color: "var(--foreground)" }}>{a.summary}</span>
-                <span style={{ color: "var(--muted-foreground)", whiteSpace: "nowrap" }}>{timeAgo(a.created_at)}</span>
+
+        {/* Needs You */}
+        <section aria-labelledby="needs-you-heading" className="mb-8">
+          {loading ? (
+            <NeedsYouSkeleton />
+          ) : isFirstRun ? (
+            <FirstRunState />
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between mb-3 gap-3">
+                <h2 id="needs-you-heading" className="lv-section text-foreground">
+                  Needs you
+                </h2>
+                {needsYouVisible.length > 0 && (
+                  <span className="lv-meta text-muted-foreground whitespace-nowrap">
+                    {needsYouShown.length} of {needsYouVisible.length} open items, by urgency
+                  </span>
+                )}
               </div>
-            ))}
-            {activityHasMore && (
-              <button
-                onClick={() => { const next = activityPageIndex + 1; setActivityPageIndex(next); loadActivity(next); }}
-                disabled={activityLoadingMore}
-                style={{ display: "block", margin: "12px auto 0", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                {activityLoadingMore ? "Loading..." : "Load more"}
-              </button>
-            )}
-          </div>
-        )}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link to="/app/agents" style={{ padding: "10px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
-            Start a campaign →
-          </Link>
-          <Link to="/audit" style={{ padding: "10px 20px", background: "var(--card)", color: "var(--foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", border: "1.5px solid var(--border)" }}>
-            Run free audit
-          </Link>
+              {isCaughtUp ? (
+                <CaughtUpState />
+              ) : isUncertainDueToError ? (
+                <div className="rounded-md border border-border bg-card px-4 py-6 text-center">
+                  <p className="lv-body text-foreground font-medium">
+                    Couldn't check for open items
+                  </p>
+                  <p className="lv-meta text-muted-foreground mt-1">
+                    This section depends on data that didn't load. Refresh the page to try again.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <ul className="space-y-2">
+                    {needsYouShown.map((item) => (
+                      <NeedsYouCard
+                        key={item.id}
+                        item={item}
+                        onDismiss={() => dismiss(item.id)}
+                        reducedMotion={reducedMotion}
+                      />
+                    ))}
+                  </ul>
+                  {!showAllNeedsYou && needsYouVisible.length > NEEDS_YOU_LIMIT && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllNeedsYou(true)}
+                      className="inline-flex items-center gap-1 lv-label text-primary hover:underline mt-3"
+                    >
+                      View all {needsYouVisible.length}{" "}
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* Today's schedule */}
+        <section aria-labelledby="today-heading" className="mb-8">
+          <h2 id="today-heading" className="lv-section text-foreground mb-3">
+            Today
+          </h2>
+          {loading ? (
+            <Skeleton className="h-[60px] w-full rounded-md" />
+          ) : todayAppointments.length === 0 ? (
+            <div className="rounded-md border border-border bg-card px-4 py-4">
+              <p className="lv-body text-muted-foreground">Nothing scheduled today.</p>
+            </div>
+          ) : (
+            <ul className="rounded-md border border-border bg-card divide-y divide-border overflow-hidden">
+              {todayAppointments.map((a) => (
+                <li key={a.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="lv-numbers text-foreground w-16 shrink-0">
+                    {formatTime(a.scheduled_at)}
+                  </span>
+                  <span
+                    className="lv-body text-foreground truncate flex-1 min-w-0"
+                    title={a.customer_name}
+                  >
+                    {a.customer_name}
+                  </span>
+                  <span
+                    className="lv-meta text-muted-foreground truncate shrink-0 max-w-[40%]"
+                    title={a.service_type}
+                  >
+                    {a.service_type}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* This Week */}
+        <section aria-labelledby="this-week-heading">
+          <h2 id="this-week-heading" className="lv-section text-foreground mb-1">
+            This week
+          </h2>
+          <p className="lv-meta text-muted-foreground mb-3">
+            Leads through to revenue · compared with last week
+          </p>
+          {loading ? (
+            <ThisWeekSkeleton />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <ThisWeekTile
+                label="Leads received"
+                value={thisWeek.leads}
+                delta={formatDelta(thisWeek.leads, lastWeek.leads)}
+              />
+              <ThisWeekTile
+                label="Quotes sent"
+                value={thisWeek.quotes}
+                delta={formatDelta(thisWeek.quotes, lastWeek.quotes)}
+              />
+              <ThisWeekTile
+                label="Jobs booked"
+                value={thisWeek.jobs}
+                delta={formatDelta(thisWeek.jobs, lastWeek.jobs)}
+              />
+              <ThisWeekTile
+                label="Revenue"
+                value={`$${thisWeek.revenue.toLocaleString()}`}
+                delta={formatDelta(thisWeek.revenue, lastWeek.revenue)}
+              />
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function NeedsYouCard({
+  item,
+  onDismiss,
+  reducedMotion,
+}: {
+  item: NeedsYouItem;
+  onDismiss: () => void;
+  reducedMotion: boolean;
+}) {
+  const [leaving, setLeaving] = useState(false);
+
+  function handleDismiss() {
+    if (reducedMotion) {
+      onDismiss();
+      return;
+    }
+    setLeaving(true);
+    window.setTimeout(onDismiss, 160);
+  }
+
+  const {
+    icon: Icon,
+    title,
+    metaPrimary,
+    metaSecondary,
+    fullDetail,
+    status,
+    action,
+  } = describeItem(item);
+
+  return (
+    <li
+      className="overflow-hidden transition-[opacity,max-height,margin,padding] ease-out"
+      style={{
+        transitionDuration: reducedMotion ? "0ms" : "160ms",
+        opacity: leaving ? 0 : 1,
+        maxHeight: leaving ? 0 : 200,
+        marginBottom: leaving ? 0 : undefined,
+      }}
+    >
+      <div className="flex items-start gap-3 rounded-md border border-border bg-card px-4 py-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent text-primary">
+          <Icon className="h-4 w-4" aria-hidden="true" />
         </div>
+        <div className="min-w-0 flex-1">
+          <p className="lv-body text-foreground font-medium truncate" title={title}>
+            {title}
+          </p>
+          {/* metaPrimary (price/time - short and important) never shrinks;
+              only metaSecondary (the free-text tail) truncates, so a long
+              service description or channel name never eats into a dollar
+              amount or timestamp. */}
+          <div className="flex items-center gap-2 min-w-0" title={fullDetail}>
+            <StatusDot status={status} className="shrink-0" />
+            <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
+            {metaPrimary && (
+              <>
+                <span className="lv-meta text-foreground font-medium shrink-0">{metaPrimary}</span>
+                <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
+              </>
+            )}
+            <span className="lv-meta text-muted-foreground truncate">{metaSecondary}</span>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {action}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-[38px] px-2 text-muted-foreground hover:text-foreground"
+            onClick={handleDismiss}
+            aria-label="Dismiss"
+          >
+            Dismiss
+          </Button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function describeItem(item: NeedsYouItem) {
+  if (item.kind === "unanswered") {
+    const isPhone = PHONE_LIKE.test(item.customerIdentifier);
+    const channelLabel = item.channel === "web_chat" ? "Web chat" : "Text";
+    return {
+      icon: MessageSquare,
+      title: item.customerName,
+      // StatusDot already says "Waiting on you" - the meta line only needs
+      // to add the concrete facts (how long, which channel), not repeat it.
+      metaPrimary: daysAgo(item.since),
+      metaSecondary: channelLabel,
+      fullDetail: `Waiting ${daysAgo(item.since)} for a reply · ${channelLabel}`,
+      status: "waiting_on_you" as const,
+      action:
+        item.channel === "web_chat" ? (
+          <Button asChild size="sm" variant="outline">
+            <Link to="/app/web-chat">Reply</Link>
+          </Button>
+        ) : isPhone ? (
+          <Button asChild size="sm" variant="outline">
+            <a href={`tel:${item.customerIdentifier}`}>Call back</a>
+          </Button>
+        ) : null,
+    };
+  }
+  if (item.kind === "quote") {
+    const isPhone = PHONE_LIKE.test(item.customerIdentifier);
+    const priceText = item.quotedPrice ? `$${item.quotedPrice.toLocaleString()}` : "Quote";
+    return {
+      icon: FileClock,
+      title: item.customerName,
+      // Price is the fact that matters most here and must never truncate -
+      // it gets its own non-shrinking slot instead of sharing the
+      // truncated tail with the service description.
+      metaPrimary: priceText,
+      metaSecondary: item.serviceType
+        ? `${item.serviceType} · ${daysAgo(item.since)} ago`
+        : `${daysAgo(item.since)} ago`,
+      fullDetail: `${priceText}${item.serviceType ? ` · ${item.serviceType}` : ""} · sent ${daysAgo(item.since)} ago, no reply`,
+      status: "stale" as const,
+      action: isPhone ? (
+        <Button asChild size="sm" variant="outline">
+          <a href={`tel:${item.customerIdentifier}`}>Follow up</a>
+        </Button>
+      ) : null,
+    };
+  }
+  return {
+    icon: UserPlus,
+    title: item.businessName,
+    metaPrimary: null,
+    metaSecondary: `Found ${daysAgo(item.since)} ago`,
+    fullDetail: `New lead · found ${daysAgo(item.since)} ago`,
+    status: "new" as const,
+    action: (
+      <Button asChild size="sm" variant="outline">
+        <Link to="/app/agents">View</Link>
+      </Button>
+    ),
+  };
+}
+
+function ThisWeekTile({
+  label,
+  value,
+  delta,
+}: {
+  label: string;
+  value: string | number;
+  delta: string | null;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card px-4 py-3">
+      <p className="lv-meta text-muted-foreground truncate" title={label}>
+        {label}
+      </p>
+      <p className="lv-numbers text-[22px] text-foreground leading-tight mt-1">{value}</p>
+      {delta && <p className="lv-meta text-muted-foreground mt-0.5">{delta}</p>}
+    </div>
+  );
+}
+
+function NeedsYouSkeleton() {
+  return (
+    <div>
+      <Skeleton className="h-5 w-40 mb-3" />
+      <div className="space-y-2">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-[60px] w-full rounded-md" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ThisWeekSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {[0, 1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-[70px] w-full rounded-md" />
+      ))}
+    </div>
+  );
+}
+
+function CaughtUpState() {
+  return (
+    <div className="rounded-md border border-border bg-card px-4 py-6 text-center">
+      <p className="lv-body text-foreground font-medium">You're caught up</p>
+      <p className="lv-meta text-muted-foreground mt-1">Nothing needs your attention right now.</p>
+    </div>
+  );
+}
+
+function FirstRunState() {
+  return (
+    <div className="rounded-md border border-border bg-card px-6 py-8 text-center">
+      <p className="lv-section text-foreground">Welcome to Lanavix</p>
+      <p className="lv-body text-muted-foreground mt-1 max-w-md mx-auto">
+        Once customers start texting your business, or the Lead Generator finds prospects, they'll
+        show up here first.
+      </p>
+      <div className="flex flex-wrap justify-center gap-2 mt-4">
+        <Button asChild>
+          <Link to="/app/agents">Run the Lead Generator</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/app/receptionist">Set up your receptionist</Link>
+        </Button>
       </div>
     </div>
   );

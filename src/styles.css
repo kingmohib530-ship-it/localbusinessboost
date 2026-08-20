@@ -98,43 +98,69 @@
 }
 
 /*
- * Lanavix — clean, confident product design (Apple/Linear/Stripe/Notion
- * territory): a light neutral ground, pure-white cards, one electric-blue
- * accent doing all the "look here" work. No gradients, no glassmorphism —
- * simplicity is the point, not a placeholder for more decoration later.
+ * Lanavix Foundations (2026 redesign, Slice 1 — integration branch) —
+ * approved 2026-08-16. Light neutral ground, pure-white panels, one deep-
+ * green accent doing all the "look here" work. No gradients, no glass, no
+ * purple/cyan AI look.
+ *
+ * This replaces the previous light token set (electric-blue accent,
+ * #2563EB) with the approved palette below. Scope note: only the App
+ * Shell and Overview page (Slice 1) actually build new UI against these
+ * tokens — every other authenticated route is still wrapped in .app-dark
+ * (see below), which redefines these same variable names back to the old
+ * dark/glass system so those pages render exactly as they did before this
+ * pass, unchanged, until they get their own redesign slice. Marketing
+ * pages are still on .page-dark and mostly read the separate --hd-*
+ * namespace, so they're likewise unaffected in practice — the one
+ * deliberate exception is any shadcn/ui primitive (Button, Input, Card,
+ * ...), which reads these tokens directly and so picks up the new palette
+ * everywhere it's used, including on a few untouched pages (Settings,
+ * Auth, Receptionist, marketing contact forms) — see the Slice 1 report
+ * for why that's expected, not a bug.
  */
 :root {
-  --radius: 1rem; /* 16px base -> rounded-lg is 16px, rounded-xl is 20px: the card corner range this system asks for */
-  --background: #FAFAFA;
-  --foreground: #111111;
-  --surface: #F3F4F6;
+  /* Base radius drives the rounded-sm/md/lg/xl scale above via @theme:
+     8px here makes rounded-sm=4px (controls), rounded-md=6px (panels),
+     rounded-lg=8px (overlays) — the three approved geometry tiers. */
+  --radius: 8px;
+  --background: #FAFAF9;
+  --foreground: #16181A;
+  --surface: #F4F4F2;
   --card: #FFFFFF;
-  --card-foreground: #111111;
+  --card-foreground: #16181A;
   --elevated: #FFFFFF;
   --popover: #FFFFFF;
-  --popover-foreground: #111111;
-  /* electric blue — the one accent, used for actions and focus, not decoration */
-  --primary: #2563EB;
+  --popover-foreground: #16181A;
+  /* deep green — the one accent, used for actions and focus, not decoration */
+  --primary: #1E5A4E;
+  --primary-hover: #17483E;
+  --primary-active: #123830;
   --primary-foreground: #FFFFFF;
-  /* kept as an alias of the one accent so dashboard status colors and
-     untouched pages (not part of this pass) still resolve to something
-     real instead of breaking */
-  --accent-2: #2563EB;
-  --secondary: #F3F4F6;
-  --secondary-foreground: #111111;
-  --muted: #F3F4F6;
-  --muted-foreground: #6B7280;
-  /* faint blue-tinted hover background, not the brand accent itself */
-  --accent: #EFF6FF;
-  --accent-foreground: #111111;
+  /* single-accent system: accent-2 stays an alias of primary rather than
+     introducing a second brand color */
+  --accent-2: #1E5A4E;
+  --secondary: #F4F4F2;
+  --secondary-foreground: #16181A;
+  --muted: #F4F4F2;
+  --muted-foreground: #6B7075;
+  /* faint green tint for hover/selected backgrounds, not the accent itself */
+  --accent: #EAF1EE;
+  --accent-foreground: #16181A;
   --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #E5E7EB;
-  --input: #E5E7EB;
-  --ring: #2563EB;
-  --success: #059669;
+  --border: #E3E3E0;
+  --input: #E3E3E0;
+  --ring: #1E5A4E;
+  --success: #1E5A4E;
   --warning: #D97706;
   --warning-foreground: #FFFFFF;
+
+  /* Motion: meaningful state changes only (menu/dialog/sheet open-close,
+     item resolution, filter transitions) - never decorative. */
+  --motion-fast: 120ms;
+  --motion-base: 160ms;
+  --motion-slow: 180ms;
+  --motion-ease: cubic-bezier(0, 0, 0.2, 1);
 
   /* Kept only for pages this pass doesn't touch (auth/chat logo tiles,
      dashboard inline styles reading var(--ink)-family tokens directly) */
@@ -142,6 +168,84 @@
   --ink-foreground: #FAFAFA;
   --ink-muted: #9CA3AF;
   --ink-border: rgba(255, 255, 255, 0.12);
+}
+
+/* Approved type scale (Slice 1: App Shell + Overview). Use these instead
+   of arbitrary text-[Npx] values so the scale stays closed - 32/22/15/14/
+   13/12, nothing in between. */
+.lv-display {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.lv-page-title {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.lv-section {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.lv-body {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.lv-label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.lv-meta {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.lv-numbers {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* Counter-override for routes that are in scope this slice (currently:
+   the App Shell itself and Overview): they render inside <Outlet/>, which
+   the App Shell wraps in .app-dark so every *other*, not-yet-redesigned
+   route keeps its current dark presentation untouched. A page in scope
+   opts back out to the approved light Foundations here rather than
+   inheriting the dark override. Same values as :root above, kept explicit
+   (not "unset") because .app-dark redefines these names on an ancestor,
+   and CSS custom properties don't support reverting to a value further up
+   a *different* branch than :root - a sibling override is the reliable
+   way to win the cascade back. */
+.lv-light {
+  --background: #FAFAF9;
+  --foreground: #16181A;
+  --surface: #F4F4F2;
+  --card: #FFFFFF;
+  --card-foreground: #16181A;
+  --elevated: #FFFFFF;
+  --popover: #FFFFFF;
+  --popover-foreground: #16181A;
+  --primary: #1E5A4E;
+  --primary-hover: #17483E;
+  --primary-active: #123830;
+  --primary-foreground: #FFFFFF;
+  --accent-2: #1E5A4E;
+  --secondary: #F4F4F2;
+  --secondary-foreground: #16181A;
+  --muted: #F4F4F2;
+  --muted-foreground: #6B7075;
+  --accent: #EAF1EE;
+  --accent-foreground: #16181A;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #E3E3E0;
+  --input: #E3E3E0;
+  --ring: #1E5A4E;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 @layer base {
