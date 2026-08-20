@@ -582,7 +582,7 @@ function Settings() {
                 </div>
               )}
               <Button asChild variant="outline" size="sm" className="min-h-[44px]">
-                <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
+                <Link to="/app/billing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
               </Button>
             </div>
 

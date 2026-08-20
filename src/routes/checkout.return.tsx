@@ -13,7 +13,7 @@ export const Route = createFileRoute("/checkout/return")({
 function CheckoutReturn() {
   const { session_id } = Route.useSearch();
   const [status, setStatus] = useState<"pending" | "active" | "timeout" | "no-session">(
-    session_id ? "pending" : "no-session"
+    session_id ? "pending" : "no-session",
   );
 
   useEffect(() => {
@@ -39,7 +39,7 @@ function CheckoutReturn() {
       if (data && ["active", "trialing"].includes(data.subscription_status || "")) {
         setStatus("active");
         setTimeout(() => {
-          topLevelNavigate(absoluteUrl("/"));
+          topLevelNavigate(absoluteUrl("/app"));
         }, 1500);
         return;
       }
@@ -61,16 +61,25 @@ function CheckoutReturn() {
   const subs: Record<typeof status, string> = {
     pending: "Hang tight, this usually takes a few seconds.",
     active: "Sending you back to Lanavix now.",
-    timeout: "Activation is taking longer than expected. Click below to return — your plan will sync automatically.",
+    timeout:
+      "Activation is taking longer than expected. Click below to return — your plan will sync automatically.",
     "no-session": "We couldn't find a checkout session in the URL.",
   };
 
   return (
-    <div style={{ padding: 32, fontFamily: "system-ui, sans-serif", maxWidth: 520, margin: "60px auto", textAlign: "center" }}>
+    <div
+      style={{
+        padding: 32,
+        fontFamily: "system-ui, sans-serif",
+        maxWidth: 520,
+        margin: "60px auto",
+        textAlign: "center",
+      }}
+    >
       <h1 style={{ fontSize: 26, marginBottom: 12 }}>{titles[status]}</h1>
       <p style={{ color: "#555", marginBottom: 24 }}>{subs[status]}</p>
       <Link
-        to="/"
+        to="/app"
         style={{
           display: "inline-block",
           padding: "10px 18px",
@@ -80,7 +89,7 @@ function CheckoutReturn() {
           textDecoration: "none",
         }}
       >
-        Back to Lanavix
+        Go to your dashboard →
       </Link>
     </div>
   );
