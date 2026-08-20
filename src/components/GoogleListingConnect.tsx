@@ -18,11 +18,11 @@ export interface GoogleListingConnectProps {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "10px 14px",
-  border: "1.5px solid var(--hd-border)",
+  border: "1.5px solid var(--border)",
   borderRadius: 10,
   fontSize: 14,
-  color: "var(--hd-fg)",
-  background: "var(--hd-glass)",
+  color: "var(--foreground)",
+  background: "var(--card)",
   fontFamily: "inherit",
   boxSizing: "border-box",
 };
@@ -163,8 +163,8 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <MapPin size={15} color="var(--hd-primary)" strokeWidth={1.75} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--hd-fg)" }}>
+        <MapPin size={15} color="var(--primary)" strokeWidth={1.75} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>
           Google Business listing
         </span>
       </div>
@@ -180,7 +180,7 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
             marginBottom: 8,
           }}
         >
-          <span style={{ fontSize: 13, color: "var(--hd-fg)" }}>
+          <span style={{ fontSize: 13, color: "var(--foreground)" }}>
             {placeLabel ? `Confirmed: ${placeLabel}` : "Listing confirmed."}
           </span>
           <div style={{ display: "flex", gap: 8 }}>
@@ -189,7 +189,7 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
               disabled={syncing}
               style={{
                 padding: "9px 18px",
-                background: "var(--hd-primary)",
+                background: "var(--primary)",
                 color: "var(--primary-foreground)",
                 border: "none",
                 borderRadius: 10,
@@ -204,9 +204,9 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
               onClick={() => setPlaceId(null)}
               style={{
                 padding: "9px 18px",
-                background: "var(--hd-glass)",
-                color: "var(--hd-fg)",
-                border: "1.5px solid var(--hd-border)",
+                background: "var(--card)",
+                color: "var(--foreground)",
+                border: "1.5px solid var(--border)",
                 borderRadius: 10,
                 fontSize: 13,
                 fontWeight: 600,
@@ -236,7 +236,7 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
               disabled={searching || loading}
               style={{
                 padding: "10px 18px",
-                background: "var(--hd-primary)",
+                background: "var(--primary)",
                 color: "var(--primary-foreground)",
                 border: "none",
                 borderRadius: 10,
@@ -265,16 +265,18 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
                     gap: 8,
                     padding: "10px 12px",
                     borderRadius: 10,
-                    background: "var(--hd-glass)",
-                    border: "1px solid var(--hd-border)",
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--hd-fg)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>
                       {c.name}
                     </div>
                     {c.address && (
-                      <div style={{ fontSize: 12, color: "var(--hd-muted)" }}>{c.address}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>
+                        {c.address}
+                      </div>
                     )}
                   </div>
                   <button
@@ -282,7 +284,7 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
                     disabled={confirmingId === c.placeId}
                     style={{
                       padding: "7px 14px",
-                      background: "var(--hd-primary)",
+                      background: "var(--primary)",
                       color: "var(--primary-foreground)",
                       border: "none",
                       borderRadius: 8,
@@ -301,7 +303,7 @@ export function GoogleListingConnect({ onConfirmed, onSynced }: GoogleListingCon
         </>
       )}
       {syncMsg && (
-        <p style={{ fontSize: 12, color: syncOk ? "var(--hd-primary-2)" : "var(--destructive)" }}>
+        <p style={{ fontSize: 12, color: syncOk ? "var(--accent-2)" : "var(--destructive)" }}>
           {syncMsg}
         </p>
       )}

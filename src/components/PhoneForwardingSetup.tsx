@@ -23,11 +23,11 @@ export interface PhoneForwardingSetupProps {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "10px 14px",
-  border: "1.5px solid var(--hd-border)",
+  border: "1.5px solid var(--border)",
   borderRadius: 10,
   fontSize: 14,
-  color: "var(--hd-fg)",
-  background: "var(--hd-glass)",
+  color: "var(--foreground)",
+  background: "var(--card)",
   fontFamily: "inherit",
   boxSizing: "border-box",
 };
@@ -36,16 +36,16 @@ const labelStyle: React.CSSProperties = {
   display: "block",
   fontSize: 12,
   fontWeight: 600,
-  color: "var(--hd-fg)",
+  color: "var(--foreground)",
   marginBottom: 6,
 };
 
 const codeBoxStyle: React.CSSProperties = {
   fontFamily: "monospace",
   fontSize: 12,
-  color: "var(--hd-fg)",
-  background: "var(--hd-glass)",
-  border: "1px solid var(--hd-border)",
+  color: "var(--foreground)",
+  background: "var(--card)",
+  border: "1px solid var(--border)",
   borderRadius: 6,
   padding: "8px 10px",
   marginBottom: 6,
@@ -136,12 +136,19 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-        <Phone size={15} color="var(--hd-primary)" strokeWidth={1.75} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--hd-fg)" }}>
+        <Phone size={15} color="var(--primary)" strokeWidth={1.75} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>
           Business phone number
         </span>
       </div>
-      <p style={{ fontSize: 12, color: "var(--hd-muted)", marginBottom: 16, lineHeight: 1.5 }}>
+      <p
+        style={{
+          fontSize: 12,
+          color: "var(--muted-foreground)",
+          marginBottom: 16,
+          lineHeight: 1.5,
+        }}
+      >
         Enter your real business phone number. Lanavix automatically sets up a dedicated line behind
         it - no separate account, nothing to sign up for or pay for on your own.
       </p>
@@ -162,7 +169,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
         disabled={saving || loading}
         style={{
           padding: "10px 20px",
-          background: "var(--hd-primary)",
+          background: "var(--primary)",
           color: "var(--primary-foreground)",
           border: "none",
           borderRadius: 10,
@@ -178,7 +185,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
         <div
           style={{
             fontSize: 12,
-            color: ok ? "var(--hd-primary-2)" : "var(--destructive)",
+            color: ok ? "var(--accent-2)" : "var(--destructive)",
             marginTop: 8,
           }}
         >
@@ -187,11 +194,20 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
       )}
 
       {connected && (
-        <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--hd-border)" }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--hd-fg)", marginBottom: 8 }}>
+        <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--border)" }}>
+          <div
+            style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 8 }}
+          >
             Forward your missed calls to {telnyxNumber}
           </div>
-          <p style={{ fontSize: 12, color: "var(--hd-muted)", marginBottom: 10, lineHeight: 1.5 }}>
+          <p
+            style={{
+              fontSize: 12,
+              color: "var(--muted-foreground)",
+              marginBottom: 10,
+              lineHeight: 1.5,
+            }}
+          >
             Important: set up <strong>conditional</strong> forwarding (no answer / busy only), not
             forwarding for every call. Lanavix only texts back calls that actually reach this
             number, so your real phone should still ring first - this number only picks up what you
@@ -201,7 +217,7 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
             On most carriers (AT&T, T-Mobile): dial *61*{telnyxNumber}#
           </div>
           <div style={codeBoxStyle}>To also forward on busy: dial *67*{telnyxNumber}#</div>
-          <p style={{ fontSize: 11, color: "var(--hd-muted)", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 11, color: "var(--muted-foreground)", lineHeight: 1.5 }}>
             Verizon and some other carriers use different codes or handle this in your phone's
             settings app instead - if the code above doesn't work, search "conditional call
             forwarding" for your carrier, or call their support line. To turn forwarding off later,

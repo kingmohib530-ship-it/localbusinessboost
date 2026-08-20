@@ -12,11 +12,11 @@ export interface WebsiteConnectProps {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "10px 14px",
-  border: "1.5px solid var(--hd-border)",
+  border: "1.5px solid var(--border)",
   borderRadius: 10,
   fontSize: 14,
-  color: "var(--hd-fg)",
-  background: "var(--hd-glass)",
+  color: "var(--foreground)",
+  background: "var(--card)",
   fontFamily: "inherit",
   boxSizing: "border-box",
 };
@@ -138,8 +138,8 @@ export function WebsiteConnect({ onSaved, onSynced }: WebsiteConnectProps) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <Globe size={15} color="var(--hd-primary)" strokeWidth={1.75} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--hd-fg)" }}>Website</span>
+        <Globe size={15} color="var(--primary)" strokeWidth={1.75} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Website</span>
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
         <input
@@ -154,9 +154,9 @@ export function WebsiteConnect({ onSaved, onSynced }: WebsiteConnectProps) {
           disabled={saving || loading}
           style={{
             padding: "10px 18px",
-            background: "var(--hd-glass)",
-            color: "var(--hd-fg)",
-            border: "1.5px solid var(--hd-border)",
+            background: "var(--card)",
+            color: "var(--foreground)",
+            border: "1.5px solid var(--border)",
             borderRadius: 10,
             fontSize: 13,
             fontWeight: 600,
@@ -170,7 +170,7 @@ export function WebsiteConnect({ onSaved, onSynced }: WebsiteConnectProps) {
           disabled={syncing || !website.trim()}
           style={{
             padding: "10px 18px",
-            background: "var(--hd-primary)",
+            background: "var(--primary)",
             color: "var(--primary-foreground)",
             border: "none",
             borderRadius: 10,
@@ -187,7 +187,7 @@ export function WebsiteConnect({ onSaved, onSynced }: WebsiteConnectProps) {
         <p
           style={{
             fontSize: 12,
-            color: saveOk ? "var(--hd-primary-2)" : "var(--destructive)",
+            color: saveOk ? "var(--accent-2)" : "var(--destructive)",
             marginBottom: 4,
           }}
         >
@@ -195,7 +195,7 @@ export function WebsiteConnect({ onSaved, onSynced }: WebsiteConnectProps) {
         </p>
       )}
       {syncMsg && (
-        <p style={{ fontSize: 12, color: syncOk ? "var(--hd-primary-2)" : "var(--destructive)" }}>
+        <p style={{ fontSize: 12, color: syncOk ? "var(--accent-2)" : "var(--destructive)" }}>
           {syncMsg}
         </p>
       )}
