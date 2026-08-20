@@ -952,7 +952,7 @@ function PlanGateNotice({ title, description }: { title: string; description: st
       <p className="lv-label text-foreground">{title}</p>
       <p className="lv-body text-muted-foreground mt-0.5">{description}</p>
       <Button size="sm" className="mt-3" asChild>
-        <Link to="/pricing">Upgrade now</Link>
+        <Link to="/app/billing">Upgrade now</Link>
       </Button>
     </div>
   );

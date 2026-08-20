@@ -85,7 +85,7 @@ export const Route = createFileRoute("/api/appointments")({
           .range(from, from + PAGE_SIZE - 1);
 
         if (start) query = query.gte("scheduled_at", new Date(start).toISOString());
-        if (end) query = query.lte("scheduled_at", new Date(end).toISOString());
+        if (end) query = query.lt("scheduled_at", new Date(end).toISOString());
 
         const { data, error } = await query;
         if (error) {
