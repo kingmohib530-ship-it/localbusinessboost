@@ -23,11 +23,11 @@ export interface AddFactFormProps {
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 14px",
-  border: "1.5px solid var(--hd-border)",
+  border: "1.5px solid var(--border)",
   borderRadius: 10,
   fontSize: 14,
-  color: "var(--hd-fg)",
-  background: "var(--hd-glass)",
+  color: "var(--foreground)",
+  background: "var(--card)",
   fontFamily: "inherit",
   boxSizing: "border-box",
 };
@@ -108,7 +108,7 @@ export function AddFactForm({ fixedType, placeholder, onAdded }: AddFactFormProp
             alignItems: "center",
             gap: 6,
             padding: "10px 18px",
-            background: "var(--hd-primary)",
+            background: "var(--primary)",
             color: "var(--primary-foreground)",
             border: "none",
             borderRadius: 10,

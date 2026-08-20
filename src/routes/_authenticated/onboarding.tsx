@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Building2,
   MapPin,
@@ -13,11 +13,14 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { GoogleListingConnect } from "@/components/GoogleListingConnect";
 import { WebsiteConnect } from "@/components/WebsiteConnect";
 import { PhoneForwardingSetup } from "@/components/PhoneForwardingSetup";
 import { AddFactForm } from "@/components/AddFactForm";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
@@ -49,8 +52,8 @@ const STEPS: { id: StepId; label: string; Icon: typeof Building2 }[] = [
 
 function OnboardingPage() {
   const navigate = useNavigate();
-  const { step: reveal, delay } = useMountReveal();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [exiting, setExiting] = useState(false);
 
@@ -75,6 +78,7 @@ function OnboardingPage() {
 
   async function load() {
     setLoading(true);
+    setLoadError(false);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -82,7 +86,7 @@ function OnboardingPage() {
       setLoading(false);
       return;
     }
-    const [{ data }, { count }] = await Promise.all([
+    const [{ data, error: profileErr }, { count, error: factsErr }] = await Promise.all([
       supabase
         .from("profiles")
         .select(
@@ -96,6 +100,16 @@ function OnboardingPage() {
         .eq("user_id", user.id)
         .eq("status", "active"),
     ]);
+
+    // A failed initial load must not render an editable blank form that
+    // could then overwrite real profile data on save - show a retry state
+    // instead of the wizard itself.
+    if (profileErr || factsErr) {
+      console.error("[onboarding] failed to load profile/facts", profileErr || factsErr);
+      setLoadError(true);
+      setLoading(false);
+      return;
+    }
 
     setIndustry(data?.industry || "");
     setBusinessName(data?.business_name || "");
@@ -197,43 +211,59 @@ function OnboardingPage() {
 
   if (loading) {
     return (
-      <div
-        className="app-dark"
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <p style={{ color: "var(--hd-muted)", fontSize: 14 }}>Loading...</p>
+      <div className="lv-light min-h-screen flex items-center justify-center bg-background">
+        <p className="lv-body text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="lv-light min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm rounded-md border border-border bg-card p-6 text-center">
+          <p className="lv-body text-foreground font-medium">Couldn't load your setup</p>
+          <p className="lv-meta text-muted-foreground mt-1">
+            Your existing information is safe - we just couldn't load it to show you here. Please
+            try again.
+          </p>
+          <Button className="w-full min-h-[44px] mt-4" onClick={load}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="app-dark"
-      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
-    >
+    <div className="lv-light min-h-screen flex flex-col bg-background">
       {/* Top bar: brand mark + step rail + always-available exit */}
-      <div
-        className={reveal}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "20px 28px",
-          borderBottom: "1px solid var(--hd-border)",
-          ...delay(0),
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src="/logo-white.png" alt="" style={{ width: 24, height: 24 }} />
-          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--hd-fg)" }}>Lanavix</span>
+      <div className="flex items-center justify-between gap-3 px-4 md:px-7 py-3 md:py-4 border-b border-border bg-card">
+        <div className="flex items-center gap-2 shrink-0">
+          <img src="/logo.png" alt="" className="h-6 w-6" />
+          <span className="lv-section text-foreground hidden sm:inline">Lanavix</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Full dot rail only fits from md up - 6 dots + 5 connectors +
+            "Skip setup for now" overflowed 390px. Mobile gets a compact
+            "Step X of 6" label instead of a squeezed rail. */}
+        <span
+          className="lv-meta text-muted-foreground md:hidden"
+          role="progressbar"
+          aria-valuenow={stepIndex + 1}
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-label={`Step ${stepIndex + 1} of ${STEPS.length}: ${currentStep.label}`}
+        >
+          Step {stepIndex + 1} of {STEPS.length}
+        </span>
+        <div
+          className="hidden md:flex items-center gap-1.5"
+          role="progressbar"
+          aria-valuenow={stepIndex + 1}
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-label={`Step ${stepIndex + 1} of ${STEPS.length}: ${currentStep.label}`}
+        >
           {STEPS.map((s, i) => {
             const done =
               (s.id === "identity" && identityDone) ||
@@ -248,124 +278,111 @@ function OnboardingPage() {
               (s.id === "phone" && phoneStatus === "skipped") ||
               (s.id === "facts" && factsStatus === "skipped");
             const active = i === stepIndex;
+            const complete = done && !skipped;
             return (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div key={s.id} className="flex items-center gap-1.5">
                 <div
                   title={s.label}
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    background: active
-                      ? "var(--hd-primary)"
-                      : done && !skipped
-                        ? "var(--hd-primary-2)"
-                        : "var(--hd-glass)",
-                    color:
-                      active || (done && !skipped)
-                        ? "var(--primary-foreground)"
-                        : "var(--hd-muted)",
-                    border: `1.5px solid ${active ? "var(--hd-primary)" : done && !skipped ? "var(--hd-primary-2)" : "var(--hd-border)"}`,
-                  }}
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full lv-meta font-semibold border",
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : complete
+                        ? "bg-primary/15 text-primary border-primary/30"
+                        : "bg-transparent text-muted-foreground border-border",
+                  )}
                 >
-                  {done && !skipped ? <Check size={13} /> : i + 1}
+                  {complete ? <Check className="h-3 w-3" aria-hidden="true" /> : i + 1}
                 </div>
-                {i < STEPS.length - 1 && (
-                  <div style={{ width: 18, height: 1.5, background: "var(--hd-border)" }} />
-                )}
+                {i < STEPS.length - 1 && <div className="w-3 md:w-4 h-px bg-border" />}
               </div>
             );
           })}
         </div>
 
         <button
+          type="button"
           onClick={finish}
           disabled={exiting}
-          style={{
-            fontSize: 12,
-            color: "var(--hd-muted)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            textDecoration: "underline",
-          }}
+          className="lv-meta text-muted-foreground hover:text-foreground underline transition-colors duration-150 ease-out shrink-0 min-h-[44px] md:min-h-0"
         >
           Skip setup for now
         </button>
       </div>
 
       {/* Step content */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px 24px",
-        }}
-      >
-        <div key={currentStep.id} className="hd-blur-in" style={{ width: "100%", maxWidth: 520 }}>
+      <div className="flex-1 flex items-center justify-center px-4 py-8 md:py-10">
+        <div key={currentStep.id} className="animate-fade-up w-full max-w-[560px]">
           {currentStep.id === "identity" && (
             <StepShell
               Icon={Building2}
               title="What do you do, and for who"
               subtitle="Real answers here mean your AI receptionist stops guessing and starts sounding like someone who actually works here."
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <Field label="Trade / main service">
-                  <input
+              <div className="flex flex-col gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ob-industry">Trade / main service</Label>
+                  <Input
+                    id="ob-industry"
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                     placeholder="e.g. HVAC"
                     list="onboarding-industry-suggestions"
-                    style={inputStyle}
+                    className="min-h-[44px]"
+                    autoFocus
                   />
                   <datalist id="onboarding-industry-suggestions">
                     {INDUSTRY_SUGGESTIONS.map((s) => (
                       <option key={s} value={s} />
                     ))}
                   </datalist>
-                </Field>
-                <Field label="Business name">
-                  <input
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ob-business-name">Business name</Label>
+                  <Input
+                    id="ob-business-name"
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="e.g. Sunshine HVAC"
-                    style={inputStyle}
+                    className="min-h-[44px]"
                   />
-                </Field>
-                <Field label="Service area (city)">
-                  <input
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ob-city">Service area (city)</Label>
+                  <Input
+                    id="ob-city"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="e.g. Tampa, FL"
-                    style={inputStyle}
+                    className="min-h-[44px]"
                   />
-                </Field>
-                <Field label="Business hours (optional)">
-                  <input
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ob-hours">Business hours (optional)</Label>
+                  <Input
+                    id="ob-hours"
                     value={businessHours}
                     onChange={(e) => setBusinessHours(e.target.value)}
                     placeholder="Mon-Fri 8am-6pm, Sat 9am-1pm"
-                    style={inputStyle}
+                    className="min-h-[44px]"
                   />
-                </Field>
+                </div>
               </div>
               {identityError && (
-                <p style={{ fontSize: 12, color: "var(--destructive)", marginTop: 12 }}>
+                <p className="lv-meta text-destructive mt-3" role="alert">
                   {identityError}
                 </p>
               )}
               <StepFooter>
                 <div />
-                <PrimaryButton onClick={saveIdentity} disabled={savingIdentity}>
-                  {savingIdentity ? "Saving..." : "Continue"} <ArrowRight size={14} />
-                </PrimaryButton>
+                <Button
+                  onClick={saveIdentity}
+                  disabled={savingIdentity}
+                  className="w-full sm:w-auto min-h-[44px] gap-1.5"
+                >
+                  {savingIdentity ? "Saving..." : "Continue"}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
               </StepFooter>
             </StepShell>
           )}
@@ -381,23 +398,29 @@ function OnboardingPage() {
                 onSynced={() => setGoogleStatus("connected")}
               />
               <StepFooter>
-                <SecondaryButton onClick={goBack}>
-                  <ArrowLeft size={14} /> Back
-                </SecondaryButton>
-                <div style={{ display: "flex", gap: 8 }}>
+                <Button
+                  variant="outline"
+                  onClick={goBack}
+                  className="w-full sm:w-auto min-h-[44px] gap-1.5"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
+                </Button>
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
                   {googleStatus === "pending" && (
-                    <SecondaryButton
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto min-h-[44px]"
                       onClick={() => {
                         setGoogleStatus("skipped");
                         goNext();
                       }}
                     >
                       I'll connect this later
-                    </SecondaryButton>
+                    </Button>
                   )}
-                  <PrimaryButton onClick={goNext}>
-                    Continue <ArrowRight size={14} />
-                  </PrimaryButton>
+                  <Button onClick={goNext} className="w-full sm:w-auto min-h-[44px] gap-1.5">
+                    Continue <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
                 </div>
               </StepFooter>
             </StepShell>
@@ -416,23 +439,29 @@ function OnboardingPage() {
                 onSynced={() => setWebsiteStatus("connected")}
               />
               <StepFooter>
-                <SecondaryButton onClick={goBack}>
-                  <ArrowLeft size={14} /> Back
-                </SecondaryButton>
-                <div style={{ display: "flex", gap: 8 }}>
+                <Button
+                  variant="outline"
+                  onClick={goBack}
+                  className="w-full sm:w-auto min-h-[44px] gap-1.5"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
+                </Button>
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
                   {websiteStatus === "pending" && (
-                    <SecondaryButton
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto min-h-[44px]"
                       onClick={() => {
                         setWebsiteStatus("skipped");
                         goNext();
                       }}
                     >
                       I'll connect this later
-                    </SecondaryButton>
+                    </Button>
                   )}
-                  <PrimaryButton onClick={goNext}>
-                    Continue <ArrowRight size={14} />
-                  </PrimaryButton>
+                  <Button onClick={goNext} className="w-full sm:w-auto min-h-[44px] gap-1.5">
+                    Continue <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
                 </div>
               </StepFooter>
             </StepShell>
@@ -446,23 +475,29 @@ function OnboardingPage() {
             >
               <PhoneForwardingSetup onConnected={() => setPhoneStatus("connected")} />
               <StepFooter>
-                <SecondaryButton onClick={goBack}>
-                  <ArrowLeft size={14} /> Back
-                </SecondaryButton>
-                <div style={{ display: "flex", gap: 8 }}>
+                <Button
+                  variant="outline"
+                  onClick={goBack}
+                  className="w-full sm:w-auto min-h-[44px] gap-1.5"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
+                </Button>
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
                   {phoneStatus === "pending" && (
-                    <SecondaryButton
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto min-h-[44px]"
                       onClick={() => {
                         setPhoneStatus("skipped");
                         goNext();
                       }}
                     >
                       I'll connect this later
-                    </SecondaryButton>
+                    </Button>
                   )}
-                  <PrimaryButton onClick={goNext}>
-                    Continue <ArrowRight size={14} />
-                  </PrimaryButton>
+                  <Button onClick={goNext} className="w-full sm:w-auto min-h-[44px] gap-1.5">
+                    Continue <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
                 </div>
               </StepFooter>
             </StepShell>
@@ -482,23 +517,29 @@ function OnboardingPage() {
                 }}
               />
               <StepFooter>
-                <SecondaryButton onClick={goBack}>
-                  <ArrowLeft size={14} /> Back
-                </SecondaryButton>
-                <div style={{ display: "flex", gap: 8 }}>
+                <Button
+                  variant="outline"
+                  onClick={goBack}
+                  className="w-full sm:w-auto min-h-[44px] gap-1.5"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
+                </Button>
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
                   {factsStatus === "pending" && (
-                    <SecondaryButton
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto min-h-[44px]"
                       onClick={() => {
                         setFactsStatus("skipped");
                         goNext();
                       }}
                     >
                       I'll add these later
-                    </SecondaryButton>
+                    </Button>
                   )}
-                  <PrimaryButton onClick={goNext}>
-                    Continue <ArrowRight size={14} />
-                  </PrimaryButton>
+                  <Button onClick={goNext} className="w-full sm:w-auto min-h-[44px] gap-1.5">
+                    Continue <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
                 </div>
               </StepFooter>
             </StepShell>
@@ -563,51 +604,66 @@ function DoneStep({
           : "The rest you can finish anytime from Business Facts or Receptionist Setup - nothing here is locked."
       }
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
+      <div className="flex flex-col gap-2 mb-1">
         <StatusRow label="Google Business listing" status={googleStatus} />
         <StatusRow label="Website" status={websiteStatus} />
         <StatusRow label="Phone number" status={phoneStatus} />
         <StatusRow label="Business facts" status={factsStatus} />
       </div>
-      <p style={{ fontSize: 12, color: "var(--hd-muted)", marginTop: 10 }}>
+      <p className="lv-meta text-muted-foreground mt-2.5">
         {factCount > 0
           ? `${factCount} fact${factCount === 1 ? "" : "s"} on file - review or edit them anytime in Business Facts.`
           : "No facts on file yet - that's fine, add them anytime in Business Facts."}
       </p>
       <StepFooter>
-        <SecondaryButton onClick={onBack}>
-          <ArrowLeft size={14} /> Back
-        </SecondaryButton>
-        <PrimaryButton onClick={onFinish} disabled={exiting}>
-          {exiting ? "Taking you there..." : "Go to my dashboard"} <ArrowRight size={14} />
-        </PrimaryButton>
+        <Button
+          variant="outline"
+          onClick={onBack}
+          className="w-full sm:w-auto min-h-[44px] gap-1.5"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
+        </Button>
+        <Button
+          onClick={onFinish}
+          disabled={exiting}
+          className="w-full sm:w-auto min-h-[44px] gap-1.5"
+        >
+          {exiting ? "Taking you there..." : "Go to my dashboard"}
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
       </StepFooter>
     </StepShell>
   );
 }
 
+// Not the approved closed StatusDot vocabulary (waiting_on_you/booked/
+// stale/...) - none of those labels actually describe "connected /
+// skipped for now / not connected" honestly, and reusing one for its dot
+// color alone while showing its unrelated label text would violate the
+// same "dot + text, never color alone" rule it exists to enforce. This is
+// its own small, closed 3-value vocabulary instead.
+const STATUS_DOT_COLOR: Record<ConnectStatus, string> = {
+  connected: "bg-primary",
+  skipped: "bg-[var(--warning)]",
+  pending: "bg-muted-foreground",
+};
+const STATUS_LABEL: Record<ConnectStatus, string> = {
+  connected: "Connected",
+  skipped: "Skipped for now",
+  pending: "Not connected",
+};
+
 function StatusRow({ label, status }: { label: string; status: ConnectStatus }) {
-  const color = status === "connected" ? "var(--hd-primary-2)" : "var(--hd-muted)";
-  const text =
-    status === "connected"
-      ? "Connected"
-      : status === "skipped"
-        ? "Skipped for now"
-        : "Not connected";
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "10px 14px",
-        borderRadius: 10,
-        background: "var(--hd-glass)",
-        border: "1px solid var(--hd-border)",
-      }}
-    >
-      <span style={{ fontSize: 13, color: "var(--hd-fg)" }}>{label}</span>
-      <span style={{ fontSize: 12, fontWeight: 600, color }}>{text}</span>
+    <div className="flex items-center justify-between gap-3 rounded-sm border border-border bg-card px-3.5 py-2.5">
+      <span className="lv-body text-foreground">{label}</span>
+      <span className="inline-flex items-center gap-1.5 lv-label text-foreground whitespace-nowrap">
+        <span
+          className={cn("h-1.5 w-1.5 shrink-0 rounded-full", STATUS_DOT_COLOR[status])}
+          aria-hidden="true"
+        />
+        {STATUS_LABEL[status]}
+      </span>
     </div>
   );
 }
@@ -615,19 +671,15 @@ function StatusRow({ label, status }: { label: string; status: ConnectStatus }) 
 function FactsStep({ factCount, onFactAdded }: { factCount: number; onFactAdded: () => void }) {
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--hd-fg)", marginBottom: 8 }}>
-          Services and pricing
-        </div>
+      <div className="mb-6">
+        <p className="lv-label text-foreground mb-2">Services and pricing</p>
         <AddFactForm fixedType="pricing" onAdded={onFactAdded} />
       </div>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--hd-fg)", marginBottom: 8 }}>
-          Common questions customers ask
-        </div>
+        <p className="lv-label text-foreground mb-2">Common questions customers ask</p>
         <QAForm onAdded={onFactAdded} />
       </div>
-      <p style={{ fontSize: 12, color: "var(--hd-muted)", marginTop: 16 }}>
+      <p className="lv-meta text-muted-foreground mt-4">
         {factCount > 0
           ? `${factCount} fact${factCount === 1 ? "" : "s"} on file so far.`
           : "Nothing on file yet - the AI will still answer, just more generally until you add something here."}
@@ -675,43 +727,33 @@ function QAForm({ onAdded }: { onAdded: () => void }) {
 
   return (
     <div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <input
+      <div className="flex flex-col gap-2">
+        <Input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="e.g. Do you offer emergency service?"
           maxLength={240}
-          style={inputStyle}
+          className="min-h-[44px]"
+          aria-label="Question"
         />
-        <input
+        <Input
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="e.g. Yes, 24/7, no extra charge on weekends"
           maxLength={240}
-          style={inputStyle}
+          className="min-h-[44px]"
+          aria-label="Answer"
         />
-        <button
-          onClick={add}
-          disabled={adding}
-          style={{
-            alignSelf: "flex-start",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "10px 18px",
-            background: "var(--hd-primary)",
-            color: "var(--primary-foreground)",
-            border: "none",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          <Plus size={14} /> {adding ? "Adding..." : "Add question"}
-        </button>
+        <Button onClick={add} disabled={adding} className="self-start min-h-[44px] gap-1.5">
+          <Plus className="h-3.5 w-3.5" aria-hidden="true" />{" "}
+          {adding ? "Adding..." : "Add question"}
+        </Button>
       </div>
-      {error && <p style={{ fontSize: 12, color: "var(--destructive)", marginTop: 8 }}>{error}</p>}
+      {error && (
+        <p className="lv-meta text-destructive mt-2" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -725,151 +767,26 @@ function StepShell({
   Icon: typeof Building2;
   title: string;
   subtitle: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="glass-dark" style={{ borderRadius: 20, padding: 32 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 10,
-            background: "var(--hd-primary)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <Icon size={17} color="var(--primary-foreground)" strokeWidth={1.75} />
+    <div className="rounded-md border border-border bg-card p-6 sm:p-8">
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent text-primary">
+          <Icon className="h-4 w-4" aria-hidden="true" />
         </div>
-        <h1
-          style={{
-            fontSize: 20,
-            fontWeight: 800,
-            color: "var(--hd-fg)",
-            margin: 0,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {title}
-        </h1>
+        <h1 className="lv-page-title text-foreground">{title}</h1>
       </div>
-      <p style={{ fontSize: 13, color: "var(--hd-muted)", lineHeight: 1.5, marginBottom: 22 }}>
-        {subtitle}
-      </p>
+      <p className="lv-body text-muted-foreground mb-6">{subtitle}</p>
       {children}
     </div>
   );
 }
 
-function StepFooter({ children }: { children: React.ReactNode }) {
+function StepFooter({ children }: { children: ReactNode }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginTop: 24,
-        paddingTop: 20,
-        borderTop: "1px solid var(--hd-border)",
-      }}
-    >
+    <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mt-6 pt-5 border-t border-border">
       {children}
     </div>
   );
 }
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label
-        style={{
-          display: "block",
-          fontSize: 12,
-          fontWeight: 600,
-          color: "var(--hd-fg)",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function PrimaryButton({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "10px 20px",
-        background: "var(--hd-primary)",
-        color: "var(--primary-foreground)",
-        border: "none",
-        borderRadius: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.6 : 1,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function SecondaryButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "10px 16px",
-        background: "var(--hd-glass)",
-        color: "var(--hd-fg)",
-        border: "1.5px solid var(--hd-border)",
-        borderRadius: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 14px",
-  border: "1.5px solid var(--hd-border)",
-  borderRadius: 10,
-  fontSize: 14,
-  color: "var(--hd-fg)",
-  background: "var(--hd-glass)",
-  fontFamily: "inherit",
-  boxSizing: "border-box",
-};
