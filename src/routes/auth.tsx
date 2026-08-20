@@ -1,7 +1,8 @@
-import { createFileRoute, useSearch, Link } from "@tanstack/react-router";
+import { createFileRoute, useSearch, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,7 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
 }
 
-function getPasswordStrength(password: string): { score: number; label: string; color: string } {
+function getPasswordStrength(password: string): { score: number; label: string } {
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
@@ -33,11 +34,11 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 1) return { score, label: "Too weak", color: "#ef4444" };
-  if (score === 2) return { score, label: "Weak", color: "#f97316" };
-  if (score === 3) return { score, label: "Fair", color: "#eab308" };
-  if (score === 4) return { score, label: "Strong", color: "#1F6F54" };
-  return { score, label: "Very strong", color: "#2F8A6A" };
+  if (score <= 1) return { score, label: "Too weak" };
+  if (score === 2) return { score, label: "Weak" };
+  if (score === 3) return { score, label: "Fair" };
+  if (score === 4) return { score, label: "Strong" };
+  return { score, label: "Very strong" };
 }
 
 function friendlyError(message: string): string {
@@ -56,10 +57,17 @@ function friendlyError(message: string): string {
   return message;
 }
 
-// Flip to true once Google OAuth is enabled in Supabase (Authentication > Providers)
+// Flip to false once Google OAuth is disabled in Supabase (Authentication > Providers)
 const GOOGLE_OAUTH_ENABLED = true;
 
 function AuthPage() {
+  // /auth/reset-password is registered as a child route of this one (both
+  // route files share the "auth." file-name prefix), so it only ever
+  // renders if this component defers to it below instead of always
+  // rendering its own sign-in/sign-up content. Checked after every hook
+  // call (not as an early return above them) so hook order never changes
+  // between renders of this same route component.
+  const location = useLocation();
   const { mode, redirect } = useSearch({ from: "/auth" });
   const postAuthTarget = redirect && redirect.startsWith("/") ? redirect : "/app";
   const [email, setEmail] = useState("");
@@ -111,6 +119,13 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(friendlyError(error.message));
     if (data.session) {
+      // Not hardcoded to /onboarding: postAuthTarget carries a real
+      // checkout deep-link when someone signs up from the pricing page
+      // (see pricing.tsx's handleCheckout), and sending them to
+      // /onboarding instead would drop that intent. Overview's own
+      // beforeLoad already redirects any /app landing to /onboarding
+      // when onboarding_completed is false, so the gate still applies
+      // universally without this route needing to special-case it.
       toast.success("Account created! Taking you to the dashboard...");
       window.location.href = postAuthTarget;
     } else {
@@ -140,23 +155,26 @@ function AuthPage() {
     if (error) toast.error(friendlyError(error.message));
   };
 
+  if (location.pathname.startsWith("/auth/reset-password")) {
+    return <Outlet />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background bg-radial-glow px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-sm">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <img src="/logo.png" alt="Lanavix" className="h-9 w-9" />
-          <span className="text-xl font-display font-bold tracking-tight">Lanavix</span>
+          <span className="lv-page-title text-foreground">Lanavix</span>
         </Link>
 
-        <div className="glass rounded-2xl p-8 shadow-sm">
+        <div className="rounded-md border border-border bg-card p-6 sm:p-8">
           {resetEmailSent ? (
             <div className="text-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
+              <div className="h-10 w-10 rounded-sm bg-accent flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="font-display font-bold text-lg mb-1">Check your email</h2>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="lv-section text-foreground mb-1">Check your email</h1>
+                <p className="lv-body text-muted-foreground">
                   If an account exists for{" "}
                   <span className="font-medium text-foreground">{resetEmailSent}</span>, we sent a
                   link to reset your password.
@@ -164,7 +182,7 @@ function AuthPage() {
               </div>
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full min-h-[44px]"
                 onClick={() => {
                   setResetEmailSent(null);
                   setForgotPasswordMode(false);
@@ -176,14 +194,15 @@ function AuthPage() {
           ) : forgotPasswordMode ? (
             <div className="space-y-4">
               <div>
-                <h2 className="font-display font-bold text-lg mb-1">Reset your password</h2>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="lv-section text-foreground mb-1">Reset your password</h1>
+                <p className="lv-body text-muted-foreground">
                   Enter your email and we'll send you a reset link.
                 </p>
               </div>
-              <div className="space-y-1">
-                <Label>Email</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="forgot-email">Email</Label>
                 <Input
+                  id="forgot-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -191,14 +210,20 @@ function AuthPage() {
                   placeholder="you@company.com"
                   onKeyDown={(e) => e.key === "Enter" && sendPasswordReset()}
                   autoComplete="email"
+                  autoFocus
+                  className="min-h-[44px]"
                 />
               </div>
-              <Button className="w-full" disabled={resetLoading} onClick={sendPasswordReset}>
-                {resetLoading ? "Sending…" : "Send reset link"}
+              <Button
+                className="w-full min-h-[44px]"
+                disabled={resetLoading}
+                onClick={sendPasswordReset}
+              >
+                {resetLoading ? "Sending..." : "Send reset link"}
               </Button>
               <Button
                 variant="ghost"
-                className="w-full"
+                className="w-full min-h-[44px]"
                 onClick={() => setForgotPasswordMode(false)}
               >
                 Back to sign in
@@ -206,74 +231,87 @@ function AuthPage() {
             </div>
           ) : signupSuccess ? (
             <div className="text-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
+              <div className="h-10 w-10 rounded-sm bg-accent flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="font-display font-bold text-lg mb-1">Check your email</h2>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="lv-section text-foreground mb-1">Check your email</h1>
+                <p className="lv-body text-muted-foreground">
                   We sent a confirmation link to{" "}
                   <span className="font-medium text-foreground">{signupSuccess}</span>. Click it to
                   activate your account, then come back and sign in.
                 </p>
               </div>
-              <Button variant="outline" className="w-full" onClick={() => setSignupSuccess(null)}>
+              <Button
+                variant="outline"
+                className="w-full min-h-[44px]"
+                onClick={() => setSignupSuccess(null)}
+              >
                 Back to sign in
               </Button>
             </div>
           ) : (
             <Tabs defaultValue={mode === "signup" ? "signup" : "signin"}>
               <TabsList className="grid grid-cols-2 w-full mb-6">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Create account</TabsTrigger>
+                <TabsTrigger value="signin" className="min-h-[36px]">
+                  Sign in
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="min-h-[36px]">
+                  Create account
+                </TabsTrigger>
               </TabsList>
 
-              {(["signin", "signup"] as const).map((mode) => (
-                <TabsContent key={mode} value={mode} className="space-y-4">
+              {(["signin", "signup"] as const).map((tabMode) => (
+                <TabsContent key={tabMode} value={tabMode} className="space-y-4">
                   {/* Email */}
-                  <div className="space-y-1">
-                    <Label>Email</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`${tabMode}-email`}>Email</Label>
                     <div className="relative">
                       <Input
+                        id={`${tabMode}-email`}
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onBlur={() => setEmailTouched(true)}
                         placeholder="you@company.com"
-                        className={
+                        className={cn(
+                          "min-h-[44px]",
                           emailError
-                            ? "border-red-500 pr-10"
+                            ? "border-destructive pr-9"
                             : email.length > 0 && emailValid
-                              ? "border-green-500 pr-10"
-                              : ""
-                        }
+                              ? "pr-9"
+                              : "",
+                        )}
+                        aria-invalid={emailError || undefined}
+                        aria-describedby={emailError ? `${tabMode}-email-error` : undefined}
                         onKeyDown={(e) =>
-                          e.key === "Enter" && (mode === "signin" ? signIn() : signUp())
+                          e.key === "Enter" && (tabMode === "signin" ? signIn() : signUp())
                         }
                         autoComplete="email"
                       />
                       {email.length > 0 && emailTouched && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                           {emailValid ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-500" />
+                            <XCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
                           )}
                         </div>
                       )}
                     </div>
                     {emailError && (
-                      <p className="text-xs text-red-500 mt-1">
+                      <p id={`${tabMode}-email-error`} className="lv-meta text-destructive">
                         Please enter a valid email address (e.g. name@company.com)
                       </p>
                     )}
                   </div>
 
                   {/* Password */}
-                  <div className="space-y-1">
-                    <Label>Password</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`${tabMode}-password`}>Password</Label>
                     <div className="relative">
                       <Input
+                        id={`${tabMode}-password`}
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => {
@@ -281,55 +319,52 @@ function AuthPage() {
                           setPasswordTouched(true);
                         }}
                         placeholder="••••••••"
-                        className="pr-10"
+                        className="pr-9 min-h-[44px]"
                         onKeyDown={(e) =>
-                          e.key === "Enter" && (mode === "signin" ? signIn() : signUp())
+                          e.key === "Enter" && (tabMode === "signin" ? signIn() : signUp())
                         }
-                        autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                        autoComplete={tabMode === "signin" ? "current-password" : "new-password"}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out"
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4" aria-hidden="true" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4" aria-hidden="true" />
                         )}
                       </button>
                     </div>
 
                     {/* Password strength — only on signup */}
-                    {mode === "signup" && password.length > 0 && passwordTouched && (
-                      <div className="mt-2 space-y-1">
+                    {tabMode === "signup" && password.length > 0 && passwordTouched && (
+                      <div className="pt-1 space-y-1">
                         <div className="flex gap-1">
                           {[1, 2, 3, 4, 5].map((i) => (
                             <div
                               key={i}
-                              className="h-1 flex-1 rounded-full transition-all"
-                              style={{
-                                background: i <= strength.score ? strength.color : "var(--border)",
-                              }}
+                              className={
+                                i <= strength.score
+                                  ? "h-1 flex-1 rounded-full bg-primary"
+                                  : "h-1 flex-1 rounded-full bg-border"
+                              }
                             />
                           ))}
                         </div>
-                        <p className="text-xs" style={{ color: strength.color }}>
+                        <p className="lv-meta text-muted-foreground">
                           {strength.label}
+                          {password.length < 8 && " · Minimum 8 characters required"}
                         </p>
-                        {password.length < 8 && (
-                          <p className="text-xs text-muted-foreground">
-                            Minimum 8 characters required
-                          </p>
-                        )}
                       </div>
                     )}
-                    {mode === "signin" && (
+                    {tabMode === "signin" && (
                       <button
                         type="button"
                         onClick={() => setForgotPasswordMode(true)}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                        className="lv-meta text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out"
                       >
                         Forgot password?
                       </button>
@@ -337,22 +372,32 @@ function AuthPage() {
                   </div>
 
                   <Button
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                     disabled={loading}
-                    onClick={mode === "signin" ? signIn : signUp}
+                    onClick={tabMode === "signin" ? signIn : signUp}
                   >
-                    {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
+                    {loading
+                      ? tabMode === "signin"
+                        ? "Signing in..."
+                        : "Creating account..."
+                      : tabMode === "signin"
+                        ? "Sign in"
+                        : "Create account"}
                   </Button>
 
                   {GOOGLE_OAUTH_ENABLED && (
                     <>
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-px bg-border" />
-                        <span className="text-xs text-muted-foreground">OR</span>
+                        <span className="lv-meta text-muted-foreground">OR</span>
                         <div className="flex-1 h-px bg-border" />
                       </div>
 
-                      <Button variant="outline" className="w-full gap-2.5" onClick={google}>
+                      <Button
+                        variant="outline"
+                        className="w-full min-h-[44px] gap-2.5"
+                        onClick={google}
+                      >
                         <svg className="h-4 w-4" viewBox="0 0 48 48" aria-hidden="true">
                           <path
                             fill="#FFC107"
@@ -377,25 +422,25 @@ function AuthPage() {
                   )}
 
                   {/* Privacy note on signup */}
-                  {mode === "signup" && (
-                    <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground space-y-1">
-                      <p className="font-semibold text-foreground/80">🔒 Your data is safe</p>
-                      <p>
+                  {tabMode === "signup" && (
+                    <div className="rounded-sm border border-border bg-muted/40 px-4 py-3 space-y-1">
+                      <p className="lv-label text-foreground">Your data is safe</p>
+                      <p className="lv-meta text-muted-foreground">
                         We never sell your information. Your email is only used to manage your
                         Lanavix account and send service notifications. You can delete your account
                         any time.
                       </p>
-                      <p>
+                      <p className="lv-meta">
                         <Link
                           to="/privacy"
-                          className="underline hover:text-foreground transition-colors"
+                          className="underline text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out"
                         >
                           Privacy Policy
                         </Link>
                         {" · "}
                         <Link
                           to="/terms"
-                          className="underline hover:text-foreground transition-colors"
+                          className="underline text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out"
                         >
                           Terms of Service
                         </Link>
@@ -408,13 +453,19 @@ function AuthPage() {
           )}
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        <p className="text-center lv-meta text-muted-foreground mt-6">
           By continuing, you agree to Lanavix's{" "}
-          <Link to="/terms" className="underline hover:text-foreground transition-colors">
+          <Link
+            to="/terms"
+            className="underline hover:text-foreground transition-colors duration-150 ease-out"
+          >
             terms of service
           </Link>{" "}
           and{" "}
-          <Link to="/privacy" className="underline hover:text-foreground transition-colors">
+          <Link
+            to="/privacy"
+            className="underline hover:text-foreground transition-colors duration-150 ease-out"
+          >
             privacy policy
           </Link>
           .
