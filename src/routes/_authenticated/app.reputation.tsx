@@ -946,16 +946,13 @@ function ReputationPage() {
   );
 }
 
-// /app/billing doesn't exist on the integration branch yet (it ships in
-// its own later slice) - points at /pricing in the meantime, the same
-// interim destination every other paid-plan gate on this branch uses.
 function PlanGateNotice({ title, description }: { title: string; description: string }) {
   return (
     <div className="rounded-md border border-border px-4 py-3">
       <p className="lv-label text-foreground">{title}</p>
       <p className="lv-body text-muted-foreground mt-0.5">{description}</p>
       <Button size="sm" className="mt-3" asChild>
-        <Link to="/pricing">Upgrade now</Link>
+        <Link to="/app/billing">Upgrade now</Link>
       </Button>
     </div>
   );

@@ -39,7 +39,7 @@ function CheckoutReturn() {
       if (data && ["active", "trialing"].includes(data.subscription_status || "")) {
         setStatus("active");
         setTimeout(() => {
-          topLevelNavigate(absoluteUrl("/"));
+          topLevelNavigate(absoluteUrl("/app"));
         }, 1500);
         return;
       }
@@ -70,7 +70,7 @@ function CheckoutReturn() {
       <h1 style={{ fontSize: 26, marginBottom: 12 }}>{titles[status]}</h1>
       <p style={{ color: "#555", marginBottom: 24 }}>{subs[status]}</p>
       <Link
-        to="/"
+        to="/app"
         style={{
           display: "inline-block",
           padding: "10px 18px",
@@ -80,7 +80,7 @@ function CheckoutReturn() {
           textDecoration: "none",
         }}
       >
-        Back to Lanavix
+        Go to your dashboard →
       </Link>
     </div>
   );
