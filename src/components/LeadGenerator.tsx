@@ -1,21 +1,54 @@
-import { useState, useEffect, useCallback, type CSSProperties } from "react";
-import { Phone, Mail, ChevronDown, ChevronUp, X, Wand2, Send } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "@tanstack/react-router";
+import { Wand2, Users, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { StatusDot, type LvStatus } from "@/components/StatusDot";
+import { relativeTime } from "@/lib/timeFormat";
 
 const INDUSTRIES = [
-  "HVAC", "Plumbing", "Roofing", "Electrical", "Cleaning",
-  "Landscaping", "Dental", "Legal", "Pest Control", "Auto Repair",
+  "HVAC",
+  "Plumbing",
+  "Roofing",
+  "Electrical",
+  "Cleaning",
+  "Landscaping",
+  "Dental",
+  "Legal",
+  "Pest Control",
+  "Auto Repair",
 ];
 
-const PIPELINE_COLUMNS: { status: string; label: string }[] = [
-  { status: "new", label: "New" },
-  { status: "contacted", label: "Contacted" },
-  { status: "responded", label: "Responded" },
-  { status: "qualified", label: "Qualified" },
-  { status: "scheduled", label: "Scheduled" },
-];
-
-const STATUS_OPTIONS = ["new", "contacted", "responded", "qualified", "scheduled", "nurture", "dead"];
+// Same status vocabulary Leads uses for lead_profiles.status, so a
+// prospect looks identical whether it's viewed here or in Leads.
+const STATUS_TO_DOT: Record<string, LvStatus> = {
+  new: "new",
+  contacted: "no_reply",
+  responded: "waiting_on_you",
+  qualified: "waiting_on_you",
+  scheduled: "booked",
+  nurture: "stale",
+  dead: "failed",
+};
 
 const STATUS_LABELS: Record<string, string> = {
   new: "New",
@@ -27,46 +60,13 @@ const STATUS_LABELS: Record<string, string> = {
   dead: "Dead",
 };
 
-const CHANNEL_LABELS: Record<string, string> = {
-  sms: "Text",
-  email: "Email",
-  voicemail_drop: "Voicemail drop",
-  linkedin: "LinkedIn",
-};
-
-const SEQUENCE_STATUS_LABELS: Record<string, string> = {
-  pending: "Pending",
-  sending: "Sending",
-  sent: "Sent",
-  responded: "Responded",
-  failed: "Failed",
-};
-
 interface LeadProfile {
   id: string;
   business_name: string;
   owner_name: string | null;
   phone: string | null;
-  email: string | null;
-  website: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  industry: string | null;
-  google_rating: number | null;
-  google_review_count: number | null;
-  has_website: boolean | null;
-  website_quality: string | null;
-  social_media: { facebook?: string; instagram?: string; linkedin?: string } | null;
-  pain_signals: string[] | null;
-  lead_score: number | null;
   status: string;
   priority: string;
-  ai_research_summary: string | null;
-  personalized_opening_line: string | null;
-  outreach_history: { channel: string; sent_at: string; message: string; response: string | null }[] | null;
-  notes: string | null;
   created_at: string;
 }
 
@@ -75,27 +75,45 @@ interface SequenceStep {
   lead_id: string;
   step_number: number;
   channel: string;
-  delay_hours: number;
-  message_template: string;
   status: string;
   sent_at: string | null;
 }
 
-const cardStyle: CSSProperties = {
-  background: "var(--card)",
-  border: "1.5px solid var(--border)",
-  borderRadius: 14,
-  padding: "14px 16px",
-};
+// Bounds how many prospects render in the summary table regardless of how
+// many a business has generated over time - full management (and the
+// ability to page/search through everything) lives in Leads.
+const RECENT_LIMIT = 10;
 
-function priorityColor(priority: string): { bg: string; color: string } {
-  if (priority === "hot") return { bg: "rgba(239,68,68,0.12)", color: "#ef4444" };
-  if (priority === "cold") return { bg: "var(--muted)", color: "var(--muted-foreground)" };
-  return { bg: "rgba(245,158,11,0.14)", color: "#d97706" };
+// Derived from lead_sequences.sent_at (the same source app.leads.tsx uses
+// for its own "last touch" column) rather than lead_profiles.outreach_history
+// - one source of truth instead of two that could drift apart.
+function lastTouchIso(steps: SequenceStep[]): string | null {
+  const sent = steps.filter((s) => s.sent_at).map((s) => s.sent_at as string);
+  if (sent.length === 0) return null;
+  return sent.reduce((latest, iso) => (iso > latest ? iso : latest), sent[0]);
 }
 
-function copyText(text: string) {
-  navigator.clipboard.writeText(text);
+function nextActionLabel(steps: SequenceStep[]): string {
+  const pending = steps.find((s) => s.status === "pending");
+  if (pending) return `Step ${pending.step_number} pending`;
+  if (steps.length > 0) return "Sequence complete";
+  return "No sequence";
+}
+
+function sequenceProgressLabel(steps: SequenceStep[]): string {
+  if (steps.length === 0) return "—";
+  const sent = steps.filter((s) => s.sent_at).length;
+  return `${sent}/${steps.length} sent`;
+}
+
+function SummarySkeleton() {
+  return (
+    <div className="rounded-md border border-border bg-card p-5 md:p-6 space-y-2">
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-[52px] w-full rounded-md" />
+      ))}
+    </div>
+  );
 }
 
 export default function LeadGenerator() {
@@ -107,40 +125,35 @@ export default function LeadGenerator() {
 
   const [leads, setLeads] = useState<LeadProfile[]>([]);
   const [sequences, setSequences] = useState<Record<string, SequenceStep[]>>({});
-  const [pipelineValue, setPipelineValue] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [outreachOpenId, setOutreachOpenId] = useState<string | null>(null);
-  const [detailLead, setDetailLead] = useState<LeadProfile | null>(null);
-  const [notesDraft, setNotesDraft] = useState("");
-  const [runningStepFor, setRunningStepFor] = useState<string | null>(null);
-
-  // Keeps the notes draft in sync with whichever lead's drawer is open, so
-  // switching leads (or reopening one) never leaves stale text from a
-  // previous lead sitting in the field to be saved over it.
-  useEffect(() => {
-    setNotesDraft(detailLead?.notes || "");
-  }, [detailLead?.id]);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const { data: leadRows } = await supabase
       .from("lead_profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("id, business_name, owner_name, phone, status, priority, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(500);
     const typedLeads = (leadRows || []) as unknown as LeadProfile[];
     setLeads(typedLeads);
 
-    if (typedLeads.length > 0) {
-      const ids = typedLeads.map((l) => l.id);
+    // Sequence steps are only ever shown for the bounded "recent" slice
+    // rendered below, so only fetch those rather than every lead's history.
+    const recentIds = typedLeads.slice(0, RECENT_LIMIT).map((l) => l.id);
+    if (recentIds.length > 0) {
       const { data: seqRows } = await supabase
         .from("lead_sequences")
-        .select("*")
-        .in("lead_id", ids)
+        .select("id, lead_id, step_number, channel, status, sent_at")
+        .in("lead_id", recentIds)
         .order("step_number", { ascending: true });
       const grouped: Record<string, SequenceStep[]> = {};
       for (const s of (seqRows || []) as unknown as SequenceStep[]) {
@@ -148,24 +161,8 @@ export default function LeadGenerator() {
         (grouped[s.lead_id] ||= []).push(s);
       }
       setSequences(grouped);
-
-      const scheduledPhones = typedLeads
-        .filter((l) => l.status === "scheduled" && l.phone)
-        .map((l) => l.phone as string);
-      if (scheduledPhones.length > 0) {
-        const { data: appts } = await supabase
-          .from("appointments")
-          .select("estimated_value, customer_phone")
-          .eq("user_id", user.id)
-          .in("customer_phone", scheduledPhones);
-        const value = (appts || []).reduce((sum, a) => sum + (a.estimated_value || 0), 0);
-        setPipelineValue(value);
-      } else {
-        setPipelineValue(0);
-      }
     } else {
       setSequences({});
-      setPipelineValue(0);
     }
     setLoading(false);
   }, []);
@@ -174,18 +171,23 @@ export default function LeadGenerator() {
     loadLeads();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      supabase.from("profiles").select("city, industry").eq("id", user.id).single().then(({ data }) => {
-        if (data?.city) setCity(data.city);
-        // profiles.industry is free text from onboarding (e.g. "Cleaning
-        // Services"), while this list is a fixed set of prospecting
-        // categories - only pre-fill on a real match, so a business with
-        // an industry outside this list keeps the current default instead
-        // of silently landing on an unrelated category.
-        const match = data?.industry
-          ? INDUSTRIES.find((i) => i.toLowerCase() === data.industry!.toLowerCase())
-          : null;
-        if (match) setIndustry(match);
-      });
+      supabase
+        .from("profiles")
+        .select("city, industry")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.city) setCity(data.city);
+          // profiles.industry is free text from onboarding (e.g. "Cleaning
+          // Services"), while this list is a fixed set of prospecting
+          // categories - only pre-fill on a real match, so a business with
+          // an industry outside this list keeps the current default instead
+          // of silently landing on an unrelated category.
+          const match = data?.industry
+            ? INDUSTRIES.find((i) => i.toLowerCase() === data.industry!.toLowerCase())
+            : null;
+          if (match) setIndustry(match);
+        });
     });
   }, [loadLeads]);
 
@@ -223,306 +225,241 @@ export default function LeadGenerator() {
     }
   }
 
-  async function updateStatus(leadId: string, status: string) {
-    await supabase.from("lead_profiles").update({ status }).eq("id", leadId);
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, status } : l)));
-    if (detailLead?.id === leadId) setDetailLead((d) => (d ? { ...d, status } : d));
-  }
-
-  async function saveNotes(leadId: string) {
-    await supabase.from("lead_profiles").update({ notes: notesDraft }).eq("id", leadId);
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, notes: notesDraft } : l)));
-  }
-
-  async function runNextStep(leadId: string) {
-    const steps = sequences[leadId] || [];
-    const next = steps.find((s) => s.status === "pending");
-    if (!next) return;
-    setRunningStepFor(leadId);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) return;
-      const res = await fetch("/api/lead-generator/execute-step", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ lead_id: leadId, step_id: next.id }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        await loadLeads();
-      } else {
-        setError(data.error || "Failed to run sequence step.");
-      }
-    } catch {
-      setError("Network error running sequence step.");
-    } finally {
-      setRunningStepFor(null);
-    }
-  }
-
   const now = Date.now();
   const weekMs = 7 * 24 * 60 * 60 * 1000;
-  const hotThisWeek = leads.filter((l) => l.priority === "hot" && now - new Date(l.created_at).getTime() < weekMs).length;
-  const contactedOrLater = leads.filter((l) => l.status !== "new").length;
-  const respondedOrLater = leads.filter((l) => ["responded", "qualified", "scheduled"].includes(l.status)).length;
-  const responseRate = contactedOrLater > 0 ? Math.round((respondedOrLater / contactedOrLater) * 100) : 0;
-  const appointmentsScheduled = leads.filter((l) => l.status === "scheduled").length;
+  const hotThisWeek = leads.filter(
+    (l) => l.priority === "hot" && now - new Date(l.created_at).getTime() < weekMs,
+  ).length;
+  const outreachStarted = leads.filter((l) => l.status !== "new").length;
+  const replies = leads.filter((l) =>
+    ["responded", "qualified", "scheduled"].includes(l.status),
+  ).length;
+  const scheduled = leads.filter((l) => l.status === "scheduled").length;
 
-  const mainColumnLeads = (status: string) => leads.filter((l) => l.status === status);
-  const otherLeads = leads.filter((l) => l.status === "nurture" || l.status === "dead");
+  const recentLeads = leads.slice(0, RECENT_LIMIT);
 
   return (
-    <div>
-      {/* Research panel */}
-      <div style={{ ...cardStyle, padding: 24, marginBottom: 24, maxWidth: 720 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Wand2 size={18} color="var(--primary)" strokeWidth={1.75} />
-          </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>Lead Generator</div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Industry</label>
-            <select value={industry} onChange={(e) => setIndustry(e.target.value)}
-              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit" }}>
-              {INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
-            </select>
+    <div className="space-y-6">
+      {/* Find opportunities */}
+      <div className="rounded-md border border-border bg-card p-5 md:p-6">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-accent text-primary">
+            <Wand2 className="h-4 w-4" aria-hidden="true" />
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>City</label>
-            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Fairfax VA"
-              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
+            <h2 className="lv-section text-foreground">Find opportunities</h2>
+            <p className="lv-meta text-muted-foreground">
+              Search real local businesses and get a personalized opening line for each one.
+            </p>
           </div>
         </div>
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>
-            Number of leads: {count}
-          </label>
-          <input type="range" min={10} max={50} value={count} onChange={(e) => setCount(Number(e.target.value))}
-            style={{ width: "100%" }} />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div>
+            <Label htmlFor="og-industry" className="lv-label text-foreground block mb-1.5">
+              Industry
+            </Label>
+            <Select value={industry} onValueChange={setIndustry}>
+              <SelectTrigger id="og-industry">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INDUSTRIES.map((i) => (
+                  <SelectItem key={i} value={i}>
+                    {i}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="og-city" className="lv-label text-foreground block mb-1.5">
+              City
+            </Label>
+            <Input
+              id="og-city"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. Fairfax VA"
+            />
+          </div>
         </div>
-        {error && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
-        <button onClick={generateLeads} disabled={researching}
-          style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: researching ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: researching ? 0.7 : 1 }}>
-          {researching ? `Researching ${count} businesses in ${city || "your area"}...` : "Generate Intelligence →"}
-        </button>
+
+        <div className="mb-4">
+          <Label htmlFor="og-count" className="lv-label text-foreground block mb-2">
+            Number of prospects: <span className="lv-numbers text-foreground">{count}</span>
+          </Label>
+          <Slider
+            id="og-count"
+            min={10}
+            max={50}
+            step={1}
+            value={[count]}
+            onValueChange={([v]) => setCount(v)}
+            aria-label="Number of prospects to research"
+          />
+        </div>
+
+        <p className="lv-meta text-muted-foreground mb-4">
+          Outreach sequences send by text message.
+        </p>
+
+        {error && (
+          <p className="lv-meta text-destructive mb-3" role="alert">
+            {error}
+          </p>
+        )}
+
+        <Button
+          onClick={generateLeads}
+          disabled={researching}
+          className="w-full sm:w-auto min-h-[44px]"
+        >
+          {researching
+            ? `Researching ${count} businesses in ${city || "your area"}...`
+            : "Find opportunities"}
+        </Button>
       </div>
 
-      {/* Stats bar */}
-      {!loading && leads.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, marginBottom: 24 }}>
-          {[
-            { label: "Total leads generated", value: leads.length },
-            { label: "Hot leads this week", value: hotThisWeek },
-            { label: "Response rate", value: `${responseRate}%` },
-            { label: "Appointments scheduled", value: appointmentsScheduled },
-            { label: "Pipeline value", value: `$${pipelineValue.toLocaleString()}` },
-          ].map((s) => (
-            <div key={s.label} style={{ ...cardStyle, padding: "14px 16px" }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
+      {/* Active outreach / recent prospects */}
+      {loading ? (
+        <SummarySkeleton />
+      ) : leads.length > 0 ? (
+        <div className="rounded-md border border-border bg-card p-5 md:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="lv-section text-foreground">Active outreach</h2>
+              <p className="lv-meta text-muted-foreground mt-0.5">
+                What's currently happening with prospects you've found.
+              </p>
             </div>
-          ))}
-        </div>
-      )}
+            <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
+              <Link to="/app/leads">
+                Manage leads <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
 
-      {/* Pipeline */}
-      {!loading && leads.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, alignItems: "start" }}>
-          {PIPELINE_COLUMNS.map((col) => (
-            <div key={col.status}>
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)", marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
-                <span>{col.label}</span>
-                <span>{mainColumnLeads(col.status).length}</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {mainColumnLeads(col.status).map((lead) => {
-                  const pc = priorityColor(lead.priority);
-                  const steps = sequences[lead.id] || [];
-                  const nextPending = steps.find((s) => s.status === "pending");
-                  return (
-                    <div key={lead.id} style={cardStyle}>
-                      <div onClick={() => setDetailLead(lead)} style={{ cursor: "pointer" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 6, marginBottom: 4 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)" }}>{lead.business_name}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: pc.bg, color: pc.color, flexShrink: 0 }}>
-                            {lead.lead_score ?? 0}
-                          </span>
-                        </div>
-                        {lead.owner_name && (
-                          <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 4 }}>{lead.owner_name}</div>
-                        )}
-                        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-                          {lead.phone && (
-                            <span onClick={(e) => { e.stopPropagation(); copyText(lead.phone!); }}
-                              title="Copy phone" style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--primary)", cursor: "pointer" }}>
-                              <Phone size={12} /> {lead.phone}
-                            </span>
-                          )}
-                          {lead.email && (
-                            <span onClick={(e) => { e.stopPropagation(); copyText(lead.email!); }}
-                              title="Copy email" style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--primary)", cursor: "pointer" }}>
-                              <Mail size={12} />
-                            </span>
-                          )}
-                        </div>
-                        {lead.pain_signals && lead.pain_signals.length > 0 && (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
-                            {lead.pain_signals.map((p) => (
-                              <span key={p} style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "var(--accent)", color: "var(--primary)" }}>{p}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <button onClick={() => setExpandedId(expandedId === lead.id ? null : lead.id)}
-                        style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 8 }}>
-                        {expandedId === lead.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />} Research
-                      </button>
-                      {expandedId === lead.id && (
-                        <p style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.5, margin: "0 0 8px" }}>
-                          {lead.ai_research_summary || "No summary available."}
-                        </p>
-                      )}
-
-                      <select value={lead.status} onChange={(e) => updateStatus(lead.id, e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", fontSize: 12, border: "1.5px solid var(--border)", borderRadius: 8, background: "var(--input)", color: "var(--foreground)", marginBottom: 8, fontFamily: "inherit" }}>
-                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
-                      </select>
-
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button onClick={() => runNextStep(lead.id)} disabled={!nextPending || runningStepFor === lead.id}
-                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "7px 8px", fontSize: 11, fontWeight: 600, background: nextPending ? "var(--primary)" : "var(--muted)", color: nextPending ? "var(--primary-foreground)" : "var(--muted-foreground)", border: "none", borderRadius: 8, cursor: nextPending ? "pointer" : "not-allowed" }}>
-                          <Send size={11} /> {runningStepFor === lead.id ? "Sending..." : nextPending ? `Run step ${nextPending.step_number}` : "All sent"}
-                        </button>
-                        <button onClick={() => setOutreachOpenId(outreachOpenId === lead.id ? null : lead.id)}
-                          style={{ padding: "7px 10px", fontSize: 11, fontWeight: 600, background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, cursor: "pointer" }}>
-                          History
-                        </button>
-                      </div>
-
-                      {outreachOpenId === lead.id && (
-                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                          {(lead.outreach_history || []).length === 0 && (
-                            <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0 }}>No messages sent yet.</p>
-                          )}
-                          {(lead.outreach_history || []).map((h, i) => (
-                            <div key={i} style={{ marginBottom: 6 }}>
-                              <div style={{ fontSize: 11, color: "var(--foreground)" }}>→ {h.message}</div>
-                              {h.response && <div style={{ fontSize: 11, color: "var(--accent-2)" }}>← {h.response}</div>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {mainColumnLeads(col.status).length === 0 && (
-                  <div style={{ fontSize: 12, color: "var(--muted-foreground)", padding: "8px 0" }}>—</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!loading && otherLeads.length > 0 && (
-        <div style={{ marginTop: 28 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)", marginBottom: 10 }}>Nurture / Dead ({otherLeads.length})</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {otherLeads.map((lead) => (
-              <div key={lead.id} onClick={() => setDetailLead(lead)}
-                style={{ ...cardStyle, padding: "8px 12px", cursor: "pointer", opacity: 0.7 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)" }}>{lead.business_name}</span>
-                <span style={{ fontSize: 11, color: "var(--muted-foreground)", marginLeft: 8 }}>{STATUS_LABELS[lead.status] || lead.status}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {[
+              { label: "Prospects found", value: leads.length },
+              { label: "Outreach started", value: outreachStarted },
+              { label: "Replies", value: replies },
+              { label: "Scheduled", value: scheduled },
+            ].map((s) => (
+              <div key={s.label} className="rounded-md border border-border px-3 py-2.5">
+                <div className="lv-numbers text-foreground text-xl">{s.value}</div>
+                <div className="lv-meta text-muted-foreground mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
-        </div>
-      )}
 
-      {!loading && leads.length === 0 && (
-        <div style={{ ...cardStyle, padding: "48px 32px", textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "var(--muted-foreground)", margin: 0 }}>
-            No leads yet. Run Generate Intelligence above to research your first batch of prospects.
-          </p>
-        </div>
-      )}
+          {hotThisWeek > 0 && (
+            <p className="lv-meta text-muted-foreground mb-4">
+              {hotThisWeek} hot {hotThisWeek === 1 ? "prospect" : "prospects"} found this week.
+            </p>
+          )}
 
-      {/* Detail drawer */}
-      {detailLead && (
-        <div onClick={() => setDetailLead(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "flex-end", zIndex: 50 }}>
-          <div onClick={(e) => e.stopPropagation()}
-            style={{ width: 440, maxWidth: "100%", height: "100%", background: "var(--card)", borderLeft: "1px solid var(--border)", overflowY: "auto", padding: 28 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 18 }}>
-              <div>
-                <div style={{ fontSize: 19, fontWeight: 800, color: "var(--foreground)" }}>{detailLead.business_name}</div>
-                {detailLead.owner_name && <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{detailLead.owner_name}</div>}
-              </div>
-              <button onClick={() => setDetailLead(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted-foreground)" }}><X size={20} /></button>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18, fontSize: 13 }}>
-              {detailLead.phone && <div><strong>Phone:</strong> {detailLead.phone}</div>}
-              {detailLead.email && <div><strong>Email:</strong> {detailLead.email}</div>}
-              {detailLead.website && <div><strong>Website:</strong> {detailLead.website}</div>}
-              {detailLead.address && <div><strong>Address:</strong> {detailLead.address}</div>}
-              {detailLead.google_rating !== null && (
-                <div><strong>Google:</strong> {detailLead.google_rating}★ ({detailLead.google_review_count ?? 0} reviews)</div>
-              )}
-              {detailLead.website_quality && <div><strong>Website quality:</strong> {detailLead.website_quality}</div>}
-              {detailLead.social_media && Object.keys(detailLead.social_media).length > 0 && (
-                <div><strong>Social:</strong> {Object.entries(detailLead.social_media).map(([k]) => k).join(", ")}</div>
-              )}
-            </div>
-
-            {detailLead.pain_signals && detailLead.pain_signals.length > 0 && (
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>Pain signals</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {detailLead.pain_signals.map((p) => (
-                    <span key={p} style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 6, background: "var(--accent)", color: "var(--primary)" }}>{p}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {detailLead.ai_research_summary && (
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>Research summary</div>
-                <p style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5, margin: 0 }}>{detailLead.ai_research_summary}</p>
-              </div>
-            )}
-
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>Sequence</div>
-              {(sequences[detailLead.id] || []).map((s) => (
-                <div key={s.id} style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 6, padding: "8px 10px", background: "var(--elevated)", borderRadius: 8 }}>
-                  <div style={{ fontWeight: 700, color: "var(--foreground)" }}>Step {s.step_number} · {CHANNEL_LABELS[s.channel] || s.channel} · {SEQUENCE_STATUS_LABELS[s.status] || s.status}</div>
-                  <div>{s.message_template}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>Notes</div>
-              <textarea
-                value={notesDraft}
-                onChange={(e) => setNotesDraft(e.target.value)}
-                onBlur={() => saveNotes(detailLead.id)}
-                rows={4}
-                style={{ width: "100%", padding: "10px 12px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, background: "var(--input)", color: "var(--foreground)", fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }}
-              />
-            </div>
-
-            <button onClick={() => updateStatus(detailLead.id, "dead")}
-              style={{ width: "100%", padding: 11, background: "var(--card)", color: "var(--destructive)", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              Mark as Dead
-            </button>
+          {/* Desktop table */}
+          <div className="hidden md:block rounded-md border border-border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[200px]">Company</TableHead>
+                  <TableHead className="min-w-[140px]">Status</TableHead>
+                  <TableHead className="min-w-[120px]">Sequence</TableHead>
+                  <TableHead className="min-w-[100px]">Last touch</TableHead>
+                  <TableHead className="min-w-[140px]">Next action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentLeads.map((lead) => {
+                  const steps = sequences[lead.id] || [];
+                  const touch = lastTouchIso(steps);
+                  return (
+                    <TableRow key={lead.id}>
+                      <TableCell className="max-w-[220px]">
+                        <div
+                          className="truncate lv-body text-foreground font-medium"
+                          title={lead.business_name}
+                        >
+                          {lead.business_name}
+                        </div>
+                        {lead.owner_name && (
+                          <div className="lv-meta text-muted-foreground truncate">
+                            {lead.owner_name}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <StatusDot status={STATUS_TO_DOT[lead.status] ?? "new"} />
+                      </TableCell>
+                      <TableCell>
+                        <span className="lv-meta text-muted-foreground whitespace-nowrap">
+                          {sequenceProgressLabel(steps)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="lv-meta text-muted-foreground whitespace-nowrap">
+                          {touch ? `${relativeTime(touch)} ago` : "No outreach yet"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="lv-meta text-muted-foreground whitespace-nowrap">
+                          {nextActionLabel(steps)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
+
+          {/* Mobile card list */}
+          <ul className="md:hidden space-y-2">
+            {recentLeads.map((lead) => {
+              const steps = sequences[lead.id] || [];
+              const touch = lastTouchIso(steps);
+              return (
+                <li key={lead.id} className="rounded-md border border-border px-3 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="lv-body text-foreground font-medium truncate">
+                      {lead.business_name}
+                    </span>
+                    <StatusDot status={STATUS_TO_DOT[lead.status] ?? "new"} className="shrink-0" />
+                  </div>
+                  <div className="flex items-center justify-between gap-2 mt-1.5">
+                    <span className="lv-meta text-muted-foreground">
+                      {touch ? `${relativeTime(touch)} ago` : "No outreach yet"}
+                    </span>
+                    <span className="lv-meta text-muted-foreground shrink-0">
+                      {nextActionLabel(steps)}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {leads.length > RECENT_LIMIT && (
+            <p className="lv-meta text-muted-foreground mt-3">
+              Showing the {RECENT_LIMIT} most recent of {leads.length} prospects.{" "}
+              <Link to="/app/leads" className="text-primary underline underline-offset-2">
+                View all in Leads
+              </Link>
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-md border border-border py-12 px-6 text-center">
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-sm bg-accent text-primary">
+            <Users className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <p className="lv-body text-foreground font-medium">No prospects yet</p>
+          <p className="lv-meta text-muted-foreground mt-1 max-w-sm mx-auto">
+            Run Find opportunities above to research your first batch of real local prospects.
+          </p>
         </div>
       )}
     </div>
