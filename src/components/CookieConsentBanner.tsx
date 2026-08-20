@@ -2,19 +2,19 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 
 const STORAGE_KEY = "lanavix:cookie_consent";
-const DARK_PATHS = ["/", "/pricing", "/about", "/terms", "/privacy", "/refund", "/cookies", "/faq"];
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   // Rendered once in __root.tsx as a sibling of <Outlet/>, not a descendant
-  // of it, so it can't inherit --hd-* custom properties from either the
-  // homepage's .page-dark or the dashboard's .app-dark scope: those only
-  // cascade to elements nested inside them, not to siblings. Hardcoding the
-  // same dark palette values directly below (rather than reading the
-  // custom properties) is what actually makes this render correctly on
-  // both dark surfaces, not just by coincidence on one of them.
+  // of it, so it can't inherit --hd-* custom properties from the
+  // dashboard's .app-dark scope: those only cascade to elements nested
+  // inside them, not to siblings. Hardcoding the same dark palette values
+  // directly below (rather than reading the custom properties) is what
+  // actually makes this render correctly there, not just by coincidence.
+  // No public route is dark anymore as of the Marketing integration slice
+  // - only /app is.
   const { pathname } = useLocation();
-  const dark = DARK_PATHS.includes(pathname) || pathname.startsWith("/app");
+  const dark = pathname.startsWith("/app");
   // The App Shell's mobile bottom tab bar (Today/Calendar/More, <md only)
   // sits at bottom-0 with z-20 - at the banner's usual bottom-4 it would
   // render on top of and block those tap targets. Only /app routes have

@@ -7,8 +7,7 @@ const COLS: FooterCol[] = [
   {
     title: "Product",
     links: [
-      { to: "/#features", label: "Features" },
-      { to: "/#how-it-works", label: "How It Works" },
+      { to: "/#workflow", label: "How It Works" },
       { to: "/pricing", label: "Pricing" },
       { to: "/auth", label: "Start Free Trial" },
     ],
@@ -34,8 +33,10 @@ const COLS: FooterCol[] = [
 ];
 
 interface SiteFooterProps {
-  /** "dark" matches the homepage's dark system; every other page keeps
-   * the default light footer. */
+  /** No public page passes "dark" anymore as of the Marketing integration
+   * slice - every public route uses the light Foundations system now. Kept
+   * for now rather than deleted, since removing it outright is a separate
+   * cleanup pass, not part of that slice's actual scope. */
   variant?: "light" | "dark";
 }
 
@@ -64,8 +65,8 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
             <p
               className={`text-sm mt-4 max-w-xs ${dark ? "text-[var(--hd-muted)]" : "text-muted-foreground"}`}
             >
-              Missed-call text-back, review requests, and local lead-finding, built for contractors
-              and running quietly in the background of your day.
+              Missed calls, leads, follow-ups, appointments, and reviews — one operating system for
+              local service businesses, running quietly in the background of your day.
             </p>
             <a
               href="tel:+15719215254"

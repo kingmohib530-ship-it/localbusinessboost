@@ -6,16 +6,17 @@ import { Button } from "@/components/ui/button";
 type NavLink = { to: string; label: string; anchor?: boolean };
 const NAV_LINKS: NavLink[] = [
   { to: "/", label: "Home" },
-  { to: "/#features", label: "What you get", anchor: true },
-  { to: "/#how-it-works", label: "How it works", anchor: true },
+  { to: "/#workflow", label: "How it works", anchor: true },
   { to: "/pricing", label: "Pricing" },
   { to: "/about", label: "About" },
 ];
 
 interface SiteNavProps {
-  /** "dark" is the glass nav for the homepage's dark system; every other
-   * page still using the light system (pricing, about, legal pages) keeps
-   * the default. */
+  /** No public page passes "dark" anymore as of the Marketing integration
+   * slice - every public route uses the light Foundations system now. Kept
+   * for now rather than deleted (see styles.css's --hd-* system), since
+   * removing it outright is a separate cleanup pass, not part of that
+   * slice's actual scope. */
   variant?: "light" | "dark";
 }
 

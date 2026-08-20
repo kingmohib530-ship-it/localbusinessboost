@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { pageMeta } from "@/lib/seo";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
 
 export const Route = createFileRoute("/refund")({
   head: () => ({
@@ -26,7 +25,7 @@ const SECTIONS = [
   },
   {
     title: "3. After the First Month",
-    body: `Once you're past your first paid month, we don't provide prorated refunds for unused portions of a billing period. You can cancel anytime from your account settings — cancellation takes effect at the end of your current billing period, and you won't be billed again.`,
+    body: `Once you're past your first paid month, we don't provide prorated refunds for unused portions of a billing period. Email moh@lanavix.com to cancel any time — cancellation takes effect at the end of your current billing period, and you won't be billed again.`,
   },
   {
     title: "4. Free Trial",
@@ -39,33 +38,29 @@ const SECTIONS = [
 ];
 
 function RefundPage() {
-  const { step, delay } = useMountReveal();
-
   return (
-    <div className="page-dark min-h-screen flex flex-col">
-      <SiteNav variant="dark" />
-      <div className={`max-w-3xl mx-auto px-6 py-16 flex-1 w-full ${step}`} style={delay(0)}>
-        <h1 className="font-display text-4xl font-extrabold tracking-tight mb-2 text-[var(--hd-fg)]">
-          Refund Policy
-        </h1>
-        <p className="text-[var(--hd-muted)] mb-12">Last updated: June 2026</p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <SiteNav />
+      <div className="max-w-3xl mx-auto px-6 py-16 flex-1 w-full">
+        <h1 className="lv-display text-[28px] text-foreground mb-1">Refund Policy</h1>
+        <p className="lv-meta text-muted-foreground mb-10">Last updated: June 2026</p>
 
         {SECTIONS.map((section) => (
-          <div key={section.title} className="mb-9">
-            <h2 className="text-lg font-bold mb-2.5 text-[var(--hd-fg)]">{section.title}</h2>
-            <p className="text-[var(--hd-muted)] leading-relaxed text-[15px]">{section.body}</p>
+          <div key={section.title} className="mb-8">
+            <h2 className="lv-section text-foreground mb-2">{section.title}</h2>
+            <p className="lv-body text-muted-foreground leading-relaxed">{section.body}</p>
           </div>
         ))}
 
-        <p className="text-sm text-[var(--hd-muted)] mt-4">
+        <p className="lv-meta text-muted-foreground mt-4">
           See also our{" "}
-          <Link to="/terms" className="text-[var(--hd-primary-2)] hover:underline">
+          <Link to="/terms" className="text-primary underline underline-offset-2">
             Terms of Service
           </Link>
           .
         </p>
       </div>
-      <SiteFooter variant="dark" />
+      <SiteFooter />
     </div>
   );
 }
