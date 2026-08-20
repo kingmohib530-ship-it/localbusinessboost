@@ -3,6 +3,8 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   Sparkles,
   LayoutDashboard,
+  Inbox,
+  Users,
   Phone,
   Target,
   Calendar,
@@ -26,15 +28,11 @@ import {
  * Cmd+K / Ctrl+K command palette. Coach lives here rather than as a
  * permanent sidebar destination (approved App Shell spec) - this is its
  * primary entry point, alongside quick navigation to the rest of the app.
- *
- * Slice 1 note: the approved destination list references /app/inbox and
- * /app/leads, neither of which exists on the integration branch yet (they
- * ship with the Receptionist/Leads slices). Destinations here are limited
- * to routes that are real today - see the App Shell nav for the same
- * constraint applied to the sidebar.
  */
 const DESTINATIONS: { to: string; label: string; icon: typeof LayoutDashboard }[] = [
   { to: "/app", label: "Overview", icon: LayoutDashboard },
+  { to: "/app/inbox", label: "Inbox", icon: Inbox },
+  { to: "/app/leads", label: "Leads", icon: Users },
   { to: "/app/calendar", label: "Calendar", icon: Calendar },
   { to: "/app/agents", label: "Outreach", icon: Target },
   { to: "/app/reputation", label: "Reviews", icon: Star },

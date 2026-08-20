@@ -2,6 +2,8 @@ import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tan
 import { useState } from "react";
 import {
   LayoutDashboard,
+  Inbox,
+  Users,
   Calendar,
   Target,
   FileText,
@@ -34,30 +36,29 @@ type NavItem = {
 type NavSection = { heading: string; items: NavItem[] };
 
 /**
- * Approved App Shell IA (Slice 1, integration branch). Two items from the
- * originally-approved spec aren't here yet because their pages don't
- * exist on this branch: Inbox (/app/inbox, ships with the Receptionist
- * slice) and Leads (/app/leads, ships with the Leads slice) - see the
- * Slice 1 report for that decision instead of guessing at it here.
- * Quotes has no backing page yet either, so it renders disabled with a
- * "Soon" badge rather than a dead link. Business Facts and Web Chat are
- * real, currently-linked main routes with no explicit slot in the
- * originally-approved sections list, so they sit under Setup alongside
- * the other account/config pages rather than being dropped. Coach is
- * deliberately not here - it lives in the Cmd+K palette instead (see
- * CommandPalette).
+ * Approved App Shell IA. Inbox and Leads (Slice 2) now have real pages on
+ * this branch, so they're back in Today/Pipeline where the originally-
+ * approved spec put them. Quotes still has no backing page, so it stays
+ * disabled with a "Soon" badge rather than a dead link. Business Facts
+ * and Web Chat are real, currently-linked main routes with no explicit
+ * slot in the originally-approved sections list, so they sit under Setup
+ * alongside the other account/config pages rather than being dropped.
+ * Coach is deliberately not here - it lives in the Cmd+K palette instead
+ * (see CommandPalette).
  */
 const NAV_SECTIONS: NavSection[] = [
   {
     heading: "Today",
     items: [
       { to: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
+      { to: "/app/inbox", label: "Inbox", icon: Inbox },
       { to: "/app/calendar", label: "Calendar", icon: Calendar },
     ],
   },
   {
     heading: "Pipeline",
     items: [
+      { to: "/app/leads", label: "Leads", icon: Users },
       { to: null, label: "Quotes", icon: FileText },
       { to: "/app/agents", label: "Outreach", icon: Target },
     ],
@@ -82,10 +83,13 @@ const NAV_SECTIONS: NavSection[] = [
 
 const MOBILE_TABS: NavItem[] = [
   { to: "/app", label: "Today", icon: LayoutDashboard, exact: true },
+  { to: "/app/inbox", label: "Inbox", icon: Inbox },
   { to: "/app/calendar", label: "Calendar", icon: Calendar },
 ];
 
 const BREADCRUMB_LABELS: { prefix: string; label: string }[] = [
+  { prefix: "/app/inbox", label: "Inbox" },
+  { prefix: "/app/leads", label: "Leads" },
   { prefix: "/app/calendar", label: "Calendar" },
   { prefix: "/app/agents", label: "Outreach" },
   { prefix: "/app/reputation", label: "Reviews" },
