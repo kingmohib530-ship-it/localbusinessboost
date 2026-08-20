@@ -1,27 +1,40 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { Send, Star, PenLine } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { Copy, Plus, Send, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StarRatingInput } from "@/components/StarRatingInput";
-import { GlowPanel } from "@/components/GlowPanel";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { StatusDot, type LvStatus } from "@/components/StatusDot";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { relativeTime } from "@/lib/timeFormat";
 
 export const Route = createFileRoute("/_authenticated/app/reputation")({
   component: ReputationPage,
 });
 
-interface ReviewRequest {
+interface RequestRow {
   id: string;
   customer_name: string | null;
   customer_phone: string;
   job_description: string | null;
+  google_review_url: string | null;
   status: string;
   sent_at: string;
 }
 
-interface ReviewResponse {
+interface ReviewRow {
   id: string;
   reviewer_name: string | null;
   star_rating: number | null;
@@ -30,243 +43,274 @@ interface ReviewResponse {
   created_at: string;
 }
 
+type ReviewTab = "attention" | "all";
 
 const PAGE_SIZE = 20;
+const STALE_REQUEST_DAYS = 14;
+const NEEDS_ATTENTION_MAX_RATING = 3;
+
+function requestStatus(r: RequestRow): LvStatus {
+  if (r.status === "reviewed") return "done";
+  const ageDays = (Date.now() - new Date(r.sent_at).getTime()) / 86400000;
+  return ageDays >= STALE_REQUEST_DAYS ? "stale" : "no_reply";
+}
+
+// Every persisted review already has a drafted response (the backend only
+// ever inserts a row after generation succeeds - see /api/review-response),
+// so this isn't "responded vs unanswered." It's "still worth a personal
+// look before you post that draft" (low rating) vs "drafted, low urgency."
+function reviewStatus(r: ReviewRow): LvStatus {
+  return r.star_rating !== null && r.star_rating <= NEEDS_ATTENTION_MAX_RATING
+    ? "waiting_on_you"
+    : "done";
+}
+
+function reviewerLabel(r: ReviewRow): string {
+  return r.reviewer_name || "Anonymous";
+}
+
+function requestLabel(r: RequestRow): string {
+  return r.customer_name || r.customer_phone;
+}
+
+function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error && err.message ? err.message : fallback;
+}
+
+async function authHeader(): Promise<Record<string, string>> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }
+    : { "Content-Type": "application/json" };
+}
+
+function ReviewSkeletonRows() {
+  return (
+    <div className="rounded-md border border-border overflow-hidden divide-y divide-border">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="px-4 py-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-full max-w-md" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const EMPTY_REQUEST_FORM = { name: "", phone: "", job: "", googleUrl: "" };
+const EMPTY_WRITE_FORM = { reviewerName: "", starRating: 5, reviewText: "" };
 
 function ReputationPage() {
-  const [tab, setTab] = useState<"dashboard" | "request" | "respond">("dashboard");
-  const [requests, setRequests] = useState<ReviewRequest[]>([]);
+  const [reviewTab, setReviewTab] = useState<ReviewTab>("attention");
+  const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsLoadingMore, setReviewsLoadingMore] = useState(false);
+  const [reviewsHasMore, setReviewsHasMore] = useState(false);
+  const [reviewsPageIndex, setReviewsPageIndex] = useState(0);
+  const [reviewsError, setReviewsError] = useState("");
+
+  const [requests, setRequests] = useState<RequestRow[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
   const [requestsLoadingMore, setRequestsLoadingMore] = useState(false);
   const [requestsHasMore, setRequestsHasMore] = useState(false);
   const [requestsPageIndex, setRequestsPageIndex] = useState(0);
-  const [responses, setResponses] = useState<ReviewResponse[]>([]);
-  const [responsesLoadingMore, setResponsesLoadingMore] = useState(false);
-  const [responsesHasMore, setResponsesHasMore] = useState(false);
-  const [responsesPageIndex, setResponsesPageIndex] = useState(0);
-  const [stats, setStats] = useState({ sent: 0, reviewed: 0, responses: 0, avgRating: "—" });
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [requestsError, setRequestsError] = useState("");
   const [markingReviewedId, setMarkingReviewedId] = useState<string | null>(null);
 
-  // Request form
-  const [custName, setCustName] = useState("");
-  const [custPhone, setCustPhone] = useState("");
-  const [jobDesc, setJobDesc] = useState("");
-  const [googleUrl, setGoogleUrl] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sendMsg, setSendMsg] = useState("");
-  const [sendOk, setSendOk] = useState(false);
+  const [everCount, setEverCount] = useState<number | null>(null);
+  const [avgRating, setAvgRating] = useState<string>("—");
+  const [attentionCount, setAttentionCount] = useState<number | null>(null);
+  const [waitingCount, setWaitingCount] = useState<number | null>(null);
 
-  // Response form
-  const [reviewText, setReviewText] = useState("");
-  const [reviewerName, setReviewerName] = useState("");
-  const [starRating, setStarRating] = useState(5);
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+
+  const [selectedReview, setSelectedReview] = useState<ReviewRow | null>(null);
+
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestForm, setRequestForm] = useState(EMPTY_REQUEST_FORM);
+  const [requestSaving, setRequestSaving] = useState(false);
+  const [requestFormError, setRequestFormError] = useState("");
+
+  const [writeOpen, setWriteOpen] = useState(false);
+  const [writeForm, setWriteForm] = useState(EMPTY_WRITE_FORM);
   const [generating, setGenerating] = useState(false);
-  const [aiResponse, setAiResponse] = useState("");
-  const [genError, setGenError] = useState("");
-  const reducedMotion = usePrefersReducedMotion();
-  const { step, delay } = useMountReveal();
+  const [writeResult, setWriteResult] = useState("");
+  const [writeError, setWriteError] = useState("");
+
+  const isPaidActive =
+    ["solo", "crew", "agency"].includes(subscriptionTier || "") &&
+    ["active", "trialing", "past_due"].includes(subscriptionStatus || "");
+  const isCrewPlus = subscriptionTier === "crew" || subscriptionTier === "agency";
 
   useEffect(() => {
-    loadStats();
-    loadRequests(0);
-    loadResponses(0);
     loadPlan();
+    loadEverCount();
+    loadSummaryStats();
+    loadRequests(0);
   }, []);
 
+  useEffect(() => {
+    setReviewsPageIndex(0);
+    loadReviews(reviewTab, 0);
+  }, [reviewTab]);
+
   async function loadPlan() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from("profiles").select("subscription_tier, subscription_status").eq("id", user.id).maybeSingle();
+    const { data } = await supabase
+      .from("profiles")
+      .select("subscription_tier, subscription_status")
+      .eq("id", user.id)
+      .maybeSingle();
     setSubscriptionTier(data?.subscription_tier ?? null);
     setSubscriptionStatus(data?.subscription_status ?? null);
   }
 
-  /**
-   * Independent of the two paginated lists below - these tiles need
-   * accurate all-time totals regardless of how many pages of history the
-   * user has loaded so far. Counts use head:true (a real SQL COUNT, not a
-   * row fetch); avg rating reads only the one narrow column it needs
-   * instead of full rows.
-   */
-  async function loadStats() {
-    setLoading(true);
-    setLoadError("");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
-    const [sentCount, reviewedCount, responsesCount, ratings] = await Promise.all([
-      supabase.from("review_requests").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("review_requests").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "reviewed"),
-      supabase.from("review_responses").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("review_responses").select("star_rating").eq("user_id", user.id).not("star_rating", "is", null),
+  async function loadEverCount() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const [reviewsCount, requestsCount] = await Promise.all([
+      supabase
+        .from("review_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
+      supabase
+        .from("review_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
     ]);
-    if (sentCount.error || reviewedCount.error || responsesCount.error || ratings.error) {
-      console.error("[reputation] failed to load stats", sentCount.error || reviewedCount.error || responsesCount.error || ratings.error);
-      setLoadError("Couldn't load your reputation data. Please refresh the page.");
+    setEverCount((reviewsCount.count ?? 0) + (requestsCount.count ?? 0));
+  }
+
+  /** Small summary strip only - three real numbers, independent of
+   * whichever page of either paginated list is currently loaded. */
+  async function loadSummaryStats() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const [ratings, attention, waiting] = await Promise.all([
+      supabase
+        .from("review_responses")
+        .select("star_rating")
+        .eq("user_id", user.id)
+        .not("star_rating", "is", null),
+      supabase
+        .from("review_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .lte("star_rating", NEEDS_ATTENTION_MAX_RATING),
+      supabase
+        .from("review_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "sent"),
+    ]);
+    if (!ratings.error) {
+      const values = (ratings.data || []).map((r) => r.star_rating || 0);
+      setAvgRating(
+        values.length > 0 ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : "—",
+      );
     }
-    const ratingValues = (ratings.data || []).map((r) => r.star_rating || 0);
-    setStats({
-      sent: sentCount.count ?? 0,
-      reviewed: reviewedCount.count ?? 0,
-      responses: responsesCount.count ?? 0,
-      avgRating: ratingValues.length > 0
-        ? (ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length).toFixed(1)
-        : "—",
-    });
-    setLoading(false);
+    // Leave the count at its previous value (null until first loaded) on
+    // error, rather than defaulting to 0 - a failed count is unknown, not
+    // zero, and showing 0 would misleadingly read as "you're caught up."
+    if (!attention.error) setAttentionCount(attention.count ?? 0);
+    if (!waiting.error) setWaitingCount(waiting.count ?? 0);
+  }
+
+  async function loadReviews(tab: ReviewTab, page: number) {
+    if (page === 0) setReviewsLoading(true);
+    else setReviewsLoadingMore(true);
+    setReviewsError("");
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const from = page * PAGE_SIZE;
+      let query = supabase.from("review_responses").select("*").eq("user_id", user.id);
+      if (tab === "attention") {
+        query = query
+          .lte("star_rating", NEEDS_ATTENTION_MAX_RATING)
+          .order("star_rating", { ascending: true })
+          .order("created_at", { ascending: true });
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
+      const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      const rows = (data as ReviewRow[]) ?? [];
+      setReviews((prev) => (page === 0 ? rows : [...prev, ...rows]));
+      setReviewsHasMore(rows.length === PAGE_SIZE);
+    } catch (err) {
+      setReviewsError(errorMessage(err, "Reviews couldn't load."));
+    } finally {
+      setReviewsLoading(false);
+      setReviewsLoadingMore(false);
+    }
   }
 
   async function loadRequests(page: number) {
-    if (page > 0) setRequestsLoadingMore(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setRequestsLoadingMore(false); return; }
-    const from = page * PAGE_SIZE;
-    const { data, error } = await supabase
-      .from("review_requests")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("sent_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
-    if (error) {
-      console.error("[reputation] failed to load requests", error);
-      setLoadError("Couldn't load your reputation data. Please refresh the page.");
-    }
-    const rows = data || [];
-    setRequests((prev) => (page === 0 ? rows : [...prev, ...rows]));
-    setRequestsHasMore(rows.length === PAGE_SIZE);
-    setRequestsLoadingMore(false);
-  }
-
-  async function loadResponses(page: number) {
-    if (page > 0) setResponsesLoadingMore(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setResponsesLoadingMore(false); return; }
-    const from = page * PAGE_SIZE;
-    const { data, error } = await supabase
-      .from("review_responses")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
-    if (error) {
-      console.error("[reputation] failed to load responses", error);
-      setLoadError("Couldn't load your reputation data. Please refresh the page.");
-    }
-    const rows = data || [];
-    setResponses((prev) => (page === 0 ? rows : [...prev, ...rows]));
-    setResponsesHasMore(rows.length === PAGE_SIZE);
-    setResponsesLoadingMore(false);
-  }
-
-  async function sendRequest() {
-    if (!custPhone.trim()) { setSendOk(false); setSendMsg("Phone number is required."); return; }
-    setSending(true);
-    setSendMsg("");
+    if (page === 0) setRequestsLoading(true);
+    else setRequestsLoadingMore(true);
+    setRequestsError("");
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        setSendOk(false);
-        setSendMsg("Please sign in again and retry.");
-        setSending(false);
-        return;
-      }
-
-      const res = await fetch("/api/review-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          customerName: custName.trim(),
-          customerPhone: custPhone.trim(),
-          jobDescription: jobDesc.trim(),
-          googleReviewUrl: googleUrl.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (data.error) { setSendOk(false); setSendMsg(data.error); return; }
-      setSendOk(true);
-      setSendMsg("Review request sent!");
-      setCustName(""); setCustPhone(""); setJobDesc("");
-      setRequestsPageIndex(0);
-      loadRequests(0);
-      loadStats();
-    } catch {
-      setSendOk(false);
-      setSendMsg("Something went wrong. Please try again.");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const from = page * PAGE_SIZE;
+      const { data, error } = await supabase
+        .from("review_requests")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("sent_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      const rows = (data as RequestRow[]) ?? [];
+      setRequests((prev) => (page === 0 ? rows : [...prev, ...rows]));
+      setRequestsHasMore(rows.length === PAGE_SIZE);
+    } catch (err) {
+      setRequestsError(errorMessage(err, "Review requests couldn't load."));
     } finally {
-      setSending(false);
+      setRequestsLoading(false);
+      setRequestsLoadingMore(false);
     }
   }
 
-  async function generateResponse() {
-    if (!reviewText.trim()) { setGenError("Paste the review text first."); return; }
-    setGenerating(true);
-    setAiResponse("");
-    setGenError("");
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        setGenError("Please sign in again and retry.");
-        setGenerating(false);
-        return;
-      }
-
-      const res = await fetch("/api/review-response", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          reviewText: reviewText.trim(),
-          reviewerName: reviewerName.trim(),
-          starRating,
-        }),
-      });
-      const data = await res.json();
-      if (data.error) { setGenError(data.error); return; }
-      setAiResponse(data.response);
-    } catch {
-      setGenError("Something went wrong. Please try again.");
-    } finally {
-      setGenerating(false);
-    }
+  function refreshAfterRequestSent() {
+    setRequestsPageIndex(0);
+    loadRequests(0);
+    loadEverCount();
+    loadSummaryStats();
   }
 
-  async function copyResponse() {
-    try {
-      await navigator.clipboard.writeText(aiResponse);
-      toast.success("Response copied to clipboard!");
-    } catch {
-      toast.error("Couldn't copy - please select and copy the text manually.");
-    }
+  function refreshAfterReviewWritten() {
+    setReviewsPageIndex(0);
+    loadReviews(reviewTab, 0);
+    loadEverCount();
+    loadSummaryStats();
   }
 
-  // No Google review-fetching integration exists in this codebase (the
-  // Places sync only pulls business facts, not individual reviews), so
-  // marking a request as reviewed is a manual confirmation the contractor
-  // makes themselves once a customer actually leaves one.
   async function markReviewed(id: string) {
     setMarkingReviewedId(id);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        toast.error("Please sign in again and retry.");
-        return;
-      }
+      const headers = await authHeader();
       const res = await fetch(`/api/review-requests/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({ status: "reviewed" }),
       });
       const data = await res.json();
@@ -275,8 +319,8 @@ function ReputationPage() {
         return;
       }
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "reviewed" } : r)));
-      loadStats();
-      toast.success("Marked as reviewed!");
+      loadSummaryStats();
+      toast.success("Marked as reviewed.");
     } catch {
       toast.error("Couldn't mark this as reviewed. Please try again.");
     } finally {
@@ -284,261 +328,635 @@ function ReputationPage() {
     }
   }
 
-  return (
-    <div style={{ padding: "24px 32px", maxWidth: 1080, margin: "0 auto", fontFamily: "Inter,-apple-system,sans-serif" }}>
+  function openRequestDialog() {
+    setRequestForm(EMPTY_REQUEST_FORM);
+    setRequestFormError("");
+    setRequestOpen(true);
+  }
 
-      <div className={step} style={{ marginBottom: 28, ...delay(0) }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.025em", color: "var(--foreground)", margin: 0 }}>
-            Reputation
-          </h1>
-          <div style={{ display: "flex", gap: 8 }}>
-            {(["dashboard", "request", "respond"] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid var(--border)", background: tab === t ? "var(--primary)" : "var(--card)", color: tab === t ? "var(--primary-foreground)" : "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
-                {t === "request" ? "Send Request" : t === "respond" ? "Write Response" : "Dashboard"}
-              </button>
-            ))}
+  async function handleSendRequest(e: FormEvent) {
+    e.preventDefault();
+    if (!requestForm.phone.trim()) {
+      setRequestFormError("Customer phone is required.");
+      return;
+    }
+    setRequestSaving(true);
+    setRequestFormError("");
+    try {
+      const headers = await authHeader();
+      const res = await fetch("/api/review-request", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          customerName: requestForm.name.trim(),
+          customerPhone: requestForm.phone.trim(),
+          jobDescription: requestForm.job.trim(),
+          googleReviewUrl: requestForm.googleUrl.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Failed to send the review request");
+      setRequestOpen(false);
+      toast.success("Review request sent.");
+      refreshAfterRequestSent();
+    } catch (err) {
+      setRequestFormError(errorMessage(err, "Something went wrong. Please try again."));
+    } finally {
+      setRequestSaving(false);
+    }
+  }
+
+  function openWriteDialog() {
+    setWriteForm(EMPTY_WRITE_FORM);
+    setWriteResult("");
+    setWriteError("");
+    setWriteOpen(true);
+  }
+
+  async function handleGenerate(e: FormEvent) {
+    e.preventDefault();
+    if (!writeForm.reviewText.trim()) {
+      setWriteError("Paste the review text first.");
+      return;
+    }
+    setGenerating(true);
+    setWriteError("");
+    setWriteResult("");
+    try {
+      const headers = await authHeader();
+      const res = await fetch("/api/review-response", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          reviewText: writeForm.reviewText.trim(),
+          reviewerName: writeForm.reviewerName.trim(),
+          starRating: writeForm.starRating,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Failed to generate a response");
+      setWriteResult(data.response);
+      refreshAfterReviewWritten();
+    } catch (err) {
+      setWriteError(errorMessage(err, "Something went wrong. Please try again."));
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Response copied to clipboard.");
+    } catch {
+      toast.error("Couldn't copy - please select and copy the text manually.");
+    }
+  }
+
+  const isFirstRun = everCount === 0;
+  const isReviewsEmpty = !reviewsLoading && !reviewsError && reviews.length === 0;
+
+  return (
+    <div className="lv-light min-h-full bg-background">
+      <div className="max-w-[1080px] mx-auto px-4 md:px-8 py-6 md:py-8">
+        {/* Header */}
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div>
+            <h1 className="lv-page-title text-foreground">Reviews</h1>
+            {!isFirstRun && attentionCount !== null && waitingCount !== null && (
+              <p className="lv-body text-muted-foreground mt-1">
+                <span className="lv-numbers">{avgRating}</span> average
+                {" · "}
+                <span className="lv-numbers">{attentionCount}</span> need attention
+                {" · "}
+                <span className="lv-numbers">{waitingCount}</span>{" "}
+                {waitingCount === 1 ? "request" : "requests"} waiting
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openRequestDialog}
+              className="gap-1.5 min-h-[44px] md:min-h-[38px]"
+            >
+              <Send className="h-3.5 w-3.5" aria-hidden="true" />
+              Send request
+            </Button>
+            <Button
+              size="sm"
+              onClick={openWriteDialog}
+              className="gap-1.5 min-h-[44px] md:min-h-[38px]"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              Log a review
+            </Button>
           </div>
         </div>
-        <p style={{ fontSize: 15, color: "var(--muted-foreground)", margin: 0 }}>
-          Send review requests after every job. Generate professional responses in seconds.
-        </p>
+
+        {isFirstRun ? (
+          <div className="rounded-md border border-border py-16 px-6 text-center">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-sm bg-accent text-primary">
+              <Star className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <p className="lv-body text-foreground font-medium">No reviews or requests yet</p>
+            <p className="lv-meta text-muted-foreground mt-1 max-w-sm mx-auto">
+              Send a review request after your next job, or log a review you've already received to
+              draft a response.
+            </p>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button size="sm" onClick={openRequestDialog} className="gap-1.5">
+                <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                Send first request
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Reviews */}
+            <div
+              className="flex items-center gap-1.5 mb-4"
+              role="tablist"
+              aria-label="Reviews filter"
+              onKeyDown={(e) => {
+                if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+                e.preventDefault();
+                const next: ReviewTab = reviewTab === "attention" ? "all" : "attention";
+                setReviewTab(next);
+                requestAnimationFrame(() => {
+                  document.querySelector<HTMLButtonElement>(`[data-tab="${next}"]`)?.focus();
+                });
+              }}
+            >
+              {(
+                [
+                  { key: "attention" as const, label: "Needs attention", count: attentionCount },
+                  { key: "all" as const, label: "All reviews", count: null },
+                ] satisfies { key: ReviewTab; label: string; count: number | null }[]
+              ).map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  data-tab={t.key}
+                  aria-selected={reviewTab === t.key}
+                  tabIndex={reviewTab === t.key ? 0 : -1}
+                  onClick={() => setReviewTab(t.key)}
+                  className={cn(
+                    "min-h-[36px] rounded-sm border px-3 py-1.5 lv-label transition-colors duration-150 ease-out whitespace-nowrap",
+                    reviewTab === t.key
+                      ? "border-primary bg-accent text-primary font-medium"
+                      : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {t.label}
+                  {t.count !== null && (
+                    <span
+                      className={cn(
+                        "ml-1.5 lv-numbers",
+                        reviewTab === t.key ? "text-primary" : "text-muted-foreground",
+                      )}
+                    >
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {reviewsError && (
+              <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <p className="lv-label text-destructive">Reviews couldn't load</p>
+                <p className="lv-body text-foreground mt-0.5">{reviewsError}</p>
+                <p className="lv-meta text-muted-foreground mt-1">
+                  Review requests below still work - try again, or come back in a moment.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => loadReviews(reviewTab, 0)}
+                >
+                  Retry
+                </Button>
+              </div>
+            )}
+
+            {reviewsLoading ? (
+              <ReviewSkeletonRows />
+            ) : reviewsError ? null : isReviewsEmpty ? (
+              <div className="rounded-md border border-border py-10 px-6 text-center mb-8">
+                <p className="lv-body text-foreground font-medium">
+                  {reviewTab === "attention" ? "You're caught up" : "No reviews logged yet"}
+                </p>
+                <p className="lv-meta text-muted-foreground mt-1">
+                  {reviewTab === "attention"
+                    ? "No reviews need a response right now."
+                    : "Log a review to draft a response for it."}
+                </p>
+              </div>
+            ) : (
+              <div className="mb-8">
+                <ul className="rounded-md border border-border bg-card divide-y divide-border overflow-hidden">
+                  {reviews.map((r) => (
+                    <li key={r.id}>
+                      {/* Not a <button>: StarRatingInput renders its own
+                          (disabled, non-interactive) star buttons, and a
+                          button can't legally contain a nested button - a
+                          role="button" div with the same keyboard handling
+                          gets the same click/keyboard behavior without the
+                          invalid HTML. */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedReview(r)}
+                        onKeyDown={(e) => {
+                          if (e.key !== "Enter" && e.key !== " ") return;
+                          e.preventDefault();
+                          setSelectedReview(r);
+                        }}
+                        className="w-full min-h-[44px] text-left px-4 py-3 hover:bg-accent transition-colors duration-150 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="lv-body text-foreground font-medium truncate"
+                            title={reviewerLabel(r)}
+                          >
+                            {reviewerLabel(r)}
+                          </span>
+                          <StatusDot status={reviewStatus(r)} className="shrink-0" />
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <StarRatingInput rating={r.star_rating ?? 0} size={13} />
+                          <span className="lv-meta text-muted-foreground shrink-0">
+                            {r.star_rating ? `${r.star_rating}.0` : "No rating"}
+                            {" · "}
+                            {relativeTime(r.created_at)} ago
+                          </span>
+                        </div>
+                        <p className="lv-body text-foreground mt-1.5 line-clamp-2">
+                          {r.review_text || "—"}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {reviewsHasMore && (
+                  <div className="flex justify-center mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={reviewsLoadingMore}
+                      onClick={() => {
+                        const next = reviewsPageIndex + 1;
+                        setReviewsPageIndex(next);
+                        loadReviews(reviewTab, next);
+                      }}
+                    >
+                      {reviewsLoadingMore ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Review requests */}
+            <section aria-labelledby="requests-heading">
+              <h2 id="requests-heading" className="lv-label text-muted-foreground mb-2">
+                Review requests
+              </h2>
+
+              {requestsError && (
+                <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+                  <p className="lv-label text-destructive">Review requests couldn't load</p>
+                  <p className="lv-body text-foreground mt-0.5">{requestsError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => loadRequests(0)}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              )}
+
+              {requestsLoading ? (
+                <ReviewSkeletonRows />
+              ) : requestsError ? null : requests.length === 0 ? (
+                <div className="rounded-md border border-border py-8 px-6 text-center">
+                  <p className="lv-body text-foreground font-medium">No requests sent yet</p>
+                  <p className="lv-meta text-muted-foreground mt-1">
+                    Send one after your next completed job.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <ul className="rounded-md border border-border bg-card divide-y divide-border overflow-hidden">
+                    {requests.map((r) => (
+                      <li
+                        key={r.id}
+                        className="flex items-center justify-between gap-3 px-4 py-3 min-h-[44px]"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="lv-body text-foreground font-medium truncate"
+                              title={requestLabel(r)}
+                            >
+                              {requestLabel(r)}
+                            </span>
+                            <StatusDot status={requestStatus(r)} className="shrink-0" />
+                          </div>
+                          <div className="lv-meta text-muted-foreground truncate mt-0.5">
+                            {new Date(r.sent_at).toLocaleDateString()}
+                            {r.job_description ? ` · ${r.job_description}` : ""}
+                          </div>
+                        </div>
+                        {r.status !== "reviewed" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 min-h-[44px] md:min-h-[32px]"
+                            onClick={() => markReviewed(r.id)}
+                            disabled={markingReviewedId === r.id}
+                            title="Mark this request as reviewed once the customer leaves a review"
+                          >
+                            {markingReviewedId === r.id ? "Saving..." : "Mark reviewed"}
+                          </Button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {requestsHasMore && (
+                    <div className="flex justify-center mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={requestsLoadingMore}
+                        onClick={() => {
+                          const next = requestsPageIndex + 1;
+                          setRequestsPageIndex(next);
+                          loadRequests(next);
+                        }}
+                      >
+                        {requestsLoadingMore ? "Loading..." : "Load more"}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          </>
+        )}
       </div>
 
-      {loadError && <p style={{ color: "var(--destructive)", fontSize: 13, marginBottom: 20 }}>{loadError}</p>}
-
-      {/* Dashboard tab */}
-      {tab === "dashboard" && (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
-            {[
-              { label: "Requests sent", value: stats.sent, Icon: Send },
-              { label: "Reviews received", value: stats.reviewed, Icon: Star },
-              { label: "Responses written", value: stats.responses, Icon: PenLine },
-              { label: "Avg star rating", value: stats.avgRating, Icon: Star },
-            ].map((s, i) => (
-              <GlowPanel key={s.label} reducedMotion={reducedMotion} className={`${step} glass-dark hover-lift-dark rounded-2xl`} style={{ padding: "16px 18px", ...delay(i + 1) }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-                  <s.Icon size={16} color="var(--primary)" strokeWidth={1.75} />
-                </div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 4 }}>{s.label}</div>
-              </GlowPanel>
-            ))}
-          </div>
-
-          {loading ? (
-            <div className="glass-dark" style={{ borderRadius: 20, padding: 48, textAlign: "center", color: "var(--muted-foreground)", fontSize: 14 }}>
-              Loading...
-            </div>
-          ) : requests.length === 0 && responses.length === 0 ? (
-            <div className={`${step} glass-dark`} style={{ borderRadius: 20, padding: "48px 32px", textAlign: "center", ...delay(5) }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                <Star size={26} color="var(--primary)" strokeWidth={1.75} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", marginBottom: 8 }}>Start building your reputation</h3>
-              <p style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 400, margin: "0 auto 24px", lineHeight: 1.6 }}>
-                Send your first review request to a recent customer — it takes 30 seconds and can get you a 5-star review today.
-              </p>
-              <button onClick={() => setTab("request")}
-                style={{ padding: "10px 24px", background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                Send first request →
-              </button>
-            </div>
+      {/* Send review request dialog */}
+      <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+        <DialogContent className="lv-light sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="lv-section">Send a review request</DialogTitle>
+          </DialogHeader>
+          {!isPaidActive ? (
+            <PlanGateNotice
+              title="Review request texts are a paid feature"
+              description="Subscribe to Solo, Crew, or Agency to start sending them."
+            />
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              {/* Recent requests */}
-              <div className="glass-dark" style={{ borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Recent requests</div>
-                {requests.map(r => (
-                  <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--foreground)" }}>{r.customer_name || r.customer_phone}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{new Date(r.sent_at).toLocaleDateString()}{r.job_description ? ` · ${r.job_description}` : ""}</div>
-                    </div>
-                    {r.status === "reviewed" ? (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "var(--accent)", color: "var(--accent-2)" }}>
-                        Reviewed ✓
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => markReviewed(r.id)}
-                        disabled={markingReviewedId === r.id}
-                        style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "var(--accent)", color: "var(--primary)", border: "none", cursor: markingReviewedId === r.id ? "not-allowed" : "pointer", opacity: markingReviewedId === r.id ? 0.6 : 1 }}
-                        title="Mark this request as reviewed once the customer leaves a review">
-                        {markingReviewedId === r.id ? "Saving..." : "Mark reviewed"}
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {requests.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No requests yet</p>}
-                {requestsHasMore && (
-                  <button
-                    onClick={() => { const next = requestsPageIndex + 1; setRequestsPageIndex(next); loadRequests(next); }}
-                    disabled={requestsLoadingMore}
-                    style={{ display: "block", margin: "10px auto 0", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                    {requestsLoadingMore ? "Loading..." : "Load more"}
-                  </button>
-                )}
-              </div>
-
-              {/* Recent responses */}
-              <div className="glass-dark" style={{ borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 14 }}>Responses written</div>
-                {responses.map(r => (
-                  <div key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      {r.star_rating && <StarRatingInput rating={r.star_rating} size={16} />}
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{r.reviewer_name || "Anonymous"}</span>
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {r.review_text}
-                    </div>
-                  </div>
-                ))}
-                {responses.length === 0 && <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>No responses yet</p>}
-                {responsesHasMore && (
-                  <button
-                    onClick={() => { const next = responsesPageIndex + 1; setResponsesPageIndex(next); loadResponses(next); }}
-                    disabled={responsesLoadingMore}
-                    style={{ display: "block", margin: "10px auto 0", padding: "8px 16px", background: "var(--card)", color: "var(--foreground)", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                    {responsesLoadingMore ? "Loading..." : "Load more"}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Send Request tab */}
-      {tab === "request" && (() => {
-        const isPaidActive =
-          ["solo", "crew", "agency"].includes(subscriptionTier || "") &&
-          ["active", "trialing", "past_due"].includes(subscriptionStatus || "");
-        return (
-        <div className="hd-blur-in" style={{ maxWidth: 520 }}>
-          {!isPaidActive && (
-            <div className="glass-dark" style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <form onSubmit={handleSendRequest} className="space-y-3">
+              <p className="lv-meta text-muted-foreground">
+                We'll text your customer a friendly message with a direct link to leave you a Google
+                review.
+              </p>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>Review request texts are a paid feature</div>
-                <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Subscribe to Solo, Crew, or Agency to start sending them.</div>
+                <label htmlFor="req-name" className="lv-label text-foreground block mb-1">
+                  Customer name
+                </label>
+                <Input
+                  id="req-name"
+                  value={requestForm.name}
+                  onChange={(e) => setRequestForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. John Smith"
+                  autoFocus
+                />
               </div>
-              <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
-                Upgrade now →
-              </Link>
-            </div>
-          )}
-          <div className="glass-dark" style={{ borderRadius: 20, padding: 28, opacity: isPaidActive ? 1 : 0.5, pointerEvents: isPaidActive ? "auto" : "none" }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Send a review request</div>
-            <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
-              We'll text your customer a friendly message with a direct link to leave you a Google review.
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Customer name</label>
-              <input value={custName} onChange={e => setCustName(e.target.value)} placeholder="e.g. John Smith"
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Customer phone *</label>
-              <input value={custPhone} onChange={e => setCustPhone(e.target.value)} placeholder="e.g. 404-555-0100"
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Job completed</label>
-              <input value={jobDesc} onChange={e => setJobDesc(e.target.value)} placeholder="e.g. AC repair, roof inspection..."
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-            </div>
-
-            <div style={{ marginBottom: 22 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Your Google review link</label>
-              <input value={googleUrl} onChange={e => setGoogleUrl(e.target.value)} placeholder="https://g.page/r/your-business/review"
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-              <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 4 }}>Find this in Google Business Profile → Get more reviews</div>
-            </div>
-
-            {sendMsg && (
-              <div style={{ fontSize: 13, color: sendOk ? "var(--accent-2)" : "var(--destructive)", marginBottom: 14 }}>{sendMsg}</div>
-            )}
-
-            <button onClick={sendRequest} disabled={sending || !isPaidActive}
-              style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: sending ? "not-allowed" : "pointer", opacity: sending ? 0.7 : 1, fontFamily: "inherit" }}>
-              {sending ? "Sending..." : "Send review request →"}
-            </button>
-            <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted-foreground)", marginTop: 10 }}>Requires Twilio to be connected</p>
-          </div>
-        </div>
-        );
-      })()}
-
-      {/* Write Response tab */}
-      {tab === "respond" && (() => {
-        const isCrewPlus = subscriptionTier === "crew" || subscriptionTier === "agency";
-        return (
-        <div className="hd-blur-in" style={{ maxWidth: 680 }}>
-          {!isCrewPlus && (
-            <div className="glass-dark" style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", marginBottom: 2 }}>The AI review response writer is a Crew feature</div>
-                <div style={{ fontSize: 13, color: "var(--muted-foreground)" }}>Upgrade to Crew or Agency to generate responses automatically.</div>
+                <label htmlFor="req-phone" className="lv-label text-foreground block mb-1">
+                  Customer phone
+                </label>
+                <Input
+                  id="req-phone"
+                  value={requestForm.phone}
+                  onChange={(e) => setRequestForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="e.g. 404-555-0100"
+                  required
+                />
               </div>
-              <Link to="/pricing" style={{ padding: "9px 20px", background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
-                Upgrade now →
-              </Link>
-            </div>
+              <div>
+                <label htmlFor="req-job" className="lv-label text-foreground block mb-1">
+                  Job completed
+                </label>
+                <Input
+                  id="req-job"
+                  value={requestForm.job}
+                  onChange={(e) => setRequestForm((f) => ({ ...f, job: e.target.value }))}
+                  placeholder="e.g. AC repair, roof inspection..."
+                />
+              </div>
+              <div>
+                <label htmlFor="req-url" className="lv-label text-foreground block mb-1">
+                  Your Google review link
+                </label>
+                <Input
+                  id="req-url"
+                  value={requestForm.googleUrl}
+                  onChange={(e) => setRequestForm((f) => ({ ...f, googleUrl: e.target.value }))}
+                  placeholder="https://g.page/r/your-business/review"
+                />
+                <p className="lv-meta text-muted-foreground mt-1">
+                  Find this in Google Business Profile → Get more reviews
+                </p>
+              </div>
+              {requestFormError && <p className="lv-meta text-destructive">{requestFormError}</p>}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={requestSaving} className="gap-1.5">
+                  <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                  {requestSaving ? "Sending..." : "Send request"}
+                </Button>
+              </DialogFooter>
+            </form>
           )}
-          <div className="glass-dark" style={{ borderRadius: 20, padding: 28, opacity: isCrewPlus ? 1 : 0.5, pointerEvents: isCrewPlus ? "auto" : "none" }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Write a review response</div>
-            <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginBottom: 24, lineHeight: 1.5 }}>
-              Paste any review and get a professional, personalized response in seconds.
-            </div>
+        </DialogContent>
+      </Dialog>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Star rating</label>
-              <StarRatingInput rating={starRating} onChange={setStarRating} />
-            </div>
+      {/* Log a review / write a response dialog */}
+      <Dialog open={writeOpen} onOpenChange={setWriteOpen}>
+        <DialogContent className="lv-light sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="lv-section">Log a review</DialogTitle>
+          </DialogHeader>
+          {!isCrewPlus ? (
+            <PlanGateNotice
+              title="The AI review response writer is a Crew feature"
+              description="Upgrade to Crew or Agency to generate responses automatically."
+            />
+          ) : (
+            <form onSubmit={handleGenerate} className="space-y-3">
+              <p className="lv-meta text-muted-foreground">
+                Paste a review you've received and get a professional draft response - copy it and
+                post it as your reply on Google.
+              </p>
+              <div>
+                <label className="lv-label text-foreground block mb-1">Star rating</label>
+                <StarRatingInput
+                  rating={writeForm.starRating}
+                  onChange={(n) => setWriteForm((f) => ({ ...f, starRating: n }))}
+                />
+              </div>
+              <div>
+                <label htmlFor="write-name" className="lv-label text-foreground block mb-1">
+                  Reviewer name
+                </label>
+                <Input
+                  id="write-name"
+                  value={writeForm.reviewerName}
+                  onChange={(e) => setWriteForm((f) => ({ ...f, reviewerName: e.target.value }))}
+                  placeholder="e.g. Sarah M."
+                />
+              </div>
+              <div>
+                <label htmlFor="write-text" className="lv-label text-foreground block mb-1">
+                  Review text
+                </label>
+                <Textarea
+                  id="write-text"
+                  value={writeForm.reviewText}
+                  onChange={(e) => setWriteForm((f) => ({ ...f, reviewText: e.target.value }))}
+                  placeholder="Paste the review here..."
+                  rows={4}
+                  required
+                />
+              </div>
+              {writeError && <p className="lv-meta text-destructive">{writeError}</p>}
+              {!writeResult && (
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setWriteOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={generating}>
+                    {generating ? "Writing response..." : "Generate response"}
+                  </Button>
+                </DialogFooter>
+              )}
+              {writeResult && (
+                <>
+                  <div className="rounded-md border border-border px-4 py-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="lv-label text-foreground">Drafted response</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => copyText(writeResult)}
+                      >
+                        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                        Copy
+                      </Button>
+                    </div>
+                    <p className="lv-body text-foreground">{writeResult}</p>
+                  </div>
+                  <DialogFooter>
+                    <Button type="button" onClick={() => setWriteOpen(false)}>
+                      Done
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Reviewer name</label>
-              <input value={reviewerName} onChange={e => setReviewerName(e.target.value)} placeholder="e.g. Sarah M."
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box" }} />
-            </div>
-
-            <div style={{ marginBottom: 22 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", display: "block", marginBottom: 6 }}>Review text *</label>
-              <textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
-                placeholder="Paste the review here..."
-                rows={4}
-                className="lv-input" style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)", background: "var(--input)", fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }} />
-            </div>
-
-            {genError && <p style={{ fontSize: 13, color: "var(--destructive)", marginBottom: 14 }}>{genError}</p>}
-
-            <button onClick={generateResponse} disabled={generating || !isCrewPlus}
-              style={{ width: "100%", padding: 13, background: "var(--primary)", color: "var(--primary-foreground)", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: generating ? "not-allowed" : "pointer", opacity: generating ? 0.7 : 1, fontFamily: "inherit", marginBottom: aiResponse ? 16 : 0 }}>
-              {generating ? "Writing response..." : "Generate response →"}
-            </button>
-
-            {aiResponse && (
-              <div className="glass-dark hd-blur-in" style={{ borderRadius: 12, padding: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Response</div>
-                  <button onClick={copyResponse}
-                    style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", background: "none", border: "none", cursor: "pointer" }}>
-                    Copy →
-                  </button>
+      {/* Review detail sheet */}
+      <Sheet
+        open={!!selectedReview}
+        onOpenChange={(v) => {
+          if (!v) setSelectedReview(null);
+        }}
+      >
+        <SheetContent side="right" className="lv-light w-full sm:max-w-xl overflow-y-auto">
+          {selectedReview && (
+            <>
+              <SheetHeader className="pr-8 text-left">
+                <SheetTitle className="lv-section text-foreground truncate">
+                  {reviewerLabel(selectedReview)}
+                </SheetTitle>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <StarRatingInput rating={selectedReview.star_rating ?? 0} size={16} />
+                  <span className="lv-meta text-muted-foreground">
+                    {selectedReview.star_rating ? `${selectedReview.star_rating}.0` : "No rating"}
+                    {" · "}
+                    {relativeTime(selectedReview.created_at)} ago
+                  </span>
                 </div>
-                <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.6, margin: 0 }}>{aiResponse}</p>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-5">
+                <div>
+                  <p className="lv-label text-foreground mb-1.5">Review</p>
+                  <p className="lv-body text-foreground whitespace-pre-wrap">
+                    {selectedReview.review_text || "—"}
+                  </p>
+                </div>
+
+                {selectedReview.ai_response && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="lv-label text-foreground">Drafted response</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => copyText(selectedReview.ai_response!)}
+                      >
+                        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                        Copy
+                      </Button>
+                    </div>
+                    <p className="lv-body text-foreground rounded-md border border-border px-3 py-2">
+                      {selectedReview.ai_response}
+                    </p>
+                    <p className="lv-meta text-muted-foreground mt-1.5">
+                      Lanavix doesn't post to Google automatically - copy this and paste it as your
+                      reply.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-        );
-      })()}
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+// /app/billing doesn't exist on the integration branch yet (it ships in
+// its own later slice) - points at /pricing in the meantime, the same
+// interim destination every other paid-plan gate on this branch uses.
+function PlanGateNotice({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-md border border-border px-4 py-3">
+      <p className="lv-label text-foreground">{title}</p>
+      <p className="lv-body text-muted-foreground mt-0.5">{description}</p>
+      <Button size="sm" className="mt-3" asChild>
+        <Link to="/pricing">Upgrade now</Link>
+      </Button>
     </div>
   );
 }
