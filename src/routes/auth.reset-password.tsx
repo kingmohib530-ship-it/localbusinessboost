@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Sparkles, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth/reset-password")({
   ssr: false,
@@ -14,8 +14,10 @@ export const Route = createFileRoute("/auth/reset-password")({
 });
 
 function friendlyError(message: string): string {
-  if (message.includes("Password should be at least")) return "Password must be at least 8 characters.";
-  if (message.includes("session")) return "This reset link has expired or already been used. Please request a new one.";
+  if (message.includes("Password should be at least"))
+    return "Password must be at least 8 characters.";
+  if (message.includes("session"))
+    return "This reset link has expired or already been used. Please request a new one.";
   return message;
 }
 
@@ -42,8 +44,14 @@ function ResetPasswordPage() {
   }, []);
 
   const submit = async () => {
-    if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
-    if (password !== confirmPassword) { toast.error("Passwords don't match."); return; }
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords don't match.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
@@ -53,76 +61,92 @@ function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background bg-radial-glow px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-sm">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-display font-bold tracking-tight">Lanavix</span>
+          <span className="lv-page-title text-foreground">Lanavix</span>
         </Link>
 
-        <div className="glass rounded-2xl p-8 shadow-sm">
+        <div className="rounded-md border border-border bg-card p-6 sm:p-8">
           {done ? (
             <div className="text-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
+              <div className="h-10 w-10 rounded-sm bg-accent flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="font-display font-bold text-lg mb-1">Password updated</h2>
-                <p className="text-sm text-muted-foreground">You can now sign in with your new password.</p>
+                <h1 className="lv-section text-foreground mb-1">Password updated</h1>
+                <p className="lv-body text-muted-foreground">
+                  You can now sign in with your new password.
+                </p>
               </div>
-              <Button className="w-full" onClick={() => navigate({ to: "/auth" })}>
+              <Button className="w-full min-h-[44px]" onClick={() => navigate({ to: "/auth" })}>
                 Go to sign in
               </Button>
             </div>
           ) : !ready ? (
             <div className="text-center space-y-3">
-              <h2 className="font-display font-bold text-lg">Verifying your link…</h2>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="lv-section text-foreground">Verifying your link…</h1>
+              <p className="lv-body text-muted-foreground">
                 If this doesn't update in a few seconds, your reset link may have expired.{" "}
-                <Link to="/auth" className="underline hover:text-foreground transition-colors">Request a new one</Link>.
+                <Link
+                  to="/auth"
+                  search={{ mode: "forgot" }}
+                  className="underline text-foreground hover:text-muted-foreground transition-colors duration-150 ease-out"
+                >
+                  Request a new one
+                </Link>
+                .
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <h2 className="font-display font-bold text-lg mb-1">Set a new password</h2>
-                <p className="text-sm text-muted-foreground">Choose a new password for your account.</p>
+                <h1 className="lv-section text-foreground mb-1">Set a new password</h1>
+                <p className="lv-body text-muted-foreground">
+                  Choose a new password for your account.
+                </p>
               </div>
-              <div className="space-y-1">
-                <Label>New password</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="new-password">New password</Label>
                 <div className="relative">
                   <Input
+                    id="new-password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pr-10"
+                    className="pr-9 min-h-[44px]"
                     autoComplete="new-password"
+                    autoFocus
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <Eye className="h-4 w-4" aria-hidden="true" />
+                    )}
                   </button>
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label>Confirm new password</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-password">Confirm new password</Label>
                 <Input
+                  id="confirm-password"
                   type={showPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && submit()}
                   placeholder="••••••••"
                   autoComplete="new-password"
+                  className="min-h-[44px]"
                 />
               </div>
-              <Button className="w-full" disabled={loading} onClick={submit}>
+              <Button className="w-full min-h-[44px]" disabled={loading} onClick={submit}>
                 {loading ? "Updating…" : "Update password"}
               </Button>
             </div>
