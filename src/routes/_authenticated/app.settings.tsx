@@ -578,11 +578,8 @@ function Settings() {
                   />
                 </div>
               )}
-              {/* /app/billing doesn't exist on this branch yet - keep the
-                  same honest interim destination current main already uses
-                  rather than linking somewhere that 404s. */}
               <Button asChild variant="outline" size="sm" className="min-h-[44px]">
-                <Link to="/pricing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
+                <Link to="/app/billing">{planId === "starter" ? "View plans" : "Manage plan"}</Link>
               </Button>
             </div>
 

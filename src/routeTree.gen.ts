@@ -68,6 +68,7 @@ import { Route as AuthenticatedAppInboxRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppCoachRouteImport } from './routes/_authenticated/app.coach'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppBusinessFactsRouteImport } from './routes/_authenticated/app.business-facts'
+import { Route as AuthenticatedAppBillingRouteImport } from './routes/_authenticated/app.billing'
 import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authenticated/app.agents'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicWebChatBusiness_idRouteImport } from './routes/api/public/web-chat/$business_id'
@@ -382,6 +383,11 @@ const AuthenticatedAppBusinessFactsRoute =
     path: '/business-facts',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppBillingRoute = AuthenticatedAppBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppAgentsRoute = AuthenticatedAppAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
@@ -443,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/checkout/start': typeof CheckoutStartRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/billing': typeof AuthenticatedAppBillingRoute
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/coach': typeof AuthenticatedAppCoachRoute
@@ -507,6 +514,7 @@ export interface FileRoutesByTo {
   '/checkout/start': typeof CheckoutStartRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/app/billing': typeof AuthenticatedAppBillingRoute
   '/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/coach': typeof AuthenticatedAppCoachRoute
@@ -574,6 +582,7 @@ export interface FileRoutesById {
   '/checkout/start': typeof CheckoutStartRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/agents': typeof AuthenticatedAppAgentsRoute
+  '/_authenticated/app/billing': typeof AuthenticatedAppBillingRoute
   '/_authenticated/app/business-facts': typeof AuthenticatedAppBusinessFactsRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/coach': typeof AuthenticatedAppCoachRoute
@@ -641,6 +650,7 @@ export interface FileRouteTypes {
     | '/checkout/start'
     | '/app/admin'
     | '/app/agents'
+    | '/app/billing'
     | '/app/business-facts'
     | '/app/calendar'
     | '/app/coach'
@@ -705,6 +715,7 @@ export interface FileRouteTypes {
     | '/checkout/start'
     | '/app/admin'
     | '/app/agents'
+    | '/app/billing'
     | '/app/business-facts'
     | '/app/calendar'
     | '/app/coach'
@@ -771,6 +782,7 @@ export interface FileRouteTypes {
     | '/checkout/start'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/agents'
+    | '/_authenticated/app/billing'
     | '/_authenticated/app/business-facts'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/coach'
@@ -1269,6 +1281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppBusinessFactsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/billing': {
+      id: '/_authenticated/app/billing'
+      path: '/billing'
+      fullPath: '/app/billing'
+      preLoaderRoute: typeof AuthenticatedAppBillingRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/agents': {
       id: '/_authenticated/app/agents'
       path: '/agents'
@@ -1324,6 +1343,7 @@ const AuthenticatedAppAdminRouteWithChildren =
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppAgentsRoute: typeof AuthenticatedAppAgentsRoute
+  AuthenticatedAppBillingRoute: typeof AuthenticatedAppBillingRoute
   AuthenticatedAppBusinessFactsRoute: typeof AuthenticatedAppBusinessFactsRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppCoachRoute: typeof AuthenticatedAppCoachRoute
@@ -1340,6 +1360,7 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppAgentsRoute: AuthenticatedAppAgentsRoute,
+  AuthenticatedAppBillingRoute: AuthenticatedAppBillingRoute,
   AuthenticatedAppBusinessFactsRoute: AuthenticatedAppBusinessFactsRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppCoachRoute: AuthenticatedAppCoachRoute,

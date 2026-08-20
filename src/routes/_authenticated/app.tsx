@@ -97,6 +97,7 @@ const BREADCRUMB_LABELS: { prefix: string; label: string }[] = [
   { prefix: "/app/web-chat", label: "Web Chat" },
   { prefix: "/app/business-facts", label: "Business Facts" },
   { prefix: "/app/settings", label: "Settings" },
+  { prefix: "/app/billing", label: "Billing" },
   { prefix: "/app/coach", label: "Coach" },
   { prefix: "/app/verification", label: "Verification" },
   { prefix: "/app/admin", label: "Admin" },
