@@ -49,6 +49,7 @@ import { Route as ApiInboxSendRouteImport } from './routes/api/inbox/send'
 import { Route as ApiCronReviewRequestsRouteImport } from './routes/api/cron/review-requests'
 import { Route as ApiCronQuoteFollowUpsRouteImport } from './routes/api/cron/quote-follow-ups'
 import { Route as ApiCronDailyBriefRouteImport } from './routes/api/cron/daily-brief'
+import { Route as ApiCoachBusinessMemoryRouteImport } from './routes/api/coach/business-memory'
 import { Route as ApiCoachBriefRouteImport } from './routes/api/coach/brief'
 import { Route as ApiBusinessFactsSyncWebsiteRouteImport } from './routes/api/business-facts/sync-website'
 import { Route as ApiBusinessFactsSyncGoogleRouteImport } from './routes/api/business-facts/sync-google'
@@ -280,6 +281,11 @@ const ApiCronDailyBriefRoute = ApiCronDailyBriefRouteImport.update({
   path: '/api/cron/daily-brief',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCoachBusinessMemoryRoute = ApiCoachBusinessMemoryRouteImport.update({
+  id: '/api/coach/business-memory',
+  path: '/api/coach/business-memory',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCoachBriefRoute = ApiCoachBriefRouteImport.update({
   id: '/api/coach/brief',
   path: '/api/coach/brief',
@@ -487,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/coach/brief': typeof ApiCoachBriefRoute
+  '/api/coach/business-memory': typeof ApiCoachBusinessMemoryRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/cron/review-requests': typeof ApiCronReviewRequestsRoute
@@ -555,6 +562,7 @@ export interface FileRoutesByTo {
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/coach/brief': typeof ApiCoachBriefRoute
+  '/api/coach/business-memory': typeof ApiCoachBusinessMemoryRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/cron/review-requests': typeof ApiCronReviewRequestsRoute
@@ -626,6 +634,7 @@ export interface FileRoutesById {
   '/api/business-facts/sync-google': typeof ApiBusinessFactsSyncGoogleRoute
   '/api/business-facts/sync-website': typeof ApiBusinessFactsSyncWebsiteRoute
   '/api/coach/brief': typeof ApiCoachBriefRoute
+  '/api/coach/business-memory': typeof ApiCoachBusinessMemoryRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
   '/api/cron/review-requests': typeof ApiCronReviewRequestsRoute
@@ -697,6 +706,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
     | '/api/coach/brief'
+    | '/api/coach/business-memory'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
     | '/api/cron/review-requests'
@@ -765,6 +775,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
     | '/api/coach/brief'
+    | '/api/coach/business-memory'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
     | '/api/cron/review-requests'
@@ -835,6 +846,7 @@ export interface FileRouteTypes {
     | '/api/business-facts/sync-google'
     | '/api/business-facts/sync-website'
     | '/api/coach/brief'
+    | '/api/coach/business-memory'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
     | '/api/cron/review-requests'
@@ -887,6 +899,7 @@ export interface RootRouteChildren {
   ApiBusinessFactsSyncGoogleRoute: typeof ApiBusinessFactsSyncGoogleRoute
   ApiBusinessFactsSyncWebsiteRoute: typeof ApiBusinessFactsSyncWebsiteRoute
   ApiCoachBriefRoute: typeof ApiCoachBriefRoute
+  ApiCoachBusinessMemoryRoute: typeof ApiCoachBusinessMemoryRoute
   ApiCronDailyBriefRoute: typeof ApiCronDailyBriefRoute
   ApiCronQuoteFollowUpsRoute: typeof ApiCronQuoteFollowUpsRoute
   ApiCronReviewRequestsRoute: typeof ApiCronReviewRequestsRoute
@@ -1183,6 +1196,13 @@ declare module '@tanstack/react-router' {
       path: '/api/cron/daily-brief'
       fullPath: '/api/cron/daily-brief'
       preLoaderRoute: typeof ApiCronDailyBriefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/coach/business-memory': {
+      id: '/api/coach/business-memory'
+      path: '/api/coach/business-memory'
+      fullPath: '/api/coach/business-memory'
+      preLoaderRoute: typeof ApiCoachBusinessMemoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/coach/brief': {
@@ -1509,6 +1529,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBusinessFactsSyncGoogleRoute: ApiBusinessFactsSyncGoogleRoute,
   ApiBusinessFactsSyncWebsiteRoute: ApiBusinessFactsSyncWebsiteRoute,
   ApiCoachBriefRoute: ApiCoachBriefRoute,
+  ApiCoachBusinessMemoryRoute: ApiCoachBusinessMemoryRoute,
   ApiCronDailyBriefRoute: ApiCronDailyBriefRoute,
   ApiCronQuoteFollowUpsRoute: ApiCronQuoteFollowUpsRoute,
   ApiCronReviewRequestsRoute: ApiCronReviewRequestsRoute,
