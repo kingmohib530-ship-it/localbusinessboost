@@ -7,6 +7,7 @@ import {
   Calendar,
   Target,
   FileText,
+  Briefcase,
   Star,
   ClipboardCheck,
   Phone,
@@ -35,9 +36,10 @@ type NavItem = {
 type NavSection = { heading: string; items: NavItem[] };
 
 /**
- * Approved App Shell IA. Inbox, Leads (Slice 2), and Quotes (Product Depth
- * Slice 2) now have real pages on this branch, so they're back in
- * Today/Pipeline where the originally-approved spec put them. Web Chat is
+ * Approved App Shell IA. Inbox, Leads (Slice 2), Quotes (Product Depth
+ * Slice 2), and Jobs (Product Depth Slice 3) now have real pages on this
+ * branch, so they're back in Today/Pipeline where the originally-approved
+ * spec put them. Web Chat is
  * a real, currently-linked main route with no explicit slot in the
  * originally-approved sections list, so it sits under Setup alongside
  * the other account/config pages rather than being dropped. Business
@@ -59,6 +61,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: "/app/leads", label: "Leads", icon: Users },
       { to: "/app/quotes", label: "Quotes", icon: FileText },
+      { to: "/app/jobs", label: "Jobs", icon: Briefcase },
       { to: "/app/agents", label: "Outreach", icon: Target },
     ],
   },
@@ -89,6 +92,7 @@ const BREADCRUMB_LABELS: { prefix: string; label: string }[] = [
   { prefix: "/app/inbox", label: "Inbox" },
   { prefix: "/app/leads", label: "Leads" },
   { prefix: "/app/quotes", label: "Quotes" },
+  { prefix: "/app/jobs", label: "Jobs" },
   { prefix: "/app/calendar", label: "Calendar" },
   { prefix: "/app/agents", label: "Outreach" },
   { prefix: "/app/reputation", label: "Reviews" },

@@ -64,6 +64,7 @@ import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
 import { Route as AuthenticatedAppQuotesRouteImport } from './routes/_authenticated/app.quotes'
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
+import { Route as AuthenticatedAppJobsRouteImport } from './routes/_authenticated/app.jobs'
 import { Route as AuthenticatedAppInboxRouteImport } from './routes/_authenticated/app.inbox'
 import { Route as AuthenticatedAppCoachRouteImport } from './routes/_authenticated/app.coach'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
@@ -362,6 +363,11 @@ const AuthenticatedAppLeadsRoute = AuthenticatedAppLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppJobsRoute = AuthenticatedAppJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppInboxRoute = AuthenticatedAppInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -458,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/coach': typeof AuthenticatedAppCoachRoute
   '/app/inbox': typeof AuthenticatedAppInboxRoute
+  '/app/jobs': typeof AuthenticatedAppJobsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/quotes': typeof AuthenticatedAppQuotesRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
@@ -524,6 +531,7 @@ export interface FileRoutesByTo {
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/coach': typeof AuthenticatedAppCoachRoute
   '/app/inbox': typeof AuthenticatedAppInboxRoute
+  '/app/jobs': typeof AuthenticatedAppJobsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/quotes': typeof AuthenticatedAppQuotesRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
@@ -593,6 +601,7 @@ export interface FileRoutesById {
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/coach': typeof AuthenticatedAppCoachRoute
   '/_authenticated/app/inbox': typeof AuthenticatedAppInboxRoute
+  '/_authenticated/app/jobs': typeof AuthenticatedAppJobsRoute
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
   '/_authenticated/app/quotes': typeof AuthenticatedAppQuotesRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
@@ -662,6 +671,7 @@ export interface FileRouteTypes {
     | '/app/calendar'
     | '/app/coach'
     | '/app/inbox'
+    | '/app/jobs'
     | '/app/leads'
     | '/app/quotes'
     | '/app/receptionist'
@@ -728,6 +738,7 @@ export interface FileRouteTypes {
     | '/app/calendar'
     | '/app/coach'
     | '/app/inbox'
+    | '/app/jobs'
     | '/app/leads'
     | '/app/quotes'
     | '/app/receptionist'
@@ -796,6 +807,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/coach'
     | '/_authenticated/app/inbox'
+    | '/_authenticated/app/jobs'
     | '/_authenticated/app/leads'
     | '/_authenticated/app/quotes'
     | '/_authenticated/app/receptionist'
@@ -1265,6 +1277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppLeadsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/jobs': {
+      id: '/_authenticated/app/jobs'
+      path: '/jobs'
+      fullPath: '/app/jobs'
+      preLoaderRoute: typeof AuthenticatedAppJobsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/inbox': {
       id: '/_authenticated/app/inbox'
       path: '/inbox'
@@ -1367,6 +1386,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppCoachRoute: typeof AuthenticatedAppCoachRoute
   AuthenticatedAppInboxRoute: typeof AuthenticatedAppInboxRoute
+  AuthenticatedAppJobsRoute: typeof AuthenticatedAppJobsRoute
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
   AuthenticatedAppQuotesRoute: typeof AuthenticatedAppQuotesRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
@@ -1385,6 +1405,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppCoachRoute: AuthenticatedAppCoachRoute,
   AuthenticatedAppInboxRoute: AuthenticatedAppInboxRoute,
+  AuthenticatedAppJobsRoute: AuthenticatedAppJobsRoute,
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
   AuthenticatedAppQuotesRoute: AuthenticatedAppQuotesRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
