@@ -46,6 +46,7 @@ import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
 import { Route as ApiInboxSendRouteImport } from './routes/api/inbox/send'
+import { Route as ApiCronReviewRequestsRouteImport } from './routes/api/cron/review-requests'
 import { Route as ApiCronQuoteFollowUpsRouteImport } from './routes/api/cron/quote-follow-ups'
 import { Route as ApiCronDailyBriefRouteImport } from './routes/api/cron/daily-brief'
 import { Route as ApiCoachBriefRouteImport } from './routes/api/coach/brief'
@@ -262,6 +263,11 @@ const ApiLeadGeneratorExecuteStepRoute =
 const ApiInboxSendRoute = ApiInboxSendRouteImport.update({
   id: '/api/inbox/send',
   path: '/api/inbox/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronReviewRequestsRoute = ApiCronReviewRequestsRouteImport.update({
+  id: '/api/cron/review-requests',
+  path: '/api/cron/review-requests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCronQuoteFollowUpsRoute = ApiCronQuoteFollowUpsRouteImport.update({
@@ -483,6 +489,7 @@ export interface FileRoutesByFullPath {
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/cron/review-requests': typeof ApiCronReviewRequestsRoute
   '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -550,6 +557,7 @@ export interface FileRoutesByTo {
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/cron/review-requests': typeof ApiCronReviewRequestsRoute
   '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -620,6 +628,7 @@ export interface FileRoutesById {
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/cron/review-requests': typeof ApiCronReviewRequestsRoute
   '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
@@ -690,6 +699,7 @@ export interface FileRouteTypes {
     | '/api/coach/brief'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/cron/review-requests'
     | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -757,6 +767,7 @@ export interface FileRouteTypes {
     | '/api/coach/brief'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/cron/review-requests'
     | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -826,6 +837,7 @@ export interface FileRouteTypes {
     | '/api/coach/brief'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/cron/review-requests'
     | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
@@ -877,6 +889,7 @@ export interface RootRouteChildren {
   ApiCoachBriefRoute: typeof ApiCoachBriefRoute
   ApiCronDailyBriefRoute: typeof ApiCronDailyBriefRoute
   ApiCronQuoteFollowUpsRoute: typeof ApiCronQuoteFollowUpsRoute
+  ApiCronReviewRequestsRoute: typeof ApiCronReviewRequestsRoute
   ApiInboxSendRoute: typeof ApiInboxSendRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
@@ -1149,6 +1162,13 @@ declare module '@tanstack/react-router' {
       path: '/api/inbox/send'
       fullPath: '/api/inbox/send'
       preLoaderRoute: typeof ApiInboxSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/review-requests': {
+      id: '/api/cron/review-requests'
+      path: '/api/cron/review-requests'
+      fullPath: '/api/cron/review-requests'
+      preLoaderRoute: typeof ApiCronReviewRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/cron/quote-follow-ups': {
@@ -1491,6 +1511,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCoachBriefRoute: ApiCoachBriefRoute,
   ApiCronDailyBriefRoute: ApiCronDailyBriefRoute,
   ApiCronQuoteFollowUpsRoute: ApiCronQuoteFollowUpsRoute,
+  ApiCronReviewRequestsRoute: ApiCronReviewRequestsRoute,
   ApiInboxSendRoute: ApiInboxSendRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
