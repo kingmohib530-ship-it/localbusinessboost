@@ -171,6 +171,19 @@ interface Opportunity {
   // (Slice 12's own scope - a resolved job isn't "still waiting" on
   // anything), and never backed by a phone-match guess.
   waitingTimeNote: string | null;
+  // Decision Support V1 (Slice 13) - a plain restatement of the existing
+  // state, never a new state machine. Only ever set for needs_you
+  // ("Needs attention") or working ("Lanavix handling"); null for
+  // booked/won/lost, where the existing state label already says
+  // everything worth saying and a third "no action needed" label would
+  // just be noise (see the Slice 13 report).
+  decisionLabel: "Needs attention" | "Lanavix handling" | null;
+  // Decision Support V1 (Slice 13) - one composed, deterministic sentence
+  // explaining decisionLabel, with quoteMemoryNote/waitingTimeNote folded
+  // in as supporting clauses when they qualify. Memory only ever adds
+  // context here; it can never change decisionLabel or this opportunity's
+  // state. Null whenever decisionLabel is null.
+  decisionExplanation: string | null;
 }
 
 // The two Business Memory signals Opportunity Intelligence reuses (see
@@ -247,6 +260,25 @@ function waitingTimeMemoryNote(
   return "waiting longer than your typical booking time";
 }
 
+/**
+ * Decision Support V1 (Slice 13): composes one deterministic sentence for
+ * an unresolved (needs_you/working) opportunity from its already-real
+ * state reason, with quoteMemoryNote/waitingTimeNote folded in as
+ * supporting clauses when they qualify. Memory can only add a factual
+ * clause here - it never changes baseSentence, never changes
+ * decisionLabel, and never implies risk, probability, or urgency.
+ */
+function decisionExplanation(
+  baseSentence: string,
+  quoteMemoryNote: string | null,
+  waitingTimeNote: string | null,
+): string {
+  const clauses: string[] = [];
+  if (quoteMemoryNote) clauses.push(`This quote is ${quoteMemoryNote}.`);
+  if (waitingTimeNote) clauses.push(`This has also been ${waitingTimeNote}.`);
+  return clauses.length > 0 ? `${baseSentence}. ${clauses.join(" ")}` : `${baseSentence}.`;
+}
+
 const OPPORTUNITY_LIMIT = 8;
 
 const OPPORTUNITY_STATE_TO_DOT: Record<OpportunityState, LvStatus> = {
@@ -320,6 +352,10 @@ function appointmentToOpportunity(
     // resolved job is never "still waiting," so waiting-time context is
     // out of scope here by construction, not just by choice.
     waitingTimeNote: null,
+    // Decision Support (Slice 13) is scoped to needs_you/working only -
+    // see the interface comment.
+    decisionLabel: null,
+    decisionExplanation: null,
   };
 }
 
@@ -736,6 +772,17 @@ function Overview() {
           convo?.started_at ?? null,
           businessMemory?.typicalTimeToBookMinutes ?? null,
         );
+        // Slice 13: reuses the exact same real state this opportunity
+        // already resolved to above - "working" means quote_follow_up_steps
+        // genuinely still has a pending step, never an inference.
+        const decisionLabel = working ? "Lanavix handling" : "Needs attention";
+        const decisionExplanationText = decisionExplanation(
+          working
+            ? "Automated follow-up is still scheduled"
+            : "Follow-ups are finished and the customer hasn't booked",
+          quoteMemoryNote,
+          waitingTimeNote,
+        );
         list.push({
           id: `quote-${q.id}`,
           customerName,
@@ -750,6 +797,8 @@ function Overview() {
           attribution: quoteAttribution,
           quoteMemoryNote,
           waitingTimeNote,
+          decisionLabel,
+          decisionExplanation: decisionExplanationText,
         });
       } else if (q.status === "cancelled" || q.status === "completed") {
         list.push({
@@ -765,6 +814,11 @@ function Overview() {
           quoteMemoryNote,
           // Resolved (lost) - out of Slice 12's scope, see the interface comment.
           waitingTimeNote: null,
+          // Resolved (lost) - Decision Support (Slice 13) is scoped to
+          // needs_you/working; a lost opportunity gets no recommendation
+          // that could imply it's still active.
+          decisionLabel: null,
+          decisionExplanation: null,
         });
       } else if (q.status === "booked") {
         // Slice 7: prefer the real conversation_id FK when the appointment
@@ -809,6 +863,11 @@ function Overview() {
             quoteMemoryNote,
             // Resolved (booked) - out of Slice 12's scope, see the interface comment.
             waitingTimeNote: null,
+            // Resolved (booked) - Decision Support (Slice 13) is scoped to
+            // needs_you/working only (see the Slice 13 report on why a
+            // "no action needed" label was omitted for booked/won).
+            decisionLabel: null,
+            decisionExplanation: null,
           });
         }
       }
@@ -823,6 +882,12 @@ function Overview() {
       if (claimedConversationIds.has(c.id)) continue;
       const last = latestByConversation.get(c.id);
       if (!last || last.direction !== "inbound" || !last.sent_at) continue;
+      // Slice 12: this conversation IS the lifecycle - its own real
+      // started_at is exactly the honest start point to compare.
+      const bareConvoWaitingTimeNote = waitingTimeMemoryNote(
+        c.started_at,
+        businessMemory?.typicalTimeToBookMinutes ?? null,
+      );
       list.push({
         id: `conv-${c.id}`,
         customerName: c.customer_name || c.customer_identifier,
@@ -835,11 +900,12 @@ function Overview() {
         attribution: "lanavix_assisted",
         // No quote exists yet for a bare conversation - nothing to compare.
         quoteMemoryNote: null,
-        // Slice 12: this conversation IS the lifecycle - its own real
-        // started_at is exactly the honest start point to compare.
-        waitingTimeNote: waitingTimeMemoryNote(
-          c.started_at,
-          businessMemory?.typicalTimeToBookMinutes ?? null,
+        waitingTimeNote: bareConvoWaitingTimeNote,
+        decisionLabel: "Needs attention",
+        decisionExplanation: decisionExplanation(
+          "Customer is waiting for your reply",
+          null,
+          bareConvoWaitingTimeNote,
         ),
       });
     }
@@ -1324,22 +1390,31 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
               <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
             </>
           )}
-          <span className="lv-meta text-muted-foreground truncate">{opportunity.reason}</span>
+          {/* Decision Support (Slice 13): needs_you/working opportunities
+              show the decision label here instead of the raw reason - the
+              fuller decisionExplanation line below composes that same
+              reason (plus any memory context) into one sentence, so this
+              slot never duplicates it. booked/won/lost keep the original
+              plain reason, unchanged. */}
+          <span className="lv-meta text-muted-foreground truncate">
+            {opportunity.decisionLabel ?? opportunity.reason}
+          </span>
         </div>
         {showAttribution && (
           <p className="lv-meta text-muted-foreground/70 mt-0.5">
             {ATTRIBUTION_LABEL[opportunity.attribution]}
           </p>
         )}
-        {opportunity.quoteMemoryNote && (
+        {opportunity.decisionExplanation ? (
           <p className="lv-meta text-muted-foreground/70 mt-0.5">
-            Business pattern: {opportunity.quoteMemoryNote}
+            {opportunity.decisionExplanation}
           </p>
-        )}
-        {opportunity.waitingTimeNote && (
-          <p className="lv-meta text-muted-foreground/70 mt-0.5">
-            Business pattern: {opportunity.waitingTimeNote}
-          </p>
+        ) : (
+          opportunity.quoteMemoryNote && (
+            <p className="lv-meta text-muted-foreground/70 mt-0.5">
+              Business pattern: {opportunity.quoteMemoryNote}
+            </p>
+          )
         )}
       </div>
       <Button asChild size="sm" variant="outline" className="shrink-0">
