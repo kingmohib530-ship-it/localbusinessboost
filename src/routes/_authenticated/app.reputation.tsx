@@ -188,7 +188,8 @@ function ReputationPage() {
       supabase
         .from("review_requests")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id),
+        .eq("user_id", user.id)
+        .not("sent_at", "is", null),
     ]);
     setEverCount((reviewsCount.count ?? 0) + (requestsCount.count ?? 0));
   }
@@ -272,10 +273,16 @@ function ReputationPage() {
       } = await supabase.auth.getUser();
       if (!user) return;
       const from = page * PAGE_SIZE;
+      // The post-job review cron (api/cron/review-requests.ts) inserts a
+      // claim row with sent_at left null until the text actually goes out,
+      // so a still-pending or failed automated attempt never has a real
+      // sent date - exclude those rather than showing a bogus "Stale,
+      // 1/1/1970" entry at the top of this list.
       const { data, error } = await supabase
         .from("review_requests")
         .select("*")
         .eq("user_id", user.id)
+        .not("sent_at", "is", null)
         .order("sent_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
       if (error) throw error;

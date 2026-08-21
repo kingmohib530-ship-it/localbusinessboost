@@ -826,36 +826,53 @@ export type Database = {
       }
       review_requests: {
         Row: {
+          appointment_id: string | null
+          claimed_at: string | null
           customer_name: string | null
           customer_phone: string
           google_review_url: string | null
           id: string
           job_description: string | null
+          send_attempted_at: string | null
           sent_at: string | null
           status: string | null
           user_id: string | null
         }
         Insert: {
+          appointment_id?: string | null
+          claimed_at?: string | null
           customer_name?: string | null
           customer_phone: string
           google_review_url?: string | null
           id?: string
           job_description?: string | null
+          send_attempted_at?: string | null
           sent_at?: string | null
           status?: string | null
           user_id?: string | null
         }
         Update: {
+          appointment_id?: string | null
+          claimed_at?: string | null
           customer_name?: string | null
           customer_phone?: string
           google_review_url?: string | null
           id?: string
           job_description?: string | null
+          send_attempted_at?: string | null
           sent_at?: string | null
           status?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "review_requests_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       review_responses: {
         Row: {
