@@ -45,6 +45,7 @@ import { Route as ApiPublicContactRouteImport } from './routes/api/public/contac
 import { Route as ApiLeadGeneratorResearchRouteImport } from './routes/api/lead-generator/research'
 import { Route as ApiLeadGeneratorHandleResponseRouteImport } from './routes/api/lead-generator/handle-response'
 import { Route as ApiLeadGeneratorExecuteStepRouteImport } from './routes/api/lead-generator/execute-step'
+import { Route as ApiInboxSendRouteImport } from './routes/api/inbox/send'
 import { Route as ApiCronQuoteFollowUpsRouteImport } from './routes/api/cron/quote-follow-ups'
 import { Route as ApiCronDailyBriefRouteImport } from './routes/api/cron/daily-brief'
 import { Route as ApiCoachBriefRouteImport } from './routes/api/coach/brief'
@@ -71,6 +72,7 @@ import { Route as AuthenticatedAppAgentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as ApiPublicWebChatBusiness_idRouteImport } from './routes/api/public/web-chat/$business_id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiInboxConversationsIdRouteImport } from './routes/api/inbox/conversations/$id'
 import { Route as AuthenticatedAppAdminVerificationReviewRouteImport } from './routes/_authenticated/app.admin.verification-review'
 
 const TermsRoute = TermsRouteImport.update({
@@ -255,6 +257,11 @@ const ApiLeadGeneratorExecuteStepRoute =
     path: '/api/lead-generator/execute-step',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiInboxSendRoute = ApiInboxSendRouteImport.update({
+  id: '/api/inbox/send',
+  path: '/api/inbox/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronQuoteFollowUpsRoute = ApiCronQuoteFollowUpsRouteImport.update({
   id: '/api/cron/quote-follow-ups',
   path: '/api/cron/quote-follow-ups',
@@ -398,6 +405,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiInboxConversationsIdRoute = ApiInboxConversationsIdRouteImport.update({
+  id: '/api/inbox/conversations/$id',
+  path: '/api/inbox/conversations/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppAdminVerificationReviewRoute =
   AuthenticatedAppAdminVerificationReviewRouteImport.update({
     id: '/verification-review',
@@ -457,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -466,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/api/telnyx/voice': typeof ApiTelnyxVoiceRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
+  '/api/inbox/conversations/$id': typeof ApiInboxConversationsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
 }
@@ -520,6 +534,7 @@ export interface FileRoutesByTo {
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -529,6 +544,7 @@ export interface FileRoutesByTo {
   '/api/telnyx/voice': typeof ApiTelnyxVoiceRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
+  '/api/inbox/conversations/$id': typeof ApiInboxConversationsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
 }
@@ -586,6 +602,7 @@ export interface FileRoutesById {
   '/api/coach/brief': typeof ApiCoachBriefRoute
   '/api/cron/daily-brief': typeof ApiCronDailyBriefRoute
   '/api/cron/quote-follow-ups': typeof ApiCronQuoteFollowUpsRoute
+  '/api/inbox/send': typeof ApiInboxSendRoute
   '/api/lead-generator/execute-step': typeof ApiLeadGeneratorExecuteStepRoute
   '/api/lead-generator/handle-response': typeof ApiLeadGeneratorHandleResponseRoute
   '/api/lead-generator/research': typeof ApiLeadGeneratorResearchRoute
@@ -595,6 +612,7 @@ export interface FileRoutesById {
   '/api/telnyx/voice': typeof ApiTelnyxVoiceRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/admin/verification-review': typeof AuthenticatedAppAdminVerificationReviewRoute
+  '/api/inbox/conversations/$id': typeof ApiInboxConversationsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/web-chat/$business_id': typeof ApiPublicWebChatBusiness_idRoute
 }
@@ -652,6 +670,7 @@ export interface FileRouteTypes {
     | '/api/coach/brief'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -661,6 +680,7 @@ export interface FileRouteTypes {
     | '/api/telnyx/voice'
     | '/app/'
     | '/app/admin/verification-review'
+    | '/api/inbox/conversations/$id'
     | '/api/public/payments/webhook'
     | '/api/public/web-chat/$business_id'
   fileRoutesByTo: FileRoutesByTo
@@ -715,6 +735,7 @@ export interface FileRouteTypes {
     | '/api/coach/brief'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -724,6 +745,7 @@ export interface FileRouteTypes {
     | '/api/telnyx/voice'
     | '/app'
     | '/app/admin/verification-review'
+    | '/api/inbox/conversations/$id'
     | '/api/public/payments/webhook'
     | '/api/public/web-chat/$business_id'
   id:
@@ -780,6 +802,7 @@ export interface FileRouteTypes {
     | '/api/coach/brief'
     | '/api/cron/daily-brief'
     | '/api/cron/quote-follow-ups'
+    | '/api/inbox/send'
     | '/api/lead-generator/execute-step'
     | '/api/lead-generator/handle-response'
     | '/api/lead-generator/research'
@@ -789,6 +812,7 @@ export interface FileRouteTypes {
     | '/api/telnyx/voice'
     | '/_authenticated/app/'
     | '/_authenticated/app/admin/verification-review'
+    | '/api/inbox/conversations/$id'
     | '/api/public/payments/webhook'
     | '/api/public/web-chat/$business_id'
   fileRoutesById: FileRoutesById
@@ -829,6 +853,7 @@ export interface RootRouteChildren {
   ApiCoachBriefRoute: typeof ApiCoachBriefRoute
   ApiCronDailyBriefRoute: typeof ApiCronDailyBriefRoute
   ApiCronQuoteFollowUpsRoute: typeof ApiCronQuoteFollowUpsRoute
+  ApiInboxSendRoute: typeof ApiInboxSendRoute
   ApiLeadGeneratorExecuteStepRoute: typeof ApiLeadGeneratorExecuteStepRoute
   ApiLeadGeneratorHandleResponseRoute: typeof ApiLeadGeneratorHandleResponseRoute
   ApiLeadGeneratorResearchRoute: typeof ApiLeadGeneratorResearchRoute
@@ -836,6 +861,7 @@ export interface RootRouteChildren {
   ApiReviewRequestsIdRoute: typeof ApiReviewRequestsIdRoute
   ApiTelnyxSmsInboundRoute: typeof ApiTelnyxSmsInboundRoute
   ApiTelnyxVoiceRoute: typeof ApiTelnyxVoiceRoute
+  ApiInboxConversationsIdRoute: typeof ApiInboxConversationsIdRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicWebChatBusiness_idRoute: typeof ApiPublicWebChatBusiness_idRoute
 }
@@ -1094,6 +1120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLeadGeneratorExecuteStepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/inbox/send': {
+      id: '/api/inbox/send'
+      path: '/api/inbox/send'
+      fullPath: '/api/inbox/send'
+      preLoaderRoute: typeof ApiInboxSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/quote-follow-ups': {
       id: '/api/cron/quote-follow-ups'
       path: '/api/cron/quote-follow-ups'
@@ -1276,6 +1309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/inbox/conversations/$id': {
+      id: '/api/inbox/conversations/$id'
+      path: '/api/inbox/conversations/$id'
+      fullPath: '/api/inbox/conversations/$id'
+      preLoaderRoute: typeof ApiInboxConversationsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app/admin/verification-review': {
       id: '/_authenticated/app/admin/verification-review'
       path: '/verification-review'
@@ -1409,6 +1449,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCoachBriefRoute: ApiCoachBriefRoute,
   ApiCronDailyBriefRoute: ApiCronDailyBriefRoute,
   ApiCronQuoteFollowUpsRoute: ApiCronQuoteFollowUpsRoute,
+  ApiInboxSendRoute: ApiInboxSendRoute,
   ApiLeadGeneratorExecuteStepRoute: ApiLeadGeneratorExecuteStepRoute,
   ApiLeadGeneratorHandleResponseRoute: ApiLeadGeneratorHandleResponseRoute,
   ApiLeadGeneratorResearchRoute: ApiLeadGeneratorResearchRoute,
@@ -1416,6 +1457,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiReviewRequestsIdRoute: ApiReviewRequestsIdRoute,
   ApiTelnyxSmsInboundRoute: ApiTelnyxSmsInboundRoute,
   ApiTelnyxVoiceRoute: ApiTelnyxVoiceRoute,
+  ApiInboxConversationsIdRoute: ApiInboxConversationsIdRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicWebChatBusiness_idRoute: ApiPublicWebChatBusiness_idRoute,
 }

@@ -62,6 +62,7 @@
     PRIMARY +
     ";color:#fff;align-self:flex-end;border-bottom-right-radius:4px}" +
     ".lvx-wc-msg-error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;align-self:flex-start}" +
+    ".lvx-wc-msg-system{background:none;border:none;color:#6b7280;align-self:center;font-size:12px;text-align:center;max-width:100%;padding:2px 8px}" +
     ".lvx-wc-form{display:flex;gap:8px;padding:10px;border-top:1px solid #e5e7eb;background:#fff}" +
     ".lvx-wc-input{flex:1;border:1px solid #d1d5db;border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;resize:none;outline:none}" +
     ".lvx-wc-input:focus{border-color:" +
@@ -101,7 +102,9 @@
 
   function addMessage(text, kind) {
     var el = document.createElement("div");
-    el.className = "lvx-wc-msg " + (kind === "user" ? "lvx-wc-msg-user" : kind === "error" ? "lvx-wc-msg-error" : "lvx-wc-msg-bot");
+    var cls =
+      kind === "user" ? "lvx-wc-msg-user" : kind === "error" ? "lvx-wc-msg-error" : kind === "system" ? "lvx-wc-msg-system" : "lvx-wc-msg-bot";
+    el.className = "lvx-wc-msg " + cls;
     el.textContent = text;
     messagesEl.appendChild(el);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -160,7 +163,13 @@
         });
       })
       .then(function (result) {
-        if (result.ok && result.data && result.data.reply) {
+        // `pending` means a person now owns this conversation (human
+        // takeover) - the message was received, but nothing automated
+        // replied, so this renders as a neutral system note, never as a
+        // reply bubble from the business.
+        if (result.ok && result.data && result.data.pending) {
+          addMessage(result.data.notice || "Message received.", "system");
+        } else if (result.ok && result.data && result.data.reply) {
           addMessage(result.data.reply, "bot");
         } else {
           addMessage((result.data && result.data.error) || "Sorry, something went wrong. Please try again.", "error");

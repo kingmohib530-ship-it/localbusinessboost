@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, MessageCircle, Phone, Send } from "lucide-react";
+import { ArrowLeft, Loader2, MessageCircle, Phone, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ interface ConversationRow {
   status: string;
   started_at: string;
   last_message_at: string | null;
+  ai_paused: boolean;
 }
 
 interface ConversationComputed extends ConversationRow {
@@ -39,6 +40,7 @@ interface MessageRow {
 const PAGE_SIZE = 30;
 const POLL_INTERVAL_MS = 10000;
 const PHONE_LIKE = /^\+?[\d\s().-]{7,}$/;
+const MAX_MESSAGE_LENGTH = 1600;
 
 function conversationLabel(c: ConversationRow): string {
   if (c.customer_name) return c.customer_name;
@@ -46,10 +48,10 @@ function conversationLabel(c: ConversationRow): string {
   return c.customer_identifier;
 }
 
-// Current main has no way to distinguish "a human took over this reply"
-// from "the AI replied" - conversations.ai_paused doesn't exist in the
-// schema and nothing writes it. Status here only reflects what's real:
-// still waiting on a reply, or the AI already replied.
+// "Waiting on you" / "Automated" here is about whether the AI already
+// replied to the latest inbound message - a different concept from
+// automation on/off (ai_paused), which is about whether the AI is even
+// allowed to reply at all right now. Both show in the thread header.
 function conversationStatus(c: ConversationComputed): LvStatus {
   if (c.latestDirection === "inbound" || c.latestDirection === null) return "waiting_on_you";
   return "automated";
@@ -73,6 +75,14 @@ function Inbox() {
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messagesError, setMessagesError] = useState("");
+
+  const [takeoverPending, setTakeoverPending] = useState(false);
+  const [takeoverError, setTakeoverError] = useState("");
+
+  const [composerText, setComposerText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [sendWarning, setSendWarning] = useState("");
 
   const selectedIdRef = useRef<string | null>(null);
   selectedIdRef.current = selectedId;
@@ -183,6 +193,10 @@ function Inbox() {
   function openConversation(id: string) {
     setSelectedId(id);
     setSeenIds((prev) => new Set(prev).add(id));
+    setComposerText("");
+    setSendError("");
+    setSendWarning("");
+    setTakeoverError("");
     loadMessages(id);
   }
 
@@ -211,6 +225,100 @@ function Inbox() {
   );
   const isFirstRun = !loading && !listError && (everCount ?? 0) === 0;
   const isCaughtUp = !loading && !listError && (everCount ?? 0) > 0 && waitingCount === 0;
+
+  async function authHeader(): Promise<Record<string, string> | null> {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return null;
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  async function setTakeover(nextPaused: boolean) {
+    if (!selectedConversation || takeoverPending) return;
+    setTakeoverPending(true);
+    setTakeoverError("");
+    try {
+      const headers = await authHeader();
+      if (!headers) {
+        setTakeoverError("Please sign in again.");
+        return;
+      }
+      const res = await fetch(`/api/inbox/conversations/${selectedConversation.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ ai_paused: nextPaused }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTakeoverError(data.error || "Couldn't update this conversation.");
+        return;
+      }
+      setConversations((prev) =>
+        prev.map((c) => (c.id === selectedConversation.id ? { ...c, ai_paused: nextPaused } : c)),
+      );
+    } catch {
+      setTakeoverError("Couldn't update this conversation. Check your connection and try again.");
+    } finally {
+      setTakeoverPending(false);
+    }
+  }
+
+  const canComposeManually =
+    !!selectedConversation &&
+    selectedConversation.channel === "sms" &&
+    selectedConversation.ai_paused;
+
+  async function sendMessage() {
+    const text = composerText.trim();
+    if (!text || !selectedConversation || !canComposeManually || sending) return;
+    setSending(true);
+    setSendError("");
+    setSendWarning("");
+    try {
+      const headers = await authHeader();
+      if (!headers) {
+        setSendError("Please sign in again.");
+        return;
+      }
+      const res = await fetch("/api/inbox/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ conversation_id: selectedConversation.id, message: text }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSendError(data.error || "Couldn't send your message. Please try again.");
+        return;
+      }
+      // Clear only on confirmed success, so a failure never loses what was typed.
+      setComposerText("");
+      if (data.message) {
+        setMessages((prev) =>
+          prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message],
+        );
+      } else {
+        // Rare "sent but not saved" case (see api/inbox/send.ts). The text
+        // really did go out, so the composer stays cleared rather than
+        // preserved - leaving the same text sitting there would just invite
+        // an accidental duplicate send - and this warning tells the owner
+        // what actually happened instead of silently dropping it.
+        setSendWarning(data.warning || "Sent, but this conversation may be missing that message.");
+        loadMessages(selectedConversation.id, { silent: true });
+      }
+      loadConversations(pageIndex, { silent: true });
+    } catch {
+      setSendError("Couldn't send your message. Check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function onComposerKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
 
   return (
     <div className="lv-light min-h-full bg-background flex flex-col md:flex-row md:h-full">
@@ -331,7 +439,7 @@ function Inbox() {
           </div>
         ) : (
           <>
-            <div className="h-[52px] shrink-0 border-b border-border px-3 md:px-5 flex items-center gap-3">
+            <div className="shrink-0 border-b border-border px-3 md:px-5 py-2.5 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setSelectedId(null)}
@@ -344,17 +452,40 @@ function Inbox() {
                 <p className="lv-body text-foreground font-medium truncate">
                   {conversationLabel(selectedConversation)}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap mt-0.5">
                   <StatusDot status={conversationStatus(selectedConversation)} />
                   <span className="lv-meta text-muted-foreground">
                     · {channelLabel(selectedConversation.channel)}
                   </span>
+                  <span className="lv-meta text-muted-foreground">·</span>
+                  <StatusDot
+                    status={selectedConversation.ai_paused ? "human_takeover" : "automation_on"}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px]"
+                    disabled={takeoverPending}
+                    onClick={() => setTakeover(!selectedConversation.ai_paused)}
+                  >
+                    {takeoverPending
+                      ? "Updating..."
+                      : selectedConversation.ai_paused
+                        ? "Return to automation"
+                        : "Take over"}
+                  </Button>
                 </div>
+                {takeoverError && (
+                  <p className="lv-meta text-destructive mt-1" role="alert">
+                    {takeoverError}
+                  </p>
+                )}
               </div>
               {PHONE_LIKE.test(selectedConversation.customer_identifier) && (
                 <a
                   href={`tel:${selectedConversation.customer_identifier}`}
-                  className="flex h-9 w-9 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground shrink-0"
+                  className="flex h-11 w-11 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground shrink-0"
                   aria-label="Call"
                 >
                   <Phone className="h-4 w-4" aria-hidden="true" />
@@ -412,33 +543,50 @@ function Inbox() {
               <div ref={threadEndRef} />
             </div>
 
-            {/* Slice 2 note: current main has no authenticated endpoint that
-                sends an outbound message, and conversations has no ai_paused
-                (or equivalent) column - every conversation_messages row
-                today is written by an automated webhook (Telnyx SMS/voice,
-                web chat, the quote follow-up cron), never by a signed-in
-                user. Faking a working composer here would mean a
-                contractor believes they replied (and paused the AI) when
-                neither actually happened. The composer stays visible for
-                layout/design parity but is disabled with an honest
-                explanation instead - see the Slice 2 report for what a real
-                send endpoint would need. */}
             <div className="shrink-0 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-              <p className="lv-meta text-muted-foreground mb-2">
-                Replying from Inbox isn't available yet - conversations are handled automatically by
-                your AI receptionist.
-              </p>
+              {!canComposeManually && (
+                <p id="composer-help" className="lv-meta text-muted-foreground mb-2">
+                  {selectedConversation.channel === "web_chat"
+                    ? "Manual reply isn't available for web chat yet - conversations are handled by your AI receptionist."
+                    : "Take over this conversation to reply manually."}
+                </p>
+              )}
+              {sendError && (
+                <p className="lv-meta text-destructive mb-2" role="alert">
+                  {sendError}
+                </p>
+              )}
+              {sendWarning && (
+                <p className="lv-meta text-[var(--warning)] mb-2" role="status">
+                  {sendWarning}
+                </p>
+              )}
               <div className="flex items-end gap-2">
                 <Textarea
-                  value=""
-                  readOnly
-                  disabled
+                  value={composerText}
+                  onChange={(e) => setComposerText(e.target.value)}
+                  onKeyDown={onComposerKeyDown}
+                  readOnly={!canComposeManually}
+                  disabled={!canComposeManually || sending}
+                  maxLength={MAX_MESSAGE_LENGTH}
                   placeholder="Write a reply..."
+                  aria-label="Reply message"
+                  aria-describedby={!canComposeManually ? "composer-help" : undefined}
                   className="min-h-[44px] max-h-32 resize-none"
-                  aria-label="Reply message (not yet available)"
                 />
-                <Button size="icon" disabled aria-label="Send" className="shrink-0">
-                  <Send className="h-4 w-4" aria-hidden="true" />
+                <Button
+                  type="button"
+                  size="icon"
+                  disabled={!canComposeManually || sending || !composerText.trim()}
+                  onClick={sendMessage}
+                  aria-label={sending ? "Sending" : "Send"}
+                  className="h-11 w-11 shrink-0"
+                >
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Send className="h-4 w-4" aria-hidden="true" />
+                  )}
                 </Button>
               </div>
             </div>

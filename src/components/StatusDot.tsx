@@ -14,7 +14,9 @@ export type LvStatus =
   | "stale"
   | "failed"
   | "automated"
-  | "draft";
+  | "draft"
+  | "automation_on"
+  | "human_takeover";
 
 const STATUS_META: Record<LvStatus, { label: string; dotClassName: string }> = {
   waiting_on_you: { label: "Waiting on you", dotClassName: "bg-[var(--warning)]" },
@@ -26,6 +28,8 @@ const STATUS_META: Record<LvStatus, { label: string; dotClassName: string }> = {
   failed: { label: "Failed", dotClassName: "bg-destructive" },
   automated: { label: "Automated", dotClassName: "bg-muted-foreground" },
   draft: { label: "Draft", dotClassName: "bg-muted-foreground" },
+  automation_on: { label: "Automation on", dotClassName: "bg-primary" },
+  human_takeover: { label: "Human takeover", dotClassName: "bg-[var(--warning)]" },
 };
 
 export function StatusDot({ status, className }: { status: LvStatus; className?: string }) {

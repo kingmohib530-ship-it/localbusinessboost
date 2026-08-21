@@ -257,7 +257,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
           // Find or start this visitor's conversation.
           const { data: existing } = await supabaseAdmin
             .from("conversations")
-            .select("id, status")
+            .select("id, status, ai_paused")
             .eq("user_id", businessId)
             .eq("channel", "web_chat")
             .eq("customer_identifier", sessionId)
@@ -295,6 +295,23 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
             message: messageBody,
             sent_at: now,
           });
+
+          // Human takeover: the visitor's message is persisted and visible
+          // in Inbox like any other inbound message, but nothing below this
+          // point runs - no LLM call, no booking detection, and critically
+          // no automated/fallback message gets written to
+          // conversation_messages or sent back to the widget as if it came
+          // from the business. There's no owner-composer transport for web
+          // chat yet (see the Slice 1 report), so the widget gets a neutral
+          // "received" acknowledgment instead of a reply - not a fake AI
+          // answer, not a fake human one.
+          if (existing?.ai_paused) {
+            await supabaseAdmin
+              .from("conversations")
+              .update({ last_message_at: now })
+              .eq("id", conversationId);
+            return Response.json({ pending: true, notice: "Message received." }, { headers: CORS });
+          }
 
           const { data: history } = await supabaseAdmin
             .from("conversation_messages")

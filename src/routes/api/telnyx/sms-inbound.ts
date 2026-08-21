@@ -107,7 +107,9 @@ export const Route = createFileRoute("/api/telnyx/sms-inbound")({
 
           const now = new Date().toISOString();
 
-          // Save inbound message
+          // The inbound message always arrives, is always saved, and always
+          // updates the conversation - human takeover only ever suppresses
+          // the AUTOMATED REPLY below, never this.
           await supabaseAdmin.from("conversation_messages").insert({
             conversation_id: conversation.id,
             user_id: conversation.user_id,
@@ -116,11 +118,18 @@ export const Route = createFileRoute("/api/telnyx/sms-inbound")({
             sent_at: now,
           });
 
-          // Update status to replied
           await supabaseAdmin
             .from("conversations")
             .update({ status: "replied", last_message_at: now })
             .eq("id", conversation.id);
+
+          // A human already has this conversation - nothing below this
+          // point (quota checks, the AI call, the auto-reply send) should
+          // run at all. The owner's manual composer is the only reply path
+          // now, until they release it back to automation.
+          if (conversation.ai_paused) {
+            return ACK();
+          }
 
           // Get conversation history
           const { data: history } = await supabaseAdmin
@@ -170,6 +179,32 @@ export const Route = createFileRoute("/api/telnyx/sms-inbound")({
               conversationHistory,
             );
             if (reply) aiReply = reply;
+          }
+
+          // The AI call above can take a few seconds - the stale ai_paused
+          // value on `conversation` (read once, before any of this ran)
+          // isn't good enough for that race window, so this atomically
+          // claims the right to send: the WHERE clause only matches (and
+          // only then does the write happen) if ai_paused is still false at
+          // the moment Postgres evaluates it, closing the plain
+          // check-then-act gap a separate SELECT would leave. If the owner's
+          // "Take over" UPDATE commits first, this matches zero rows and the
+          // automated reply is dropped entirely - never inserted, never
+          // sent. This doesn't cover every conceivable race (the actual
+          // Telnyx HTTP call a few lines below still can't be made atomic
+          // with this database write - a takeover landing in that
+          // last, sub-second gap could still cross with an already-claimed
+          // send), so the model here is "close the wide window a fresh
+          // re-check leaves open," not "provably impossible to race."
+          const { data: claimed } = await supabaseAdmin
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("id", conversation.id)
+            .eq("ai_paused", false)
+            .select("id")
+            .maybeSingle();
+          if (!claimed) {
+            return ACK();
           }
 
           // Save AI reply
