@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PhoneMissed, Clock, CalendarDays, Star, Users, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/coach")({
   component: CoachPage,
@@ -37,11 +39,28 @@ const CARD_ICON: Record<string, typeof PhoneMissed> = {
   network_requests: Users,
 };
 
-const SEVERITY_COLOR: Record<CoachCardSeverity, string> = {
-  urgent: "var(--destructive)",
-  attention: "var(--warning)",
-  info: "var(--hd-primary-2)",
-  positive: "var(--success)",
+// Severity is always shown as an icon color plus this text label together -
+// never color alone, since color blindness and grayscale printing of an
+// emailed brief both make color-only status unreadable.
+const SEVERITY_META: Record<
+  CoachCardSeverity,
+  { label: string; iconBg: string; iconColor: string }
+> = {
+  urgent: { label: "Urgent", iconBg: "bg-destructive/10", iconColor: "text-destructive" },
+  attention: {
+    label: "Needs follow-up",
+    iconBg: "bg-[var(--warning)]/15",
+    iconColor: "text-[var(--warning)]",
+  },
+  info: { label: "Today", iconBg: "bg-accent", iconColor: "text-foreground" },
+  positive: { label: "Opportunity", iconBg: "bg-primary/10", iconColor: "text-primary" },
+};
+
+const DELIVERY_STATUS_CLASS: Record<string, string> = {
+  sent: "bg-primary/10 text-primary",
+  failed: "bg-destructive/10 text-destructive",
+  skipped: "bg-accent text-muted-foreground",
+  pending: "bg-accent text-muted-foreground",
 };
 
 function greeting(): string {
@@ -68,7 +87,6 @@ function CoachPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<BriefHistoryRow[]>([]);
-  const { step, delay } = useMountReveal();
 
   useEffect(() => {
     loadBrief();
@@ -149,118 +167,139 @@ function CoachPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <div className={step} style={delay(0)}>
-        <h1 className="text-2xl font-bold text-[var(--hd-fg)]">
-          {greeting()}
-          {businessName ? `, ${businessName}` : ""}.
-        </h1>
-        <p className="text-[var(--hd-muted)] mt-1">Here's what deserves your attention today.</p>
-      </div>
-
-      <div className="mt-8 space-y-3">
-        {loading && (
-          <div className="rounded-xl border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-md p-6 text-[var(--hd-muted)] text-sm">
-            Loading today's brief...
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="rounded-xl border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-md p-6">
-            <p className="text-sm text-[var(--destructive)]">{error}</p>
-            <button
-              onClick={loadBrief}
-              className="mt-3 text-sm font-medium text-[var(--hd-primary-2)] hover:underline"
-            >
-              Try again
-            </button>
-          </div>
-        )}
-
-        {!loading && !error && cards.length === 0 && (
-          <div className="rounded-xl border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-md p-8 text-center">
-            <CheckCircle2 className="h-8 w-8 mx-auto text-[var(--success)]" />
-            <p className="mt-3 text-[var(--hd-fg)] font-medium">You're caught up.</p>
-            <p className="text-sm text-[var(--hd-muted)] mt-1">
-              Nothing needs your attention right now.
-            </p>
-          </div>
-        )}
-
-        {!loading &&
-          !error &&
-          cards.map((card, i) => {
-            const Icon = CARD_ICON[card.id] || Clock;
-            return (
-              <div
-                key={card.id}
-                className={`rounded-xl border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-md p-5 flex items-start gap-4 ${step}`}
-                style={delay(i + 1)}
-              >
-                <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{
-                    background: `color-mix(in oklab, ${SEVERITY_COLOR[card.severity]} 15%, transparent)`,
-                  }}
-                >
-                  <Icon className="h-4 w-4" style={{ color: SEVERITY_COLOR[card.severity] }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[var(--hd-fg)]">{card.title}</p>
-                  <p className="text-sm text-[var(--hd-muted)] mt-0.5">{card.detail}</p>
-                </div>
-                <Link
-                  to={card.actionHref}
-                  className="shrink-0 text-sm font-medium px-3 py-1.5 rounded-lg border border-[var(--hd-border)] text-[var(--hd-fg)] hover:bg-white/[0.06] transition-colors"
-                >
-                  {card.actionLabel}
-                </Link>
-              </div>
-            );
-          })}
-      </div>
-
-      {history.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-sm font-semibold text-[var(--hd-muted)] uppercase tracking-wide">
-            Brief history
-          </h2>
-          <div className="mt-3 rounded-xl border border-[var(--hd-border)] bg-[var(--hd-glass)] backdrop-blur-md divide-y divide-[var(--hd-border)]">
-            {history.map((row) => (
-              <div key={row.id} className="p-4 flex items-center justify-between gap-4 text-sm">
-                <span className="text-[var(--hd-fg)]">{formatBriefDate(row.brief_date)}</span>
-                <span className="text-[var(--hd-muted)]">
-                  {Array.isArray(row.brief_payload) ? row.brief_payload.length : 0} item
-                  {Array.isArray(row.brief_payload) && row.brief_payload.length === 1 ? "" : "s"}
-                </span>
-                <span className="text-[var(--hd-muted)] capitalize">{row.delivery_method}</span>
-                <span
-                  className="text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{
-                    background:
-                      row.delivery_status === "sent"
-                        ? "color-mix(in oklab, var(--success) 15%, transparent)"
-                        : row.delivery_status === "failed"
-                          ? "color-mix(in oklab, var(--destructive) 15%, transparent)"
-                          : "var(--hd-glass-strong)",
-                    color:
-                      row.delivery_status === "sent"
-                        ? "var(--success)"
-                        : row.delivery_status === "failed"
-                          ? "var(--destructive)"
-                          : "var(--hd-muted)",
-                  }}
-                >
-                  {row.delivery_status}
-                </span>
-                <span className="text-[var(--hd-muted)]">
-                  {row.opened_at ? "Opened" : "Not opened"}
-                </span>
-              </div>
-            ))}
-          </div>
+    <div className="lv-light min-h-full bg-background">
+      <div className="max-w-[720px] mx-auto px-4 md:px-8 py-6 md:py-8">
+        <div className="mb-1.5">
+          <h1 className="lv-page-title text-foreground">
+            {greeting()}
+            {businessName ? `, ${businessName}` : ""}.
+          </h1>
+          <p className="lv-body text-muted-foreground mt-1">
+            Here's what deserves your attention today.
+          </p>
         </div>
-      )}
+        <p className="lv-meta text-muted-foreground mb-6">
+          Coach checks missed calls, open estimates, today's schedule, and completed jobs that
+          haven't gotten a review request. For a live, item-by-item list, see{" "}
+          <Link to="/app" className="text-primary underline underline-offset-2">
+            Overview
+          </Link>
+          .
+        </p>
+
+        <div className="space-y-2.5">
+          {loading && (
+            <div className="space-y-2.5">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-[76px] w-full rounded-md" />
+              ))}
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+              <p className="lv-label text-destructive">Couldn't load today's brief</p>
+              <p className="lv-body text-foreground mt-0.5">{error}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2.5 min-h-[44px]"
+                onClick={loadBrief}
+              >
+                Try again
+              </Button>
+            </div>
+          )}
+
+          {!loading && !error && cards.length === 0 && (
+            <div className="rounded-md border border-border py-12 px-6 text-center">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-sm bg-accent text-primary">
+                <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <p className="lv-body text-foreground font-medium">You're caught up</p>
+              <p className="lv-meta text-muted-foreground mt-1">
+                Nothing needs your attention right now.
+              </p>
+            </div>
+          )}
+
+          {!loading &&
+            !error &&
+            cards.map((card) => {
+              const Icon = CARD_ICON[card.id] || Clock;
+              const meta = SEVERITY_META[card.severity];
+              return (
+                <div
+                  key={card.id}
+                  className="rounded-md border border-border bg-card p-4 md:p-5 flex items-start gap-3.5"
+                >
+                  <div
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-sm",
+                      meta.iconBg,
+                    )}
+                  >
+                    <Icon className={cn("h-4 w-4", meta.iconColor)} aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <p className="lv-body text-foreground font-medium">{card.title}</p>
+                      <span
+                        className={cn(
+                          "lv-meta font-semibold px-1.5 py-0.5 rounded-sm",
+                          meta.iconBg,
+                          meta.iconColor,
+                        )}
+                      >
+                        {meta.label}
+                      </span>
+                    </div>
+                    <p className="lv-meta text-muted-foreground">{card.detail}</p>
+                  </div>
+                  <Button asChild variant="outline" size="sm" className="shrink-0 min-h-[44px]">
+                    <Link to={card.actionHref}>{card.actionLabel}</Link>
+                  </Button>
+                </div>
+              );
+            })}
+        </div>
+
+        {history.length > 0 && (
+          <div className="mt-10">
+            <h2 className="lv-label text-muted-foreground uppercase tracking-wide">
+              Brief history
+            </h2>
+            <div className="mt-2.5 rounded-md border border-border divide-y divide-border overflow-x-auto">
+              {history.map((row) => (
+                <div
+                  key={row.id}
+                  className="p-3.5 flex items-center justify-between gap-3 flex-wrap lv-meta"
+                >
+                  <span className="text-foreground font-medium">
+                    {formatBriefDate(row.brief_date)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {Array.isArray(row.brief_payload) ? row.brief_payload.length : 0} item
+                    {Array.isArray(row.brief_payload) && row.brief_payload.length === 1 ? "" : "s"}
+                  </span>
+                  <span className="text-muted-foreground capitalize">{row.delivery_method}</span>
+                  <span
+                    className={cn(
+                      "font-semibold px-2 py-0.5 rounded-sm",
+                      DELIVERY_STATUS_CLASS[row.delivery_status] || DELIVERY_STATUS_CLASS.pending,
+                    )}
+                  >
+                    {row.delivery_status}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {row.opened_at ? "Opened" : "Not opened"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
