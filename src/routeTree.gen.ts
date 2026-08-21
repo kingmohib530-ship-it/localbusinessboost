@@ -62,6 +62,7 @@ import { Route as AuthenticatedAppVerificationRouteImport } from './routes/_auth
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authenticated/app.reputation'
 import { Route as AuthenticatedAppReceptionistRouteImport } from './routes/_authenticated/app.receptionist'
+import { Route as AuthenticatedAppQuotesRouteImport } from './routes/_authenticated/app.quotes'
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
 import { Route as AuthenticatedAppInboxRouteImport } from './routes/_authenticated/app.inbox'
 import { Route as AuthenticatedAppCoachRouteImport } from './routes/_authenticated/app.coach'
@@ -351,6 +352,11 @@ const AuthenticatedAppReceptionistRoute =
     path: '/receptionist',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppQuotesRoute = AuthenticatedAppQuotesRouteImport.update({
+  id: '/quotes',
+  path: '/quotes',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppLeadsRoute = AuthenticatedAppLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -453,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/app/coach': typeof AuthenticatedAppCoachRoute
   '/app/inbox': typeof AuthenticatedAppInboxRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
+  '/app/quotes': typeof AuthenticatedAppQuotesRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -518,6 +525,7 @@ export interface FileRoutesByTo {
   '/app/coach': typeof AuthenticatedAppCoachRoute
   '/app/inbox': typeof AuthenticatedAppInboxRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
+  '/app/quotes': typeof AuthenticatedAppQuotesRoute
   '/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/app/reputation': typeof AuthenticatedAppReputationRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -586,6 +594,7 @@ export interface FileRoutesById {
   '/_authenticated/app/coach': typeof AuthenticatedAppCoachRoute
   '/_authenticated/app/inbox': typeof AuthenticatedAppInboxRoute
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
+  '/_authenticated/app/quotes': typeof AuthenticatedAppQuotesRoute
   '/_authenticated/app/receptionist': typeof AuthenticatedAppReceptionistRoute
   '/_authenticated/app/reputation': typeof AuthenticatedAppReputationRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -654,6 +663,7 @@ export interface FileRouteTypes {
     | '/app/coach'
     | '/app/inbox'
     | '/app/leads'
+    | '/app/quotes'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
@@ -719,6 +729,7 @@ export interface FileRouteTypes {
     | '/app/coach'
     | '/app/inbox'
     | '/app/leads'
+    | '/app/quotes'
     | '/app/receptionist'
     | '/app/reputation'
     | '/app/settings'
@@ -786,6 +797,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/coach'
     | '/_authenticated/app/inbox'
     | '/_authenticated/app/leads'
+    | '/_authenticated/app/quotes'
     | '/_authenticated/app/receptionist'
     | '/_authenticated/app/reputation'
     | '/_authenticated/app/settings'
@@ -1239,6 +1251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppReceptionistRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/quotes': {
+      id: '/_authenticated/app/quotes'
+      path: '/quotes'
+      fullPath: '/app/quotes'
+      preLoaderRoute: typeof AuthenticatedAppQuotesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/leads': {
       id: '/_authenticated/app/leads'
       path: '/leads'
@@ -1349,6 +1368,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppCoachRoute: typeof AuthenticatedAppCoachRoute
   AuthenticatedAppInboxRoute: typeof AuthenticatedAppInboxRoute
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
+  AuthenticatedAppQuotesRoute: typeof AuthenticatedAppQuotesRoute
   AuthenticatedAppReceptionistRoute: typeof AuthenticatedAppReceptionistRoute
   AuthenticatedAppReputationRoute: typeof AuthenticatedAppReputationRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -1366,6 +1386,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppCoachRoute: AuthenticatedAppCoachRoute,
   AuthenticatedAppInboxRoute: AuthenticatedAppInboxRoute,
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
+  AuthenticatedAppQuotesRoute: AuthenticatedAppQuotesRoute,
   AuthenticatedAppReceptionistRoute: AuthenticatedAppReceptionistRoute,
   AuthenticatedAppReputationRoute: AuthenticatedAppReputationRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
