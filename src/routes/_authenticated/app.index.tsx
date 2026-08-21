@@ -154,6 +154,52 @@ interface Opportunity {
   actionHref: string;
   since: string;
   attribution: AttributionLevel;
+  // Business Memory V1 (Slice 9/10) secondary context - only ever set from
+  // quote_follow_ups.quoted_price, never appointments.estimated_value (see
+  // business-memory.server.ts: the two answer different questions and
+  // shouldn't be mixed). Null for any opportunity not built directly from a
+  // quote row, and for a quote-derived one whose deviation from this
+  // business's own typical quote didn't clear the noise threshold.
+  quoteMemoryNote: string | null;
+}
+
+// Business Memory's typicalQuoteValue only - the one signal this slice
+// reuses (see src/lib/business-memory.server.ts). Deliberately not the
+// full BusinessMemory shape: Overview has no use for commonService,
+// bookingsBySource, or typicalTimeToBookMinutes, and declaring only what's
+// consumed keeps it obvious this slice reused Slice 9's aggregation rather
+// than recomputing anything client-side.
+interface BusinessMemoryQuoteValue {
+  typicalQuoteValue: { median: number; sampleSize: number } | null;
+}
+
+// A large enough gap to be a genuinely notable pattern rather than routine
+// quote-to-quote variance (home-services quotes for the same business can
+// legitimately range from a small diagnostic to a full install). 30% keeps
+// a $1,550 quote silent against a $1,525 median while still surfacing a
+// quote that's meaningfully out of this business's usual range.
+const QUOTE_DEVIATION_THRESHOLD_PCT = 30;
+
+/**
+ * Factual, non-predictive comparison of one quote against this business's
+ * own median known quote - never a claim about likelihood to close, never
+ * an adjective ("expensive", "risky"), just the calculated percentage.
+ * Returns null below the noise threshold or when either side of the
+ * comparison isn't real (no quote value, or Business Memory hasn't cleared
+ * its own minimum sample size for this business yet).
+ */
+function quoteValueNote(
+  quotedPrice: number | null,
+  typicalQuoteValue: BusinessMemoryQuoteValue["typicalQuoteValue"],
+): string | null {
+  if (quotedPrice === null || !typicalQuoteValue || typicalQuoteValue.median <= 0) return null;
+  const pct = Math.round(
+    ((quotedPrice - typicalQuoteValue.median) / typicalQuoteValue.median) * 100,
+  );
+  if (Math.abs(pct) < QUOTE_DEVIATION_THRESHOLD_PCT) return null;
+  return pct > 0
+    ? `${pct}% above your typical known quote`
+    : `${Math.abs(pct)}% below your typical known quote`;
 }
 
 const OPPORTUNITY_LIMIT = 8;
@@ -221,6 +267,10 @@ function appointmentToOpportunity(
     actionHref: "/app/jobs",
     since: a.scheduled_at,
     attribution,
+    // An appointment's value is estimated_value, a different field from
+    // the quote history Business Memory's median is built from - never
+    // carried forward here (see the Opportunity.quoteMemoryNote comment).
+    quoteMemoryNote: null,
   };
 }
 
@@ -288,6 +338,7 @@ function Overview() {
   const [error, setError] = useState("");
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [showAllNeedsYou, setShowAllNeedsYou] = useState(false);
+  const [businessMemory, setBusinessMemory] = useState<BusinessMemoryQuoteValue | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -481,6 +532,30 @@ function Overview() {
     load();
   }, []);
 
+  // Business Memory (Slice 9) reused as secondary opportunity context - a
+  // separate, isolated fetch of the same endpoint Coach already calls, not
+  // duplicated aggregation logic. Observational only: fails silently with
+  // no error banner, since a missing memory note is never worth surfacing
+  // a second error state for on top of the main Overview load above.
+  useEffect(() => {
+    async function loadBusinessMemory() {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) return;
+        const res = await fetch("/api/coach/business-memory", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) setBusinessMemory(data.memory ?? null);
+        else console.error("[overview] business memory load failed", data.error);
+      } catch (err) {
+        console.error("[overview] business memory load failed", err);
+      }
+    }
+    loadBusinessMemory();
+  }, []);
+
   // Needs You: combined across three item types, ranked by business
   // urgency rather than recency. Type first (a customer actively waiting
   // on a reply outranks an aging quote, which outranks a fresh unworked
@@ -593,6 +668,14 @@ function Overview() {
       const quoteAttribution: AttributionLevel = quotesWithSentStep.has(q.id)
         ? "automation_touched"
         : "lanavix_assisted";
+      // Slice 10: reuses Business Memory's typicalQuoteValue, the one
+      // signal computed from the same field (quote_follow_ups.quoted_price)
+      // this opportunity's own value already comes from - never mixed with
+      // an appointment's estimated_value.
+      const quoteMemoryNote = quoteValueNote(
+        q.quoted_price,
+        businessMemory?.typicalQuoteValue ?? null,
+      );
 
       if (q.status === "active") {
         const working = quotesWithPendingStep.has(q.id);
@@ -608,6 +691,7 @@ function Overview() {
           actionHref: "/app/quotes",
           since: q.quoted_at,
           attribution: quoteAttribution,
+          quoteMemoryNote,
         });
       } else if (q.status === "cancelled" || q.status === "completed") {
         list.push({
@@ -620,6 +704,7 @@ function Overview() {
           actionHref: "/app/quotes",
           since: q.quoted_at,
           attribution: quoteAttribution,
+          quoteMemoryNote,
         });
       } else if (q.status === "booked") {
         // Slice 7: prefer the real conversation_id FK when the appointment
@@ -661,6 +746,7 @@ function Overview() {
             actionHref: "/app/quotes",
             since: q.quoted_at,
             attribution: quoteAttribution,
+            quoteMemoryNote,
           });
         }
       }
@@ -685,6 +771,8 @@ function Overview() {
         actionHref: "/app/inbox",
         since: last.sent_at,
         attribution: "lanavix_assisted",
+        // No quote exists yet for a bare conversation - nothing to compare.
+        quoteMemoryNote: null,
       });
     }
 
@@ -710,6 +798,7 @@ function Overview() {
     quotesWithSentStep,
     opportunityAppointments,
     reviewRequestPhones,
+    businessMemory,
   ]);
 
   // Only ever a sum of real, non-null values already visible in the list
@@ -1172,6 +1261,11 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
         {showAttribution && (
           <p className="lv-meta text-muted-foreground/70 mt-0.5">
             {ATTRIBUTION_LABEL[opportunity.attribution]}
+          </p>
+        )}
+        {opportunity.quoteMemoryNote && (
+          <p className="lv-meta text-muted-foreground/70 mt-0.5">
+            Business pattern: {opportunity.quoteMemoryNote}
           </p>
         )}
       </div>
