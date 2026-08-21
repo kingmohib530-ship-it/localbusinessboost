@@ -1,6 +1,6 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { MessageSquare, UserPlus, FileClock, ArrowRight } from "lucide-react";
+import { UserPlus, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -359,31 +359,23 @@ function appointmentToOpportunity(
   };
 }
 
-type NeedsYouItem =
-  | {
-      kind: "unanswered";
-      id: string;
-      conversationId: string;
-      customerName: string;
-      customerIdentifier: string;
-      channel: string;
-      since: string;
-    }
-  | { kind: "lead"; id: string; businessName: string; since: string }
-  | {
-      kind: "quote";
-      id: string;
-      conversationId: string;
-      customerName: string;
-      customerIdentifier: string;
-      serviceType: string | null;
-      quotedPrice: number | null;
-      since: string;
-    };
+// Slice 14: new leads (outbound prospecting via the Lead Generator) are a
+// genuinely different signal from an opportunity's needs_you state - a
+// lead isn't a customer conversation lifecycle, so it can't be part of
+// the Action Queue's eligibility model. Preserved as its own small,
+// separate block instead of folded into the queue (see the Slice 14
+// report for why unanswered conversations and stale quotes - the two
+// other former "Needs You" item kinds - were removed from here:
+// they're now sourced directly from Opportunity Intelligence's own
+// needs_you state instead of a second, parallel computation).
+interface NewLeadItem {
+  id: string;
+  businessName: string;
+  since: string;
+}
 
-const NEEDS_YOU_LIMIT = 3;
-/** Looks like a phone number (E.164 or close enough) - safe to offer a tel: link for. */
-const PHONE_LIKE = /^\+?[\d\s().-]{7,}$/;
+const NEW_LEADS_LIMIT = 3;
+const ACTION_QUEUE_LIMIT = 5;
 
 /** Most recent Monday 00:00 local time. */
 function startOfWeek(from: Date): Date {
@@ -422,7 +414,7 @@ function Overview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const [showAllNeedsYou, setShowAllNeedsYou] = useState(false);
+  const [showAllNewLeads, setShowAllNewLeads] = useState(false);
   const [businessMemory, setBusinessMemory] = useState<BusinessMemorySignals | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -641,75 +633,24 @@ function Overview() {
     loadBusinessMemory();
   }, []);
 
-  // Needs You: combined across three item types, ranked by business
-  // urgency rather than recency. Type first (a customer actively waiting
-  // on a reply outranks an aging quote, which outranks a fresh unworked
-  // lead), then oldest-first within each type - see the report for why
-  // this ordering, not a single shared "urgency score" across unrelated
-  // tables.
-  const needsYouAll = useMemo<NeedsYouItem[]>(() => {
-    const latestByConversation = new Map<string, MessageRow>();
-    for (const m of messages) {
-      if (!m.conversation_id || !m.sent_at) continue;
-      if (!latestByConversation.has(m.conversation_id))
-        latestByConversation.set(m.conversation_id, m);
-    }
-    const conversationById = new Map(conversations.map((c) => [c.id, c]));
-
-    const unanswered: NeedsYouItem[] = conversations
-      .filter((c) => {
-        const last = latestByConversation.get(c.id);
-        return last?.direction === "inbound";
-      })
-      .map((c) => ({
-        kind: "unanswered" as const,
-        id: `unanswered-${c.id}`,
-        conversationId: c.id,
-        customerName: c.customer_name || "Unknown caller",
-        customerIdentifier: c.customer_identifier,
-        channel: c.channel,
-        since: latestByConversation.get(c.id)?.sent_at || new Date().toISOString(),
-      }))
-      .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
-
-    // A quote only needs a human once the real Day 1/5/14 automated
-    // sequence has nothing left pending for it - same signal Quotes
-    // itself uses (quote_follow_up_steps, not the quote's raw age), so
-    // this list and the Quotes page never disagree about which quotes
-    // still need a person.
-    const staleQuotes: NeedsYouItem[] = quotes
-      .filter((q) => !quotesWithPendingStep.has(q.id))
-      .map((q) => {
-        const convo = conversationById.get(q.conversation_id);
-        return {
-          kind: "quote" as const,
-          id: `quote-${q.id}`,
-          conversationId: q.conversation_id,
-          customerName: convo?.customer_name || "Unknown customer",
-          customerIdentifier: convo?.customer_identifier || "",
-          serviceType: q.service_type,
-          quotedPrice: q.quoted_price,
-          since: q.quoted_at,
-        };
-      })
-      .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
-
-    const newLeads: NeedsYouItem[] = leads
+  // New leads (Lead Generator prospecting) - a separate signal from
+  // Opportunity Intelligence entirely (see the NewLeadItem comment above),
+  // preserved unchanged from the old Needs You section's own lead
+  // handling: oldest-first.
+  const newLeads = useMemo<NewLeadItem[]>(() => {
+    return [...leads]
       .map((l) => ({
-        kind: "lead" as const,
         id: `lead-${l.id}`,
         businessName: l.business_name || "Unnamed prospect",
         since: l.created_at,
       }))
       .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
+  }, [leads]);
 
-    return [...unanswered, ...staleQuotes, ...newLeads];
-  }, [conversations, messages, quotes, leads, quotesWithPendingStep]);
-
-  const needsYouVisible = needsYouAll.filter((item) => !dismissed.has(item.id));
-  const needsYouShown = showAllNeedsYou
-    ? needsYouVisible
-    : needsYouVisible.slice(0, NEEDS_YOU_LIMIT);
+  const newLeadsVisible = newLeads.filter((item) => !dismissed.has(item.id));
+  const newLeadsShown = showAllNewLeads
+    ? newLeadsVisible
+    : newLeadsVisible.slice(0, NEW_LEADS_LIMIT);
 
   // Opportunity Intelligence: one row per real customer lifecycle, built
   // with precedence so the same underlying opportunity never shows up
@@ -935,6 +876,41 @@ function Overview() {
     businessMemory,
   ]);
 
+  // Action Queue (Slice 14): the real human-required subset of Opportunity
+  // Intelligence - needs_you only, never working/booked/won/lost (Lanavix-
+  // handled or resolved items never belong in a human's action list).
+  // Business Memory can only add context to an item already here (via
+  // Decision Support's decisionExplanation); it never makes an opportunity
+  // eligible on its own.
+  //
+  // Ordered unanswered conversations first, then exhausted quotes, oldest
+  // waiting first within each - the same ordering the old Needs You
+  // section used for these same two item types (see its removed comment),
+  // deliberately not the newest-first order `opportunities` itself uses
+  // above, which serves a different purpose (overall lifecycle recency,
+  // not human urgency).
+  const actionQueueAll = useMemo(() => {
+    const categoryRank = (o: Opportunity) => (o.actionHref === "/app/inbox" ? 0 : 1);
+    return opportunities
+      .filter((o) => o.state === "needs_you")
+      .sort((a, b) => {
+        const rankDiff = categoryRank(a) - categoryRank(b);
+        if (rankDiff !== 0) return rankDiff;
+        return new Date(a.since).getTime() - new Date(b.since).getTime();
+      });
+  }, [opportunities]);
+  const actionQueueShown = actionQueueAll.slice(0, ACTION_QUEUE_LIMIT);
+  const hiddenActionQueueItems = actionQueueAll.slice(ACTION_QUEUE_LIMIT);
+  const hasHiddenInboxItems = hiddenActionQueueItems.some((o) => o.actionHref === "/app/inbox");
+  const hasHiddenQuoteItems = hiddenActionQueueItems.some((o) => o.actionHref === "/app/quotes");
+  // Real count only (Phase 8) - never shown unless Lanavix is genuinely
+  // still working on at least one opportunity.
+  const workingOpportunityCount = opportunities.filter((o) => o.state === "working").length;
+  // Slice 14: the Opportunities section below renders this instead of the
+  // full `opportunities` list, so a needs_you item is never shown
+  // prominently twice on the same page (see the Slice 14 report).
+  const opportunitiesBelowQueue = opportunities.filter((o) => o.state !== "needs_you");
+
   // Only ever a sum of real, non-null values already visible in the list
   // above - never an estimate for opportunities where no price/value was
   // ever recorded, and never counting won/lost work as "currently" open.
@@ -1010,11 +986,11 @@ function Overview() {
 
   const name = profile?.business_name || profile?.full_name || null;
   const isFirstRun = !loading && !error && !hasAnyHistory;
-  const isCaughtUp = !loading && !error && hasAnyHistory && needsYouVisible.length === 0;
-  // A load error can leave needsYouVisible empty for a reason that has
+  const isQueueEmpty = !loading && !error && hasAnyHistory && actionQueueAll.length === 0;
+  // A load error can leave actionQueueAll empty for a reason that has
   // nothing to do with being caught up - don't claim confidently that
   // nothing needs attention when we couldn't actually check.
-  const isUncertainDueToError = !loading && error && needsYouVisible.length === 0;
+  const isQueueUncertainDueToError = !loading && error && actionQueueAll.length === 0;
 
   return (
     <div className="lv-light min-h-full bg-background">
@@ -1035,27 +1011,30 @@ function Overview() {
           </div>
         )}
 
-        {/* Needs You */}
-        <section aria-labelledby="needs-you-heading" className="mb-8">
+        {/* Action Queue (Slice 14) - real, human-required items only. See
+            the Slice 14 report for why this replaced the old "Needs You"
+            section's unanswered-conversation and stale-quote handling
+            rather than sitting alongside it as a second list. */}
+        <section aria-labelledby="action-queue-heading" className="mb-8">
           {loading ? (
-            <NeedsYouSkeleton />
+            <ActionQueueSkeleton />
           ) : isFirstRun ? (
             <FirstRunState />
           ) : (
             <>
               <div className="flex items-baseline justify-between mb-3 gap-3">
-                <h2 id="needs-you-heading" className="lv-section text-foreground">
-                  Needs you
+                <h2 id="action-queue-heading" className="lv-section text-foreground">
+                  Action queue
                 </h2>
-                {needsYouVisible.length > 0 && (
+                {actionQueueAll.length > 0 && (
                   <span className="lv-meta text-muted-foreground whitespace-nowrap">
-                    {needsYouShown.length} of {needsYouVisible.length} open items, by urgency
+                    {actionQueueShown.length} of {actionQueueAll.length} need you
                   </span>
                 )}
               </div>
-              {isCaughtUp ? (
-                <CaughtUpState />
-              ) : isUncertainDueToError ? (
+              {isQueueEmpty ? (
+                <ActionQueueEmptyState workingCount={workingOpportunityCount} />
+              ) : isQueueUncertainDueToError ? (
                 <div className="rounded-md border border-border bg-card px-4 py-6 text-center">
                   <p className="lv-body text-foreground font-medium">
                     Couldn't check for open items
@@ -1067,30 +1046,71 @@ function Overview() {
               ) : (
                 <>
                   <ul className="space-y-2">
-                    {needsYouShown.map((item) => (
-                      <NeedsYouCard
-                        key={item.id}
-                        item={item}
-                        onDismiss={() => dismiss(item.id)}
-                        reducedMotion={reducedMotion}
-                      />
+                    {actionQueueShown.map((o) => (
+                      <OpportunityCard key={o.id} opportunity={o} />
                     ))}
                   </ul>
-                  {!showAllNeedsYou && needsYouVisible.length > NEEDS_YOU_LIMIT && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllNeedsYou(true)}
-                      className="inline-flex items-center gap-1 lv-label text-primary hover:underline mt-3"
-                    >
-                      View all {needsYouVisible.length}{" "}
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
+                  {(hasHiddenInboxItems || hasHiddenQuoteItems) && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+                      {hasHiddenInboxItems && (
+                        <Link
+                          to="/app/inbox"
+                          className="inline-flex items-center gap-1 lv-label text-primary hover:underline"
+                        >
+                          View Inbox <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                        </Link>
+                      )}
+                      {hasHiddenQuoteItems && (
+                        <Link
+                          to="/app/quotes"
+                          className="inline-flex items-center gap-1 lv-label text-primary hover:underline"
+                        >
+                          View Quotes <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                        </Link>
+                      )}
+                    </div>
                   )}
                 </>
               )}
             </>
           )}
         </section>
+
+        {/* New leads - a separate signal from the Action Queue (outbound
+            prospecting, not a customer lifecycle) - only shown when there
+            are real ones, never as an empty state of its own. */}
+        {!loading && !isFirstRun && newLeadsVisible.length > 0 && (
+          <section aria-labelledby="new-leads-heading" className="mb-8">
+            <div className="flex items-baseline justify-between mb-3 gap-3">
+              <h2 id="new-leads-heading" className="lv-section text-foreground">
+                New leads
+              </h2>
+              <span className="lv-meta text-muted-foreground whitespace-nowrap">
+                {newLeadsShown.length} of {newLeadsVisible.length}
+              </span>
+            </div>
+            <ul className="space-y-2">
+              {newLeadsShown.map((item) => (
+                <NewLeadCard
+                  key={item.id}
+                  item={item}
+                  onDismiss={() => dismiss(item.id)}
+                  reducedMotion={reducedMotion}
+                />
+              ))}
+            </ul>
+            {!showAllNewLeads && newLeadsVisible.length > NEW_LEADS_LIMIT && (
+              <button
+                type="button"
+                onClick={() => setShowAllNewLeads(true)}
+                className="inline-flex items-center gap-1 lv-label text-primary hover:underline mt-3"
+              >
+                View all {newLeadsVisible.length}{" "}
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            )}
+          </section>
+        )}
 
         {/* Today's schedule */}
         <section aria-labelledby="today-heading" className="mb-8">
@@ -1201,11 +1221,22 @@ function Overview() {
                     ` · $${attributionSummary.knownValue.toLocaleString()} known value`}
                 </p>
               )}
-              <ul className="space-y-2">
-                {opportunities.map((o) => (
-                  <OpportunityCard key={o.id} opportunity={o} />
-                ))}
-              </ul>
+              {/* Slice 14: needs_you opportunities are already visible in
+                  the Action Queue above - excluded here so the same item
+                  never appears twice as a prominent card on the same page.
+                  workingValue/attributionSummary above still read the full
+                  opportunities list, so those totals stay accurate. */}
+              {opportunitiesBelowQueue.length > 0 ? (
+                <ul className="space-y-2">
+                  {opportunitiesBelowQueue.map((o) => (
+                    <OpportunityCard key={o.id} opportunity={o} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="lv-meta text-muted-foreground">
+                  Every current opportunity needs your attention - see the queue above.
+                </p>
+              )}
             </>
           )}
         </section>
@@ -1214,12 +1245,12 @@ function Overview() {
   );
 }
 
-function NeedsYouCard({
+function NewLeadCard({
   item,
   onDismiss,
   reducedMotion,
 }: {
-  item: NeedsYouItem;
+  item: NewLeadItem;
   onDismiss: () => void;
   reducedMotion: boolean;
 }) {
@@ -1234,15 +1265,7 @@ function NeedsYouCard({
     window.setTimeout(onDismiss, 160);
   }
 
-  const {
-    icon: Icon,
-    title,
-    metaPrimary,
-    metaSecondary,
-    fullDetail,
-    status,
-    action,
-  } = describeItem(item);
+  const fullDetail = `New lead · found ${daysAgo(item.since)} ago`;
 
   return (
     <li
@@ -1256,30 +1279,24 @@ function NeedsYouCard({
     >
       <div className="flex items-start gap-3 rounded-md border border-border bg-card px-4 py-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent text-primary">
-          <Icon className="h-4 w-4" aria-hidden="true" />
+          <UserPlus className="h-4 w-4" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="lv-body text-foreground font-medium truncate" title={title}>
-            {title}
+          <p className="lv-body text-foreground font-medium truncate" title={item.businessName}>
+            {item.businessName}
           </p>
-          {/* metaPrimary (price/time - short and important) never shrinks;
-              only metaSecondary (the free-text tail) truncates, so a long
-              service description or channel name never eats into a dollar
-              amount or timestamp. */}
           <div className="flex items-center gap-2 min-w-0" title={fullDetail}>
-            <StatusDot status={status} className="shrink-0" />
+            <StatusDot status="new" className="shrink-0" />
             <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
-            {metaPrimary && (
-              <>
-                <span className="lv-meta text-foreground font-medium shrink-0">{metaPrimary}</span>
-                <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
-              </>
-            )}
-            <span className="lv-meta text-muted-foreground truncate">{metaSecondary}</span>
+            <span className="lv-meta text-muted-foreground truncate">
+              Found {daysAgo(item.since)} ago
+            </span>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          {action}
+          <Button asChild size="sm" variant="outline">
+            <Link to="/app/agents">View</Link>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -1293,68 +1310,6 @@ function NeedsYouCard({
       </div>
     </li>
   );
-}
-
-function describeItem(item: NeedsYouItem) {
-  if (item.kind === "unanswered") {
-    const isPhone = PHONE_LIKE.test(item.customerIdentifier);
-    const channelLabel = item.channel === "web_chat" ? "Web chat" : "Text";
-    return {
-      icon: MessageSquare,
-      title: item.customerName,
-      // StatusDot already says "Waiting on you" - the meta line only needs
-      // to add the concrete facts (how long, which channel), not repeat it.
-      metaPrimary: daysAgo(item.since),
-      metaSecondary: channelLabel,
-      fullDetail: `Waiting ${daysAgo(item.since)} for a reply · ${channelLabel}`,
-      status: "waiting_on_you" as const,
-      action:
-        item.channel === "web_chat" ? (
-          <Button asChild size="sm" variant="outline">
-            <Link to="/app/web-chat">View chat</Link>
-          </Button>
-        ) : isPhone ? (
-          <Button asChild size="sm" variant="outline">
-            <a href={`tel:${item.customerIdentifier}`}>Call back</a>
-          </Button>
-        ) : null,
-    };
-  }
-  if (item.kind === "quote") {
-    const isPhone = PHONE_LIKE.test(item.customerIdentifier);
-    const priceText = item.quotedPrice ? `$${item.quotedPrice.toLocaleString()}` : "Quote";
-    return {
-      icon: FileClock,
-      title: item.customerName,
-      // Price is the fact that matters most here and must never truncate -
-      // it gets its own non-shrinking slot instead of sharing the
-      // truncated tail with the service description.
-      metaPrimary: priceText,
-      metaSecondary: item.serviceType
-        ? `${item.serviceType} · ${daysAgo(item.since)} ago`
-        : `${daysAgo(item.since)} ago`,
-      fullDetail: `${priceText}${item.serviceType ? ` · ${item.serviceType}` : ""} · sent ${daysAgo(item.since)} ago, no reply`,
-      status: "stale" as const,
-      action: isPhone ? (
-        <Button asChild size="sm" variant="outline">
-          <a href={`tel:${item.customerIdentifier}`}>Follow up</a>
-        </Button>
-      ) : null,
-    };
-  }
-  return {
-    icon: UserPlus,
-    title: item.businessName,
-    metaPrimary: null,
-    metaSecondary: `Found ${daysAgo(item.since)} ago`,
-    fullDetail: `New lead · found ${daysAgo(item.since)} ago`,
-    status: "new" as const,
-    action: (
-      <Button asChild size="sm" variant="outline">
-        <Link to="/app/agents">View</Link>
-      </Button>
-    ),
-  };
 }
 
 function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
@@ -1454,7 +1409,7 @@ function ThisWeekTile({
   );
 }
 
-function NeedsYouSkeleton() {
+function ActionQueueSkeleton() {
   return (
     <div>
       <Skeleton className="h-5 w-40 mb-3" />
@@ -1477,11 +1432,20 @@ function ThisWeekSkeleton() {
   );
 }
 
-function CaughtUpState() {
+// Phase 8 (Slice 14): restrained, honest copy - the secondary line only
+// ever shows a real count of opportunities Lanavix is genuinely still
+// working on, never a fabricated "all clear" flourish.
+function ActionQueueEmptyState({ workingCount }: { workingCount: number }) {
   return (
     <div className="rounded-md border border-border bg-card px-4 py-6 text-center">
-      <p className="lv-body text-foreground font-medium">You're caught up</p>
-      <p className="lv-meta text-muted-foreground mt-1">Nothing needs your attention right now.</p>
+      <p className="lv-body text-foreground font-medium">
+        No actions need your attention right now.
+      </p>
+      {workingCount > 0 && (
+        <p className="lv-meta text-muted-foreground mt-1">
+          Lanavix is still working on {workingCount} opportunit{workingCount === 1 ? "y" : "ies"}.
+        </p>
+      )}
     </div>
   );
 }
