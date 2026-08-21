@@ -60,6 +60,10 @@ interface QuoteRow {
   quoted_at: string;
 }
 
+interface QuoteStepRow {
+  follow_up_id: string;
+}
+
 interface AppointmentRow {
   id: string;
   estimated_value: number | null;
@@ -125,6 +129,7 @@ function Overview() {
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
+  const [quotesWithPendingStep, setQuotesWithPendingStep] = useState<Set<string>>(new Set());
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<TodayAppointmentRow[]>([]);
   const [hasAnyHistory, setHasAnyHistory] = useState(true);
@@ -224,11 +229,34 @@ function Overview() {
           setError("Some of your dashboard data couldn't load. What did load is still accurate.");
         }
 
+        // Same real signal Quotes itself uses to decide open vs.
+        // needs-follow-up (quote_follow_up_steps, not the quote's raw
+        // age) - fetched as a second pass since it depends on which
+        // quote ids came back above. Only IDs are needed, so scope to
+        // status='pending' rather than pulling every step.
+        const activeQuoteIds = ((quoteData as QuoteRow[]) ?? []).map((q) => q.id);
+        let pendingStepQuoteIds = new Set<string>();
+        if (activeQuoteIds.length > 0) {
+          const { data: pendingStepData, error: pendingStepErr } = await supabase
+            .from("quote_follow_up_steps")
+            .select("follow_up_id")
+            .in("follow_up_id", activeQuoteIds)
+            .eq("status", "pending");
+          if (pendingStepErr) {
+            console.error("[overview] failed to load quote_follow_up_steps", pendingStepErr);
+          } else {
+            pendingStepQuoteIds = new Set(
+              ((pendingStepData as QuoteStepRow[]) ?? []).map((s) => s.follow_up_id),
+            );
+          }
+        }
+
         setProfile(profileData);
         setConversations((conversationData as ConversationRow[]) ?? []);
         setMessages((messageData as MessageRow[]) ?? []);
         setLeads((leadData as LeadRow[]) ?? []);
         setQuotes((quoteData as QuoteRow[]) ?? []);
+        setQuotesWithPendingStep(pendingStepQuoteIds);
         setAppointments((appointmentData as AppointmentRow[]) ?? []);
         setTodayAppointments((todayAppointmentData as TodayAppointmentRow[]) ?? []);
         setHasAnyHistory(
@@ -277,12 +305,13 @@ function Overview() {
       }))
       .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
 
-    // A quote only counts as "stale" past the day-1 automated nudge - a
-    // quote sent an hour ago isn't neglected yet, the follow-up sequence
-    // is still doing its job.
-    const STALE_QUOTE_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000;
+    // A quote only needs a human once the real Day 1/5/14 automated
+    // sequence has nothing left pending for it - same signal Quotes
+    // itself uses (quote_follow_up_steps, not the quote's raw age), so
+    // this list and the Quotes page never disagree about which quotes
+    // still need a person.
     const staleQuotes: NeedsYouItem[] = quotes
-      .filter((q) => Date.now() - new Date(q.quoted_at).getTime() >= STALE_QUOTE_THRESHOLD_MS)
+      .filter((q) => !quotesWithPendingStep.has(q.id))
       .map((q) => {
         const convo = conversationById.get(q.conversation_id);
         return {
@@ -308,7 +337,7 @@ function Overview() {
       .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
 
     return [...unanswered, ...staleQuotes, ...newLeads];
-  }, [conversations, messages, quotes, leads]);
+  }, [conversations, messages, quotes, leads, quotesWithPendingStep]);
 
   const needsYouVisible = needsYouAll.filter((item) => !dismissed.has(item.id));
   const needsYouShown = showAllNeedsYou

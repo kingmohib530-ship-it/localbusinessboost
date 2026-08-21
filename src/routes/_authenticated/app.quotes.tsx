@@ -142,6 +142,23 @@ function channelLabel(channel: string): string {
   return channel === "web_chat" ? "Web chat" : "Text";
 }
 
+// quote_follow_up_steps.scheduled_for is always a future timestamp for a
+// pending step, but timeFormat.ts's relativeTime() only measures time
+// already passed (Date.now() - iso) - using it here always landed in the
+// "under a minute" bucket and printed the next automated follow-up as
+// happening "just now" no matter how far off it actually was. Same fix
+// as Jobs' startsIn(), kept local rather than changing the shared
+// relativeTime(), which every other page here still uses correctly for
+// genuinely past timestamps.
+function startsIn(iso: string): string {
+  const minutes = Math.floor((new Date(iso).getTime() - Date.now()) / 60000);
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `in ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `in ${hours}h`;
+  return `in ${Math.floor(hours / 24)}d`;
+}
+
 function nextActionFor(q: QuoteComputed): string {
   if (q.bucket === "won") return q.bookedAt ? `Booked for ${formatDate(q.bookedAt)}` : "Booked";
   if (q.bucket === "lost") return "Marked lost";
@@ -152,7 +169,7 @@ function nextActionFor(q: QuoteComputed): string {
   }
   // open
   return q.nextStep
-    ? `Next automated follow-up ${relativeTime(q.nextStep.scheduled_for)}`
+    ? `Next automated follow-up ${startsIn(q.nextStep.scheduled_for)}`
     : "Follow-up in progress";
 }
 
