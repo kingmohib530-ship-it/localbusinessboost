@@ -28,8 +28,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutStartRouteImport } from './routes/checkout.start'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
-import { Route as ApiWorkflowRouteImport } from './routes/api/workflow'
-import { Route as ApiSaveAutomationRouteImport } from './routes/api/save-automation'
 import { Route as ApiReviewResponseRouteImport } from './routes/api/review-response'
 import { Route as ApiReviewRequestRouteImport } from './routes/api/review-request'
 import { Route as ApiReceptionistPreviewRouteImport } from './routes/api/receptionist-preview'
@@ -168,16 +166,6 @@ const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => AuthRoute,
-} as any)
-const ApiWorkflowRoute = ApiWorkflowRouteImport.update({
-  id: '/api/workflow',
-  path: '/api/workflow',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSaveAutomationRoute = ApiSaveAutomationRouteImport.update({
-  id: '/api/save-automation',
-  path: '/api/save-automation',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiReviewResponseRoute = ApiReviewResponseRouteImport.update({
   id: '/api/review-response',
@@ -442,8 +430,6 @@ export interface FileRoutesByFullPath {
   '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
-  '/api/save-automation': typeof ApiSaveAutomationRoute
-  '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
@@ -507,8 +493,6 @@ export interface FileRoutesByTo {
   '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
-  '/api/save-automation': typeof ApiSaveAutomationRoute
-  '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
@@ -575,8 +559,6 @@ export interface FileRoutesById {
   '/api/receptionist-preview': typeof ApiReceptionistPreviewRoute
   '/api/review-request': typeof ApiReviewRequestRoute
   '/api/review-response': typeof ApiReviewResponseRoute
-  '/api/save-automation': typeof ApiSaveAutomationRoute
-  '/api/workflow': typeof ApiWorkflowRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/checkout/start': typeof CheckoutStartRoute
@@ -643,8 +625,6 @@ export interface FileRouteTypes {
     | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
-    | '/api/save-automation'
-    | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
@@ -708,8 +688,6 @@ export interface FileRouteTypes {
     | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
-    | '/api/save-automation'
-    | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
@@ -775,8 +753,6 @@ export interface FileRouteTypes {
     | '/api/receptionist-preview'
     | '/api/review-request'
     | '/api/review-response'
-    | '/api/save-automation'
-    | '/api/workflow'
     | '/auth/reset-password'
     | '/checkout/return'
     | '/checkout/start'
@@ -841,8 +817,6 @@ export interface RootRouteChildren {
   ApiReceptionistPreviewRoute: typeof ApiReceptionistPreviewRoute
   ApiReviewRequestRoute: typeof ApiReviewRequestRoute
   ApiReviewResponseRoute: typeof ApiReviewResponseRoute
-  ApiSaveAutomationRoute: typeof ApiSaveAutomationRoute
-  ApiWorkflowRoute: typeof ApiWorkflowRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   CheckoutStartRoute: typeof CheckoutStartRoute
   ApiAccountDeleteRoute: typeof ApiAccountDeleteRoute
@@ -1000,20 +974,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/reset-password'
       preLoaderRoute: typeof AuthResetPasswordRouteImport
       parentRoute: typeof AuthRoute
-    }
-    '/api/workflow': {
-      id: '/api/workflow'
-      path: '/api/workflow'
-      fullPath: '/api/workflow'
-      preLoaderRoute: typeof ApiWorkflowRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/save-automation': {
-      id: '/api/save-automation'
-      path: '/api/save-automation'
-      fullPath: '/api/save-automation'
-      preLoaderRoute: typeof ApiSaveAutomationRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/review-response': {
       id: '/api/review-response'
@@ -1436,8 +1396,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiReceptionistPreviewRoute: ApiReceptionistPreviewRoute,
   ApiReviewRequestRoute: ApiReviewRequestRoute,
   ApiReviewResponseRoute: ApiReviewResponseRoute,
-  ApiSaveAutomationRoute: ApiSaveAutomationRoute,
-  ApiWorkflowRoute: ApiWorkflowRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   CheckoutStartRoute: CheckoutStartRoute,
   ApiAccountDeleteRoute: ApiAccountDeleteRoute,

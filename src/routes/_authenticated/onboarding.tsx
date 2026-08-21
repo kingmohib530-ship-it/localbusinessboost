@@ -601,7 +601,7 @@ function DoneStep({
       subtitle={
         connectedCount === 4
           ? "Google, your website, your phone, and your own facts are all in. Your AI receptionist is working from real information now, not guesses."
-          : "The rest you can finish anytime from Business Facts or Receptionist Setup - nothing here is locked."
+          : "The rest you can finish anytime from Receptionist → Knowledge - nothing here is locked."
       }
     >
       <div className="flex flex-col gap-2 mb-1">
@@ -612,8 +612,8 @@ function DoneStep({
       </div>
       <p className="lv-meta text-muted-foreground mt-2.5">
         {factCount > 0
-          ? `${factCount} fact${factCount === 1 ? "" : "s"} on file - review or edit them anytime in Business Facts.`
-          : "No facts on file yet - that's fine, add them anytime in Business Facts."}
+          ? `${factCount} fact${factCount === 1 ? "" : "s"} on file - review or edit them anytime in Receptionist → Knowledge.`
+          : "No facts on file yet - that's fine, add them anytime in Receptionist → Knowledge."}
       </p>
       <StepFooter>
         <Button
