@@ -107,7 +107,40 @@ interface OpportunityAppointmentRow {
   // appointment creation, null for manual Calendar appointments and any
   // appointment created before this column existed.
   conversation_id: string | null;
+  source: string;
 }
+
+// Attribution (Slice 8) - what Lanavix can honestly claim about an
+// opportunity, strictly in that order of evidence strength:
+//   unattributed        - no real conversation trail at all (manual, or a
+//                          historical/unlinkable row)
+//   lanavix_assisted    - a real Lanavix conversation is behind this job
+//                          (explicit conversation_id, or - for a row from
+//                          before that column existed - the channel itself
+//                          already proves it: source is inbound_sms or
+//                          web_chat, both only ever set by the automated
+//                          booking paths)
+//   automation_touched  - assisted, AND at least one Day 1/5/14 automated
+//                          follow-up step actually sent before the booking
+// This is evidence of participation, not a claim of causing the outcome -
+// automation_touched never implies Lanavix caused the booking, only that
+// it happened.
+type AttributionLevel = "unattributed" | "lanavix_assisted" | "automation_touched";
+
+const ATTRIBUTION_LABEL: Record<AttributionLevel, string | null> = {
+  unattributed: null,
+  lanavix_assisted: "Lanavix assisted",
+  automation_touched: "Automation followed up",
+};
+
+// source values that only ever get set by an automated booking path (see
+// telnyx/sms-inbound.ts and web-chat/$business_id.ts) - real evidence of
+// participation on its own, with no relationship to guess at, for rows
+// created before appointments.conversation_id existed. lead_blast is
+// deliberately excluded: it's the outbound B2B prospecting flow, a
+// different product surface from the inbound conversation lifecycle this
+// attribution model describes.
+const LANAVIX_SOURCES = new Set(["inbound_sms", "web_chat"]);
 
 type OpportunityState = "needs_you" | "working" | "booked" | "won" | "lost";
 
@@ -120,6 +153,7 @@ interface Opportunity {
   actionLabel: string;
   actionHref: string;
   since: string;
+  attribution: AttributionLevel;
 }
 
 const OPPORTUNITY_LIMIT = 8;
@@ -153,6 +187,7 @@ function normalizePhone(phone: string | null | undefined): string | null {
 function appointmentToOpportunity(
   a: OpportunityAppointmentRow,
   reviewRequestPhones: Set<string>,
+  automationTouched = false,
 ): Opportunity {
   const state: OpportunityState =
     a.status === "completed"
@@ -170,6 +205,12 @@ function appointmentToOpportunity(
   } else {
     reason = "Job scheduled";
   }
+  const assisted = !!a.conversation_id || LANAVIX_SOURCES.has(a.source);
+  const attribution: AttributionLevel = automationTouched
+    ? "automation_touched"
+    : assisted
+      ? "lanavix_assisted"
+      : "unattributed";
   return {
     id: `appt-${a.id}`,
     customerName: a.customer_name,
@@ -179,6 +220,7 @@ function appointmentToOpportunity(
     actionLabel: "View job",
     actionHref: "/app/jobs",
     since: a.scheduled_at,
+    attribution,
   };
 }
 
@@ -233,6 +275,7 @@ function Overview() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [quotesWithPendingStep, setQuotesWithPendingStep] = useState<Set<string>>(new Set());
+  const [quotesWithSentStep, setQuotesWithSentStep] = useState<Set<string>>(new Set());
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<TodayAppointmentRow[]>([]);
   const [opportunityQuotes, setOpportunityQuotes] = useState<OpportunityQuoteRow[]>([]);
@@ -330,7 +373,7 @@ function Overview() {
           supabase
             .from("appointments")
             .select(
-              "id, customer_name, customer_phone, service_type, scheduled_at, status, estimated_value, conversation_id",
+              "id, customer_name, customer_phone, service_type, scheduled_at, status, estimated_value, conversation_id, source",
             )
             .eq("user_id", user.id)
             .order("scheduled_at", { ascending: false })
@@ -373,22 +416,32 @@ function Overview() {
 
         // Same real signal Quotes itself uses to decide open vs.
         // needs-follow-up (quote_follow_up_steps, not the quote's raw
-        // age) - fetched as a second pass since it depends on which
-        // quote ids came back above. Only IDs are needed, so scope to
-        // status='pending' rather than pulling every step.
-        const activeQuoteIds = ((quoteData as QuoteRow[]) ?? []).map((q) => q.id);
+        // age) - fetched as a second pass since it depends on which quote
+        // ids came back above. Scoped to opportunityQuoteData's ids (every
+        // status, not just active) since Attribution (Slice 8) also needs
+        // to know which quotes ever had a step actually SENT, not just
+        // which active ones have one still PENDING - one query answers
+        // both instead of two.
+        const relevantQuoteIds = ((opportunityQuoteData as OpportunityQuoteRow[]) ?? []).map(
+          (q) => q.id,
+        );
         let pendingStepQuoteIds = new Set<string>();
-        if (activeQuoteIds.length > 0) {
-          const { data: pendingStepData, error: pendingStepErr } = await supabase
+        let sentStepQuoteIds = new Set<string>();
+        if (relevantQuoteIds.length > 0) {
+          const { data: stepData, error: stepErr } = await supabase
             .from("quote_follow_up_steps")
-            .select("follow_up_id")
-            .in("follow_up_id", activeQuoteIds)
-            .eq("status", "pending");
-          if (pendingStepErr) {
-            console.error("[overview] failed to load quote_follow_up_steps", pendingStepErr);
+            .select("follow_up_id, status")
+            .in("follow_up_id", relevantQuoteIds)
+            .in("status", ["pending", "sent"]);
+          if (stepErr) {
+            console.error("[overview] failed to load quote_follow_up_steps", stepErr);
           } else {
+            const rows = (stepData as (QuoteStepRow & { status: string })[]) ?? [];
             pendingStepQuoteIds = new Set(
-              ((pendingStepData as QuoteStepRow[]) ?? []).map((s) => s.follow_up_id),
+              rows.filter((s) => s.status === "pending").map((s) => s.follow_up_id),
+            );
+            sentStepQuoteIds = new Set(
+              rows.filter((s) => s.status === "sent").map((s) => s.follow_up_id),
             );
           }
         }
@@ -399,6 +452,7 @@ function Overview() {
         setLeads((leadData as LeadRow[]) ?? []);
         setQuotes((quoteData as QuoteRow[]) ?? []);
         setQuotesWithPendingStep(pendingStepQuoteIds);
+        setQuotesWithSentStep(sentStepQuoteIds);
         setAppointments((appointmentData as AppointmentRow[]) ?? []);
         setTodayAppointments((todayAppointmentData as TodayAppointmentRow[]) ?? []);
         setOpportunityQuotes((opportunityQuoteData as OpportunityQuoteRow[]) ?? []);
@@ -531,6 +585,15 @@ function Overview() {
       const convo = conversationById.get(q.conversation_id);
       const customerName = convo?.customer_name || convo?.customer_identifier || "Unknown customer";
 
+      // A quote only exists because of a real conversation FK, so it's
+      // always at least "assisted" - "automation_touched" additionally
+      // requires a step that actually fired (status='sent'), never just a
+      // still-pending one, so a quote whose Day 1 nudge hasn't gone out
+      // yet is never shown as if automation already acted.
+      const quoteAttribution: AttributionLevel = quotesWithSentStep.has(q.id)
+        ? "automation_touched"
+        : "lanavix_assisted";
+
       if (q.status === "active") {
         const working = quotesWithPendingStep.has(q.id);
         list.push({
@@ -544,6 +607,7 @@ function Overview() {
           actionLabel: "View quote",
           actionHref: "/app/quotes",
           since: q.quoted_at,
+          attribution: quoteAttribution,
         });
       } else if (q.status === "cancelled" || q.status === "completed") {
         list.push({
@@ -555,6 +619,7 @@ function Overview() {
           actionLabel: "View quote",
           actionHref: "/app/quotes",
           since: q.quoted_at,
+          attribution: quoteAttribution,
         });
       } else if (q.status === "booked") {
         // Slice 7: prefer the real conversation_id FK when the appointment
@@ -574,7 +639,13 @@ function Overview() {
         const matchedAppt = explicitMatch ?? phoneMatch;
         if (matchedAppt) {
           usedApptIds.add(matchedAppt.id);
-          list.push(appointmentToOpportunity(matchedAppt, reviewRequestPhones));
+          list.push(
+            appointmentToOpportunity(
+              matchedAppt,
+              reviewRequestPhones,
+              quotesWithSentStep.has(q.id),
+            ),
+          );
         } else {
           // Known booked, but no matching job row found (e.g. the AI
           // booked it in a different conversation than we can trace, or
@@ -589,6 +660,7 @@ function Overview() {
             actionLabel: "View quote",
             actionHref: "/app/quotes",
             since: q.quoted_at,
+            attribution: quoteAttribution,
           });
         }
       }
@@ -612,6 +684,7 @@ function Overview() {
         actionLabel: "View conversation",
         actionHref: "/app/inbox",
         since: last.sent_at,
+        attribution: "lanavix_assisted",
       });
     }
 
@@ -634,6 +707,7 @@ function Overview() {
     messages,
     opportunityQuotes,
     quotesWithPendingStep,
+    quotesWithSentStep,
     opportunityAppointments,
     reviewRequestPhones,
   ]);
@@ -649,6 +723,26 @@ function Overview() {
     );
     if (relevant.length === 0) return null;
     return relevant.reduce((sum, o) => sum + (o.value ?? 0), 0);
+  }, [opportunities]);
+
+  // One restrained, deterministic attribution summary - only ever counts
+  // opportunities already in the list above (never a separate broader
+  // query), and only ever sums real non-null values among the attributed
+  // won ones specifically, never an estimate.
+  const attributionSummary = useMemo(() => {
+    const won = opportunities.filter((o) => o.state === "won");
+    if (won.length === 0) return null;
+    const assisted = won.filter((o) => o.attribution !== "unattributed");
+    if (assisted.length === 0) return null;
+    const knownValue = assisted
+      .filter((o) => o.value !== null)
+      .reduce((sum, o) => sum + (o.value ?? 0), 0);
+    const hasKnownValue = assisted.some((o) => o.value !== null);
+    return {
+      assistedCount: assisted.length,
+      wonCount: won.length,
+      knownValue: hasKnownValue ? knownValue : null,
+    };
   }, [opportunities]);
 
   // This Week / Last Week, Monday-anchored.
@@ -867,11 +961,21 @@ function Overview() {
           ) : (
             <>
               {workingValue !== null && (
-                <p className="lv-meta text-muted-foreground mb-3">
+                <p
+                  className={`lv-meta text-muted-foreground ${attributionSummary ? "mb-1" : "mb-3"}`}
+                >
                   <span className="lv-label text-foreground font-medium">
                     ${workingValue.toLocaleString()}
                   </span>{" "}
                   currently being worked
+                </p>
+              )}
+              {attributionSummary && (
+                <p className="lv-meta text-muted-foreground mb-3">
+                  {attributionSummary.assistedCount} of {attributionSummary.wonCount} won job
+                  {attributionSummary.wonCount === 1 ? "" : "s"} had Lanavix involvement
+                  {attributionSummary.knownValue !== null &&
+                    ` · $${attributionSummary.knownValue.toLocaleString()} known value`}
                 </p>
               )}
               <ul className="space-y-2">
@@ -1032,6 +1136,17 @@ function describeItem(item: NeedsYouItem) {
 
 function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   const fullDetail = `${OPPORTUNITY_STATE_LABEL[opportunity.state]}${opportunity.value !== null ? ` · $${opportunity.value.toLocaleString()}` : ""} · ${opportunity.reason}`;
+  // Attribution is only worth showing on a resolved job (booked/won/lost) -
+  // needs_you/working rows are trivially always Lanavix-assisted by
+  // construction (they only exist because of a real conversation/quote),
+  // so labeling every one of those would be noise, not clarity. Never
+  // rendered at all when unattributed - the absence of the line already
+  // says it honestly.
+  const showAttribution =
+    (opportunity.state === "booked" ||
+      opportunity.state === "won" ||
+      opportunity.state === "lost") &&
+    ATTRIBUTION_LABEL[opportunity.attribution] !== null;
   return (
     <li className="flex items-center gap-3 rounded-md border border-border bg-card px-4 py-3">
       <div className="min-w-0 flex-1">
@@ -1054,6 +1169,11 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
           )}
           <span className="lv-meta text-muted-foreground truncate">{opportunity.reason}</span>
         </div>
+        {showAttribution && (
+          <p className="lv-meta text-muted-foreground/70 mt-0.5">
+            {ATTRIBUTION_LABEL[opportunity.attribution]}
+          </p>
+        )}
       </div>
       <Button asChild size="sm" variant="outline" className="shrink-0">
         <Link to={opportunity.actionHref}>{opportunity.actionLabel}</Link>
