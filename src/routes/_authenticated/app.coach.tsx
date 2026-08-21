@@ -31,6 +31,14 @@ interface BriefHistoryRow {
   brief_payload: CoachCard[];
 }
 
+interface BusinessMemory {
+  windowDays: number;
+  commonService: { label: string; count: number } | null;
+  typicalQuoteValue: { median: number; sampleSize: number } | null;
+  bookingsBySource: { source: string; label: string; count: number }[] | null;
+  typicalTimeToBookMinutes: { median: number; sampleSize: number } | null;
+}
+
 const CARD_ICON: Record<string, typeof PhoneMissed> = {
   missed_calls: PhoneMissed,
   estimates: Clock,
@@ -87,11 +95,14 @@ function CoachPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<BriefHistoryRow[]>([]);
+  const [memory, setMemory] = useState<BusinessMemory | null>(null);
+  const [memoryLoading, setMemoryLoading] = useState(true);
 
   useEffect(() => {
     loadBrief();
     loadName();
     loadHistory();
+    loadBusinessMemory();
   }, []);
 
   async function loadName() {
@@ -132,6 +143,31 @@ function CoachPage() {
       setError("Couldn't load today's brief. Please check your connection and try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Observational only, never blocking - if this fails to load, the page
+  // just doesn't show the section rather than surfacing a second error
+  // banner for a non-urgent, secondary feature.
+  async function loadBusinessMemory() {
+    setMemoryLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        setMemoryLoading(false);
+        return;
+      }
+      const res = await fetch("/api/coach/business-memory", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setMemory(data.memory ?? null);
+      else console.error("[coach] business memory load failed", data.error);
+    } catch (err) {
+      console.error("[coach] business memory load failed", err);
+    } finally {
+      setMemoryLoading(false);
     }
   }
 
@@ -263,6 +299,71 @@ function CoachPage() {
               );
             })}
         </div>
+
+        {!memoryLoading &&
+          memory &&
+          (memory.commonService ||
+            memory.typicalQuoteValue ||
+            memory.bookingsBySource ||
+            memory.typicalTimeToBookMinutes) && (
+            <div className="mt-10">
+              <h2 className="lv-label text-muted-foreground uppercase tracking-wide">
+                Business patterns
+              </h2>
+              <p className="lv-meta text-muted-foreground mt-1 mb-2.5">
+                What Lanavix has observed from your own history over the last {memory.windowDays}{" "}
+                days.
+              </p>
+              <div className="rounded-md border border-border divide-y divide-border">
+                {memory.commonService && (
+                  <div className="p-3.5">
+                    <p className="lv-meta text-muted-foreground">Most common booked service</p>
+                    <p className="lv-body text-foreground font-medium mt-0.5">
+                      {memory.commonService.label}
+                    </p>
+                    <p className="lv-meta text-muted-foreground">
+                      {memory.commonService.count} jobs in the last {memory.windowDays} days
+                    </p>
+                  </div>
+                )}
+                {memory.typicalQuoteValue && (
+                  <div className="p-3.5">
+                    <p className="lv-meta text-muted-foreground">Typical known quote</p>
+                    <p className="lv-numbers text-foreground font-medium mt-0.5">
+                      ${memory.typicalQuoteValue.median.toLocaleString()}
+                    </p>
+                    <p className="lv-meta text-muted-foreground">
+                      Based on {memory.typicalQuoteValue.sampleSize} quotes
+                    </p>
+                  </div>
+                )}
+                {memory.bookingsBySource && (
+                  <div className="p-3.5">
+                    <p className="lv-meta text-muted-foreground mb-1.5">Bookings by source</p>
+                    <div className="space-y-1">
+                      {memory.bookingsBySource.map((s) => (
+                        <div key={s.source} className="flex items-center justify-between gap-2">
+                          <span className="lv-body text-foreground truncate">{s.label}</span>
+                          <span className="lv-numbers text-foreground shrink-0">{s.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {memory.typicalTimeToBookMinutes && (
+                  <div className="p-3.5">
+                    <p className="lv-meta text-muted-foreground">Typical time to book</p>
+                    <p className="lv-numbers text-foreground font-medium mt-0.5">
+                      {memory.typicalTimeToBookMinutes.median} min
+                    </p>
+                    <p className="lv-meta text-muted-foreground">
+                      Based on {memory.typicalTimeToBookMinutes.sampleSize} tracked bookings
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
         {history.length > 0 && (
           <div className="mt-10">
