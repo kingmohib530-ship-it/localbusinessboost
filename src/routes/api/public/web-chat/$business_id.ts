@@ -393,6 +393,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
                     status: "confirmed",
                     source: "web_chat",
                     estimated_value: estimatedValue,
+                    conversation_id: conversationId,
                   })
                   .select()
                   .single();

@@ -103,6 +103,10 @@ interface OpportunityAppointmentRow {
   scheduled_at: string;
   status: string;
   estimated_value: number | null;
+  // Real FK (Slice 7) - populated by both automated booking paths at
+  // appointment creation, null for manual Calendar appointments and any
+  // appointment created before this column existed.
+  conversation_id: string | null;
 }
 
 type OpportunityState = "needs_you" | "working" | "booked" | "won" | "lost";
@@ -326,7 +330,7 @@ function Overview() {
           supabase
             .from("appointments")
             .select(
-              "id, customer_name, customer_phone, service_type, scheduled_at, status, estimated_value",
+              "id, customer_name, customer_phone, service_type, scheduled_at, status, estimated_value, conversation_id",
             )
             .eq("user_id", user.id)
             .order("scheduled_at", { ascending: false })
@@ -512,7 +516,14 @@ function Overview() {
         latestByConversation.set(m.conversation_id, m);
     }
     const conversationById = new Map(conversations.map((c) => [c.id, c]));
-    const claimedConversationIds = new Set(opportunityQuotes.map((q) => q.conversation_id));
+    // A conversation is already represented elsewhere - by its quote, or
+    // (Slice 7) directly by an appointment that carries a real
+    // conversation_id from an automated booking with no quote step at all
+    // - and should never also show up as "still needs a reply."
+    const claimedConversationIds = new Set([
+      ...opportunityQuotes.map((q) => q.conversation_id),
+      ...opportunityAppointments.map((a) => a.conversation_id).filter((id): id is string => !!id),
+    ]);
     const usedApptIds = new Set<string>();
     const list: Opportunity[] = [];
 
@@ -546,12 +557,21 @@ function Overview() {
           since: q.quoted_at,
         });
       } else if (q.status === "booked") {
+        // Slice 7: prefer the real conversation_id FK when the appointment
+        // has one (every automated booking sets it now); the phone-match
+        // heuristic is only a fallback for historical rows created before
+        // this column existed, or where it's genuinely absent.
+        const explicitMatch = opportunityAppointments.find(
+          (a) => !usedApptIds.has(a.id) && a.conversation_id === q.conversation_id,
+        );
         const normPhone = convo ? normalizePhone(convo.customer_identifier) : null;
-        const matchedAppt = normPhone
-          ? opportunityAppointments.find(
-              (a) => !usedApptIds.has(a.id) && normalizePhone(a.customer_phone) === normPhone,
-            )
-          : undefined;
+        const phoneMatch =
+          !explicitMatch && normPhone
+            ? opportunityAppointments.find(
+                (a) => !usedApptIds.has(a.id) && normalizePhone(a.customer_phone) === normPhone,
+              )
+            : undefined;
+        const matchedAppt = explicitMatch ?? phoneMatch;
         if (matchedAppt) {
           usedApptIds.add(matchedAppt.id);
           list.push(appointmentToOpportunity(matchedAppt, reviewRequestPhones));
