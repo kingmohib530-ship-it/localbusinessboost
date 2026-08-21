@@ -1,4 +1,10 @@
 import { useState } from "react";
+import { ArrowRight, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import type { AuditInput, Industry } from "@/lib/auditApi";
 
 const INDUSTRIES: Industry[] = [
@@ -15,11 +21,11 @@ const INDUSTRIES: Industry[] = [
 ];
 
 const AGENT_STEPS = [
-  { id: "atlas",   label: "Atlas",   task: "Scanning business presence"   },
-  { id: "nexus",   label: "Nexus",   task: "Analysing local competitors"   },
-  { id: "pulse",   label: "Pulse",   task: "Reviewing online messaging"    },
-  { id: "shield",  label: "Shield",  task: "Validating all data points"    },
-  { id: "aether",  label: "Aether",  task: "Scoring & building your report"},
+  { id: "atlas", label: "Atlas", task: "Scanning business presence" },
+  { id: "nexus", label: "Nexus", task: "Analysing local competitors" },
+  { id: "pulse", label: "Pulse", task: "Reviewing online messaging" },
+  { id: "shield", label: "Shield", task: "Validating all data points" },
+  { id: "aether", label: "Aether", task: "Scoring & building your report" },
 ];
 
 interface Props {
@@ -59,24 +65,19 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
     });
   }
 
-  const progressPct = loading
-    ? Math.min(95, ((loadingStep + 1) / AGENT_STEPS.length) * 100)
-    : 0;
+  const progressPct = loading ? Math.min(95, ((loadingStep + 1) / AGENT_STEPS.length) * 100) : 0;
 
   return (
-    <div className="audit-form-wrap">
+    <div className="p-5 md:p-6">
       {!loading ? (
-        <form onSubmit={handleSubmit} noValidate>
-
-          {/* ── Business name ── */}
-          <div className="af-field">
-            <label htmlFor="biz-name" className="af-label">
-              Business name <span className="af-required">*</span>
-            </label>
-            <input
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          <div>
+            <Label htmlFor="biz-name" className="lv-label text-foreground block mb-1.5">
+              Business name <span className="text-primary">*</span>
+            </Label>
+            <Input
               id="biz-name"
               type="text"
-              className={`af-input${errors.businessName ? " af-input--error" : ""}`}
               placeholder="e.g. Smith Plumbing & Repair"
               value={businessName}
               onChange={(e) => {
@@ -84,24 +85,24 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
                 if (errors.businessName) setErrors((p) => ({ ...p, businessName: "" }));
               }}
               autoComplete="organization"
+              aria-invalid={!!errors.businessName}
               aria-describedby={errors.businessName ? "biz-name-err" : undefined}
+              className={cn(errors.businessName && "border-destructive")}
             />
             {errors.businessName && (
-              <p id="biz-name-err" className="af-error" role="alert">
+              <p id="biz-name-err" className="lv-meta text-destructive mt-1.5" role="alert">
                 {errors.businessName}
               </p>
             )}
           </div>
 
-          {/* ── City / Area ── */}
-          <div className="af-field">
-            <label htmlFor="biz-city" className="af-label">
-              City / Area <span className="af-required">*</span>
-            </label>
-            <input
+          <div>
+            <Label htmlFor="biz-city" className="lv-label text-foreground block mb-1.5">
+              City / Area <span className="text-primary">*</span>
+            </Label>
+            <Input
               id="biz-city"
               type="text"
-              className={`af-input${errors.city ? " af-input--error" : ""}`}
               placeholder="e.g. Manassas VA, Atlanta GA..."
               value={city}
               onChange={(e) => {
@@ -109,57 +110,59 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
                 if (errors.city) setErrors((p) => ({ ...p, city: "" }));
               }}
               autoComplete="address-level2"
+              aria-invalid={!!errors.city}
               aria-describedby={errors.city ? "biz-city-err" : undefined}
+              className={cn(errors.city && "border-destructive")}
             />
             {errors.city && (
-              <p id="biz-city-err" className="af-error" role="alert">
+              <p id="biz-city-err" className="lv-meta text-destructive mt-1.5" role="alert">
                 {errors.city}
               </p>
             )}
           </div>
 
-          {/* ── Industry chips ── */}
-          <div className="af-field">
-            <p className="af-label" id="industry-label">
-              What type of business? <span className="af-required">*</span>
+          <div>
+            <p className="lv-label text-foreground mb-1.5" id="industry-label">
+              What type of business? <span className="text-primary">*</span>
             </p>
-            <div
-              className="af-chips"
-              role="group"
-              aria-labelledby="industry-label"
-            >
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="industry-label">
               {INDUSTRIES.map((ind) => (
                 <button
                   key={ind}
                   type="button"
-                  className={`af-chip${industry === ind ? " af-chip--active" : ""}`}
                   onClick={() => {
                     setIndustry(ind);
                     if (errors.industry) setErrors((p) => ({ ...p, industry: "" }));
                   }}
                   aria-pressed={industry === ind}
+                  className={cn(
+                    "min-h-[36px] px-3.5 py-1.5 rounded-full lv-label font-medium border transition-colors duration-150 ease-out",
+                    industry === ind
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary",
+                  )}
                 >
                   {ind}
                 </button>
               ))}
             </div>
             {errors.industry && (
-              <p className="af-error" role="alert">
+              <p className="lv-meta text-destructive mt-1.5" role="alert">
                 {errors.industry}
               </p>
             )}
           </div>
 
-          {/* ── Website URL ── */}
-          <div className="af-field">
-            <label htmlFor="biz-url" className="af-label">
+          <div>
+            <Label htmlFor="biz-url" className="lv-label text-foreground block mb-1.5">
               Website URL{" "}
-              <span className="af-optional">(optional — helps us audit lead capture)</span>
-            </label>
-            <input
+              <span className="lv-meta text-muted-foreground font-normal">
+                (optional — helps us audit lead capture)
+              </span>
+            </Label>
+            <Input
               id="biz-url"
               type="url"
-              className={`af-input${errors.websiteUrl ? " af-input--error" : ""}${noWebsite ? " af-input--disabled" : ""}`}
               placeholder="https://yourbusiness.com"
               value={websiteUrl}
               onChange={(e) => {
@@ -167,87 +170,109 @@ export function AuditForm({ onSubmit, loading, loadingStep }: Props) {
                 if (errors.websiteUrl) setErrors((p) => ({ ...p, websiteUrl: "" }));
               }}
               disabled={noWebsite}
+              aria-invalid={!!errors.websiteUrl}
               aria-describedby={errors.websiteUrl ? "url-err" : undefined}
+              className={cn(errors.websiteUrl && "border-destructive")}
             />
             {errors.websiteUrl && (
-              <p id="url-err" className="af-error" role="alert">
+              <p id="url-err" className="lv-meta text-destructive mt-1.5" role="alert">
                 {errors.websiteUrl}
               </p>
             )}
-            <label className="af-checkbox-row">
-              <input
-                type="checkbox"
+            <label className="flex items-center gap-2 mt-2.5 cursor-pointer min-h-[36px]">
+              <Checkbox
                 checked={noWebsite}
-                onChange={(e) => {
-                  setNoWebsite(e.target.checked);
-                  if (e.target.checked) setWebsiteUrl("");
+                onCheckedChange={(checked) => {
+                  const isChecked = checked === true;
+                  setNoWebsite(isChecked);
+                  if (isChecked) setWebsiteUrl("");
                 }}
-                className="af-checkbox"
               />
-              <span className="af-checkbox-label">I don't have a website yet</span>
+              <span className="lv-meta text-muted-foreground select-none">
+                I don't have a website yet
+              </span>
             </label>
           </div>
 
-          {/* ── Submit ── */}
-          <button type="submit" className="af-submit">
+          <Button type="submit" className="w-full min-h-[44px] gap-1.5">
             Run My Free Audit
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Button>
 
-          <p className="af-trust">
+          <p className="lv-meta text-muted-foreground text-center flex justify-center flex-wrap gap-x-1.5">
             <span>No signup required</span>
-            <span className="af-trust-dot" aria-hidden="true">·</span>
+            <span aria-hidden="true">·</span>
             <span>No credit card</span>
-            <span className="af-trust-dot" aria-hidden="true">·</span>
+            <span aria-hidden="true">·</span>
             <span>Results in ~15 seconds</span>
           </p>
         </form>
       ) : (
-        /* ── Loading state ── */
-        <div className="af-loading" aria-live="polite" aria-label="Audit in progress">
-          <div className="af-loading-eyebrow">Your Lanavix agents are on it</div>
-          <p className="af-loading-name">
-            Auditing <strong>{businessName}</strong>{city ? ` in ${city}` : ""}
+        <div aria-live="polite" aria-label="Audit in progress">
+          <p className="lv-label text-primary mb-2">Your Lanavix agents are on it</p>
+          <p className="lv-section text-foreground mb-5">
+            Auditing <strong className="text-primary">{businessName}</strong>
+            {city ? ` in ${city}` : ""}
           </p>
 
-          {/* Progress bar */}
-          <div className="af-progress-track" role="progressbar" aria-valuenow={Math.round(progressPct)} aria-valuemin={0} aria-valuemax={100}>
+          <div
+            className="h-1.5 bg-border rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={Math.round(progressPct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div
-              className="af-progress-fill"
+              className="h-full bg-primary rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none"
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <p className="af-progress-pct">{Math.round(progressPct)}%</p>
+          <p className="lv-meta text-muted-foreground text-right mt-1.5">
+            {Math.round(progressPct)}%
+          </p>
 
-          {/* Agent steps */}
-          <div className="af-steps">
+          <div className="flex flex-col gap-2 mt-4">
             {AGENT_STEPS.map((step, i) => {
               const done = i < loadingStep;
               const active = i === loadingStep;
               return (
                 <div
                   key={step.id}
-                  className={`af-step${done ? " af-step--done" : ""}${active ? " af-step--active" : ""}`}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3.5 py-2.5 rounded-md border",
+                    done && "bg-accent border-primary/30",
+                    active && "bg-accent border-primary/40",
+                    !done && !active && "bg-background border-border",
+                  )}
                 >
-                  <div className="af-step-icon" aria-hidden="true">
+                  <div
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                      done ? "bg-primary text-primary-foreground" : "bg-border",
+                    )}
+                    aria-hidden="true"
+                  >
                     {done ? (
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <Check className="h-3 w-3" />
                     ) : active ? (
-                      <span className="af-step-spinner" />
+                      <span className="h-2.5 w-2.5 rounded-full border-2 border-primary/30 border-t-primary animate-spin motion-reduce:animate-none" />
                     ) : (
-                      <span className="af-step-dot" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
                     )}
                   </div>
-                  <div className="af-step-text">
-                    <span className="af-step-name">{step.label}</span>
-                    <span className="af-step-task">{step.task}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="lv-label text-foreground font-medium mr-1.5">
+                      {step.label}
+                    </span>
+                    <span className="lv-meta text-muted-foreground">{step.task}</span>
                   </div>
                   {(done || active) && (
-                    <span className={`af-step-badge${done ? " af-step-badge--done" : " af-step-badge--running"}`}>
+                    <span
+                      className={cn(
+                        "lv-meta font-semibold px-2 py-0.5 rounded-sm shrink-0",
+                        done ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary",
+                      )}
+                    >
                       {done ? "Done" : "Running"}
                     </span>
                   )}

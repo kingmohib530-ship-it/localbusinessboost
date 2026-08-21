@@ -1,4 +1,9 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Lock, ArrowRight, Zap, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import type { AuditResult, AuditCategory } from "@/lib/auditApi";
 import { saveAuditLead } from "@/lib/auditApi";
 
@@ -7,10 +12,26 @@ const CATEGORY_META: Record<
   keyof AuditResult["categories"],
   { label: string; icon: string; description: string }
 > = {
-  visibility:  { label: "Visibility",   icon: "📍", description: "How easily customers find you on Google, Maps, and AI search" },
-  reputation:  { label: "Reputation",   icon: "⭐", description: "Your reviews, rating, recency, and response rate"             },
-  leadCapture: { label: "Lead Capture", icon: "📥", description: "How well your website and listings capture contact info"        },
-  conversion:  { label: "Conversion",   icon: "💬", description: "How easy it is for visitors to book or call you"               },
+  visibility: {
+    label: "Visibility",
+    icon: "📍",
+    description: "How easily customers find you on Google, Maps, and AI search",
+  },
+  reputation: {
+    label: "Reputation",
+    icon: "⭐",
+    description: "Your reviews, rating, recency, and response rate",
+  },
+  leadCapture: {
+    label: "Lead Capture",
+    icon: "📥",
+    description: "How well your website and listings capture contact info",
+  },
+  conversion: {
+    label: "Conversion",
+    icon: "💬",
+    description: "How easy it is for visitors to book or call you",
+  },
 };
 
 const EFFORT_LABEL: Record<string, string> = {
@@ -19,22 +40,22 @@ const EFFORT_LABEL: Record<string, string> = {
   strategic: "This month",
 };
 
-const EFFORT_COLOR: Record<string, string> = {
-  quick: "ar-badge--green",
-  medium: "ar-badge--blue",
-  strategic: "ar-badge--amber",
+const EFFORT_CLASS: Record<string, string> = {
+  quick: "bg-primary/10 text-primary",
+  medium: "bg-accent text-foreground",
+  strategic: "bg-[var(--warning)]/15 text-[var(--warning)]",
 };
 
-function gradeColor(grade: string) {
-  if (grade === "Excellent" || grade === "Good") return "ar-grade--good";
-  if (grade === "Fair") return "ar-grade--fair";
-  return "ar-grade--bad";
+function gradeClass(grade: string) {
+  if (grade === "Excellent" || grade === "Good") return "text-primary";
+  if (grade === "Fair") return "text-[var(--warning)]";
+  return "text-destructive";
 }
 
 function scoreColor(score: number) {
-  if (score >= 70) return "#10B981";
-  if (score >= 50) return "#F59E0B";
-  return "#EF4444";
+  if (score >= 70) return "var(--primary)";
+  if (score >= 50) return "var(--warning)";
+  return "var(--destructive)";
 }
 
 /* ── ScoreRing ── */
@@ -46,18 +67,36 @@ function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--ar-ring-bg, #E2E8F0)" strokeWidth="5" />
       <circle
-        cx={size / 2} cy={size / 2} r={r}
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="var(--border)"
+        strokeWidth="5"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
         fill="none"
         stroke={color}
         strokeWidth="5"
         strokeDasharray={`${fill} ${circ}`}
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: "stroke-dasharray 0.8s ease" }}
+        className="transition-[stroke-dasharray] duration-700 ease-out motion-reduce:transition-none"
       />
-      <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="central" fill={color} fontSize="16" fontWeight="600" fontFamily="inherit">
+      <text
+        x={size / 2}
+        y={size / 2}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill={color}
+        fontSize="16"
+        fontWeight="700"
+        fontFamily="inherit"
+      >
         {score}
       </text>
     </svg>
@@ -75,16 +114,36 @@ function FixItem({
   locked: boolean;
 }) {
   return (
-    <div className={`ar-fix${locked ? " ar-fix--locked" : ""}`} aria-hidden={locked}>
-      <div className="ar-fix-num">{index + 1}</div>
-      <div className="ar-fix-body">
-        <p className="ar-fix-text">{fix.text}</p>
-        <div className="ar-fix-meta">
-          <span className={`ar-badge ${EFFORT_COLOR[fix.effort]}`}>
+    <div
+      className={cn(
+        "flex gap-3 items-start rounded-md border px-4 py-3.5",
+        index === 0 ? "border-primary/30 bg-primary/5" : "border-border bg-background",
+        locked && "blur-sm pointer-events-none select-none",
+      )}
+      aria-hidden={locked}
+    >
+      <div
+        className={cn(
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full lv-meta font-bold",
+          index === 0 ? "bg-primary text-primary-foreground" : "bg-border text-muted-foreground",
+        )}
+      >
+        {index + 1}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="lv-body text-foreground mb-2">{fix.text}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span
+            className={cn("lv-meta font-semibold px-2 py-0.5 rounded-sm", EFFORT_CLASS[fix.effort])}
+          >
             {EFFORT_LABEL[fix.effort]}
           </span>
-          <span className="ar-fix-impact">
-            {fix.impact === "high" ? "High impact" : fix.impact === "medium" ? "Medium impact" : "Low impact"}
+          <span className="lv-meta text-muted-foreground">
+            {fix.impact === "high"
+              ? "High impact"
+              : fix.impact === "medium"
+                ? "Medium impact"
+                : "Low impact"}
           </span>
         </div>
       </div>
@@ -105,31 +164,35 @@ function CategorySection({
   const meta = CATEGORY_META[catKey];
 
   return (
-    <section className="ar-cat" aria-labelledby={`cat-${catKey}`}>
-      <div className="ar-cat-header">
-        <div className="ar-cat-left">
-          <span className="ar-cat-icon" aria-hidden="true">{meta.icon}</span>
+    <section
+      className="border border-border border-t-0 bg-card px-5 md:px-7 py-6"
+      aria-labelledby={`cat-${catKey}`}
+    >
+      <div className="flex items-start justify-between gap-4 mb-3 flex-wrap">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <span className="text-xl mt-0.5" aria-hidden="true">
+            {meta.icon}
+          </span>
           <div>
-            <h3 id={`cat-${catKey}`} className="ar-cat-title">{meta.label}</h3>
-            <p className="ar-cat-desc">{meta.description}</p>
+            <h3 id={`cat-${catKey}`} className="lv-section text-foreground">
+              {meta.label}
+            </h3>
+            <p className="lv-meta text-muted-foreground mt-0.5">{meta.description}</p>
           </div>
         </div>
-        <div className="ar-cat-right">
+        <div className="flex flex-col items-center gap-1 shrink-0">
           <ScoreRing score={category.score} />
-          <span className={`ar-grade ${gradeColor(category.grade)}`}>{category.grade}</span>
+          <span className={cn("lv-meta font-semibold", gradeClass(category.grade))}>
+            {category.grade}
+          </span>
         </div>
       </div>
 
-      <p className="ar-cat-headline">{category.headline}</p>
+      <p className="lv-body text-muted-foreground italic mb-4">{category.headline}</p>
 
-      <div className="ar-fixes">
+      <div className="flex flex-col gap-2.5">
         {category.fixes.map((fix, i) => (
-          <FixItem
-            key={i}
-            fix={fix}
-            index={i}
-            locked={!unlocked && i > 0}
-          />
+          <FixItem key={i} fix={fix} index={i} locked={!unlocked && i > 0} />
         ))}
       </div>
     </section>
@@ -137,7 +200,13 @@ function CategorySection({
 }
 
 /* ── EmailGate ── */
-function EmailGate({ result, onUnlock }: { result: AuditResult; onUnlock: (email: string) => void }) {
+function EmailGate({
+  result,
+  onUnlock,
+}: {
+  result: AuditResult;
+  onUnlock: (email: string) => void;
+}) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -161,18 +230,21 @@ function EmailGate({ result, onUnlock }: { result: AuditResult; onUnlock: (email
   }
 
   return (
-    <div className="ar-gate" role="complementary" aria-label="Unlock full audit">
-      <div className="ar-gate-inner">
-        <div className="ar-gate-lock" aria-hidden="true">🔒</div>
-        <h3 className="ar-gate-title">Unlock your full audit — free</h3>
-        <p className="ar-gate-sub">
-          Enter your email to unlock all 8 remaining fixes and your full revenue opportunity estimate.
-          No credit card. No spam.
+    <div className="border border-border border-t-0 bg-card px-5 md:px-7 py-6">
+      <div className="rounded-lg bg-foreground px-6 py-8 md:px-8 text-center">
+        <Lock className="h-7 w-7 text-background mx-auto mb-3" aria-hidden="true" />
+        <h3 className="lv-section text-background mb-1.5">Unlock your full audit — free</h3>
+        <p className="lv-body text-background/70 max-w-md mx-auto mb-5">
+          Enter your email to unlock all 8 remaining fixes and your full revenue opportunity
+          estimate. No credit card. No spam.
         </p>
-        <form className="ar-gate-form" onSubmit={handleSubmit} noValidate>
-          <input
+        <form
+          className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <Input
             type="email"
-            className={`ar-gate-input${error ? " ar-gate-input--error" : ""}`}
             placeholder="your@email.com"
             value={email}
             onChange={(e) => {
@@ -180,25 +252,26 @@ function EmailGate({ result, onUnlock }: { result: AuditResult; onUnlock: (email
               if (error) setError("");
             }}
             aria-label="Email address"
+            aria-invalid={!!error}
             aria-describedby={error ? "gate-err" : undefined}
             autoComplete="email"
-          />
-          <button type="submit" className="ar-gate-btn" disabled={loading}>
-            {loading ? (
-              <span className="ar-gate-spinner" aria-label="Loading" />
-            ) : (
-              <>
-                Unlock free
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </>
+            className={cn(
+              "bg-background/10 border-background/20 text-background placeholder:text-background/40 min-h-[44px]",
+              error && "border-destructive",
             )}
-          </button>
+          />
+          <Button type="submit" disabled={loading} className="min-h-[44px] gap-1.5 shrink-0">
+            {loading ? "Unlocking..." : "Unlock free"}
+            {!loading && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+          </Button>
         </form>
-        {error && <p id="gate-err" className="ar-gate-error" role="alert">{error}</p>}
-        <p className="ar-gate-fine">
-          By entering your email, you create a free Lanavix account.
+        {error && (
+          <p id="gate-err" className="lv-meta text-destructive mt-2" role="alert">
+            {error}
+          </p>
+        )}
+        <p className="lv-meta text-background/40 mt-3">
+          We'll email you this report and occasional tips for running a service business.
           Unsubscribe anytime.
         </p>
       </div>
@@ -219,20 +292,20 @@ export function AuditReport({ result, onStartOver }: Props) {
     [keyof AuditResult["categories"], AuditCategory]
   >;
 
-  const overallColor = scoreColor(result.overallScore);
-
   return (
-    <article className="ar-wrap" aria-label={`Business audit for ${result.businessName}`}>
-
+    <article
+      className="rounded-xl border border-border overflow-hidden"
+      aria-label={`Business audit for ${result.businessName}`}
+    >
       {/* ── Report header ── */}
-      <header className="ar-header">
-        <div className="ar-header-top">
-          <div className="ar-header-meta">
-            <span className="ar-header-tag">Lanavix Business Audit</span>
-            <span className="ar-header-dot" aria-hidden="true">·</span>
-            <span className="ar-header-tag">{result.industry}</span>
-            <span className="ar-header-dot" aria-hidden="true">·</span>
-            <time className="ar-header-tag" dateTime={result.generatedAt}>
+      <header className="bg-foreground px-5 md:px-7 pt-6 pb-5">
+        <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+          <div className="flex flex-wrap items-center gap-1.5 lv-meta text-background/50">
+            <span>Lanavix Business Audit</span>
+            <span aria-hidden="true">·</span>
+            <span>{result.industry}</span>
+            <span aria-hidden="true">·</span>
+            <time dateTime={result.generatedAt}>
               {new Date(result.generatedAt).toLocaleDateString("en-US", {
                 month: "long",
                 day: "numeric",
@@ -240,42 +313,54 @@ export function AuditReport({ result, onStartOver }: Props) {
               })}
             </time>
           </div>
-          <button className="ar-restart" onClick={onStartOver} aria-label="Start a new audit">
+          <button
+            type="button"
+            onClick={onStartOver}
+            className="lv-meta text-background/60 hover:text-background transition-colors duration-150 ease-out"
+          >
             ← New audit
           </button>
         </div>
-        <h1 className="ar-title">{result.businessName}</h1>
-        <p className="ar-summary">{result.executiveSummary}</p>
+        <h1 className="lv-display text-[26px] md:text-[30px] text-background mb-2">
+          {result.businessName}
+        </h1>
+        <p className="lv-body text-background/70 max-w-xl">{result.executiveSummary}</p>
       </header>
 
       {/* ── Score overview ── */}
-      <section className="ar-scores" aria-label="Overall scores">
-        <div className="ar-overall">
-          <div className="ar-overall-ring">
-            <ScoreRing score={result.overallScore} size={96} />
-          </div>
-          <div className="ar-overall-text">
-            <div className="ar-overall-label">Overall score</div>
-            <div className="ar-overall-grade" style={{ color: overallColor }}>
-              {result.overallGrade}
+      <section
+        className="bg-card border-x border-border px-5 md:px-7 py-6 grid grid-cols-1 md:grid-cols-[auto_1fr] gap-5 items-center"
+        aria-label="Overall scores"
+      >
+        <div className="flex items-center gap-4">
+          <ScoreRing score={result.overallScore} size={88} />
+          <div>
+            <div className="lv-meta text-muted-foreground uppercase tracking-wide font-semibold mb-0.5">
+              Overall score
             </div>
-            <div className="ar-overall-agents">
-              Generated by {result.agentsUsed.join(", ")}
+            <div className={cn("lv-section", gradeClass(result.overallGrade))}>
+              {result.overallGrade}
             </div>
           </div>
         </div>
 
-        <div className="ar-score-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {cats.map(([key, cat]) => {
             const meta = CATEGORY_META[key];
             return (
-              <a key={key} href={`#cat-${key}`} className="ar-score-card">
-                <span className="ar-score-card-icon" aria-hidden="true">{meta.icon}</span>
-                <span className="ar-score-card-label">{meta.label}</span>
-                <span className="ar-score-card-val" style={{ color: scoreColor(cat.score) }}>
+              <a
+                key={key}
+                href={`#cat-${key}`}
+                className="flex flex-col items-center text-center gap-1 rounded-md border border-border bg-background px-2 py-3 hover:border-primary transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span className="text-lg" aria-hidden="true">
+                  {meta.icon}
+                </span>
+                <span className="lv-meta text-muted-foreground">{meta.label}</span>
+                <span className="lv-numbers text-xl" style={{ color: scoreColor(cat.score) }}>
                   {cat.score}
                 </span>
-                <span className={`ar-score-card-grade ${gradeColor(cat.grade)}`}>
+                <span className={cn("lv-meta font-medium", gradeClass(cat.grade))}>
                   {cat.grade}
                 </span>
               </a>
@@ -288,80 +373,100 @@ export function AuditReport({ result, onStartOver }: Props) {
       {result.technicalCheck.hasWebsite && (
         <section
           aria-label="Website technical scan"
-          style={{ background: "#fff", border: "1.5px solid var(--border, #E2E8F0)", borderTop: "none", padding: "16px 28px", display: "flex", flexWrap: "wrap", gap: "10px 20px", fontSize: 13, color: "#475569" }}
+          className="bg-card border-x border-border px-5 md:px-7 py-4 flex flex-wrap gap-x-5 gap-y-2 lv-meta text-muted-foreground"
         >
-          <span style={{ fontWeight: 700, color: "#0F172A" }}>Real website scan:</span>
+          <span className="font-semibold text-foreground">Real website scan:</span>
           {!result.technicalCheck.reachable ? (
             <span>Site could not be reached — this alone is hurting every category above.</span>
           ) : (
             <>
-              <span>SSL: {result.technicalCheck.sslValid ? "✅ Valid" : "❌ Not valid"}</span>
+              <span>SSL: {result.technicalCheck.sslValid ? "Valid" : "Not valid"}</span>
               <span>Load time: {result.technicalCheck.loadTimeMs}ms</span>
-              <span>Title tag: {result.technicalCheck.hasTitleTag ? "✅" : "❌ Missing"}</span>
-              <span>Meta description: {result.technicalCheck.hasMetaDescription ? "✅" : "❌ Missing"}</span>
-              <span>Mobile-friendly tag: {result.technicalCheck.hasViewportTag ? "✅" : "❌ Missing"}</span>
+              <span>Title tag: {result.technicalCheck.hasTitleTag ? "Present" : "Missing"}</span>
+              <span>
+                Meta description: {result.technicalCheck.hasMetaDescription ? "Present" : "Missing"}
+              </span>
+              <span>
+                Mobile-friendly tag: {result.technicalCheck.hasViewportTag ? "Present" : "Missing"}
+              </span>
             </>
           )}
         </section>
       )}
 
       {/* ── Revenue opportunity ── */}
-      <section className="ar-revenue" aria-label="Revenue opportunity">
-        <div className="ar-revenue-inner">
-          <span className="ar-revenue-icon" aria-hidden="true">💰</span>
-          <div className="ar-revenue-text">
-            <div className="ar-revenue-label">Estimated revenue opportunity</div>
-            <div className="ar-revenue-amount">{result.revenueOpportunity} in new revenue</div>
-            <div className="ar-revenue-detail">{result.revenueOpportunityDetail}</div>
+      <section
+        className="bg-primary/5 border border-primary/20 border-t-0 px-5 md:px-7 py-5"
+        aria-label="Revenue opportunity"
+      >
+        <div className="flex items-center gap-3 mb-2.5">
+          <DollarSign className="h-6 w-6 text-primary shrink-0" aria-hidden="true" />
+          <div>
+            <div className="lv-meta text-primary/80 uppercase tracking-wide font-semibold">
+              Estimated revenue opportunity
+            </div>
+            <div className="lv-section text-foreground">
+              {result.revenueOpportunity} in new revenue
+            </div>
+            <div className="lv-body text-muted-foreground mt-0.5">
+              {result.revenueOpportunityDetail}
+            </div>
           </div>
         </div>
-        <div className="ar-topwin">
-          <span className="ar-topwin-label">⚡ Top win:</span>
-          <span className="ar-topwin-text">{result.topWin}</span>
+        <div className="flex items-start gap-2 rounded-sm border border-primary/25 bg-primary/10 px-3 py-2 lv-body text-foreground">
+          <Zap className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+          <span>
+            <span className="font-semibold">Top win: </span>
+            {result.topWin}
+          </span>
         </div>
       </section>
 
       {/* ── Category sections ── */}
-      <div className="ar-categories">
-        {cats.map(([key, cat]) => (
-          <CategorySection
-            key={key}
-            catKey={key}
-            category={cat}
-            unlocked={unlocked}
-          />
-        ))}
-      </div>
+      {cats.map(([key, cat]) => (
+        <CategorySection key={key} catKey={key} category={cat} unlocked={unlocked} />
+      ))}
 
       {/* ── Email gate (shown if not yet unlocked) ── */}
-      {!unlocked && (
-        <EmailGate result={result} onUnlock={() => setUnlocked(true)} />
-      )}
+      {!unlocked && <EmailGate result={result} onUnlock={() => setUnlocked(true)} />}
+
+      {/* ── AI disclosure ── */}
+      <div className="border border-border border-t-0 bg-card px-5 md:px-7 py-3">
+        <p className="lv-meta text-muted-foreground">
+          This audit is generated by AI from what you entered and a real scan of your website. It's
+          an assessment to help you prioritize, not a guarantee.
+        </p>
+      </div>
 
       {/* ── Post-unlock CTA ── */}
       {unlocked && (
-        <section className="ar-cta" aria-label="Next steps">
-          <div className="ar-cta-inner">
-            <div className="ar-cta-icon" aria-hidden="true">🚀</div>
-            <h2 className="ar-cta-title">
+        <section
+          className="border border-border border-t-0 rounded-b-xl overflow-hidden"
+          aria-label="Next steps"
+        >
+          <div className="border-t-[3px] border-primary px-5 md:px-7 py-8 text-center">
+            <h2 className="lv-section text-foreground mb-2">
               Your audit is complete. Ready to fix this?
             </h2>
-            <p className="ar-cta-sub">
-              Lanavix's 8 AI agents can run your first growth campaign in 60 seconds —
-              finding leads, writing outreach, and recovering reviews automatically.
+            <p className="lv-body text-muted-foreground max-w-md mx-auto mb-5">
+              Lanavix runs the missed-call text-back, review requests, and lead prospecting for
+              service businesses like {result.businessName || "yours"} — real automation you can
+              turn on today.
             </p>
-            <div className="ar-cta-actions">
-              <a href="/auth" className="ar-cta-btn ar-cta-btn--primary">
-                Start fixing for free
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
-              <a href="/pricing" className="ar-cta-btn ar-cta-btn--secondary">
-                View pricing
-              </a>
+            <div className="flex justify-center gap-3 flex-wrap mb-3">
+              <Button asChild size="lg" className="gap-1.5 min-h-[44px]">
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Start your free trial
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="min-h-[44px]">
+                <Link to="/pricing">View pricing</Link>
+              </Button>
             </div>
-            <p className="ar-cta-trust">Free forever to start · No credit card · Cancel anytime</p>
+            <p className="lv-meta text-muted-foreground">
+              14-day free trial · No credit card to start
+            </p>
           </div>
         </section>
       )}
