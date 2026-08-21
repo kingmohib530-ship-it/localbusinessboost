@@ -612,7 +612,7 @@ function describeItem(item: NeedsYouItem) {
       action:
         item.channel === "web_chat" ? (
           <Button asChild size="sm" variant="outline">
-            <Link to="/app/web-chat">Reply</Link>
+            <Link to="/app/web-chat">View chat</Link>
           </Button>
         ) : isPhone ? (
           <Button asChild size="sm" variant="outline">
