@@ -110,9 +110,9 @@
  * (see below), which redefines these same variable names back to the old
  * dark/glass system so those pages render exactly as they did before this
  * pass, unchanged, until they get their own redesign slice. Marketing
- * pages are still on .page-dark and mostly read the separate --hd-*
- * namespace, so they're likewise unaffected in practice — the one
- * deliberate exception is any shadcn/ui primitive (Button, Input, Card,
+ * pages already render directly against this light palette (no dark
+ * wrapper), so they're unaffected by the .app-dark override below — the
+ * one deliberate exception is any shadcn/ui primitive (Button, Input, Card,
  * ...), which reads these tokens directly and so picks up the new palette
  * everywhere it's used, including on a few untouched pages (Settings,
  * Auth, Receptionist, marketing contact forms) — see the Slice 1 report
@@ -258,16 +258,6 @@
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
-  /* .page-dark's own background only covers the page once its wrapper div
-     has painted, so body's light default is briefly the true base color on
-     every dark route (home, pricing, about, legal), visible as a flash of
-     white during a fast scroll jump. Matching body's background here for
-     exactly those routes closes the gap instead of relying on the wrapper
-     always covering it in time. Other routes (auth, dashboard, checkout)
-     don't use .page-dark, so they keep the light default untouched. */
-  body:has(.page-dark) {
-    background-color: #08090b;
-  }
   /* Plain links (nav, footer, in-page anchors) have no focus style of
      their own, so without this they'd fall back to each browser's own
      default outline instead of the accent ring the rest of the app uses. */
@@ -282,9 +272,6 @@
 /* Solid brand-blue mark, no rainbow gradient */
 @utility gradient-primary {
   background-color: var(--primary);
-}
-@utility gradient-text {
-  color: var(--color-primary);
 }
 @utility glass {
   background: color-mix(in oklab, var(--card) 90%, transparent);
@@ -308,12 +295,6 @@
     linear-gradient(to right, var(--ink-border) 1px, transparent 1px),
     linear-gradient(to bottom, var(--ink-border) 1px, transparent 1px);
   background-size: 56px 56px;
-}
-
-/* Faint depth behind auth/onboarding cards — restrained, not a neon glow */
-.bg-radial-glow {
-  background:
-    radial-gradient(50% 40% at 50% 0%, color-mix(in oklab, var(--primary) 8%, transparent) 0%, transparent 70%);
 }
 
 @keyframes zy-fade-up {
@@ -343,29 +324,6 @@
   }
 }
 
-/*
- * Hero v2 exploration — dark, glassy, Linear/Raycast/Framer-territory.
- * Scoped to its own class rather than :root: the rest of the homepage is
- * now approved and rolled out to the whole homepage — .page-dark sits on
- * the page's outer wrapper so every section, the nav, and the cookie
- * banner (when rendered on this route) can read the same tokens. Other
- * routes (pricing, about, the dashboard) don't wrap themselves in this
- * class, so they're untouched and keep the light system.
- */
-.page-dark {
-  --hd-bg: #08090b;
-  --hd-surface: #0d0f13;
-  --hd-fg: #f5f6f7;
-  --hd-muted: #9096a3;
-  --hd-border: rgba(255, 255, 255, 0.09);
-  --hd-glass: rgba(255, 255, 255, 0.05);
-  --hd-glass-strong: rgba(255, 255, 255, 0.08);
-  --hd-primary: #6366f1;
-  --hd-primary-2: #22d3ee;
-  background: var(--hd-bg);
-  color: var(--hd-fg);
-}
-
 /* Shorthand for the glass-panel look used across every card on the dark
    homepage, so we're not repeating the same three arbitrary-value
    classes on every card in index.tsx. */
@@ -376,13 +334,6 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* A spring/overshoot curve for entrances — a flat ease-out settles, this
-   one settles past the target and eases back, reading as physical rather
-   than animated. */
-@utility ease-spring {
-  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 @keyframes hd-blur-in {
   from { opacity: 0; filter: blur(10px); transform: translateY(14px); }
   to { opacity: 1; filter: blur(0); transform: translateY(0); }
@@ -391,30 +342,7 @@
   animation: hd-blur-in 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-@keyframes hd-mesh-a {
-  0%, 100% { transform: translate(-8%, -6%) scale(1); }
-  50% { transform: translate(10%, 8%) scale(1.2); }
-}
-@keyframes hd-mesh-b {
-  0%, 100% { transform: translate(6%, 10%) scale(1.05); }
-  50% { transform: translate(-10%, -4%) scale(0.9); }
-}
-@keyframes hd-mesh-c {
-  0%, 100% { transform: translate(0%, 0%) scale(1); }
-  50% { transform: translate(-6%, 12%) scale(1.15); }
-}
-.hd-mesh-blob {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(70px);
-  will-change: transform;
-}
-.hd-mesh-blob-a { animation: hd-mesh-a 22s ease-in-out infinite; }
-.hd-mesh-blob-b { animation: hd-mesh-b 26s ease-in-out infinite; }
-.hd-mesh-blob-c { animation: hd-mesh-c 30s ease-in-out infinite; }
-
 @media (prefers-reduced-motion: reduce) {
-  .hd-mesh-blob-a, .hd-mesh-blob-b, .hd-mesh-blob-c { animation: none !important; }
   .hd-blur-in { animation: hd-blur-in-reduced 0.01ms both; }
 }
 @keyframes hd-blur-in-reduced {
@@ -456,8 +384,8 @@
  * SAME token names here means every existing inline style automatically
  * renders dark the moment the shell wraps in .app-dark, no per-page style
  * object needs touching for color alone. The --hd-* aliases underneath let
- * the glass-dark/hover-lift-dark/hd-blur-in/hd-mesh-blob utilities already
- * built for the homepage work here unchanged too.
+ * the glass-dark/hover-lift-dark/hd-blur-in utilities already built for
+ * the homepage work here unchanged too.
  */
 .app-dark {
   --background: #08090b;

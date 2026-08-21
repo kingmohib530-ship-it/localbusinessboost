@@ -11,7 +11,6 @@ import {
   ClipboardCheck,
   Phone,
   MessageCircle,
-  Brain,
   Settings,
   LogOut,
   Menu,
@@ -39,12 +38,13 @@ type NavSection = { heading: string; items: NavItem[] };
  * Approved App Shell IA. Inbox and Leads (Slice 2) now have real pages on
  * this branch, so they're back in Today/Pipeline where the originally-
  * approved spec put them. Quotes still has no backing page, so it stays
- * disabled with a "Soon" badge rather than a dead link. Business Facts
- * and Web Chat are real, currently-linked main routes with no explicit
- * slot in the originally-approved sections list, so they sit under Setup
- * alongside the other account/config pages rather than being dropped.
- * Coach is deliberately not here - it lives in the Cmd+K palette instead
- * (see CommandPalette).
+ * disabled with a "Soon" badge rather than a dead link. Web Chat is a
+ * real, currently-linked main route with no explicit slot in the
+ * originally-approved sections list, so it sits under Setup alongside
+ * the other account/config pages rather than being dropped. Business
+ * Facts was removed from here (its route now redirects to Receptionist's
+ * Knowledge tab, which has full functional parity). Coach is deliberately
+ * not here - it lives in the Cmd+K palette instead (see CommandPalette).
  */
 const NAV_SECTIONS: NavSection[] = [
   {
@@ -75,7 +75,6 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: "/app/receptionist", label: "Receptionist", icon: Phone },
       { to: "/app/web-chat", label: "Web Chat", icon: MessageCircle },
-      { to: "/app/business-facts", label: "Business Facts", icon: Brain },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -95,7 +94,6 @@ const BREADCRUMB_LABELS: { prefix: string; label: string }[] = [
   { prefix: "/app/reputation", label: "Reviews" },
   { prefix: "/app/receptionist", label: "Receptionist" },
   { prefix: "/app/web-chat", label: "Web Chat" },
-  { prefix: "/app/business-facts", label: "Business Facts" },
   { prefix: "/app/settings", label: "Settings" },
   { prefix: "/app/billing", label: "Billing" },
   { prefix: "/app/coach", label: "Coach" },
