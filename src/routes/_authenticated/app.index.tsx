@@ -38,6 +38,10 @@ interface ConversationRow {
   customer_identifier: string;
   channel: string;
   status: string | null;
+  // Slice 11's real conversation-start timestamp - the same field
+  // Business Memory's typicalTimeToBookMinutes is measured from, so it's
+  // the only honest source for a live waiting-time comparison (Slice 12).
+  started_at: string | null;
 }
 
 interface MessageRow {
@@ -161,16 +165,23 @@ interface Opportunity {
   // quote row, and for a quote-derived one whose deviation from this
   // business's own typical quote didn't clear the noise threshold.
   quoteMemoryNote: string | null;
+  // Business Memory V1 (Slice 9/12) secondary context - only ever set for
+  // an unresolved opportunity (needs_you/working) with a real, known
+  // conversation.started_at. Never set for booked/won/lost opportunities
+  // (Slice 12's own scope - a resolved job isn't "still waiting" on
+  // anything), and never backed by a phone-match guess.
+  waitingTimeNote: string | null;
 }
 
-// Business Memory's typicalQuoteValue only - the one signal this slice
-// reuses (see src/lib/business-memory.server.ts). Deliberately not the
-// full BusinessMemory shape: Overview has no use for commonService,
-// bookingsBySource, or typicalTimeToBookMinutes, and declaring only what's
-// consumed keeps it obvious this slice reused Slice 9's aggregation rather
-// than recomputing anything client-side.
-interface BusinessMemoryQuoteValue {
+// The two Business Memory signals Opportunity Intelligence reuses (see
+// src/lib/business-memory.server.ts) - deliberately not the full
+// BusinessMemory shape: Overview has no use for commonService or
+// bookingsBySource, and declaring only what's consumed keeps it obvious
+// this slice reused Slice 9's aggregation rather than recomputing
+// anything client-side.
+interface BusinessMemorySignals {
   typicalQuoteValue: { median: number; sampleSize: number } | null;
+  typicalTimeToBookMinutes: { median: number; sampleSize: number } | null;
 }
 
 // A large enough gap to be a genuinely notable pattern rather than routine
@@ -190,7 +201,7 @@ const QUOTE_DEVIATION_THRESHOLD_PCT = 30;
  */
 function quoteValueNote(
   quotedPrice: number | null,
-  typicalQuoteValue: BusinessMemoryQuoteValue["typicalQuoteValue"],
+  typicalQuoteValue: BusinessMemorySignals["typicalQuoteValue"],
 ): string | null {
   if (quotedPrice === null || !typicalQuoteValue || typicalQuoteValue.median <= 0) return null;
   const pct = Math.round(
@@ -200,6 +211,40 @@ function quoteValueNote(
   return pct > 0
     ? `${pct}% above your typical known quote`
     : `${Math.abs(pct)}% below your typical known quote`;
+}
+
+// Conservative on purpose: exceeding the median by a single minute proves
+// nothing. Both a relative and an absolute floor have to clear before this
+// renders, so a business whose typical booking time is short (e.g. 20 min)
+// doesn't get flagged over a routine extra 10-15 minutes, and a business
+// whose typical time is long (e.g. 2 hours) doesn't get flagged the moment
+// it's technically 1.5x over if that's still a small number of minutes.
+const WAITING_TIME_RELATIVE_THRESHOLD = 1.5;
+const WAITING_TIME_ABSOLUTE_THRESHOLD_MINUTES = 30;
+
+/**
+ * Factual, non-predictive comparison of how long this specific opportunity
+ * has been waiting against how long this business's own bookings usually
+ * take - never a countdown, never a claim the customer is at risk of
+ * leaving, just a plain observation. Returns null whenever either side of
+ * the comparison isn't real (no reliable conversation start, or Business
+ * Memory hasn't cleared its own minimum sample size), or when the gap is
+ * still small enough to be routine.
+ */
+function waitingTimeMemoryNote(
+  startedAt: string | null | undefined,
+  typicalTimeToBookMinutes: BusinessMemorySignals["typicalTimeToBookMinutes"],
+): string | null {
+  if (!startedAt || !typicalTimeToBookMinutes || typicalTimeToBookMinutes.median <= 0) return null;
+  const startedMs = new Date(startedAt).getTime();
+  if (isNaN(startedMs)) return null;
+  const elapsedMinutes = (Date.now() - startedMs) / 60000;
+  if (elapsedMinutes < 0) return null;
+  const typical = typicalTimeToBookMinutes.median;
+  const clearsRelative = elapsedMinutes >= WAITING_TIME_RELATIVE_THRESHOLD * typical;
+  const clearsAbsolute = elapsedMinutes - typical >= WAITING_TIME_ABSOLUTE_THRESHOLD_MINUTES;
+  if (!clearsRelative || !clearsAbsolute) return null;
+  return "waiting longer than your typical booking time";
 }
 
 const OPPORTUNITY_LIMIT = 8;
@@ -271,6 +316,10 @@ function appointmentToOpportunity(
     // the quote history Business Memory's median is built from - never
     // carried forward here (see the Opportunity.quoteMemoryNote comment).
     quoteMemoryNote: null,
+    // Booked/won/lost is always this function's state (see above) - a
+    // resolved job is never "still waiting," so waiting-time context is
+    // out of scope here by construction, not just by choice.
+    waitingTimeNote: null,
   };
 }
 
@@ -338,7 +387,7 @@ function Overview() {
   const [error, setError] = useState("");
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [showAllNeedsYou, setShowAllNeedsYou] = useState(false);
-  const [businessMemory, setBusinessMemory] = useState<BusinessMemoryQuoteValue | null>(null);
+  const [businessMemory, setBusinessMemory] = useState<BusinessMemorySignals | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -374,7 +423,7 @@ function Overview() {
           supabase.from("profiles").select("full_name, business_name").eq("id", user.id).single(),
           supabase
             .from("conversations")
-            .select("id, customer_name, customer_identifier, channel, status")
+            .select("id, customer_name, customer_identifier, channel, status, started_at")
             .eq("user_id", user.id)
             .neq("status", "booked"),
           supabase
@@ -679,6 +728,14 @@ function Overview() {
 
       if (q.status === "active") {
         const working = quotesWithPendingStep.has(q.id);
+        // Slice 12: needs_you/working only - an active quote is still
+        // genuinely unresolved, so its underlying conversation's real
+        // started_at is the honest lifecycle start to compare against
+        // Business Memory's typical time-to-book.
+        const waitingTimeNote = waitingTimeMemoryNote(
+          convo?.started_at ?? null,
+          businessMemory?.typicalTimeToBookMinutes ?? null,
+        );
         list.push({
           id: `quote-${q.id}`,
           customerName,
@@ -692,6 +749,7 @@ function Overview() {
           since: q.quoted_at,
           attribution: quoteAttribution,
           quoteMemoryNote,
+          waitingTimeNote,
         });
       } else if (q.status === "cancelled" || q.status === "completed") {
         list.push({
@@ -705,6 +763,8 @@ function Overview() {
           since: q.quoted_at,
           attribution: quoteAttribution,
           quoteMemoryNote,
+          // Resolved (lost) - out of Slice 12's scope, see the interface comment.
+          waitingTimeNote: null,
         });
       } else if (q.status === "booked") {
         // Slice 7: prefer the real conversation_id FK when the appointment
@@ -747,6 +807,8 @@ function Overview() {
             since: q.quoted_at,
             attribution: quoteAttribution,
             quoteMemoryNote,
+            // Resolved (booked) - out of Slice 12's scope, see the interface comment.
+            waitingTimeNote: null,
           });
         }
       }
@@ -773,6 +835,12 @@ function Overview() {
         attribution: "lanavix_assisted",
         // No quote exists yet for a bare conversation - nothing to compare.
         quoteMemoryNote: null,
+        // Slice 12: this conversation IS the lifecycle - its own real
+        // started_at is exactly the honest start point to compare.
+        waitingTimeNote: waitingTimeMemoryNote(
+          c.started_at,
+          businessMemory?.typicalTimeToBookMinutes ?? null,
+        ),
       });
     }
 
@@ -1266,6 +1334,11 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
         {opportunity.quoteMemoryNote && (
           <p className="lv-meta text-muted-foreground/70 mt-0.5">
             Business pattern: {opportunity.quoteMemoryNote}
+          </p>
+        )}
+        {opportunity.waitingTimeNote && (
+          <p className="lv-meta text-muted-foreground/70 mt-0.5">
+            Business pattern: {opportunity.waitingTimeNote}
           </p>
         )}
       </div>
