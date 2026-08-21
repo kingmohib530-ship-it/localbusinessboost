@@ -4,7 +4,7 @@ import { MessageSquare, UserPlus, FileClock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusDot } from "@/components/StatusDot";
+import { StatusDot, type LvStatus } from "@/components/StatusDot";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { daysAgo, formatTime } from "@/lib/timeFormat";
 
@@ -79,6 +79,105 @@ interface TodayAppointmentRow {
   status: string;
 }
 
+// Opportunity Intelligence reads two broader queries than the ones above -
+// Needs You's `quotes` is scoped to status=active only (all it needs for
+// staleness), and `appointments` excludes cancelled and is windowed to two
+// weeks (all it needs for This Week's revenue tile). Neither can answer
+// "what's the full current state of every recent opportunity," so this is
+// a second, deliberately separate read rather than widening those two and
+// risking a regression in logic that's already shipped and approved.
+interface OpportunityQuoteRow {
+  id: string;
+  conversation_id: string;
+  service_type: string | null;
+  quoted_price: number | null;
+  quoted_at: string;
+  status: string;
+}
+
+interface OpportunityAppointmentRow {
+  id: string;
+  customer_name: string;
+  customer_phone: string | null;
+  service_type: string;
+  scheduled_at: string;
+  status: string;
+  estimated_value: number | null;
+}
+
+type OpportunityState = "needs_you" | "working" | "booked" | "won" | "lost";
+
+interface Opportunity {
+  id: string;
+  customerName: string;
+  state: OpportunityState;
+  value: number | null;
+  reason: string;
+  actionLabel: string;
+  actionHref: string;
+  since: string;
+}
+
+const OPPORTUNITY_LIMIT = 8;
+
+const OPPORTUNITY_STATE_TO_DOT: Record<OpportunityState, LvStatus> = {
+  needs_you: "waiting_on_you",
+  working: "automated",
+  booked: "booked",
+  won: "done",
+  lost: "failed",
+};
+
+const OPPORTUNITY_STATE_LABEL: Record<OpportunityState, string> = {
+  needs_you: "Needs you",
+  working: "Lanavix working",
+  booked: "Booked",
+  won: "Won",
+  lost: "Lost",
+};
+
+/** Digits only, last 10 - the same heuristic phone match Jobs, Quotes, and
+ * Coach already use to bridge tables with no real foreign key between
+ * them. Not a reliable identity match, just the best available one. */
+function normalizePhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 7) return null;
+  return digits.slice(-10);
+}
+
+function appointmentToOpportunity(
+  a: OpportunityAppointmentRow,
+  reviewRequestPhones: Set<string>,
+): Opportunity {
+  const state: OpportunityState =
+    a.status === "completed"
+      ? "won"
+      : a.status === "cancelled" || a.status === "no_show"
+        ? "lost"
+        : "booked";
+  let reason: string;
+  if (state === "won") {
+    const normPhone = normalizePhone(a.customer_phone);
+    reason =
+      normPhone && reviewRequestPhones.has(normPhone) ? "Review request sent" : "Job completed";
+  } else if (state === "lost") {
+    reason = a.status === "no_show" ? "Marked as no-show" : "Cancelled";
+  } else {
+    reason = "Job scheduled";
+  }
+  return {
+    id: `appt-${a.id}`,
+    customerName: a.customer_name,
+    state,
+    value: a.estimated_value,
+    reason,
+    actionLabel: "View job",
+    actionHref: "/app/jobs",
+    since: a.scheduled_at,
+  };
+}
+
 type NeedsYouItem =
   | {
       kind: "unanswered";
@@ -132,6 +231,11 @@ function Overview() {
   const [quotesWithPendingStep, setQuotesWithPendingStep] = useState<Set<string>>(new Set());
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<TodayAppointmentRow[]>([]);
+  const [opportunityQuotes, setOpportunityQuotes] = useState<OpportunityQuoteRow[]>([]);
+  const [opportunityAppointments, setOpportunityAppointments] = useState<
+    OpportunityAppointmentRow[]
+  >([]);
+  const [reviewRequestPhones, setReviewRequestPhones] = useState<Set<string>>(new Set());
   const [hasAnyHistory, setHasAnyHistory] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -149,6 +253,7 @@ function Overview() {
         if (!user) return;
 
         const twoWeeksAgoIso = new Date(Date.now() - 14 * 86400000).toISOString();
+        const thirtyDaysAgoIso = new Date(Date.now() - 30 * 86400000).toISOString();
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         const todayEnd = new Date(todayStart.getTime() + 86400000);
@@ -161,6 +266,9 @@ function Overview() {
           { data: quoteData, error: quoteErr },
           { data: appointmentData, error: appointmentErr },
           { data: todayAppointmentData, error: todayAppointmentErr },
+          { data: opportunityQuoteData, error: opportunityQuoteErr },
+          { data: opportunityAppointmentData, error: opportunityAppointmentErr },
+          { data: reviewRequestData, error: reviewRequestErr },
           { count: everConversationCount },
           { count: everLeadCount },
           { count: everAppointmentCount },
@@ -202,6 +310,33 @@ function Overview() {
             .gte("scheduled_at", todayStart.toISOString())
             .lt("scheduled_at", todayEnd.toISOString())
             .order("scheduled_at", { ascending: true }),
+          // Opportunity Intelligence: every quote status (not just active),
+          // so a booked/cancelled/completed quote can also be represented -
+          // Needs You's own `quotes` query above intentionally only fetches
+          // active ones.
+          supabase
+            .from("quote_follow_ups")
+            .select("id, conversation_id, service_type, quoted_price, quoted_at, status")
+            .eq("user_id", user.id)
+            .order("quoted_at", { ascending: false })
+            .limit(50),
+          // Every recent appointment status (not just non-cancelled), for
+          // the same reason - This Week's `appointments` query above
+          // deliberately excludes cancelled ones.
+          supabase
+            .from("appointments")
+            .select(
+              "id, customer_name, customer_phone, service_type, scheduled_at, status, estimated_value",
+            )
+            .eq("user_id", user.id)
+            .order("scheduled_at", { ascending: false })
+            .limit(50),
+          // Same 30-day phone-matched "already asked" signal Jobs/Coach use.
+          supabase
+            .from("review_requests")
+            .select("customer_phone")
+            .eq("user_id", user.id)
+            .gte("sent_at", thirtyDaysAgoIso),
           supabase
             .from("conversations")
             .select("id", { count: "exact", head: true })
@@ -223,7 +358,10 @@ function Overview() {
           leadErr ||
           quoteErr ||
           appointmentErr ||
-          todayAppointmentErr;
+          todayAppointmentErr ||
+          opportunityQuoteErr ||
+          opportunityAppointmentErr ||
+          reviewRequestErr;
         if (firstErr) {
           console.error("[overview] failed to load one or more queries", firstErr);
           setError("Some of your dashboard data couldn't load. What did load is still accurate.");
@@ -259,6 +397,17 @@ function Overview() {
         setQuotesWithPendingStep(pendingStepQuoteIds);
         setAppointments((appointmentData as AppointmentRow[]) ?? []);
         setTodayAppointments((todayAppointmentData as TodayAppointmentRow[]) ?? []);
+        setOpportunityQuotes((opportunityQuoteData as OpportunityQuoteRow[]) ?? []);
+        setOpportunityAppointments(
+          (opportunityAppointmentData as OpportunityAppointmentRow[]) ?? [],
+        );
+        setReviewRequestPhones(
+          new Set(
+            ((reviewRequestData as { customer_phone: string }[]) ?? [])
+              .map((r) => normalizePhone(r.customer_phone))
+              .filter((p): p is string => !!p),
+          ),
+        );
         setHasAnyHistory(
           (everConversationCount ?? 0) > 0 ||
             (everLeadCount ?? 0) > 0 ||
@@ -343,6 +492,144 @@ function Overview() {
   const needsYouShown = showAllNeedsYou
     ? needsYouVisible
     : needsYouVisible.slice(0, NEEDS_YOU_LIMIT);
+
+  // Opportunity Intelligence: one row per real customer lifecycle, built
+  // with precedence so the same underlying opportunity never shows up
+  // twice in contradictory states. Quotes go first, since
+  // quote_follow_ups.conversation_id is a real foreign key back to
+  // conversations - any conversation a quote already represents is never
+  // separately listed as "needs a reply." A quote that's been marked
+  // booked is, in turn, resolved forward to the appointment it became
+  // (phone-matched - there's no real link from a quote to an appointment,
+  // only from a quote to its conversation), so a won/lost/booked job is
+  // represented once, by whichever entity actually reflects its current
+  // state, not by both the quote and the job.
+  const opportunities = useMemo<Opportunity[]>(() => {
+    const latestByConversation = new Map<string, MessageRow>();
+    for (const m of messages) {
+      if (!m.conversation_id || !m.sent_at) continue;
+      if (!latestByConversation.has(m.conversation_id))
+        latestByConversation.set(m.conversation_id, m);
+    }
+    const conversationById = new Map(conversations.map((c) => [c.id, c]));
+    const claimedConversationIds = new Set(opportunityQuotes.map((q) => q.conversation_id));
+    const usedApptIds = new Set<string>();
+    const list: Opportunity[] = [];
+
+    for (const q of opportunityQuotes) {
+      const convo = conversationById.get(q.conversation_id);
+      const customerName = convo?.customer_name || convo?.customer_identifier || "Unknown customer";
+
+      if (q.status === "active") {
+        const working = quotesWithPendingStep.has(q.id);
+        list.push({
+          id: `quote-${q.id}`,
+          customerName,
+          state: working ? "working" : "needs_you",
+          value: q.quoted_price,
+          reason: working
+            ? "Automated follow-up scheduled"
+            : "Follow-ups finished - customer hasn't booked",
+          actionLabel: "View quote",
+          actionHref: "/app/quotes",
+          since: q.quoted_at,
+        });
+      } else if (q.status === "cancelled" || q.status === "completed") {
+        list.push({
+          id: `quote-${q.id}`,
+          customerName,
+          state: "lost",
+          value: q.quoted_price,
+          reason: "Quote didn't convert",
+          actionLabel: "View quote",
+          actionHref: "/app/quotes",
+          since: q.quoted_at,
+        });
+      } else if (q.status === "booked") {
+        const normPhone = convo ? normalizePhone(convo.customer_identifier) : null;
+        const matchedAppt = normPhone
+          ? opportunityAppointments.find(
+              (a) => !usedApptIds.has(a.id) && normalizePhone(a.customer_phone) === normPhone,
+            )
+          : undefined;
+        if (matchedAppt) {
+          usedApptIds.add(matchedAppt.id);
+          list.push(appointmentToOpportunity(matchedAppt, reviewRequestPhones));
+        } else {
+          // Known booked, but no matching job row found (e.g. the AI
+          // booked it in a different conversation than we can trace, or
+          // the phone match simply fails) - honest fallback rather than
+          // guessing which appointment it was.
+          list.push({
+            id: `quote-${q.id}`,
+            customerName,
+            state: "booked",
+            value: q.quoted_price,
+            reason: "Booked",
+            actionLabel: "View quote",
+            actionHref: "/app/quotes",
+            since: q.quoted_at,
+          });
+        }
+      }
+    }
+
+    for (const a of opportunityAppointments) {
+      if (usedApptIds.has(a.id)) continue;
+      list.push(appointmentToOpportunity(a, reviewRequestPhones));
+    }
+
+    for (const c of conversations) {
+      if (claimedConversationIds.has(c.id)) continue;
+      const last = latestByConversation.get(c.id);
+      if (!last || last.direction !== "inbound" || !last.sent_at) continue;
+      list.push({
+        id: `conv-${c.id}`,
+        customerName: c.customer_name || c.customer_identifier,
+        state: "needs_you",
+        value: null,
+        reason: "Waiting for your reply",
+        actionLabel: "View conversation",
+        actionHref: "/app/inbox",
+        since: last.sent_at,
+      });
+    }
+
+    const priorityRank: Record<OpportunityState, number> = {
+      needs_you: 0,
+      working: 1,
+      booked: 2,
+      won: 3,
+      lost: 4,
+    };
+    return list
+      .sort((x, y) => {
+        const p = priorityRank[x.state] - priorityRank[y.state];
+        if (p !== 0) return p;
+        return new Date(y.since).getTime() - new Date(x.since).getTime();
+      })
+      .slice(0, OPPORTUNITY_LIMIT);
+  }, [
+    conversations,
+    messages,
+    opportunityQuotes,
+    quotesWithPendingStep,
+    opportunityAppointments,
+    reviewRequestPhones,
+  ]);
+
+  // Only ever a sum of real, non-null values already visible in the list
+  // above - never an estimate for opportunities where no price/value was
+  // ever recorded, and never counting won/lost work as "currently" open.
+  const workingValue = useMemo(() => {
+    const relevant = opportunities.filter(
+      (o) =>
+        (o.state === "needs_you" || o.state === "working" || o.state === "booked") &&
+        o.value !== null,
+    );
+    if (relevant.length === 0) return null;
+    return relevant.reduce((sum, o) => sum + (o.value ?? 0), 0);
+  }, [opportunities]);
 
   // This Week / Last Week, Monday-anchored.
   const { thisWeek, lastWeek } = useMemo(() => {
@@ -539,6 +826,42 @@ function Overview() {
             </div>
           )}
         </section>
+
+        {/* Opportunities */}
+        <section aria-labelledby="opportunities-heading" className="mt-8">
+          <h2 id="opportunities-heading" className="lv-section text-foreground mb-1">
+            Opportunities
+          </h2>
+          <p className="lv-meta text-muted-foreground mb-3">
+            Where each current customer opportunity stands, start to finish.
+          </p>
+          {loading ? (
+            <OpportunitiesSkeleton />
+          ) : opportunities.length === 0 ? (
+            <div className="rounded-md border border-border bg-card px-4 py-6 text-center">
+              <p className="lv-body text-foreground font-medium">No active opportunities yet</p>
+              <p className="lv-meta text-muted-foreground mt-1">
+                Once a customer reaches out or a job gets booked, it'll show up here.
+              </p>
+            </div>
+          ) : (
+            <>
+              {workingValue !== null && (
+                <p className="lv-meta text-muted-foreground mb-3">
+                  <span className="lv-label text-foreground font-medium">
+                    ${workingValue.toLocaleString()}
+                  </span>{" "}
+                  currently being worked
+                </p>
+              )}
+              <ul className="space-y-2">
+                {opportunities.map((o) => (
+                  <OpportunityCard key={o.id} opportunity={o} />
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
       </div>
     </div>
   );
@@ -685,6 +1008,48 @@ function describeItem(item: NeedsYouItem) {
       </Button>
     ),
   };
+}
+
+function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
+  const fullDetail = `${OPPORTUNITY_STATE_LABEL[opportunity.state]}${opportunity.value !== null ? ` · $${opportunity.value.toLocaleString()}` : ""} · ${opportunity.reason}`;
+  return (
+    <li className="flex items-center gap-3 rounded-md border border-border bg-card px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <p
+          className="lv-body text-foreground font-medium truncate"
+          title={opportunity.customerName}
+        >
+          {opportunity.customerName}
+        </p>
+        <div className="flex items-center gap-2 min-w-0" title={fullDetail}>
+          <StatusDot status={OPPORTUNITY_STATE_TO_DOT[opportunity.state]} className="shrink-0" />
+          <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
+          {opportunity.value !== null && (
+            <>
+              <span className="lv-meta text-foreground font-medium shrink-0">
+                ${opportunity.value.toLocaleString()}
+              </span>
+              <span className="lv-meta text-muted-foreground/40 shrink-0">·</span>
+            </>
+          )}
+          <span className="lv-meta text-muted-foreground truncate">{opportunity.reason}</span>
+        </div>
+      </div>
+      <Button asChild size="sm" variant="outline" className="shrink-0">
+        <Link to={opportunity.actionHref}>{opportunity.actionLabel}</Link>
+      </Button>
+    </li>
+  );
+}
+
+function OpportunitiesSkeleton() {
+  return (
+    <div className="space-y-2">
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-[60px] w-full rounded-md" />
+      ))}
+    </div>
+  );
 }
 
 function ThisWeekTile({
