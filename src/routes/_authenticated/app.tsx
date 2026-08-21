@@ -35,11 +35,10 @@ type NavItem = {
 type NavSection = { heading: string; items: NavItem[] };
 
 /**
- * Approved App Shell IA. Inbox and Leads (Slice 2) now have real pages on
- * this branch, so they're back in Today/Pipeline where the originally-
- * approved spec put them. Quotes still has no backing page, so it stays
- * disabled with a "Soon" badge rather than a dead link. Web Chat is a
- * real, currently-linked main route with no explicit slot in the
+ * Approved App Shell IA. Inbox, Leads (Slice 2), and Quotes (Product Depth
+ * Slice 2) now have real pages on this branch, so they're back in
+ * Today/Pipeline where the originally-approved spec put them. Web Chat is
+ * a real, currently-linked main route with no explicit slot in the
  * originally-approved sections list, so it sits under Setup alongside
  * the other account/config pages rather than being dropped. Business
  * Facts was removed from here (its route now redirects to Receptionist's
@@ -59,7 +58,7 @@ const NAV_SECTIONS: NavSection[] = [
     heading: "Pipeline",
     items: [
       { to: "/app/leads", label: "Leads", icon: Users },
-      { to: null, label: "Quotes", icon: FileText },
+      { to: "/app/quotes", label: "Quotes", icon: FileText },
       { to: "/app/agents", label: "Outreach", icon: Target },
     ],
   },
@@ -89,6 +88,7 @@ const MOBILE_TABS: NavItem[] = [
 const BREADCRUMB_LABELS: { prefix: string; label: string }[] = [
   { prefix: "/app/inbox", label: "Inbox" },
   { prefix: "/app/leads", label: "Leads" },
+  { prefix: "/app/quotes", label: "Quotes" },
   { prefix: "/app/calendar", label: "Calendar" },
   { prefix: "/app/agents", label: "Outreach" },
   { prefix: "/app/reputation", label: "Reviews" },
