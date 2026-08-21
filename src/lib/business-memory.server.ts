@@ -138,8 +138,11 @@ export async function generateBusinessMemory(userId: string): Promise<BusinessMe
     // business_id is a real FK to auth.users - the one part of
     // conversation_intelligence's linkage that's actually reliable.
     // outcome='booked' is the only outcome that ever gets a real
-    // time_to_book_minutes value written (see sms-inbound.ts /
-    // web-chat/$business_id.ts).
+    // time_to_book_minutes value written. As of Slice 11, sms-inbound.ts
+    // and web-chat/$business_id.ts both compute it the same way (elapsed
+    // minutes from the conversation's real started_at, via
+    // aiReceptionist.server.ts's timeToBookMinutes) - one combined median
+    // across channels is safe rather than needing a channel split.
     supabaseAdmin
       .from("conversation_intelligence")
       .select("time_to_book_minutes")

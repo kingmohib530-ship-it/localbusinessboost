@@ -7,6 +7,7 @@ import {
   generateReceptionistReply,
   detectBooking,
   deriveUrgency,
+  timeToBookMinutes,
 } from "@/lib/aiReceptionist.server";
 import { ESTIMATED_VALUE_MAP, type ServiceTypeKey } from "@/lib/serviceTypes";
 import { cancelActiveQuoteFollowUp, maybeStartQuoteFollowUp } from "@/lib/quoteFollowUps.server";
@@ -257,14 +258,20 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
           // Find or start this visitor's conversation.
           const { data: existing } = await supabaseAdmin
             .from("conversations")
-            .select("id, status, ai_paused")
+            .select("id, status, ai_paused, started_at")
             .eq("user_id", businessId)
             .eq("channel", "web_chat")
             .eq("customer_identifier", sessionId)
             .maybeSingle();
 
           let conversationId = existing?.id;
+          // Real conversation-start timestamp, same role as SMS's
+          // conversation.started_at - known locally for a brand-new
+          // conversation (the value just written below), read back from
+          // the row for a returning visitor's existing one.
+          let conversationStartedAt: string | null = existing?.started_at ?? null;
           if (!conversationId) {
+            const startedAt = new Date().toISOString();
             const { data: created, error: createErr } = await supabaseAdmin
               .from("conversations")
               .insert({
@@ -272,7 +279,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
                 channel: "web_chat",
                 customer_identifier: sessionId,
                 status: "received",
-                started_at: new Date().toISOString(),
+                started_at: startedAt,
               })
               .select("id")
               .single();
@@ -284,6 +291,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
               );
             }
             conversationId = created.id;
+            conversationStartedAt = startedAt;
           }
 
           const now = new Date().toISOString();
@@ -413,6 +421,7 @@ export const Route = createFileRoute("/api/public/web-chat/$business_id")({
                     price_mentioned: estimatedValue,
                     urgency_level: deriveUrgency(scheduledMs),
                     outcome: "booked",
+                    time_to_book_minutes: timeToBookMinutes(conversationStartedAt),
                     source_channel: "web_chat",
                     ai_confidence_score: 0.85,
                   });
