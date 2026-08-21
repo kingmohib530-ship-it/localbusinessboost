@@ -263,6 +263,7 @@ export const Route = createFileRoute("/api/telnyx/sms-inbound")({
                     status: "confirmed",
                     source: "inbound_sms",
                     estimated_value: estimatedValue,
+                    conversation_id: conversation.id,
                   })
                   .select()
                   .single();

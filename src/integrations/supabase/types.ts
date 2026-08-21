@@ -64,6 +64,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          conversation_id: string | null
           created_at: string | null
           customer_email: string | null
           customer_name: string
@@ -79,6 +80,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conversation_id?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name: string
@@ -94,6 +96,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conversation_id?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string
@@ -108,7 +111,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "appointments_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_leads: {
         Row: {
