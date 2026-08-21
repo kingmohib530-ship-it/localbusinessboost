@@ -10,6 +10,7 @@ import {
   generateReceptionistReply,
   detectBooking,
   deriveUrgency,
+  timeToBookMinutes,
   type BusinessProfile,
 } from "@/lib/aiReceptionist.server";
 import { cancelActiveQuoteFollowUp, maybeStartQuoteFollowUp } from "@/lib/quoteFollowUps.server";
@@ -280,9 +281,6 @@ export const Route = createFileRoute("/api/telnyx/sms-inbound")({
                   // location_zip stays null — nothing in this app captures a
                   // ZIP code anywhere (profiles.city and the consumer flow
                   // both only ever collect free-text city).
-                  const firstContactMs = conversation.started_at
-                    ? new Date(conversation.started_at).getTime()
-                    : Date.now();
                   await supabaseAdmin.from("conversation_intelligence").insert({
                     business_id: conversation.user_id,
                     consumer_phone: from,
@@ -291,10 +289,7 @@ export const Route = createFileRoute("/api/telnyx/sms-inbound")({
                     price_mentioned: estimatedValue,
                     urgency_level: deriveUrgency(scheduledMs),
                     outcome: "booked",
-                    time_to_book_minutes: Math.max(
-                      0,
-                      Math.round((Date.now() - firstContactMs) / 60000),
-                    ),
+                    time_to_book_minutes: timeToBookMinutes(conversation.started_at),
                     source_channel: "inbound_sms",
                     ai_confidence_score: 0.85,
                   });

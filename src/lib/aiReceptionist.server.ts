@@ -21,6 +21,24 @@ export function deriveUrgency(
   return "scheduled";
 }
 
+/**
+ * Elapsed minutes from a conversation's real started_at to now - the one
+ * shared definition of conversation_intelligence.time_to_book_minutes,
+ * used identically by every booking channel so Business Memory's median
+ * (src/lib/business-memory.server.ts) is comparing the same thing across
+ * all of them. Null whenever timing can't be established honestly (no
+ * started_at at all) rather than a fake 0 - a missing timestamp is not
+ * the same fact as "booked instantly." A negative gap (clock skew) is
+ * clamped to 0, since the conversation did start at or before now even if
+ * the exact elapsed time is unclear.
+ */
+export function timeToBookMinutes(startedAt: string | null | undefined): number | null {
+  if (!startedAt) return null;
+  const startedMs = new Date(startedAt).getTime();
+  if (isNaN(startedMs)) return null;
+  return Math.max(0, Math.round((Date.now() - startedMs) / 60000));
+}
+
 export interface BusinessProfile {
   business_name: string | null;
   industry: string | null;
