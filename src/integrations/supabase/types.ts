@@ -301,6 +301,7 @@ export type Database = {
       }
       conversations: {
         Row: {
+          ai_paused: boolean
           channel: string
           created_at: string
           customer_identifier: string
@@ -313,6 +314,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_paused?: boolean
           channel: string
           created_at?: string
           customer_identifier: string
@@ -325,6 +327,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_paused?: boolean
           channel?: string
           created_at?: string
           customer_identifier?: string
