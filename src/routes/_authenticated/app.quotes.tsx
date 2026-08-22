@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,14 @@ function formatDate(iso: string): string {
 }
 
 export const Route = createFileRoute("/_authenticated/app/quotes")({
+  // Deep-link support (Slice 16) for Action Queue - see the matching note
+  // on app.inbox.tsx's route. No detail drawer exists on this page, so the
+  // effect this drives is limited to switching to the right tab and
+  // scrolling/highlighting the matching row - never a fetch of its own,
+  // since loadQuotes() below already loads every quote this business owns.
+  validateSearch: z.object({
+    quote: z.string().uuid().optional(),
+  }),
   component: Quotes,
 });
 
@@ -184,6 +193,8 @@ function SkeletonRows() {
 }
 
 function Quotes() {
+  const search = Route.useSearch();
+
   const [quotes, setQuotes] = useState<QuoteComputed[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState("");
@@ -297,6 +308,32 @@ function Quotes() {
   useEffect(() => {
     loadQuotes();
   }, []);
+
+  // Deep-link (Slice 16): switch to whichever real, owned tab the target
+  // quote actually lives in. quotes here is already scoped to this
+  // business (loadQuotes's own user_id filter), so an id that doesn't
+  // match anything in it - wrong, unowned, or made up - just finds
+  // nothing and this is a no-op. Never fetches anything new.
+  useEffect(() => {
+    if (!search.quote || loading) return;
+    const target = quotes.find((q) => q.id === search.quote);
+    if (target && activeTab !== target.bucket) setActiveTab(target.bucket);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.quote, loading, quotes]);
+
+  // Runs after the tab switch above has had a chance to put the target row
+  // into the DOM (visibleQuotes is filtered by activeTab) - scroll/focus is
+  // the whole deep-link affordance here, since this page has no detail
+  // drawer to open instead (see the route comment).
+  useEffect(() => {
+    if (!search.quote || loading) return;
+    // Desktop and mobile both render at once (Tailwind just hides one via
+    // CSS), so this checks both ids rather than assuming which is on screen.
+    const target =
+      document.getElementById(`quote-row-${search.quote}`) ||
+      document.getElementById(`quote-card-${search.quote}`);
+    target?.scrollIntoView({ block: "center" });
+  }, [search.quote, loading, activeTab]);
 
   const tabCounts = useMemo(() => {
     const counts: Record<Bucket, number> = { open: 0, needs_followup: 0, won: 0, lost: 0 };
@@ -463,7 +500,11 @@ function Quotes() {
                       </TableHeader>
                       <TableBody>
                         {visibleQuotes.map((q) => (
-                          <TableRow key={q.id}>
+                          <TableRow
+                            key={q.id}
+                            id={`quote-row-${q.id}`}
+                            className={cn(q.id === search.quote && "bg-accent")}
+                          >
                             <TableCell className="max-w-[220px]">
                               <div
                                 className="truncate lv-body text-foreground font-medium"
@@ -546,7 +587,14 @@ function Quotes() {
                   {/* Mobile card list */}
                   <ul className="md:hidden space-y-2">
                     {visibleQuotes.map((q) => (
-                      <li key={q.id} className="rounded-md border border-border overflow-hidden">
+                      <li
+                        key={q.id}
+                        id={`quote-card-${q.id}`}
+                        className={cn(
+                          "rounded-md border overflow-hidden",
+                          q.id === search.quote ? "border-primary bg-accent" : "border-border",
+                        )}
+                      >
                         <div className="px-3 py-3">
                           <div className="flex items-start justify-between gap-2">
                             <span className="lv-body text-foreground font-medium truncate">
