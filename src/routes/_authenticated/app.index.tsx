@@ -1,6 +1,6 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { UserPlus, ArrowRight } from "lucide-react";
+import { UserPlus, ArrowRight, CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,25 @@ export const Route = createFileRoute("/_authenticated/app/")({
 interface Profile {
   full_name: string | null;
   business_name: string | null;
+  // Launch Sprint 1: the same real signals Receptionist's own readiness
+  // checklist already uses (app.receptionist.tsx) - reused here, not
+  // recomputed differently, so "ready" means the same thing on both pages.
+  industry: string | null;
+  telnyx_number_provisioned_at: string | null;
+  subscription_tier: string | null;
+  subscription_status: string | null;
 }
+
+// Same real "has a live subscription" definition duplicated across client
+// files (app.web-chat.tsx, app.billing.tsx, the Stripe webhook) since this
+// is client code and the canonical version lives server-side only.
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+// Same real support address app.billing.tsx already uses for anything that
+// isn't self-serve yet - duplicated here for the same reason
+// ACTIVE_SUBSCRIPTION_STATUSES is (this is client code, not a shared
+// server-only module).
+const SUPPORT_EMAIL = "moh@lanavix.com";
 
 interface ConversationRow {
   id: string;
@@ -430,6 +448,7 @@ function Overview() {
   >([]);
   const [reviewRequestPhones, setReviewRequestPhones] = useState<Set<string>>(new Set());
   const [hasAnyHistory, setHasAnyHistory] = useState(true);
+  const [knowledgeCount, setKnowledgeCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -466,8 +485,15 @@ function Overview() {
           { count: everConversationCount },
           { count: everLeadCount },
           { count: everAppointmentCount },
+          { count: activeKnowledgeCount },
         ] = await Promise.all([
-          supabase.from("profiles").select("full_name, business_name").eq("id", user.id).single(),
+          supabase
+            .from("profiles")
+            .select(
+              "full_name, business_name, industry, telnyx_number_provisioned_at, subscription_tier, subscription_status",
+            )
+            .eq("id", user.id)
+            .single(),
           supabase
             .from("conversations")
             .select("id, customer_name, customer_identifier, channel, status, started_at")
@@ -543,6 +569,14 @@ function Overview() {
             .from("appointments")
             .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
+          // Launch Sprint 1: same real signal Receptionist's own "Knowledge
+          // available" checklist item uses (app.receptionist.tsx's
+          // loadKnowledgeCount) - active facts only, not pending/rejected.
+          supabase
+            .from("business_facts")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("status", "active"),
         ]);
 
         const firstErr =
@@ -618,6 +652,7 @@ function Overview() {
             (everLeadCount ?? 0) > 0 ||
             (everAppointmentCount ?? 0) > 0,
         );
+        setKnowledgeCount(activeKnowledgeCount ?? 0);
       } catch (e) {
         console.error("[overview]", e);
         setError("Couldn't load your Overview. Please refresh the page.");
@@ -1034,6 +1069,51 @@ function Overview() {
   const name = profile?.business_name || profile?.full_name || null;
   const isFirstRun = !loading && !error && !hasAnyHistory;
   const isQueueEmpty = !loading && !error && hasAnyHistory && actionQueueAll.length === 0;
+
+  // Launch Sprint 1 (Early User Activation): the smallest real setup model,
+  // built entirely from signals that already exist elsewhere (Receptionist's
+  // own readiness checklist, Web Chat's subscription check) - never a new
+  // requirement invented just to fill a checklist. Shown only in place of
+  // the first-run welcome (isFirstRun below), never instead of the real
+  // Action Queue once any real activity exists.
+  const businessInfoReady = !!profile?.business_name && !!profile?.industry;
+  const knowledgeReady = knowledgeCount > 0;
+  const numberReady = !!profile?.telnyx_number_provisioned_at;
+  const subscriptionReady =
+    !!profile?.subscription_tier &&
+    profile.subscription_tier !== "starter" &&
+    ACTIVE_SUBSCRIPTION_STATUSES.has(profile?.subscription_status ?? "");
+  const setupComplete = businessInfoReady && knowledgeReady && numberReady && subscriptionReady;
+  // All three Receptionist-owned steps point at the same page rather than a
+  // per-tab deep link - Receptionist's own "Overview" tab already has a
+  // checklist with tab-jumping "Fix" buttons for each of these, so this
+  // never needs to fabricate routing Receptionist itself doesn't support.
+  const activationSteps = [
+    {
+      key: "business",
+      label: "Business information",
+      done: businessInfoReady,
+      href: "/app/receptionist",
+    },
+    {
+      key: "knowledge",
+      label: "Receptionist knowledge",
+      done: knowledgeReady,
+      href: "/app/receptionist",
+    },
+    {
+      key: "number",
+      label: "Activate business number",
+      done: numberReady,
+      href: "/app/receptionist",
+    },
+    {
+      key: "subscription",
+      label: "Subscribe to a plan",
+      done: subscriptionReady,
+      href: "/app/billing",
+    },
+  ];
   // A load error can leave actionQueueAll empty for a reason that has
   // nothing to do with being caught up - don't claim confidently that
   // nothing needs attention when we couldn't actually check.
@@ -1066,7 +1146,11 @@ function Overview() {
           {loading ? (
             <ActionQueueSkeleton />
           ) : isFirstRun ? (
-            <FirstRunState />
+            setupComplete ? (
+              <ReadyState />
+            ) : (
+              <ActivationChecklist steps={activationSteps} />
+            )
           ) : (
             <>
               <div className="flex items-baseline justify-between mb-3 gap-3">
@@ -1593,22 +1677,87 @@ function ActionQueueEmptyState({ workingCount }: { workingCount: number }) {
   );
 }
 
-function FirstRunState() {
+// Launch Sprint 1: replaces the old generic "Welcome to Lanavix" message,
+// which showed identically whether a brand-new account had done nothing at
+// all or had fully configured Receptionist and was just waiting on its
+// first real conversation - two very different situations that need
+// different next actions, not the same static welcome copy either way.
+function ActivationChecklist({
+  steps,
+}: {
+  steps: { key: string; label: string; done: boolean; href: string }[];
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card px-4 py-5 md:px-6 md:py-6">
+      <p className="lv-section text-foreground mb-1">Set up Lanavix</p>
+      <p className="lv-meta text-muted-foreground mb-4">
+        A few real things left before Lanavix can start working for you.
+      </p>
+      <ul className="flex flex-col gap-3 mb-4">
+        {steps.map((step) => (
+          <li key={step.key} className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {step.done ? (
+                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+              ) : (
+                <Circle className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+              )}
+              <span
+                className={
+                  step.done
+                    ? "lv-body text-muted-foreground truncate line-through"
+                    : "lv-body text-foreground truncate"
+                }
+              >
+                {step.label}
+                <span className="sr-only">{step.done ? " - done" : " - not done yet"}</span>
+              </span>
+            </div>
+            {!step.done && (
+              <Button asChild size="sm" variant="outline" className="shrink-0">
+                <Link to={step.href}>Set up</Link>
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="lv-meta text-muted-foreground">
+        Need help setting up?{" "}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+          Email {SUPPORT_EMAIL}
+        </a>
+      </p>
+    </div>
+  );
+}
+
+// Launch Sprint 1: setup is genuinely complete (the same real signals as
+// the checklist above) but there's still no real customer activity -
+// distinct from ActivationChecklist above, which is for when setup itself
+// isn't finished yet. Points at Web Chat's real live preview (Phase 5) -
+// existing production infrastructure, not a separate fake demo - since
+// it's the one test path that needs nothing from the owner but a click.
+// Launch Sprint 1 fix-up: the button used to say "Test your Receptionist"
+// while only ever testing Web Chat - misleading, since the phone/SMS
+// Receptionist is a different channel with its own real test path (the
+// actual provisioned number, on Receptionist's Phone tab). Named
+// truthfully here instead of overclaiming what a Web Chat click tests.
+function ReadyState() {
   return (
     <div className="rounded-md border border-border bg-card px-6 py-8 text-center">
-      <p className="lv-section text-foreground">Welcome to Lanavix</p>
+      <p className="lv-section text-foreground">You're ready</p>
       <p className="lv-body text-muted-foreground mt-1 max-w-md mx-auto">
-        Once customers start texting your business, or the Lead Generator finds prospects, they'll
-        show up here first.
+        Lanavix is set up and waiting for your first customer conversation. Try it yourself first.
       </p>
       <div className="flex flex-wrap justify-center gap-2 mt-4">
         <Button asChild>
-          <Link to="/app/agents">Run the Lead Generator</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link to="/app/receptionist">Set up your receptionist</Link>
+          <Link to="/app/web-chat">Test Web Chat</Link>
         </Button>
       </div>
+      <p className="lv-meta text-muted-foreground mt-3">
+        Testing your phone/SMS Receptionist instead? Text your real Lanavix number - find it under
+        Receptionist → Phone.
+      </p>
     </div>
   );
 }
