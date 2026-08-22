@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
+import { toast } from "sonner";
 import { ArrowLeft, Loader2, MessageCircle, Phone, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
@@ -332,6 +333,14 @@ function Inbox() {
   async function sendMessage() {
     const text = composerText.trim();
     if (!text || !selectedConversation || !canComposeManually || sending) return;
+    // Resolution Feedback V1 (Slice 17): captured before the send, from the
+    // same real latestDirection signal conversationStatus()/waitingCount
+    // already use - true only when this reply is the one actually ending a
+    // wait, never claimed on an ordinary follow-up message in an
+    // already-answered thread.
+    const wasWaiting =
+      selectedConversation.latestDirection === "inbound" ||
+      selectedConversation.latestDirection === null;
     setSending(true);
     setSendError("");
     setSendWarning("");
@@ -353,6 +362,15 @@ function Inbox() {
       }
       // Clear only on confirmed success, so a failure never loses what was typed.
       setComposerText("");
+      // Resolution Feedback V1 (Slice 17): the owner's own successful send is
+      // the one moment actor identity genuinely isn't ambiguous - this
+      // request only succeeds while the conversation is paused for manual
+      // reply (see api/inbox/send.ts), so there's no guessing who just
+      // acted. Not shown for an ordinary reply in an already-answered
+      // thread, where nothing was actually waiting to be resolved.
+      if (wasWaiting) {
+        toast.success("Reply sent. This conversation no longer needs a reply.");
+      }
       if (data.message) {
         setMessages((prev) =>
           prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message],
