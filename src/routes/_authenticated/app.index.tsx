@@ -1,10 +1,21 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { UserPlus, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusDot, type LvStatus } from "@/components/StatusDot";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { daysAgo, formatTime } from "@/lib/timeFormat";
 
@@ -184,6 +195,11 @@ interface Opportunity {
   // context here; it can never change decisionLabel or this opportunity's
   // state. Null whenever decisionLabel is null.
   decisionExplanation: string | null;
+  // Safe Actions V1 (Slice 15) - the raw quote_follow_ups.id, only for an
+  // opportunity built directly from a quote row (never an appointment or
+  // bare conversation). This is the one thing the "Mark lost" quick
+  // action needs that customerName/reason/etc. don't already carry.
+  quoteId: string | null;
 }
 
 // The two Business Memory signals Opportunity Intelligence reuses (see
@@ -356,6 +372,9 @@ function appointmentToOpportunity(
     // see the interface comment.
     decisionLabel: null,
     decisionExplanation: null,
+    // An appointment is never built from a quote row directly - see the
+    // Opportunity.quoteId comment.
+    quoteId: null,
   };
 }
 
@@ -740,6 +759,7 @@ function Overview() {
           waitingTimeNote,
           decisionLabel,
           decisionExplanation: decisionExplanationText,
+          quoteId: q.id,
         });
       } else if (q.status === "cancelled" || q.status === "completed") {
         list.push({
@@ -760,6 +780,10 @@ function Overview() {
           // that could imply it's still active.
           decisionLabel: null,
           decisionExplanation: null,
+          // Already lost - Slice 15's "Mark lost" quick action only ever
+          // renders for state === "needs_you" anyway, but this is still a
+          // real quote-backed opportunity, so the id is accurate.
+          quoteId: q.id,
         });
       } else if (q.status === "booked") {
         // Slice 7: prefer the real conversation_id FK when the appointment
@@ -809,6 +833,7 @@ function Overview() {
             // "no action needed" label was omitted for booked/won).
             decisionLabel: null,
             decisionExplanation: null,
+            quoteId: q.id,
           });
         }
       }
@@ -848,6 +873,9 @@ function Overview() {
           null,
           bareConvoWaitingTimeNote,
         ),
+        // No quote exists yet for a bare conversation - see the
+        // Opportunity.quoteId comment.
+        quoteId: null,
       });
     }
 
@@ -984,6 +1012,18 @@ function Overview() {
     setDismissed((prev) => new Set(prev).add(id));
   }
 
+  // Slice 15: called only after the server has actually confirmed the
+  // "Mark lost" mutation - mirrors the exact new status the row now has,
+  // rather than a separate "resolved" flag. opportunities/actionQueueAll
+  // recompute from this automatically, so the item leaves the queue
+  // because its real state changed (Phase 3), not because anything was
+  // hidden client-side.
+  function handleQuoteMarkedLost(quoteId: string) {
+    setOpportunityQuotes((prev) =>
+      prev.map((q) => (q.id === quoteId ? { ...q, status: "cancelled" } : q)),
+    );
+  }
+
   const name = profile?.business_name || profile?.full_name || null;
   const isFirstRun = !loading && !error && !hasAnyHistory;
   const isQueueEmpty = !loading && !error && hasAnyHistory && actionQueueAll.length === 0;
@@ -1047,7 +1087,12 @@ function Overview() {
                 <>
                   <ul className="space-y-2">
                     {actionQueueShown.map((o) => (
-                      <OpportunityCard key={o.id} opportunity={o} />
+                      <OpportunityCard
+                        key={o.id}
+                        opportunity={o}
+                        showQuickAction
+                        onQuoteMarkedLost={handleQuoteMarkedLost}
+                      />
                     ))}
                   </ul>
                   {(hasHiddenInboxItems || hasHiddenQuoteItems) && (
@@ -1312,7 +1357,22 @@ function NewLeadCard({
   );
 }
 
-function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
+function OpportunityCard({
+  opportunity,
+  showQuickAction = false,
+  onQuoteMarkedLost,
+}: {
+  opportunity: Opportunity;
+  // Slice 15: the "Mark lost" quick action is Action-Queue-only - the
+  // Opportunities section below reuses this same card for broader
+  // lifecycle visibility, not quick actions, so it never passes this.
+  showQuickAction?: boolean;
+  onQuoteMarkedLost?: (quoteId: string) => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [markingLost, setMarkingLost] = useState(false);
+  const [markLostError, setMarkLostError] = useState("");
+
   const fullDetail = `${OPPORTUNITY_STATE_LABEL[opportunity.state]}${opportunity.value !== null ? ` · $${opportunity.value.toLocaleString()}` : ""} · ${opportunity.reason}`;
   // Attribution is only worth showing on a resolved job (booked/won/lost) -
   // needs_you/working rows are trivially always Lanavix-assisted by
@@ -1325,6 +1385,43 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
       opportunity.state === "won" ||
       opportunity.state === "lost") &&
     ATTRIBUTION_LABEL[opportunity.attribution] !== null;
+
+  // Slice 15: the one direct mutation this slice adds, reusing quotes.tsx's
+  // own updateStatus(quote, "cancelled") logic exactly (same status value,
+  // same quote_follow_up_steps cleanup, same RLS-scoped ownership check via
+  // the anon client) rather than inventing a new write path. Only ever
+  // called for a real quote-backed needs_you opportunity - see the render
+  // gate below.
+  async function handleMarkLost() {
+    if (!opportunity.quoteId) return;
+    setMarkingLost(true);
+    setMarkLostError("");
+    const { error } = await supabase
+      .from("quote_follow_ups")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", opportunity.quoteId);
+    if (error) {
+      console.error("[overview] failed to mark quote lost", error);
+      setMarkLostError("Couldn't update this quote. Please try again.");
+      setMarkingLost(false);
+      return;
+    }
+    await supabase
+      .from("quote_follow_up_steps")
+      .update({ status: "cancelled" })
+      .eq("follow_up_id", opportunity.quoteId)
+      .eq("status", "pending");
+    toast.success("Marked as lost.");
+    setMarkingLost(false);
+    setConfirmOpen(false);
+    // No optimistic removal before this point - the queue only reflects
+    // the change once the server has actually confirmed it (Phase 3/6).
+    onQuoteMarkedLost?.(opportunity.quoteId);
+  }
+
+  const showMarkLost =
+    showQuickAction && opportunity.state === "needs_you" && opportunity.quoteId !== null;
+
   return (
     <li className="flex items-center gap-3 rounded-md border border-border bg-card px-4 py-3">
       <div className="min-w-0 flex-1">
@@ -1371,10 +1468,49 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
             </p>
           )
         )}
+        {markLostError && <p className="lv-meta text-destructive mt-0.5">{markLostError}</p>}
       </div>
-      <Button asChild size="sm" variant="outline" className="shrink-0">
-        <Link to={opportunity.actionHref}>{opportunity.actionLabel}</Link>
-      </Button>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Button asChild size="sm" variant="outline">
+          <Link to={opportunity.actionHref}>{opportunity.actionLabel}</Link>
+        </Button>
+        {showMarkLost && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive"
+            disabled={markingLost}
+            onClick={() => setConfirmOpen(true)}
+          >
+            Mark lost
+          </Button>
+        )}
+      </div>
+      {showMarkLost && (
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent className="lv-light">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Mark this quote as lost?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This stops any scheduled follow-ups for {opportunity.customerName}. You can reopen
+                it later from the Quotes page.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={markingLost}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleMarkLost();
+                }}
+                disabled={markingLost}
+              >
+                {markingLost ? "Marking lost..." : "Mark lost"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </li>
   );
 }
