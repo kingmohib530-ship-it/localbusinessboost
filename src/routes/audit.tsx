@@ -111,16 +111,16 @@ function AuditPage() {
           heading is the page's only H1 and the report doesn't sit under
           marketing copy that no longer applies. */}
       {pageState !== "report" && (
-        <div className="border-b border-border py-10 md:py-12 text-center px-6">
+        <div className="border-b border-border py-7 md:py-8 text-center px-6">
           <div className="max-w-[640px] mx-auto">
-            <div className="inline-flex items-center gap-1.5 lv-meta font-semibold uppercase tracking-wide text-primary bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-4">
+            <div className="inline-flex items-center gap-1.5 lv-meta font-semibold uppercase tracking-wide text-primary bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
               Free · AI-assisted audit
             </div>
-            <h1 className="lv-display text-[26px] md:text-[36px] text-foreground mb-3">
+            <h1 className="lv-display text-[24px] md:text-[32px] text-foreground mb-2.5">
               Find out what's costing your business <span className="text-primary">customers</span>
             </h1>
-            <p className="lv-body text-muted-foreground max-w-[480px] mx-auto mb-5">
+            <p className="lv-body text-muted-foreground max-w-[480px] mx-auto mb-4">
               Enter your business details and get a scored audit across 4 categories — with
               plain-English fixes you can act on today.
             </p>
@@ -134,7 +134,7 @@ function AuditPage() {
       )}
 
       {/* Main */}
-      <main className="max-w-[720px] w-full mx-auto px-6 py-10 pb-20 flex-1" id="main-content">
+      <main className="max-w-[720px] w-full mx-auto px-6 py-8 pb-16 flex-1" id="main-content">
         {showForm && (
           <div
             className="rounded-xl border border-border bg-card overflow-hidden"
