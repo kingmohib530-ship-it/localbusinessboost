@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Phone,
@@ -78,7 +78,11 @@ const STATUS_META: Record<
   },
   not_active: {
     label: "Not active",
-    description: "Lanavix isn't answering calls yet. Connect your phone number to turn it on.",
+    // Launch Sprint 1: this status now covers two distinct real blockers
+    // (no phone connected, or no active subscription) - the checklist below
+    // names which one specifically, so this description stays generic
+    // rather than naming only one and being wrong about the other.
+    description: "Lanavix isn't answering calls yet. See the checklist below to turn it on.",
     dotClass: "bg-muted-foreground",
     textClass: "text-muted-foreground",
   },
@@ -113,6 +117,7 @@ const FOLLOW_UP_STEP_LABELS: Record<string, string> = {
 };
 
 function ReceptionistPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -126,6 +131,13 @@ function ReceptionistPage() {
   const businessNameRef = useRef<HTMLInputElement>(null);
 
   const [telnyxNumberProvisionedAt, setTelnyxNumberProvisionedAt] = useState<string | null>(null);
+  // Launch Sprint 1: same real subscription check app.web-chat.tsx already
+  // uses (duplicated here for the same reason - this is client code, the
+  // canonical version lives server-side in planLimits.server.ts). Without
+  // this, a fully-configured-but-unpaid account could show "Ready" here
+  // while checkSmsQuota silently blocks every real inbound text.
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
   const [businessHours, setBusinessHours] = useState("");
   const [greetingMessage, setGreetingMessage] = useState("");
@@ -169,7 +181,7 @@ function ReceptionistPage() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "business_name, industry, business_hours, greeting_message, escalation_rules, telnyx_number_provisioned_at",
+        "business_name, industry, business_hours, greeting_message, escalation_rules, telnyx_number_provisioned_at, subscription_tier, subscription_status",
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -185,6 +197,8 @@ function ReceptionistPage() {
     setGreetingMessage(data?.greeting_message || "");
     setEscalationRules(data?.escalation_rules || "");
     setTelnyxNumberProvisionedAt(data?.telnyx_number_provisioned_at || null);
+    setSubscriptionTier(data?.subscription_tier || null);
+    setSubscriptionStatus(data?.subscription_status || null);
     setLoading(false);
   }
 
@@ -391,11 +405,27 @@ function ReceptionistPage() {
   const greetingReady = greetingMessage.trim() !== "";
   const hoursReady = businessHours.trim() !== "";
   const knowledgeReady = knowledgeCount > 0;
-  const allReady = connected && businessReady && greetingReady && hoursReady && knowledgeReady;
+  // Launch Sprint 1: a real requirement, not a UI nicety - checkSmsQuota
+  // (planLimits.server.ts) blocks the actual AI reply on every inbound text
+  // for a starter-tier or lapsed account, silently from the owner's point
+  // of view (sms-inbound.ts just sends a generic placeholder). Folding this
+  // into allReady means "Ready" here only ever means replies will actually
+  // go out, never just "the form fields are filled in."
+  const subscriptionReady =
+    !!subscriptionTier &&
+    subscriptionTier !== "starter" &&
+    new Set(["active", "trialing", "past_due"]).has(subscriptionStatus ?? "");
+  const allReady =
+    connected &&
+    subscriptionReady &&
+    businessReady &&
+    greetingReady &&
+    hoursReady &&
+    knowledgeReady;
 
   const status: ReadinessStatus = loadError
     ? "error"
-    : !connected
+    : !connected || !subscriptionReady
       ? "not_active"
       : allReady
         ? "ready"
@@ -409,6 +439,13 @@ function ReceptionistPage() {
       done: connected,
       why: "Lanavix needs a number to answer calls behind before it can text anyone back.",
       onFix: () => setActiveTab("phone"),
+    },
+    {
+      key: "subscription",
+      label: "Active subscription",
+      done: subscriptionReady,
+      why: "Missed-call text-back only sends real replies on an active Solo, Crew, or Agency plan.",
+      onFix: () => navigate({ to: "/app/billing" }),
     },
     {
       key: "business",

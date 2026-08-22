@@ -10,6 +10,7 @@ import {
   Calendar,
   Star,
   MessageCircle,
+  CreditCard,
   Settings,
   Search as SearchIcon,
 } from "lucide-react";
@@ -37,6 +38,7 @@ const DESTINATIONS: { to: string; label: string; icon: typeof LayoutDashboard }[
   { to: "/app/reputation", label: "Reviews", icon: Star },
   { to: "/app/receptionist", label: "Receptionist", icon: Phone },
   { to: "/app/web-chat", label: "Web Chat", icon: MessageCircle },
+  { to: "/app/billing", label: "Billing", icon: CreditCard },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
 

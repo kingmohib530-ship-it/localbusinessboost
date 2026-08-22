@@ -223,6 +223,17 @@ export function PhoneForwardingSetup({ onConnected }: PhoneForwardingSetupProps)
             forwarding" for your carrier, or call their support line. To turn forwarding off later,
             dial #61# (and #67# if you set that one too).
           </p>
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+            <div
+              style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}
+            >
+              Test it right now
+            </div>
+            <p style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.5 }}>
+              Text {telnyxNumber} from your own phone. Lanavix replies for real, using your current
+              settings - then check the Inbox to see what happened.
+            </p>
+          </div>
         </div>
       )}
     </div>

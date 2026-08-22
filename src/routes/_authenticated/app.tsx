@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   Phone,
   MessageCircle,
+  CreditCard,
   Settings,
   LogOut,
   Menu,
@@ -46,6 +47,9 @@ type NavSection = { heading: string; items: NavItem[] };
  * Facts was removed from here (its route now redirects to Receptionist's
  * Knowledge tab, which has full functional parity). Coach is deliberately
  * not here - it lives in the Cmd+K palette instead (see CommandPalette).
+ * Billing (Launch Sprint 1) was previously a real page with no nav entry
+ * at all, reachable only via a breadcrumb or Web Chat's "Upgrade now"
+ * button - a new subscriber had no way to discover where to subscribe.
  */
 const NAV_SECTIONS: NavSection[] = [
   {
@@ -77,6 +81,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: "/app/receptionist", label: "Receptionist", icon: Phone },
       { to: "/app/web-chat", label: "Web Chat", icon: MessageCircle },
+      { to: "/app/billing", label: "Billing", icon: CreditCard },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ],
   },
