@@ -212,10 +212,10 @@ export function ReceptionistKnowledge() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="lv-section text-foreground mb-1">What Lanavix knows about your business</h2>
+        <h2 className="lv-section text-foreground mb-1">Business knowledge</h2>
         <p className="lv-body text-muted-foreground">
-          Missed-Call Text-Back uses these facts to answer with your real prices and hours instead
-          of guessing.
+          The information Lanavix uses when talking with customers - your receptionist answers with
+          your real prices, services, and hours instead of guessing.
         </p>
       </div>
 
@@ -307,7 +307,7 @@ export function ReceptionistKnowledge() {
       <div className="rounded-md border border-border bg-card p-4 md:p-6">
         <p className="lv-label text-foreground mb-1">Active facts</p>
         <p className="lv-meta text-muted-foreground mb-3">
-          Everything here is live and available to Missed-Call Text-Back right now.
+          Everything here is live and available to your receptionist right now.
         </p>
 
         {activeError && <p className="lv-meta text-destructive mb-2">{activeError}</p>}

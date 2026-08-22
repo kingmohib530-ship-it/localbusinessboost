@@ -39,8 +39,10 @@
   }
   var sessionId = getSessionId();
 
-  var PRIMARY = "#6366f1";
-  var PRIMARY_DARK = "#4f46e5";
+  // Lanavix Pine - same primary/hover pair as the rest of the app
+  // (src/styles.css --primary / --primary-hover), not the old indigo.
+  var PRIMARY = "#1E5A4E";
+  var PRIMARY_DARK = "#17483E";
 
   var style = document.createElement("style");
   style.textContent =
