@@ -752,7 +752,7 @@ function Overview() {
             ? "Automated follow-up scheduled"
             : "Follow-ups finished - customer hasn't booked",
           actionLabel: "View quote",
-          actionHref: "/app/quotes",
+          actionHref: `/app/quotes?quote=${q.id}`,
           since: q.quoted_at,
           attribution: quoteAttribution,
           quoteMemoryNote,
@@ -769,7 +769,7 @@ function Overview() {
           value: q.quoted_price,
           reason: "Quote didn't convert",
           actionLabel: "View quote",
-          actionHref: "/app/quotes",
+          actionHref: `/app/quotes?quote=${q.id}`,
           since: q.quoted_at,
           attribution: quoteAttribution,
           quoteMemoryNote,
@@ -822,7 +822,7 @@ function Overview() {
             value: q.quoted_price,
             reason: "Booked",
             actionLabel: "View quote",
-            actionHref: "/app/quotes",
+            actionHref: `/app/quotes?quote=${q.id}`,
             since: q.quoted_at,
             attribution: quoteAttribution,
             quoteMemoryNote,
@@ -861,7 +861,7 @@ function Overview() {
         value: null,
         reason: "Waiting for your reply",
         actionLabel: "View conversation",
-        actionHref: "/app/inbox",
+        actionHref: `/app/inbox?conversation=${c.id}`,
         since: last.sent_at,
         attribution: "lanavix_assisted",
         // No quote exists yet for a bare conversation - nothing to compare.
@@ -918,7 +918,10 @@ function Overview() {
   // above, which serves a different purpose (overall lifecycle recency,
   // not human urgency).
   const actionQueueAll = useMemo(() => {
-    const categoryRank = (o: Opportunity) => (o.actionHref === "/app/inbox" ? 0 : 1);
+    // Slice 16: actionHref can now carry a ?conversation=/?quote= deep-link
+    // query string, so this checks the path prefix rather than exact
+    // equality - the category, not the specific id, is what matters here.
+    const categoryRank = (o: Opportunity) => (o.actionHref.startsWith("/app/inbox") ? 0 : 1);
     return opportunities
       .filter((o) => o.state === "needs_you")
       .sort((a, b) => {
@@ -929,8 +932,12 @@ function Overview() {
   }, [opportunities]);
   const actionQueueShown = actionQueueAll.slice(0, ACTION_QUEUE_LIMIT);
   const hiddenActionQueueItems = actionQueueAll.slice(ACTION_QUEUE_LIMIT);
-  const hasHiddenInboxItems = hiddenActionQueueItems.some((o) => o.actionHref === "/app/inbox");
-  const hasHiddenQuoteItems = hiddenActionQueueItems.some((o) => o.actionHref === "/app/quotes");
+  const hasHiddenInboxItems = hiddenActionQueueItems.some((o) =>
+    o.actionHref.startsWith("/app/inbox"),
+  );
+  const hasHiddenQuoteItems = hiddenActionQueueItems.some((o) =>
+    o.actionHref.startsWith("/app/quotes"),
+  );
   // Real count only (Phase 8) - never shown unless Lanavix is genuinely
   // still working on at least one opportunity.
   const workingOpportunityCount = opportunities.filter((o) => o.state === "working").length;

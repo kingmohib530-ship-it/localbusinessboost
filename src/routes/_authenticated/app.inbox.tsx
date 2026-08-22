@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import { ArrowLeft, Loader2, MessageCircle, Phone, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +11,13 @@ import { cn } from "@/lib/utils";
 import { relativeTime, formatTime } from "@/lib/timeFormat";
 
 export const Route = createFileRoute("/_authenticated/app/inbox")({
+  // Deep-link support (Slice 16) for Action Queue - a plain uuid check, no
+  // ownership assumption baked in here. An absent/invalid param just never
+  // matches anything real; ownership itself is still enforced the normal
+  // way, by RLS + the explicit user_id filter on every query below.
+  validateSearch: z.object({
+    conversation: z.string().uuid().optional(),
+  }),
   component: Inbox,
 });
 
@@ -62,6 +70,9 @@ function channelLabel(channel: string): string {
 }
 
 function Inbox() {
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+
   const [conversations, setConversations] = useState<ConversationComputed[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -198,7 +209,57 @@ function Inbox() {
     setSendWarning("");
     setTakeoverError("");
     loadMessages(id);
+    // Keep the URL in sync with manual selection (Slice 16) so back/forward
+    // moves between conversations coherently - skipped when this id is
+    // already the one in the URL (the deep-link effect below calling this
+    // on load, or re-opening the same conversation) to avoid a redundant
+    // history entry.
+    if (search.conversation !== id) {
+      navigate({ to: "/app/inbox", search: { conversation: id } });
+    }
   }
+
+  // Deep-link (Slice 16): open the conversation named in the URL, once,
+  // when it's real and owned by this business. Never fabricates a
+  // conversation - if it's not in the already-loaded page and a direct,
+  // ownership-scoped lookup finds nothing (bad id, someone else's
+  // conversation, or genuinely doesn't exist), this simply does nothing
+  // and the generic Inbox stays exactly as usable as always.
+  useEffect(() => {
+    const targetId = search.conversation;
+    if (!targetId || loading) return;
+    if (selectedId === targetId) return;
+    const found = conversations.find((c) => c.id === targetId);
+    if (found) {
+      openConversation(found.id);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const { data } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("id", targetId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const row = data as ConversationRow;
+      setConversations((prev) =>
+        prev.some((c) => c.id === row.id)
+          ? prev
+          : [{ ...row, latestDirection: null, waitingSince: null }, ...prev],
+      );
+      openConversation(row.id);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.conversation, loading, conversations, selectedId]);
 
   useEffect(() => {
     loadConversations(0);
@@ -442,7 +503,10 @@ function Inbox() {
             <div className="shrink-0 border-b border-border px-3 md:px-5 py-2.5 flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setSelectedId(null)}
+                onClick={() => {
+                  setSelectedId(null);
+                  navigate({ to: "/app/inbox", search: {} });
+                }}
                 className="md:hidden flex h-9 w-9 items-center justify-center rounded-sm text-foreground hover:bg-accent shrink-0"
                 aria-label="Back to conversations"
               >
