@@ -54,10 +54,10 @@ function normalizePhone(phone: string): string {
 
 /**
  * Missed calls where the auto-text-back itself never went out (quota
- * exceeded, Twilio error) - conversations.status stays 'received' in
- * exactly that case (see missed-call.ts). This is the one unambiguous
+ * exceeded, Telnyx error) - conversations.status stays 'received' in
+ * exactly that case (see telnyx/voice.ts). This is the one unambiguous
  * "nobody has reached this customer at all" signal in the conversations
- * table: once an auto-text succeeds, sms-reply.ts always sends an
+ * table: once an auto-text succeeds, telnyx/sms-inbound.ts always sends an
  * immediate AI (or canned-fallback) reply to anything the customer sends
  * back, so there is no reliable "customer replied and is still waiting on
  * the business" state to detect separately.

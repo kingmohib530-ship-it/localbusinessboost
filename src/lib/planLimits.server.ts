@@ -24,7 +24,7 @@ const SMS_HOURLY_WINDOW_SECONDS = 3600;
 
 // The web-chat widget is public and embeddable anywhere, a materially
 // different attack surface than SMS (no carrier cost, no phone number to
-// rate-limit by, no Twilio signature to verify) — so it gets its own,
+// rate-limit by, no Telnyx signature to verify) — so it gets its own,
 // tighter hourly ceiling per business rather than sharing SMS's cap.
 const WEB_CHAT_HOURLY_ABUSE_CAP = 100;
 const WEB_CHAT_HOURLY_WINDOW_SECONDS = 3600;

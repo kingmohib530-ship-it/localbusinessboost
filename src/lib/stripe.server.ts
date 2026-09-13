@@ -6,8 +6,8 @@ const getEnv = (key: string): string => {
   return value;
 };
 
-// Constant-time comparison (same approach as verifyTwilioRequest in
-// twilio.server.ts) — a naive `===`/`.includes()` check on the signature
+// Constant-time comparison (same approach as the CRON_SECRET check in
+// cron/quote-follow-ups.ts) — a naive `===`/`.includes()` check on the signature
 // short-circuits on the first mismatched byte, which is a (largely
 // theoretical, but free to close) timing side-channel.
 function timingSafeEqualStr(a: string, b: string): boolean {

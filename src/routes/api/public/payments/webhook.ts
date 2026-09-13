@@ -71,7 +71,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
     handlers: {
       POST: async ({ request }) => {
         // Rate limit before signature verification, same defense-in-depth
-        // ordering as the Twilio webhooks (missed-call.ts, sms-reply.ts) -
+        // ordering as the Telnyx webhooks (telnyx/voice.ts, telnyx/sms-inbound.ts) -
         // bounds abuse volume regardless of whether the signature would
         // even be valid, rather than doing the HMAC computation first.
         const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";

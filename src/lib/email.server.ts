@@ -1,6 +1,6 @@
 /**
  * Minimal outbound email via Resend's REST API (plain fetch — no SDK
- * dependency, consistent with how this codebase calls Twilio/Anthropic
+ * dependency, consistent with how this codebase calls Telnyx/Anthropic
  * directly). Best-effort: never throws, so a missing/failing email send
  * never breaks the request that triggered it (e.g. a contact form
  * submission is still saved even if notifying support fails).
