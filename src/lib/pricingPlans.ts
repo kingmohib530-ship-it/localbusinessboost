@@ -70,7 +70,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlanConfig> = {
       "Unlimited Lead Generator",
       "AI review response writer",
       "Competitor ranking tracker",
-      "Automated follow-up sequences",
+      "AI booking follow-up plans",
       "Priority support",
     ],
     featured: true,

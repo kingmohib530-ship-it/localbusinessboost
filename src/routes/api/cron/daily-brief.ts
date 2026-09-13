@@ -4,7 +4,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { generateDailyBriefCards, type CoachCard } from "@/lib/coach.server";
 import { sendExternalEmail } from "@/lib/email.server";
 import { loadBusinessTelnyxNumber, sendTelnyxSms } from "@/lib/telnyxProvisioning.server";
-import { checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
+import { checkSmsQuota, checkSmsHourlyRateLimit } from "@/lib/planLimits.server";
 
 // Same constant-time comparison approach as every other cron in this
 // codebase (quote-follow-ups.ts) - a naive `===` on the secret
@@ -189,11 +189,18 @@ export const Route = createFileRoute("/api/cron/daily-brief")({
             if (channel === "sms" || channel === "both") {
               anyAttempted = true;
               if (profile.owner_phone) {
-                const [telnyxNumber, hourlyOk] = await Promise.all([
+                // Real SMS send, same rule every other SMS-send path in this
+                // codebase already enforces (sms-inbound.ts, voice.ts,
+                // inbox/send.ts, quote-follow-ups.ts) - this one was missing
+                // it, so a canceled/never-subscribed account with
+                // daily_brief_enabled still true (the column's own default)
+                // could otherwise keep receiving a real, billable text.
+                const [telnyxNumber, hourlyOk, quotaOk] = await Promise.all([
                   loadBusinessTelnyxNumber(profile.id),
                   checkSmsHourlyRateLimit(profile.id),
+                  checkSmsQuota(profile.id),
                 ]);
-                if (telnyxNumber && hourlyOk.allowed) {
+                if (telnyxNumber && hourlyOk.allowed && quotaOk.allowed) {
                   try {
                     const sendResult = await sendTelnyxSms(
                       telnyxNumber,
